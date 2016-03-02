@@ -122,6 +122,8 @@ public:      // data
   ASTClass *super;
   ASTList <ASTClass > ctors;
 
+  ASTClass *parent = 0;
+
 public:      // funcs
   TF_class(ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(), super(_super), ctors(_ctors) {
   }
@@ -203,6 +205,7 @@ public:      // data
   ASTList <CtorArg > lastArgs;
   ASTList <BaseClass > bases;
   ASTList <Annotation > decls;
+  bool consumed = 0;
 
 public:      // funcs
   ASTClass(string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : name(_name), args(_args), lastArgs(_lastArgs), bases(_bases), decls(_decls) {

@@ -549,8 +549,9 @@ void HGen::emitTFClass(TF_class const &cls)
     out << "  friend class ASTXmlReader;\n";
   }
 
+
   emitCtorFields(cls.super->args, cls.super->lastArgs);
-  emitCtorDefn(*(cls.super), NULL /*parent*/);
+  emitCtorDefn(*(cls.super), cls.parent /*parent*/);
 
   // destructor
   char const *virt = virtualIfChildren(cls);
@@ -859,6 +860,9 @@ void HGen::emitUserDecls(ASTList<Annotation> const &decls)
 // emit declaration for a specific class instance constructor
 void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
 {
+  if (ctor.consumed) {
+      return;
+  }
   out << "class " << ctor.name << " : public " << parent.name;
   emitBaseClassDecls(ctor, 1 /*ct*/);
   out << " {\n";
@@ -3105,6 +3109,40 @@ TF_enum *findEnum(ASTSpecFile *base, rostring name)
   return NULL;    // not found
 }
 
+void mergeItself(ASTSpecFile *base)
+{
+    const int ct = base->forms.count();
+    for (int i = 0; i<ct; i++) {
+      ToplevelForm * /*owner*/ tf = base->forms.nth(i);
+      if (tf->isTF_class()) {
+          TF_class *c = tf->asTF_class();
+          TF_class *s = NULL;
+          if (c->super->bases.count()) {
+              BaseClass *bc = c->super->bases.first();
+              if (bc) {
+                  s = findSuperclass(base, bc->name);
+              }
+          }
+          if (s) {
+              const int cct = s->ctors.count();
+              std::cout << "base s class:" << s->super->name << "  freeform child:"<< c->super->name << " children:" << cct << std::endl;
+
+              for (int j = 0; j<cct; j++) {
+                  ASTClass *sc = s->ctors.nth(j);
+                  if (sc->name.equals(c->super->name) && sc != c->super) {
+                      std::cout << "Merge base s class:" << s->super->name << "  into freeform child:"<< c->super->name << std::endl;
+                      sc->debugPrint(std::cout, 0);
+                      std::cout << std::endl;
+                      mergeClass(c->super, sc);
+                      sc->consumed = true;
+                      c->parent = s->super;
+                  }
+              }
+          }
+      }
+    }
+}
+
 void mergeExtension(ASTSpecFile *base, ASTSpecFile *ext)
 {
   // for each toplevel form, either add it or merge it
@@ -3335,6 +3373,8 @@ void entry(int argc, char **argv)
 
     mergeExtension(ast, extension);
   }
+
+  mergeItself(ast);
 
   // scan options, and fill 'allClasses'
   {

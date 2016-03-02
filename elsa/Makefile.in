@@ -10,11 +10,13 @@ all: cc.ast.gen.h tlexer ccparse quicktest
 #iptree smin cipart
 
 # directories of other software
+BOOST     := ../../boost_1_60_0
 SMBASE   := @SMBASE@
 AST      := @AST@
 ELKHOUND := @ELKHOUND@
 
 # stuff inside those other directories
+BOOST_LIBS:= $(BOOST)/stage/lib/libboost_locale.a
 LIBSMBASE   := $(SMBASE)/libsmbase.a
 LIBAST      := $(AST)/libast.a
 LIBELKHOUND := $(ELKHOUND)/libelkhound.a
@@ -97,13 +99,13 @@ endif
 CXX := g++
 
 # flags for the C++ compiler (and preprocessor)
-CCFLAGS := @CCFLAGS@ -DXML -Woverloaded-virtual -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
+CCFLAGS := @CCFLAGS@ -DXML -Woverloaded-virtual -I$(BOOST) -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
 
 # how to enable coverage
 GCOV_OPTS := -fprofile-arcs -ftest-coverage
 
 # flags for the linker
-libraries := $(LIBELKHOUND) $(LIBAST) $(LIBSMBASE)
+libraries := $(BOOST_LIBS) $(LIBELKHOUND) $(LIBAST) $(LIBSMBASE)
 LDFLAGS := @LDFLAGS@ $(libraries)
 
 

@@ -5,11 +5,13 @@
 all: cparse
 
 # directories of other software
+BOOST    := ../../boost_1_60_0
 SMBASE   := @SMBASE@
 AST      := @AST@
 ELKHOUND := @ELKHOUND@
 
 # stuff inside those other directories
+BOOST_LIBS:= $(BOOST)/stage/lib/libboost_locale.a
 LIBSMBASE   := $(SMBASE)/libsmbase.a
 LIBAST      := $(AST)/libast.a
 LIBELKHOUND := $(ELKHOUND)/libelkhound.a
@@ -25,10 +27,10 @@ Makefile: Makefile.in
 CXX := g++
 
 # flags for the C++ compiler (and preprocessor)
-CCFLAGS := @CCFLAGS@ -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
+CCFLAGS := @CCFLAGS@ -I$(BOOST) -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
 
 # flags for the linker
-libraries := $(LIBELKHOUND) $(LIBAST) $(LIBSMBASE)
+libraries := $(BOOST_LIBS) $(LIBELKHOUND) $(LIBAST) $(LIBSMBASE)
 LDFLAGS := -g -Wall $(libraries)
 
 

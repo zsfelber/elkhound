@@ -6,6 +6,8 @@ all: ccsstr astgen libast.a example.o ext1.o
 
 
 # directories of other software
+BOOST     := ../../boost_1_60_0
+BOOST_LIBS:= $(BOOST)/stage/lib/libboost_locale.a
 SMBASE := @SMBASE@
 LIBSMBASE := $(SMBASE)/libsmbase.a
 
@@ -22,10 +24,10 @@ MYFLEX := $(PERL) $(SMBASE)/run-flex.pl
 CXX := $(CXX)
 
 # flags for the C and C++ compilers (and preprocessor)
-CCFLAGS := @CCFLAGS@ -I$(SMBASE)
+CCFLAGS := @CCFLAGS@ -I$(BOOST) -I$(SMBASE)
 
 # flags for the linker
-LDFLAGS := -g -Wall $(LIBSMBASE)
+LDFLAGS := -g -Wall $(BOOST_LIBS) $(LIBSMBASE)
 
 
 # some other tools

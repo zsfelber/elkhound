@@ -6,6 +6,9 @@ THIS := libsmbase.a
 all: gensrc $(THIS)
 
 
+BOOST     := ../../boost_1_60_0
+BOOST_LIBS:= $(BOOST)/stage/lib/libboost_locale.a
+
 # C preprocessor, compiler and linker
 CC := @CC@
 
@@ -14,14 +17,16 @@ CXX := @CXX@
 
 # flags for the C and C++ compilers (and preprocessor)
 CFLAGS  := @CFLAGS@
-CCFLAGS := @CCFLAGS@
+CCFLAGS := @CCFLAGS@ -I$(BOOST)
 
 # cross-compile info
 CROSSTARGET   := @CROSSTARGET@
 EXE           := @EXE@
 
 # flags for the linker
-LDFLAGS := -g -Wall libsmbase.a
+libraries0 := $(BOOST_LIBS)
+libraries := $(BOOST_LIBS) libsmbase.a
+LDFLAGS := -g -Wall $(libraries)
 
 
 # some other tools
@@ -155,7 +160,7 @@ endif
 
 $(THIS): $(OBJS)
 	rm -f $(THIS)
-	$(AR) -r $(THIS) $(OBJS)
+	$(AR) -r $(THIS) $(OBJS) $(libraries0)
 	-$(RANLIB) $(THIS)
 
 
