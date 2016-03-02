@@ -51,6 +51,7 @@ public:
   // insertion
   void prepend(T *newitem)              { list.prepend(newitem); }
   void append(T *newitem)               { list.append(newitem); }
+  void appendAll(ASTList<T> &tail)      { list.appendAll(tail.list); }
   void insertAt(T *newitem, int index)  { list.insertAt(newitem, index); }
   void concat(ASTList<T> &tail)         { list.concat(tail.list); }
 

@@ -373,7 +373,7 @@ private:        // funcs
   void innerEmitCtorFields(ASTList<CtorArg> const &args);
   void emitCtorFormal(int &ct, CtorArg const *arg);
   void emitCtorFormals(int &ct, ASTList<CtorArg> const &args);
-  void emitCtorDefn(ASTClass const &cls, ASTClass const *parent);
+  void emitCtorDefn(ASTClass const &cls, ASTClass const *parent, ASTList<CtorArg> const *totArgs=0, ASTList<CtorArg> const *totLastArgs=0);
   void passParentCtorArgs(int &ct, ASTList<CtorArg> const &args);
   void initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args);
   void emitCommonFuncs(rostring virt);
@@ -551,7 +551,7 @@ void HGen::emitTFClass(TF_class const &cls)
 
 
   emitCtorFields(cls.super->args, cls.super->lastArgs);
-  emitCtorDefn(*(cls.super), cls.super->parent);
+  emitCtorDefn(*(cls.super), cls.super->parent?cls.super->parent->super:0, &cls.super->getArgs(), &cls.super->getLastArgs());
 
   // destructor
   char const *virt = virtualIfChildren(cls);
@@ -714,8 +714,16 @@ bool isFuncDecl(UserDecl const *ud)
 }
 
 // emit the definition of the constructor itself
-void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
+void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent, ASTList<CtorArg> const *args, ASTList<CtorArg> const *lastArgs)
 {
+  if (parent) {
+      if (!args) {
+          args = &parent->getArgs();
+      }
+      if (!lastArgs) {
+          lastArgs = &parent->getLastArgs();
+      }
+  }
   // declare the constructor
   {
     out << "public:      // funcs\n";
@@ -724,13 +732,13 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
     // list of formal parameters to the constructor
     {
       int ct = 0;
-      if (parent) {
-        emitCtorFormals(ct, parent->args);
+      if (args) {
+        emitCtorFormals(ct, *args);
       }
       emitCtorFormals(ct, cls.args);
       emitCtorFormals(ct, cls.lastArgs);
-      if (parent) {
-        emitCtorFormals(ct, parent->lastArgs);
+      if (lastArgs) {
+        emitCtorFormals(ct, *lastArgs);
       }
     }
     out << ")";
@@ -741,8 +749,12 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
 
       if (parent) {
         out << " : " << parent->name << "(";
-        passParentCtorArgs(ct, parent->args);
-        passParentCtorArgs(ct, parent->lastArgs);
+        if (args) {
+           passParentCtorArgs(ct, *args);
+        }
+        if (lastArgs) {
+           passParentCtorArgs(ct, *lastArgs);
+        }
         ct++;     // make sure we print a comma, below
         out << ")";
       }
@@ -3121,7 +3133,6 @@ void mergeItself(ASTSpecFile *base)
               BaseClass *bc = c->super->bases.first();
               if (bc) {
                   s = findSuperclass(base, bc->name);
-                  c->super->parent = s;
               }
           }
           if (s) {
@@ -3137,8 +3148,9 @@ void mergeItself(ASTSpecFile *base)
                       mergeClass(c->super, sc);
                       sc->consumed = true;
 
-                      const int cnt = s->super->args.count();
-                      c->super->totArgs.concat(s->super->args);
+                      c->super->parent = s;
+                      c->super->totArgs.appendAll(s->super->getArgs());
+                      c->super->totLastArgs.appendAll(s->super->getLastArgs());
                       break;
                   }
               }

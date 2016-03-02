@@ -221,6 +221,11 @@ public:      // funcs
   void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
   public:  string classKindName() const;
+
+  ASTList <CtorArg >& getArgs() { return parent ? totArgs : args; }
+  ASTList <CtorArg >& getLastArgs() { return parent ? totLastArgs : lastArgs; }
+  ASTList <CtorArg > const & getArgs() const { return parent ? totArgs : args; }
+  ASTList <CtorArg > const & getLastArgs() const { return parent ? totLastArgs : lastArgs; }
 };
 
 

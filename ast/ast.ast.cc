@@ -216,8 +216,8 @@ void ASTClass::debugPrint(std::ostream &os, int indent, char const *subtreeName)
   PRINT_HEADER(subtreeName, ASTClass);
 
   PRINT_STRING(name);
-  PRINT_LIST(CtorArg, args);
-  PRINT_LIST(CtorArg, lastArgs);
+  PRINT_LIST(CtorArg, getArgs());
+  PRINT_LIST(CtorArg, getLastArgs());
   PRINT_LIST(BaseClass, bases);
   PRINT_LIST(Annotation, decls);
 }
