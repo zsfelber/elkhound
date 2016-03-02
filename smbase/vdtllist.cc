@@ -37,6 +37,17 @@ void VoidTailList::append(void *newitem)
   }
 }
 
+void VoidTailList::appendAll(VoidTailList &src)
+{
+  VoidList::appendAll(src);
+  if (!tail) {
+      tail = top;
+  }
+  if (tail) {
+      while (tail->next) tail = tail->next;
+  }
+}
+
 void VoidTailList::insertAt(void *newitem, int index)
 {
   VoidList::insertAt(newitem, index);

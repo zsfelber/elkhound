@@ -551,7 +551,7 @@ void HGen::emitTFClass(TF_class const &cls)
 
 
   emitCtorFields(cls.super->args, cls.super->lastArgs);
-  emitCtorDefn(*(cls.super), cls.parent /*parent*/);
+  emitCtorDefn(*(cls.super), cls.super->parent);
 
   // destructor
   char const *virt = virtualIfChildren(cls);
@@ -3121,6 +3121,7 @@ void mergeItself(ASTSpecFile *base)
               BaseClass *bc = c->super->bases.first();
               if (bc) {
                   s = findSuperclass(base, bc->name);
+                  c->super->parent = s;
               }
           }
           if (s) {
@@ -3135,7 +3136,10 @@ void mergeItself(ASTSpecFile *base)
                       std::cout << std::endl;
                       mergeClass(c->super, sc);
                       sc->consumed = true;
-                      c->parent = s->super;
+
+                      const int cnt = s->super->args.count();
+                      c->super->totArgs.concat(s->super->args);
+                      break;
                   }
               }
           }
