@@ -471,6 +471,8 @@ private:    // funcs
     #endif
       ;                     // debug version checks bounds
 
+  void fillDefaultTypes();
+  void fillDefaultType(Nonterminal* nonterm);
   // ---- derivability ----
   // iteratively compute every pair A,B such that A can derive B
   void computeWhatCanDeriveWhat();

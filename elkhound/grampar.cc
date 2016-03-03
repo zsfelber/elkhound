@@ -14,6 +14,7 @@
 #include "grampar.tab.h"     // token constant codes, union YYSTYPE
 #include "array.h"           // GrowArray
 #include "mlsstr.h"          // MLSubstrate
+#include "util.h"
 
 #include <fstream>         // ifstream
 #include <ctype.h>           // isspace, isalnum
@@ -593,7 +594,7 @@ void astParseDDM(Environment &env, Symbol *sym,
 void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
 {
   // language defaults
-  StringRef defaultType, defaultAction;
+  StringRef defaultType, defaultAction, defaultTagAction;
   if (g.targetLang.equals("OCaml")) {
     defaultType = grammarStringTable.add("unit");
     defaultAction = grammarStringTable.add("()");
@@ -601,6 +602,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   else /*C*/ {
     defaultType = grammarStringTable.add("void");
     defaultAction = grammarStringTable.add("return;");
+    defaultTagAction = grammarStringTable.add("return tag;");
   }
 
   // hook to allow me to force defaults everywhere (this is useful
@@ -609,12 +611,49 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   bool forceDefaults = tracingSys("forceDefaultActions");
 
   // iterate over nonterminals
-  FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
+  for (ObjListIter<Nonterminal> ntIter(g.nonterminals);
+       !ntIter.isDone(); ntIter.adv()) {
+      // convenient alias
+      Nonterminal *nonterm = constcast(ntIter.data());
+
+      // default type
+      if (forceDefaults || !nonterm->type) {
+        nonterm->type = defaultType;
+      }
+
+      // loop over all productions
+      for (ObjListIter<Production> prodIter(nonterm->productions);
+           !prodIter.isDone(); prodIter.adv()) {
+        // convenient alias
+        Production *prod = constcast(prodIter.data());
+
+        // default action
+        if (forceDefaults || prod->action.isNull()) {
+          prod->action.str = nonterm->type_is_default ? defaultTagAction : defaultAction;
+        }
+
+        if (forceDefaults) {
+          // TODO FIXME ??->ok this way? rhs->sym->name = "" ->
+          // clear RHSElt tags, since otherwise the lack of types
+          // will provoke errors; and default actions don't refer to
+          // the RHSElts anyway
+          StringRef empty = grammarStringTable.add("");
+          for (ObjListIter<Production::RHSElt> rhsIter(prod->right);
+               !rhsIter.isDone(); rhsIter.adv()) {
+              // convenient alias
+              Production::RHSElt *rhs = constcast(rhsIter.data());
+              //TODO constcast(rhs->sym->name) = "";
+          }
+        }
+      }
+  }
+  /*FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
     if (!iter.data()->isTF_nonterm()) { continue; }
     TF_nonterm *nt = iter.data()->asTF_nonterm();
+    Nonterminal *nonterm = g.findNonterminal(nt->name);
 
     // default type
-    if (forceDefaults || nt->type.isNull()) {
+    if (forceDefaults || !nonterm->type) {
       nt->type.str = defaultType;
     }
 
@@ -623,10 +662,10 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
       ProdDecl *pd = iter2.data();
 
       // default action
-      if (forceDefaults || pd->actionCode.isNull()) {
-        pd->actionCode.str = defaultAction;
+      if (forceDefaults || prod.isNull()) {
+        pd->actionCode.str = isnull ? defaultAction : defaultTagAction;
       }
-                          
+
       if (forceDefaults) {
         // clear RHSElt tags, since otherwise the lack of types
         // will provoke errors; and default actions don't refer to
@@ -645,7 +684,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
         }
       }
     }
-  }
+  }*/
 }
 
 
@@ -739,6 +778,10 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
 
   // put the code into it
   prod->action = prodDecl->actionCode;
+
+  int tags = 0;
+  bool found_tag_ne = false;
+  Production::RHSElt *first = 0;
 
   // deal with RHS elements
   FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
@@ -847,9 +890,21 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
     }
     else {
       // add it to the production
-      prod->append(s, symTag);
+      Production::RHSElt * r = prod->append(s, symTag);
+      if (tags == 0) {
+          first = r;
+      }
+      tags++;
+      found_tag_ne = found_tag_ne || symTag.length();
     }
   }
+  // generating default rule
+  if (tags==1 && !found_tag_ne) {
+    first->tag.str = "tag";
+    nonterm->appendDefault(first->sym);
+  }
+
+  nonterm->appendProd(prod);
 
   // after constructing the production we need to do this
   // update: no we don't -- GrammarAnalysis takes care of it (and
@@ -1256,8 +1311,8 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop)
   // so we can know what language is the target
   astParseOptions(g, treeTop);
 
-  // fill in default types and actions
-  addDefaultTypesActions(g, treeTop);
+  // moved to after parse
+  //addDefaultTypesActions(g, treeTop);
 
   // synthesize a rule "TrueStart -> Start EOF"
   synthesizeStartRule(g, treeTop);
@@ -1265,6 +1320,9 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop)
   // parse the AST into a Grammar
   traceProgress() << "parsing grammar AST..\n";
   astParseGrammar(g, treeTop);
+
+  // fill in default types and actions
+  addDefaultTypesActions(g, treeTop);
 
   // then check grammar properties; throws exception
   // on failure

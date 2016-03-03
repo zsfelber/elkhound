@@ -19,7 +19,8 @@ SOURCES += main.cpp \
     ../ast/reporterr.cc \
     ../ast/strtable.cc \
     ../ast/towner.cc \
-    ../ast/xmlhelp.cc
+    ../ast/xmlhelp.cc \
+    ../ast/example.cc
 
 DISTFILES += \
     ../ast/configure.pl \
@@ -52,6 +53,7 @@ HEADERS += \
     ../ast/locstr.h \
     ../ast/reporterr.h \
     ../ast/strtable.h \
-    ../ast/xmlhelp.h
+    ../ast/xmlhelp.h \
+    ../ast/example.h
 
 INCLUDEPATH += ../smbase

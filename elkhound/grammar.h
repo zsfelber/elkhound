@@ -129,6 +129,7 @@ public:      // funcs
   virtual bool anyDDM() const;
 
   virtual string toString() const { return string(name); }
+
 };
 
 // I have several needs for serf lists of symbols, so let's use this for now
@@ -290,7 +291,11 @@ public:
 
   bool maximal;             // if true, use maximal munch disambiguation
   
+  ObjList<Production> productions;    //
   SObjList<Nonterminal> subsets;      // preferred subsets (for scannerless)
+  ObjList<Symbol> defaults;           // default type determination (of 1-symbol-wide productions) :
+                                      // analyzing its consistency
+  bool deftravd = false;
 
 protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
@@ -308,6 +313,9 @@ public:     // funcs
 
   virtual bool anyDDM() const;
 
+  void appendProd(Production *prod);
+  void appendDefault(Symbol *sym);
+
 // ------ annotation ------
 public:     // data
   int ntIndex;           // nonterminal index; see Grammar::computeWhatCanDeriveWhat
@@ -315,6 +323,7 @@ public:     // data
   TerminalSet first;     // set of terminals that can be start of a string derived from 'this'
   TerminalSet follow;    // set of terminals that can follow a string derived from 'this'
   Nonterminal *superset; // inverse of 'subsets'
+  bool type_is_default = false;
 };
 
 typedef SObjList<Nonterminal> NonterminalList;
@@ -388,7 +397,7 @@ public:	    // funcs
   void getRHSSymbols(SymbolList &output) const;
 
   // append a RHS symbol
-  void append(Symbol *sym, LocString const &tag);
+  RHSElt* append(Symbol *sym, LocString const &tag);
 
   // call this when production is built, so it can compute annotations
   // (this is called by GrammarAnalysis::initializeAuxData, from

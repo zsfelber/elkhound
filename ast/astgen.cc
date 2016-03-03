@@ -551,7 +551,10 @@ void HGen::emitTFClass(TF_class const &cls)
 
 
   emitCtorFields(cls.super->args, cls.super->lastArgs);
-  emitCtorDefn(*(cls.super), cls.super->parent?cls.super->parent->super:0, &cls.super->getArgs(), &cls.super->getLastArgs());
+  if (cls.super->parent)
+      emitCtorDefn(*(cls.super), cls.super->parent->super, &cls.super->getArgs(), &cls.super->getLastArgs());
+  else
+      emitCtorDefn(*(cls.super), 0);
 
   // destructor
   char const *virt = virtualIfChildren(cls);

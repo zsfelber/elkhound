@@ -626,14 +626,25 @@ void Production::getRHSSymbols(SymbolList &output) const
 }
 
 
-void Production::append(Symbol *sym, LocString const &tag)
+Production::RHSElt* Production::append(Symbol *sym, LocString const &tag)
 {
   // my new design decision (6/26/00 14:24) is to disallow the
   // emptyString nonterminal from explicitly appearing in the
   // productions
   xassert(!sym->isEmptyString);
 
-  right.append(new RHSElt(sym, tag));
+  RHSElt *r = new RHSElt(sym, tag);
+  right.append(r);
+  return r;
+}
+
+void Nonterminal::appendProd(Production *prod) {
+  productions.append(prod);
+}
+
+void Nonterminal::appendDefault(Symbol *sym) {
+  xassert(!sym->isEmptyString);
+  defaults.append(sym);
 }
 
 

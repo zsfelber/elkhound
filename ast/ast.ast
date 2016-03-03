@@ -44,9 +44,20 @@ class ASTClass (string name,
                 ASTList<CtorArg> lastArgs,    // only for nonterminal
                 ASTList<BaseClass> bases,
                 ASTList<Annotation> decls) {
+
+  public bool consumed = 0;
+  public TF_class *parent = 0;
+  public ASTList <CtorArg > totArgs;
+  public ASTList <CtorArg > totLastArgs;
+
   // the name of the enum constant denoting this ctor, as distinguished
   // from its sibling ctors
   public string classKindName() const;
+
+  ASTList <CtorArg >& getArgs() { return parent ? totArgs : args; }
+  ASTList <CtorArg >& getLastArgs() { return parent ? totLastArgs : lastArgs; }
+  ASTList <CtorArg > const & getArgs() const { return parent ? totArgs : args; }
+  ASTList <CtorArg > const & getLastArgs() const { return parent ? totLastArgs : lastArgs; }
 }
 
 verbatim {

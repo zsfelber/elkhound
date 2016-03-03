@@ -224,3 +224,5 @@ HEADERS += \
     ../elkhound/c/paths.h \
     ../elkhound/c/treeout.h
 
+INCLUDEPATH += ../smbase \
+../ast
