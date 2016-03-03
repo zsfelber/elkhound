@@ -3174,6 +3174,7 @@ void mergeItself(ASTSpecFile *base)
                   if (sc->name.equals(c->super->name) && sc != c->super) {
                       mergedChild = sc;
                       o << "Merged child found:" << mergedChild->name << std::endl;
+                      break;
                   }
               }
               if (!mergedChild) {
@@ -3207,7 +3208,6 @@ void mergeItself(ASTSpecFile *base)
               o<<std::endl;
               o << "freeform result:" << std::endl;
               c->super->debugPrint(o, 0);
-              break;
           }
       }
     }
