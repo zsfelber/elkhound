@@ -45,6 +45,7 @@ class ASTClass (string name,
                 ASTList<BaseClass> bases,
                 ASTList<Annotation> decls) {
 
+  public int level = 0;
   public bool consumed = 0;
   public TF_class *parent = 0;
   public ASTList <CtorArg > totArgs;

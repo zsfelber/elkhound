@@ -17,6 +17,8 @@
 #include <string.h>        // strncmp
 #include <fstream>       // std::ofstream
 #include <ctype.h>         // isalnum
+#include <sstream>
+#include <exception>
 
 // propertly a member of ListClass below, but I don't like nested
 // things
@@ -377,6 +379,7 @@ private:        // funcs
   void passParentCtorArgs(int &ct, ASTList<CtorArg> const &args);
   void initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args);
   void emitCommonFuncs(rostring virt);
+  void emitKindLeafFuncs(ASTClass const &ctor, rostring virt, rostring level);
   void emitUserDecls(ASTList<Annotation> const &decls);
   void emitCtor(ASTClass const &ctor, ASTClass const &parent);
 
@@ -552,7 +555,8 @@ void HGen::emitTFClass(TF_class const &cls)
 
   emitCtorFields(cls.super->args, cls.super->lastArgs);
   if (cls.super->parent)
-      emitCtorDefn(*(cls.super), cls.super->parent->super, &cls.super->getArgs(), &cls.super->getLastArgs());
+      emitCtorDefn(*(cls.super), cls.super->parent->super//, &cls.super->getArgs(), &cls.super->getLastArgs()
+                   );
   else
       emitCtorDefn(*(cls.super), 0);
 
@@ -561,18 +565,27 @@ void HGen::emitTFClass(TF_class const &cls)
   out << "  " << virt << "~" << cls.super->name << "();\n";
   out << "\n";
 
+  std::stringstream biggy,biggy1;
+  if (cls.super->level > 0) {
+      biggy << cls.super->level;
+      if (cls.super->level > 1) {
+        biggy1 << (cls.super->level-1);
+      }
+      emitKindLeafFuncs(*cls.super, virt, biggy1.str().c_str());
+  }
+
   // declare the child kind selector
   if (cls.hasChildren()) {
-    out << "  enum Kind { ";
+    out << "  enum Kind"<<biggy.str()<<" { ";
     FOREACH_ASTLIST(ASTClass, cls.ctors, ctor) {
       out << ctor.data()->classKindName() << ", ";
     }
-    out << "NUM_KINDS };\n";
+    out << "NUM"<<biggy.str()<<"_KINDS };\n";
 
-    out << "  virtual Kind kind() const = 0;\n";
+    out << "  virtual Kind"<<biggy.str()<<" kind"<<biggy.str()<<"() const = 0;\n";
     out << "\n";
-    out << "  static char const * const kindNames[NUM_KINDS];\n";
-    out << "  char const *kindName() const { return kindNames[kind()]; }\n";
+    out << "  static char const * const kindNames"<<biggy.str()<<"[NUM"<<biggy.str()<<"_KINDS];\n";
+    out << "  char const *kindName"<<biggy.str()<<"() const { return kindNames"<<biggy.str()<<"[kind"<<biggy.str()<<"()]; }\n";
     out << "\n";
   }
   else {
@@ -580,7 +593,7 @@ void HGen::emitTFClass(TF_class const &cls)
     // to ask an AST node for its name (e.g. in templatized code that
     // deals with arbitrary AST node types), so define the
     // 'kindName()' method anyway
-    out << "  char const *kindName() const { return \"" << cls.super->name << "\"; }\n";
+    out << "  char const *kindName"<<biggy.str()<<"() const { return \"" << cls.super->name << "\"; }\n";
   }
 
   // declare checked downcast functions
@@ -833,6 +846,13 @@ void HGen::emitCommonFuncs(rostring virt)
   out << "\n";
 }
 
+void HGen::emitKindLeafFuncs(ASTClass const &ctor, rostring virt, rostring level) {
+    // type tag
+    out << "  virtual Kind"<<level<<" kind"<<level<<"() const { return " << ctor.classKindName() << "; }\n";
+    out << "  enum { TYPE"<<level<<"_TAG = " << ctor.classKindName() << " };\n";
+    out << "\n";
+}
+
 // emit user-supplied declarations
 void HGen::emitUserDecls(ASTList<Annotation> const &decls)
 {
@@ -889,10 +909,11 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   out << "  virtual ~" << ctor.name << "();\n";
   out << "\n";
 
-  // type tag
-  out << "  virtual Kind kind() const { return " << ctor.classKindName() << "; }\n";
-  out << "  enum { TYPE_TAG = " << ctor.classKindName() << " };\n";
-  out << "\n";
+  std::stringstream biggy;
+  if (parent.level > 0) {
+      biggy << parent.level;
+  }
+  emitKindLeafFuncs(ctor, "virtual ", biggy.str().c_str());
 
   // common functions
   emitCommonFuncs("virtual ");
@@ -1120,8 +1141,12 @@ void CGen::emitTFClass(TF_class const &cls)
 
   // kind name map
   if (cls.hasChildren()) {
+    std::stringstream biggy;
+    if (cls.super->level > 0) {
+      biggy << cls.super->level;
+    }
     out << "char const * const " << cls.super->name << "::kindNames["
-        <<   cls.super->name << "::NUM_KINDS] = {\n";
+        <<   cls.super->name << "::NUM"<<biggy.str()<<"_KINDS] = {\n";
     FOREACH_ASTLIST(ASTClass, cls.ctors, ctor) {
       out << "  \"" << ctor.data()->name << "\",\n";
     }
@@ -3139,21 +3164,39 @@ void mergeItself(ASTSpecFile *base)
               }
           }
           if (s) {
+              std::ostream &o = trace("merge");
               const int cct = s->ctors.count();
-              std::cout << "base s class:" << s->super->name << "  freeform child:"<< c->super->name << " children:" << cct << std::endl;
+              o << "base s class:" << s->super->name << " children:" << cct  << "  freeform child:"<< c->super->name << std::endl;
 
               for (int j = 0; j<cct; j++) {
                   ASTClass *sc = s->ctors.nth(j);
                   if (sc->name.equals(c->super->name) && sc != c->super) {
-                      std::cout << "Merge base s class:" << s->super->name << "  into freeform child:"<< c->super->name << std::endl;
-                      sc->debugPrint(std::cout, 0);
-                      std::cout << std::endl;
+
+                      o << "Merge This:" << std::endl;
+                      sc->debugPrint(o, 0);
+                      o << std::endl;
+                      o << "Into freeform child:" << std::endl;
+                      c->super->debugPrint(o, 0);
                       mergeClass(c->super, sc);
                       sc->consumed = true;
 
                       c->super->parent = s;
+                      c->super->level = s->super->level + 1;
                       c->super->totArgs.appendAll(s->super->getArgs());
+                      o<<" "<<c->super->name<<".totArgs1+=(<-"<<s->super->name<<"):";
+                      c->super->totArgs.debugPrint(o);
                       c->super->totLastArgs.appendAll(s->super->getLastArgs());
+                      o<<" "<<c->super->name<<".totLastArgs1+=(<-"<<s->super->name<<"):";
+                      c->super->totLastArgs.debugPrint(o);
+                      c->super->totArgs.appendAll(c->super->args);
+                      o<<" "<<c->super->name<<".totArgs2+=(<-"<<c->super->name<<".args):";
+                      c->super->totArgs.debugPrint(o);
+                      c->super->totLastArgs.appendAll(c->super->lastArgs);
+                      o<<" "<<c->super->name<<".totLastArgs2+=(<-"<<c->super->name<<".lastArgs):";
+                      c->super->totLastArgs.debugPrint(o);
+                      o<<std::endl;
+                      o << "freeform result:" << std::endl;
+                      c->super->debugPrint(o, 0);
                       break;
                   }
               }

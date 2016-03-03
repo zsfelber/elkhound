@@ -9,6 +9,7 @@
 #include "xassert.h"     // xassert
 #include "typ.h"         // bool
 #include "trdelete.h"    // TRASHINGDELETE
+#include <iostream>      //
 
 // -------------------------- non-typesafe core -----------------------------
 // non-typesafe list node
@@ -135,6 +136,7 @@ public:
   // debugging
   void selfCheck() const;            // test this list; fail assertion if malformed
   void debugPrint() const;           // print list contents to stdout
+  void debugPrint(std::ostream& os) const;     // print list contents to stdout
   void checkHeapDataPtrs() const;    // fail assertion if any 'data' ptr isn't valid heap ptr
   void checkUniqueDataPtrs() const;  // fail assertion if any 'data' ptr matches any other in this list
 };

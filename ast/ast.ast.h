@@ -204,6 +204,7 @@ public:      // data
   ASTList <BaseClass > bases;
   ASTList <Annotation > decls;
 
+  int level = 0;
   bool consumed = 0;
   TF_class *parent = 0;
   ASTList <CtorArg > totArgs;

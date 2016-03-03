@@ -8,6 +8,7 @@
 
 #include <stdlib.h>     // rand()
 #include <stdio.h>      // printf()
+#include <ios>
 
 
 VoidList::VoidList(VoidList const &obj)
@@ -656,14 +657,18 @@ STATICDEF int VoidList::pointerAddressDiff(void *left, void *right, void*)
   return comparePointerAddresses(left, right);
 }
 
-
 void VoidList::debugPrint() const
 {
-  printf("{ ");
+    debugPrint(std::cout);
+}
+
+void VoidList::debugPrint(std::ostream& os) const
+{
+  os<<std::hex<< "{ ";
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {
-    printf("%p ", iter.data());
+    os<<" "<< iter.data();
   }
-  printf("}");
+  os<< "}"<<std::flush<<std::dec;
 }
 
 
