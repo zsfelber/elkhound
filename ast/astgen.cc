@@ -565,27 +565,27 @@ void HGen::emitTFClass(TF_class const &cls)
   out << "  " << virt << "~" << cls.super->name << "();\n";
   out << "\n";
 
-  std::stringstream biggy,biggy1;
+  std::stringstream str_level,str_level1;
   if (cls.super->level > 0) {
-      biggy << cls.super->level;
+      str_level << cls.super->classKindName();
       if (cls.super->level > 1) {
-        biggy1 << (cls.super->level-1);
+        str_level1 << cls.super->parent->super->classKindName();
       }
-      emitKindLeafFuncs(*cls.super, virt, biggy1.str().c_str());
+      emitKindLeafFuncs(*cls.super, virt, str_level1.str().c_str());
   }
 
   // declare the child kind selector
   if (cls.hasChildren()) {
-    out << "  enum Kind"<<biggy.str()<<" { ";
+    out << "  enum Kind"<<str_level.str()<<" { ";
     FOREACH_ASTLIST(ASTClass, cls.ctors, ctor) {
       out << ctor.data()->classKindName() << ", ";
     }
-    out << "NUM"<<biggy.str()<<"_KINDS };\n";
+    out << "NUM"<<str_level.str()<<"_KINDS };\n";
 
-    out << "  virtual Kind"<<biggy.str()<<" kind"<<biggy.str()<<"() const = 0;\n";
+    out << "  virtual Kind"<<str_level.str()<<" kind"<<str_level.str()<<"() const = 0;\n";
     out << "\n";
-    out << "  static char const * const kindNames"<<biggy.str()<<"[NUM"<<biggy.str()<<"_KINDS];\n";
-    out << "  char const *kindName"<<biggy.str()<<"() const { return kindNames"<<biggy.str()<<"[kind"<<biggy.str()<<"()]; }\n";
+    out << "  static char const * const kindNames"<<str_level.str()<<"[NUM"<<str_level.str()<<"_KINDS];\n";
+    out << "  char const *kindName"<<str_level.str()<<"() const { return kindNames"<<str_level.str()<<"[kind"<<str_level.str()<<"()]; }\n";
     out << "\n";
   }
   else {
@@ -593,7 +593,7 @@ void HGen::emitTFClass(TF_class const &cls)
     // to ask an AST node for its name (e.g. in templatized code that
     // deals with arbitrary AST node types), so define the
     // 'kindName()' method anyway
-    out << "  char const *kindName"<<biggy.str()<<"() const { return \"" << cls.super->name << "\"; }\n";
+    out << "  char const *kindName"<<str_level.str()<<"() const { return \"" << cls.super->name << "\"; }\n";
   }
 
   // declare checked downcast functions
@@ -909,11 +909,11 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   out << "  virtual ~" << ctor.name << "();\n";
   out << "\n";
 
-  std::stringstream biggy;
+  std::stringstream str_level;
   if (parent.level > 0) {
-      biggy << parent.level;
+      str_level << parent.classKindName();
   }
-  emitKindLeafFuncs(ctor, "virtual ", biggy.str().c_str());
+  emitKindLeafFuncs(ctor, "virtual ", str_level.str().c_str());
 
   // common functions
   emitCommonFuncs("virtual ");
@@ -1141,12 +1141,12 @@ void CGen::emitTFClass(TF_class const &cls)
 
   // kind name map
   if (cls.hasChildren()) {
-    std::stringstream biggy;
+    std::stringstream str_level;
     if (cls.super->level > 0) {
-      biggy << cls.super->level;
+      str_level << cls.super->classKindName();
     }
     out << "char const * const " << cls.super->name << "::kindNames["
-        <<   cls.super->name << "::NUM"<<biggy.str()<<"_KINDS] = {\n";
+        <<   cls.super->name << "::NUM"<<str_level.str()<<"_KINDS] = {\n";
     FOREACH_ASTLIST(ASTClass, cls.ctors, ctor) {
       out << "  \"" << ctor.data()->name << "\",\n";
     }
@@ -3168,38 +3168,46 @@ void mergeItself(ASTSpecFile *base)
               const int cct = s->ctors.count();
               o << "base s class:" << s->super->name << " children:" << cct  << "  freeform child:"<< c->super->name << std::endl;
 
+              ASTClass *mergedChild = 0;
               for (int j = 0; j<cct; j++) {
                   ASTClass *sc = s->ctors.nth(j);
                   if (sc->name.equals(c->super->name) && sc != c->super) {
-
-                      o << "Merge This:" << std::endl;
-                      sc->debugPrint(o, 0);
-                      o << std::endl;
-                      o << "Into freeform child:" << std::endl;
-                      c->super->debugPrint(o, 0);
-                      mergeClass(c->super, sc);
-                      sc->consumed = true;
-
-                      c->super->parent = s;
-                      c->super->level = s->super->level + 1;
-                      c->super->totArgs.appendAll(s->super->getArgs());
-                      o<<" "<<c->super->name<<".totArgs1+=(<-"<<s->super->name<<"):";
-                      c->super->totArgs.debugPrint(o);
-                      c->super->totLastArgs.appendAll(s->super->getLastArgs());
-                      o<<" "<<c->super->name<<".totLastArgs1+=(<-"<<s->super->name<<"):";
-                      c->super->totLastArgs.debugPrint(o);
-                      c->super->totArgs.appendAll(c->super->args);
-                      o<<" "<<c->super->name<<".totArgs2+=(<-"<<c->super->name<<".args):";
-                      c->super->totArgs.debugPrint(o);
-                      c->super->totLastArgs.appendAll(c->super->lastArgs);
-                      o<<" "<<c->super->name<<".totLastArgs2+=(<-"<<c->super->name<<".lastArgs):";
-                      c->super->totLastArgs.debugPrint(o);
-                      o<<std::endl;
-                      o << "freeform result:" << std::endl;
-                      c->super->debugPrint(o, 0);
-                      break;
+                      mergedChild = sc;
+                      o << "Merged child found:" << mergedChild->name << std::endl;
                   }
               }
+              if (!mergedChild) {
+                  mergedChild = new ASTClass(c->super->name, 0,0,0,0);
+                  s->ctors.append(mergedChild);
+                  o << "Merged child not found, created an empty one." << std::endl;
+              }
+
+              o << "Merge This:" << std::endl;
+              mergedChild->debugPrint(o, 0);
+              o << std::endl;
+              o << "Into freeform child:" << std::endl;
+              c->super->debugPrint(o, 0);
+              mergeClass(c->super, mergedChild);
+              mergedChild->consumed = true;
+
+              c->super->parent = s;
+              c->super->level = s->super->level + 1;
+              c->super->totArgs.appendAll(s->super->getArgs());
+              o<<" "<<c->super->name<<".totArgs1+=(<-"<<s->super->name<<"):";
+              c->super->totArgs.debugPrint(o);
+              c->super->totLastArgs.appendAll(s->super->getLastArgs());
+              o<<" "<<c->super->name<<".totLastArgs1+=(<-"<<s->super->name<<"):";
+              c->super->totLastArgs.debugPrint(o);
+              c->super->totArgs.appendAll(c->super->args);
+              o<<" "<<c->super->name<<".totArgs2+=(<-"<<c->super->name<<".args):";
+              c->super->totArgs.debugPrint(o);
+              c->super->totLastArgs.appendAll(c->super->lastArgs);
+              o<<" "<<c->super->name<<".totLastArgs2+=(<-"<<c->super->name<<".lastArgs):";
+              c->super->totLastArgs.debugPrint(o);
+              o<<std::endl;
+              o << "freeform result:" << std::endl;
+              c->super->debugPrint(o, 0);
+              break;
           }
       }
     }
