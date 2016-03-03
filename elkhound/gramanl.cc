@@ -1368,8 +1368,6 @@ void GrammarAnalysis::initializeAuxData()
   // at the moment, calling this twice leaks memory
   xassert(!initialized);
 
-  fillDefaultTypes();
-
   computeIndexedNonterms();
   computeIndexedTerms();
   resetFirstFollow();
@@ -1390,58 +1388,6 @@ void GrammarAnalysis::initializeAuxData()
 
   // mark the grammar as initialized
   initialized = true;
-}
-
-void GrammarAnalysis::fillDefaultTypes() {
-    // loop over all nonterminals
-    for (ObjListIter<Nonterminal> ntIter(nonterminals);
-         !ntIter.isDone(); ntIter.adv()) {
-
-        // convenient alias
-        Nonterminal *nonterm = constcast(ntIter.data());
-        fillDefaultType(nonterm);
-    }
-}
-
-void GrammarAnalysis::fillDefaultType(Nonterminal* nonterm) {
-
-    // also ignore circles:
-    if (!nonterm->deftravd && !nonterm->type && nonterm->defaults.isNotEmpty()) {
-
-        nonterm->deftravd = true;
-
-        bool err_concur = false;
-        std::string concur_types;
-        // loop over default type providing single productions
-        // (their single symbols were collected into 'defaults')
-        for (ObjListIter<Symbol> syIter(nonterm->defaults);
-             !syIter.isDone(); syIter.adv()) {
-            // convenient alias
-            Symbol *sym = constcast(syIter.data());
-            if (sym->isNonterminal()) {
-                Nonterminal &nt = sym->asNonterminal();
-                fillDefaultType(&nt);
-            }
-            if (nonterm->type && nonterm->type != sym->type) {
-                if (!err_concur) {
-                    concur_types = concur_types + nonterm->type + ", ";
-                }
-                err_concur = true;
-                concur_types = concur_types + "," + sym->type;
-            } else {
-                nonterm->type = sym->type;
-                nonterm->type_is_default = true;
-            }
-        }
-        if (err_concur) {
-            cout << "Nonterminal " << nonterm->name << " has default rules and an undefined (default) type, but determining default type is not possible, candidates:"
-                 << concur_types << endl;
-            errors++;
-        } else if (nonterm->defaults.count() && !nonterm->type) {
-            cout << "Nonterminal " << nonterm->name << " has default rules and an undefined (default) type, but after looking for default type it is still void." << endl;
-            errors++;
-        }
-    }
 }
 
 void GrammarAnalysis::computeWhatCanDeriveWhat()

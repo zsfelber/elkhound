@@ -21,6 +21,10 @@
 
 #define LIT_STR(s) LocString(SL_INIT, grammarStringTable.add(s))
 
+inline bool isVoid(char const * tp) {
+    return !tp || !strcmp("void", tp);
+}
+
 
 // ------------------------- Environment ------------------------
 Environment::Environment(Grammar &G)
@@ -590,6 +594,50 @@ void astParseDDM(Environment &env, Symbol *sym,
   }
 }
 
+void fillDefaultType(Nonterminal* nonterm) {
+
+    //cout << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << " defaults:" << nonterm->defaults.count() << endl;
+    // also ignore circles:
+    if (!nonterm->deftravd && isVoid(nonterm->type) && nonterm->defaults.isNotEmpty()) {
+
+        nonterm->deftravd = true;
+
+        bool err_concur = false;
+        std::string concur_types;
+        // loop over default type providing single productions
+        // (their single symbols were collected into 'defaults')
+        for (ObjListIter<Symbol> syIter(nonterm->defaults);
+             !syIter.isDone(); syIter.adv()) {
+            // convenient alias
+            Symbol *sym = constcast(syIter.data());
+            if (sym->isNonterminal()) {
+                Nonterminal &nt = sym->asNonterminal();
+                fillDefaultType(&nt);
+            }
+
+            //cout << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << endl;
+
+            if (!isVoid(nonterm->type) && nonterm->type != sym->type) {
+                if (!err_concur) {
+                    concur_types = concur_types + nonterm->type;
+                }
+                err_concur = true;
+                concur_types = concur_types + "," + sym->type;
+            } else if (!nonterm->type_is_default && !isVoid(sym->type)) {
+                nonterm->type = sym->type;
+                nonterm->type_is_default = true;
+            }
+        }
+        if (err_concur) {
+            cout << "Nonterminal " << nonterm->name << " has default rules and an undefined (default) type, but determining default type is not possible, candidates:"
+                 << concur_types << endl;
+            //errors++;
+        } else if (nonterm->defaults.count() && isVoid(nonterm->type)) {
+            cout << "Nonterminal " << nonterm->name << " has default rules and an undefined (default) type, but after looking for default type it is still void." << endl;
+            //errors++;
+        }
+    }
+}
 
 void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
 {
@@ -615,6 +663,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
        !ntIter.isDone(); ntIter.adv()) {
       // convenient alias
       Nonterminal *nonterm = constcast(ntIter.data());
+      fillDefaultType(nonterm);
 
       // default type
       if (forceDefaults || !nonterm->type) {
