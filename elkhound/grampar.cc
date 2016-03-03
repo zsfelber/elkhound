@@ -596,9 +596,9 @@ void astParseDDM(Environment &env, Symbol *sym,
 
 void fillDefaultType(Nonterminal* nonterm) {
 
-    //cout << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << " defaults:" << nonterm->defaults.count() << endl;
+    traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << " defaults:" << nonterm->defaults.count() << endl;
     // also ignore circles:
-    if (!nonterm->deftravd && isVoid(nonterm->type) && nonterm->defaults.isNotEmpty()) {
+    if (!nonterm->deftravd && isVoid(nonterm->type)) {
 
         nonterm->deftravd = true;
 
@@ -615,7 +615,7 @@ void fillDefaultType(Nonterminal* nonterm) {
                 fillDefaultType(&nt);
             }
 
-            //cout << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << endl;
+            traceProgress() << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << endl;
 
             if (!isVoid(nonterm->type) && nonterm->type != sym->type) {
                 if (!err_concur) {
@@ -629,11 +629,11 @@ void fillDefaultType(Nonterminal* nonterm) {
             }
         }
         if (err_concur) {
-            cout << "Nonterminal " << nonterm->name << " has default rules and an undefined (default) type, but determining default type is not possible, candidates:"
+            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is not possible, candidates:"
                  << concur_types << endl;
             //errors++;
-        } else if (nonterm->defaults.count() && isVoid(nonterm->type)) {
-            cout << "Nonterminal " << nonterm->name << " has default rules and an undefined (default) type, but after looking for default type it is still void." << endl;
+        } else if (isVoid(nonterm->type)) {
+            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but after looking for default type it is still void." << endl;
             //errors++;
         }
     }
@@ -678,7 +678,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
 
         // default action
         if (forceDefaults || prod->action.isNull()) {
-          prod->action.str = nonterm->type_is_default ? defaultTagAction : defaultAction;
+          prod->action.str = prod->defaultTagAction ? defaultTagAction : defaultAction;
         }
 
         if (forceDefaults) {
@@ -940,16 +940,19 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
     else {
       // add it to the production
       Production::RHSElt * r = prod->append(s, symTag);
-      if (tags == 0) {
-          first = r;
+
+      if (symTag.length()) {
+          found_tag_ne = true;
+      } else {
+          if (!first) first = r;
+          tags++;
       }
-      tags++;
-      found_tag_ne = found_tag_ne || symTag.length();
     }
   }
   // generating default rule
   if (tags==1 && !found_tag_ne) {
     first->tag.str = "tag";
+    prod->defaultTagAction = true;
     nonterm->appendDefault(first->sym);
   }
 

@@ -371,6 +371,7 @@ public:	    // data
 
   // user-supplied reduction action code
   LocString action;
+  bool defaultTagAction = 0;
 
 private:    // funcs
   void computeDerived();
