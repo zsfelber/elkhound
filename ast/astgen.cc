@@ -1536,15 +1536,15 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
     // clone each of the superclass ctor arguments
     int ct=0;
-    emitCloneCtorArgs(ct, super->args);
+    emitCloneCtorArgs(ct, super->getArgs());
 
     // and likewise for the subclass ctor arguments
     if (sub) {
-      emitCloneCtorArgs(ct, sub->args);
-      emitCloneCtorArgs(ct, sub->lastArgs);
+      emitCloneCtorArgs(ct, sub->getArgs());
+      emitCloneCtorArgs(ct, sub->getLastArgs());
     }
 
-    emitCloneCtorArgs(ct, super->lastArgs);
+    emitCloneCtorArgs(ct, super->getLastArgs());
 
     out << "\n"
         << "  );\n";
