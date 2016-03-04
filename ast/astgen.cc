@@ -94,10 +94,10 @@ bool wantGDB = false;
 // support for covariant return types in MSVC; see
 //   http://support.microsoft.com/kb/240862/EN-US/
 // The approach is to use
-//   virtual Super *nocvr_clone() const;
-//   Sub *clone() const { return static_cast<Sub*>(nocvr_clone()); }
+//   virtual Super *nocvr_clone(int deepness=0,int listDeepness=1) const;
+//   Sub *clone(int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(deepness,listDeepness)); }
 // in place of
-//   virtual Sub *clone() const;
+//   virtual Sub *clone(int deepness=0,int listDeepness=1) const;
 bool nocvr = false;
 
 
@@ -610,17 +610,17 @@ void HGen::emitTFClass(TF_class const &cls)
   if (cls.hasChildren()) {
     if (!nocvr) {
       // normal case
-      out << "  virtual " << cls.super->name << "* clone() const=0;\n";
+      out << "  virtual " << cls.super->name << "* clone(int deepness=0,int listDeepness=1) const=0;\n";
     }
     else {
       // msvc hack case
-      out << "  virtual " << cls.super->name << "* nocvr_clone() const=0;\n";
-      out << "  " << cls.super->name << "* clone() const { return nocvr_clone(); }\n";
+      out << "  virtual " << cls.super->name << "* nocvr_clone(int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  " << cls.super->name << "* clone(int deepness=0,int listDeepness=1) const { return nocvr_clone(deepness,listDeepness); }\n";
     }
   }
   else {
     // not pure or virtual
-    out << "  " << cls.super->name << " *clone() const;\n";
+    out << "  " << cls.super->name << " *clone(int deepness=0,int listDeepness=1) const;\n";
   }
   out << "\n";
 
@@ -921,13 +921,13 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   // clone function (take advantage of covariant return types)
   if (!nocvr) {
     // normal case
-    out << "  virtual " << ctor.name << " *clone() const;\n";
+    out << "  virtual " << ctor.name << " *clone(int deepness=0,int listDeepness=1) const;\n";
   }
   else {
     // msvc hack case
-    out << "  virtual " << parent.name << "* nocvr_clone() const;\n";
-    out << "  " << ctor.name << "* clone() const\n"
-        << "    { return static_cast<" << ctor.name << "*>(nocvr_clone()); }\n";
+    out << "  virtual " << parent.name << "* nocvr_clone(int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << ctor.name << "* clone(int deepness=0,int listDeepness=1) const\n"
+        << "    { return static_cast<" << ctor.name << "*>(nocvr_clone(deepness,listDeepness)); }\n";
   }
 
   out << "\n";
@@ -1145,7 +1145,7 @@ void CGen::emitTFClass(TF_class const &cls)
     if (cls.super->level > 0) {
       str_level << cls.super->classKindName();
     }
-    out << "char const * const " << cls.super->name << "::kindNames["
+    out << "char const * const " << cls.super->name << "::kindNames"<<str_level.str()<<"["
         <<   cls.super->name << "::NUM"<<str_level.str()<<"_KINDS] = {\n";
     FOREACH_ASTLIST(ASTClass, cls.ctors, ctor) {
       out << "  \"" << ctor.data()->name << "\",\n";
@@ -1221,13 +1221,16 @@ void CGen::emitTFClass(TF_class const &cls)
 
   // clone for childless superclasses
   if (!cls.hasChildren()) {
-    emitCloneCode(cls.super, NULL /*sub*/);
+     emitCloneCode(cls.super, NULL /*sub*/);
   }
 
 
   // constructors (class hierarchy children)
   FOREACH_ASTLIST(ASTClass, cls.ctors, ctoriter) {
     ASTClass const &ctor = *(ctoriter.data());
+    if (ctor.consumed) {
+        continue;
+    }
 
     // downcast function
     out << "DEFN_AST_DOWNCASTS(" << cls.super->name << ", "
@@ -1478,12 +1481,12 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
 
   if (isTreeListType(arg->type)) {
     // clone an ASTList of tree nodes
-    out << "cloneASTList(" << argName << ")";
+    out << "cloneASTList(" << argName << ", deepness, listDeepness)";
   }
   else if (isListType(arg->type)) {
     if (streq(extractListType(arg->type), "LocString")) {
       // these are owned, so clone deeply
-      out << "cloneASTList(" << argName << ")";
+      out << "cloneASTList(" << argName << ", deepness, listDeepness)";
     }
     else {
       // clone an ASTList of non-tree nodes
@@ -1492,15 +1495,16 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
   }
   else if (isFakeListType(arg->type)) {
     // clone a FakeList (of tree nodes, we assume..)
-    out << "cloneFakeList(" << argName << ")";
+    out << "(listDeepness>=0) ? ";
+    out << "cloneFakeList(" << argName << ", deepness, listDeepness) : " << argName ;
   }
   else if (isTreeNode(arg->type)) {
     // clone a tree node
-    out << argName << "? " << argName << "->clone() : NULL";
+    out << "((deepness>=0)&&"<<argName << ")? " << argName << "->clone(deepness, listDeepness) : " << argName ;
   }
   else if (streq(arg->type, "LocString")) {
     // clone a LocString; we store objects, but pass pointers
-    out << argName << ".clone()";
+    out << "(deepness>=0)? " << argName << ".clone() : constcast(&" << argName<<")" ;
   }
   else {
     // pass the non-tree node's value directly
@@ -1523,15 +1527,17 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
   if (!nocvr || !sub) {
     // normal case, or childless superclass case
-    out << name << " *" << name << "::clone() const\n";
+    out << name << " *" << name << "::clone(int deepness,int listDeepness) const\n";
   }
   else {
     // msvc hack case
-    out << super->name << " *" << name << "::nocvr_clone() const\n";
+    out << super->name << " *" << name << "::nocvr_clone(int deepness,int listDeepness) const\n";
   }
   out << "{\n";
 
+
   if (!emitCustomCode(myClass->decls, "substituteClone")) {
+    out << "  deepness--; listDeepness--;" << std::endl;
     out << "  " << name << " *ret = new " << name << "(";
 
     // clone each of the superclass ctor arguments

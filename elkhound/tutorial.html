@@ -1454,7 +1454,7 @@ rest of the <tt>nonterm</tt> info:
 
 <pre>
   nonterm(AExp*) AExp {
-    fun dup(a) { return a-&gt;clone(); }     // deep copy
+    fun dup(a) { return a-&gt;clone(INT_MAX,INT_MAX); }     // deep copy
     fun del(a) { delete a; }              // deep delete
     // ... rest of AExp ...
   }

@@ -29,6 +29,7 @@ public:    // funcs
 
   // sometimes useful for generating arguments to the above ctor
   LocString *clone() const;
+  LocString *clone(int deepness, int listDeepness) const;
 
   LocString& operator= (LocString const &obj)
     { loc = obj.loc; str = obj.str; return *this; }

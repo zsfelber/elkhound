@@ -50,6 +50,11 @@ LocString *LocString::clone() const
   return new LocString(*this);
 }
 
+LocString *LocString::clone(int deepness, int listDeepness) const
+{
+  return new LocString(*this);
+}
+
 
 bool LocString::equals(char const *other) const
 {

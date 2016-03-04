@@ -7,14 +7,6 @@
 
 #include "trace.h"     // trace
 
-template <typename P> inline P* constcast(P const * p) {
-    return const_cast<P*>(p);
-}
-
-template <typename P> inline P& constcast(P const & p) {
-    return const_cast<P&>(p);
-}
-
 // given a method called 'print', define an operator to use it
 #define OSTREAM_OPERATOR(MyClass)                                \
   friend ostream &operator << (ostream &os, MyClass const &ths)  \
