@@ -256,7 +256,7 @@ KeywordMap c_KeywordMap[] = {
 };
 
 
-Lexer2TokenType lookupKeyword(CCLang &lang, rostring keyword)
+Lexer2TokenType lookupKeyword(CLang &lang, rostring keyword)
 {
   // works?
   STATIC_ASSERT(TABLESIZE(l2TokTypes) == L2_NUM_TYPES);
@@ -599,7 +599,7 @@ void lexer2_lex(Lexer2 &dest, Lexer1 const &src, char const *fname)
 
 
 // --------------------- Lexer2 ------------------
-Lexer2::Lexer2(CCLang &L)
+Lexer2::Lexer2(CLang &L)
   : myIdTable(new StringTable()),
     lang(L),
     idTable(*myIdTable),      // hope this works..
@@ -610,7 +610,7 @@ Lexer2::Lexer2(CCLang &L)
   init();
 }
 
-Lexer2::Lexer2(CCLang &L, StringTable &extTable)
+Lexer2::Lexer2(CLang &L, StringTable &extTable)
   : myIdTable(NULL),
     lang(L),
     idTable(extTable),
@@ -717,7 +717,7 @@ Lexer2TokenType lexer2_gettoken()
     }
 
     // do second phase
-    lexer2 = new Lexer2(*new CCLang);
+    lexer2 = new Lexer2(*new CLang);
     lexer2_lex(*lexer2, *lexer1, "<stdin>");
 
     // prepare to return tokens

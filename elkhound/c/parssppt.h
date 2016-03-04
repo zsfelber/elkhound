@@ -32,8 +32,8 @@ public:
   ParseTables *tables;             // (serf)
 
 public:
-  ParseTreeAndTokens(CCLang &lang, SemanticValue &top);
-  ParseTreeAndTokens(CCLang &lang, SemanticValue &top, StringTable &extTable);
+  ParseTreeAndTokens(CLang &lang, SemanticValue &top);
+  ParseTreeAndTokens(CLang &lang, SemanticValue &top, StringTable &extTable);
   ~ParseTreeAndTokens();
 };
 

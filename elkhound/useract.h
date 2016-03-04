@@ -115,7 +115,7 @@ public:
   // used to give the user a chance to reinterpret the token, before it
   // is used for reduction lookahead comparisons; it returns the
   // reclassified token type, or 'oldTokenType' to leave it unchanged
-  typedef int (*ReclassifyFunc)(UserActions *ths, int oldTokenType, SemanticValue sval);
+  typedef int (*ReclassifyFunc)(UserActions *ths, int oldTokenType, SemanticValue sval, int* multipleTokens);
 
   // get the reclassifier
   virtual ReclassifyFunc getReclassifier()=0;
@@ -177,7 +177,7 @@ public:
     SOURCELOCARG( SourceLoc loc ) );
 
   static int reclassifyToken(UserActions *ths, 
-    int oldTokenType, SemanticValue sval);
+    int oldTokenType, SemanticValue sval, int*);
 };
 
 

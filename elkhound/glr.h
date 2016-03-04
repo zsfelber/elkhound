@@ -419,6 +419,7 @@ private:    // funcs
   void buildParserIndex();
   void printParseErrorMessage(StateId lastToDie);
   bool cleanupAfterParse(SemanticValue &treeTop);
+  int deterministicParseToken();
   bool nondeterministicParseToken();
   static bool innerGlrParse(GLR &glr, LexerInterface &lexer, SemanticValue &treeTop);
   SemanticValue doReductionAction(

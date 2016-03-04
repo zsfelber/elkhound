@@ -60,7 +60,7 @@ UserActions::ReclassifyFunc TrivialUserActions::getReclassifier()
 }
 
 STATICDEF int TrivialUserActions::reclassifyToken(UserActions *,
-  int oldTokenType, SemanticValue )
+  int oldTokenType, SemanticValue, int* )
   { return oldTokenType; }
 
 string TrivialUserActions::terminalDescription(int, SemanticValue)

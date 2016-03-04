@@ -220,6 +220,21 @@ enum {
 };
 
 
+//zsf : from innerGlr locals when moved all to deterministicParseToken()
+// this is *not* a reference to the 'glr' member because it
+// doesn't need to be shared with the rest of the algorithm (it's
+// only used in the Mini-LR core), and by having it directly on
+// the stack another indirection is saved
+//
+// new approach: let's try embedding this directly into the stack
+// (this saves 10% in end-to-end performance!)
+//GrowArray<SemanticValue> toPass(TYPICAL_MAX_RHSLEN);
+SemanticValue toPass[MAX_RHSLEN];
+
+// count # of times we use mini LR
+ACCOUNTING( int localDetShift=0; int localDetReduce=0; )
+
+
 // ------------- front ends to user code ---------------
 // given a symbol id (terminal or nonterminal), and its associated
 // semantic value, yield a description string
@@ -869,15 +884,15 @@ STATICDEF bool GLR
 {
   #ifndef NDEBUG
     bool doDumpGSS = tracingSys("dumpGSS");
+    // some debugging streams so the TRSPARSE etc. macros work
+    bool trParse       = glr.trParse;
+    ostream &trsParse  = glr.trsParse;
   #endif
 
   // pull a bunch of things out of 'glr' so they'll be accessible from
   // the stack frame instead of having to indirect into the 'glr' object
   UserActions *userAct = glr.userAct;
   ParseTables *tables = glr.tables;
-  #if USE_MINI_LR
-    ArrayStack<StackNode*> &topmostParsers = glr.topmostParsers;
-  #endif
 
   // lexer token function
   LexerInterface::NextTokenFunc nextToken = lexer.getTokenFunc();
@@ -903,33 +918,15 @@ STATICDEF bool GLR
     glr.addTopmostParser(first);
   }
 
-  #if USE_MINI_LR
-    // reduction action function
-    UserActions::ReductionActionFunc reductionAction =
-      userAct->getReductionAction();
-
-    // this is *not* a reference to the 'glr' member because it
-    // doesn't need to be shared with the rest of the algorithm (it's
-    // only used in the Mini-LR core), and by having it directly on
-    // the stack another indirection is saved
-    //
-    // new approach: let's try embedding this directly into the stack
-    // (this saves 10% in end-to-end performance!)
-    //GrowArray<SemanticValue> toPass(TYPICAL_MAX_RHSLEN);
-    SemanticValue toPass[MAX_RHSLEN];
-  #endif
-                   
-  // count # of times we use mini LR
-  ACCOUNTING( int localDetShift=0; int localDetReduce=0; )
-
   // for each input symbol
   #ifndef NDEBUG
     int tokenNumber = 0;
-
-    // some debugging streams so the TRSPARSE etc. macros work
-    bool trParse       = glr.trParse;
-    ostream &trsParse  = glr.trsParse;
   #endif
+
+  int multiTokensBuffer[256];
+  int savedTkns = 0;
+  int *savedTkn = multiTokensBuffer-1;
+
   for (;;) {
     // debugging
     TRSPARSE(
@@ -946,373 +943,70 @@ STATICDEF bool GLR
       }
     #endif
 
-    // get token type, possibly using token reclassification
-    #if USE_RECLASSIFY
-      lexer.type = reclassifyToken(userAct, lexer.type, lexer.sval);
-    #else     // this is what bccgr does
-      //if (lexer.type == 1 /*L2_NAME*/) {
-      //  lexer.type = 3 /*L2_VARIABLE_NAME*/;
-      //} 
-    #endif
+    if (savedTkns) {
+        lexer.type = *savedTkn;
+        savedTkns--;
+        savedTkn++;
+#ifndef NDEBUG
+        tokenNumber++;
+#endif
+    } else {
+        // get token type, possibly using token reclassification
+        #if USE_RECLASSIFY
+          lexer.type = reclassifyToken(userAct, lexer.type, lexer.sval, multiTokensBuffer);
+          // zsf : support reclassify as multiple-token-sequence (practical eg. '>>' ->  '>' '>'  with generic types)
+          if (lexer.type < 0) {
+              savedTkns = - lexer.type - 1;
+              savedTkn = multiTokensBuffer + 1;
+              lexer.type = *multiTokensBuffer;
+          }
+        #else     // this is what bccgr does
+          //if (lexer.type == 1 /*L2_NAME*/) {
+          //  lexer.type = 3 /*L2_VARIABLE_NAME*/;
+          //}
+        #endif
+    }
 
     // alternate debugging; print after reclassification
     TRSACTION("lookahead token: " << lexer.tokenDesc() <<
               " aka " << userAct->terminalDescription(lexer.type, lexer.sval));
 
-  #if USE_MINI_LR
-    // try to cache a few values in locals (this didn't help any..)
-    //ActionEntry const * const actionTable = this->tables->actionTable;
-    //int const numTerms = this->tables->numTerms;
 
-  tryDeterministic:
-    // --------------------- mini-LR parser -------------------------
-    // optimization: if there's only one active parser, and the
-    // action is unambiguous, and it doesn't involve traversing
-    // parts of the stack which are nondeterministic, then do the
-    // parse action the way an ordinary LR parser would
-    //
-    // please note:  The code in this section is cobbled together
-    // from various other GLR functions.  Everything here appears in
-    // at least one other place, so modifications will usually have
-    // to be done in both places.
-    //
-    // This code is the core of the parsing algorithm, so it's a bit
-    // hairy for its performance optimizations.
-    if (topmostParsers.length() == 1) {
-      StackNode *parser = topmostParsers[0];
-      xassertdb(parser->referenceCount==1);     // 'topmostParsers[0]' is referrer
-      
-      #if ENABLE_EEF_COMPRESSION
-        if (tables->actionEntryIsError(parser->state, lexer.type)) {
-          return false;    // parse error
+   #if USE_MINI_LR
+
+    switch (glr.deterministicParseToken()) {
+    case -1:
+        return false;
+    case 0:
+   #endif // USE_MINI_LR
+
+        // if we get here, we're dropping into the nondeterministic GLR
+        // algorithm in its full glory
+        if (!glr.nondeterministicParseToken()) {
+          return false;
         }
-      #endif
 
-      ActionEntry action =
-        tables->getActionEntry_noError(parser->state, lexer.type);
-
-      // I decode reductions before shifts because:
-      //   - they are 4x more common in my C grammar
-      //   - decoding a reduction is one less integer comparison
-      // however I can only measure ~1% performance difference
-      if (tables->isReduceAction(action)) {
-        ACCOUNTING( localDetReduce++; )
-        int prodIndex = tables->decodeReduce(action, parser->state);
-        ParseTables::ProdInfo const &prodInfo = tables->getProdInfo(prodIndex);
-        int rhsLen = prodInfo.rhsLen;
-        if (rhsLen <= parser->determinDepth) {
-          // can reduce unambiguously
-
-          // I need to hide this declaration when debugging is off and
-          // optimizer and -Werror are on, because it provokes a warning
-          TRSPARSE_DECL( int startStateId = parser->state; )
-          
-          // if we're tracing actions, I'm going to build a string 
-          // that describes all of the RHS symbols
-          ACTION( 
-            string rhsDescription("");
-            if (rhsLen == 0) {
-              // print something anyway
-              rhsDescription = " empty";
-            }
-          )
-
-          // record location of left edge; defaults to no location
-          // (used for epsilon rules)
-          // update: use location of lookahead token instead, for epsilons
-          SOURCELOC( SourceLoc leftEdge = lexer.loc; )
-
-          //toPass.ensureIndexDoubler(rhsLen-1);
-          xassertdb(rhsLen <= MAX_RHSLEN);
-
-          // we will manually string the stack nodes together onto
-          // the free list in 'stackNodePool', and 'prev' will point
-          // to the head of the current list; at the end, we'll
-          // install the final value of 'prev' back into
-          // 'stackNodePool' as the new head of the list
-          StackNode *prev = stackNodePool.private_getHead();
-
-          #if USE_UNROLLED_REDUCE
-            // What follows is unrollings of the loop below,
-            // labeled "loop for arbitrary rhsLen".  Read that loop
-            // before the unrollings here, since I omit the comments
-            // here.  In general, this program should be correct
-            // whether USE_UNROLLED_REDUCE is set or not.
-            //
-            // To produce the unrolled versions, simply copy all of the
-            // noncomment lines from the general loop, and replace the
-            // occurrence of 'i' with the value of one less than the 'case'
-            // label number.
-            switch ((unsigned)rhsLen) {    // gcc produces slightly better code if I cast to unsigned first
-              case 1: {
-                SiblingLink &sib = parser->firstSib;
-                toPass[0] = sib.sval;
-                ACTION( rhsDescription =
-                  stringc << " "
-                          << symbolDescription(parser->getSymbolC(), userAct, sib.sval)
-                          << rhsDescription; )
-                SOURCELOC(
-                  if (sib.validLoc()) {
-                    leftEdge = sib.loc;
-                  }
-                )
-                parser->nextInFreeList = prev;
-                prev = parser;
-                parser = sib.sib;
-                xassertdb(parser->referenceCount==1);
-                xassertdb(prev->referenceCount==1);
-                prev->decrementAllocCounter();
-                prev->firstSib.sib.setWithoutUpdateRefct(NULL);
-                xassertdb(parser->referenceCount==1);
-                // drop through into next case
-              }
-
-              case 0:
-                // nothing to do
-                goto afterGeneralLoop;
-            }
-          #endif // USE_UNROLLED_REDUCE
-
-          // ------ loop for arbitrary rhsLen ------
-          // pop off 'rhsLen' stack nodes, collecting as many semantic
-          // values into 'toPass'
-          // NOTE: this loop is the innermost inner loop of the entire
-          // parser engine -- even *one* branch inside the loop body
-          // costs about 30% end-to-end performance loss!
-          for (int i = rhsLen-1; i >= 0; i--) {
-            // grab 'parser's only sibling link
-            //SiblingLink *sib = parser->getUniqueLink();
-            SiblingLink &sib = parser->firstSib;
-
-            // Store its semantic value it into array that will be
-            // passed to user's routine.  Note that there is no need to
-            // dup() this value, since it will never be passed to
-            // another action routine (avoiding that overhead is
-            // another advantage to the LR mode).
-            toPass[i] = sib.sval;
-
-            // when tracing actions, continue building rhs desc
-            ACTION( rhsDescription = 
-              stringc << " "
-                      << symbolDescription(parser->getSymbolC(), userAct, sib.sval)
-                      << rhsDescription; )
-
-            // not necessary:
-            //   sib.sval = NULL;                  // link no longer owns the value
-            // this assignment isn't necessary because the usual treatment
-            // of NULL is to ignore it, and I manually ignore *any* value
-            // in the inline-expanded code below
-
-            // if it has a valid source location, grab it
-            SOURCELOC(
-              if (sib.validLoc()) {
-                leftEdge = sib.loc;
-              }
-            )
-
-            // pop 'parser' and move to the next one
-            parser->nextInFreeList = prev;
-            prev = parser;
-            parser = sib.sib;
-
-            // don't actually increment, since I now no longer actually decrement
-            // cancelled(1) effect: parser->incRefCt();    // so 'parser' survives deallocation of 'sib'
-            // cancelled(1) observable: xassertdb(parser->referenceCount==1);       // 'sib' and the fake one
-
-            // so now it's just the one
-            xassertdb(parser->referenceCount==1);     // just 'sib'
-
-            xassertdb(prev->referenceCount==1);
-            // expand "prev->decRefCt();"             // deinit 'prev', dealloc 'sib'
-            {
-              // I don't actually decrement the reference count on 'prev'
-              // because it will be reset to 0 anyway when it is inited
-              // the next time it is used
-              //prev->referenceCount = 0;
-
-              // adjust the global count of stack nodes
-              prev->decrementAllocCounter();
-
-              // I previously had a test for "prev->firstSib.sval != NULL",
-              // but that can't happen because I set it to NULL above!
-              // (as the alias sib.sval)
-              // update: now I don't even set it to NULL because the code here
-              // has been changed to ignore *any* value
-              //if (prev->firstSib.sval != NULL) {
-              //  cout << "I GOT THE ANALYSIS WRONG!\n";
-              //}
-
-              // cancelled(1) effect: parser->decRefCt();
-              prev->firstSib.sib.setWithoutUpdateRefct(NULL);
-
-              // possible optimization: I could eliminiate
-              // "prev->firstSib.sib=NULL" if I consistently modified all
-              // creation of stack nodes to treat sib as a dead value:
-              // right after creation I would make sure the new
-              // sibling value *overwrites* sib, and no attempt is
-              // made to decrement a refct on the dead value
-
-              // this is obviated by the manual construction of the
-              // free list links (nestInFreeList) above
-              //stackNodePool.deallocNoDeinit(prev);
-            }
-
-            xassertdb(parser->referenceCount==1);     // fake refct only
-          } // end of general rhsLen loop
-
-        #if USE_UNROLLED_REDUCE    // suppress the warning when not using it..
-        afterGeneralLoop:
-        #endif
-          // having now manually strung the deallocated stack nodes together
-          // on the free list, I need to make the node pool's head point at them
-          stackNodePool.private_setHead(prev);
-
-          // call the user's action function (TREEBUILD)
-          SemanticValue sval =
-          #if USE_ACTIONS
-            reductionAction(userAct, prodIndex, toPass /*.getArray()*/
-                            SOURCELOCARG( leftEdge ) );
-          #else
-            NULL;
-          #endif
-
-          // now, push a new state; essentially, shift prodInfo.lhsIndex.
-          // do "glrShiftNonterminal(parser, prodInfo.lhsIndex, sval, leftEdge);",
-          // except avoid interacting with the worklists
-
-          // this is like a shift -- we need to know where to go; the
-          // 'goto' table has this information
-          StateId newState = tables->decodeGoto(
-            tables->getGotoEntry(parser->state, prodInfo.lhsIndex),
-            prodInfo.lhsIndex);
-
-          // debugging
-          TRSPARSE("state " << startStateId <<
-                   ", (unambig) reduce by " << prodIndex <<
-                   " (len=" << rhsLen <<
-                   "), back to " << parser->state <<
-                   " then out to " << newState);
-
-          // 'parser' has refct 1, reflecting the local variable only
-          xassertdb(parser->referenceCount==1);
-
-          // push new state
-          StackNode *newNode;
-          MAKE_STACK_NODE(newNode, newState, &glr, stackNodePool)
-
-          newNode->addFirstSiblingLink_noRefCt(
-            parser, sval  SOURCELOCARG( leftEdge ) );
-          // cancelled(3) effect: parser->incRefCt();
-
-          // cancelled(3) effect: xassertdb(parser->referenceCount==2);
-          // expand:
-          //   "parser->decRefCt();"                 // local variable "parser" about to go out of scope
-          {
-            // cancelled(3) effect: parser->referenceCount = 1;
-          }
-          xassertdb(parser->referenceCount==1);
-
-          // replace whatever is in 'topmostParsers[0]' with 'newNode'
-          topmostParsers[0] = newNode;
-          newNode->incRefCt();
-          xassertdb(newNode->referenceCount == 1);   // topmostParsers[0] is referrer
-
-          // emit some trace output
-          TRSACTION("  " << 
-                    symbolDescription(newNode->getSymbolC(), userAct, sval) <<
-                    " ->" << rhsDescription);
-
-          #if USE_KEEP
-            // see if the user wants to keep this reduction
-            if (!userAct->keepNontermValue(prodInfo.lhsIndex, sval)) {
-              ACTION( string lhsDesc =
-                        userAct->nonterminalDescription(prodInfo.lhsIndex, sval); )
-              TRSACTION("    CANCELLED " << lhsDesc);
-              glr.printParseErrorMessage(newNode->state);
-              ACCOUNTING(
-                glr.detShift += localDetShift;
-                glr.detReduce += localDetReduce;
-              )
-              
-              // TODO: I'm pretty sure I'm not properly cleaning
-              // up all of my state here..
-              return false;
-            }
-          #endif // USE_KEEP
-
-          // after all this, we haven't shifted any tokens, so the token
-          // context remains; let's go back and try to keep acting
-          // determinstically (if at some point we can't be deterministic,
-          // then we drop into full GLR, which always ends by shifting)
-          goto tryDeterministic;
-        }
-      }
-
-      else if (tables->isShiftAction(action)) {
-        ACCOUNTING( localDetShift++; )
-
-        // can shift unambiguously
-        StateId newState = tables->decodeShift(action, lexer.type);
-
-        TRSPARSE("state " << parser->state <<
-                 ", (unambig) shift token " << lexer.tokenDesc() <<
-                 ", to state " << newState);
-
-        NODE_COLUMN( glr.globalNodeColumn++; )
-
-        StackNode *rightSibling;
-        MAKE_STACK_NODE(rightSibling, newState, &glr, stackNodePool);
-
-        rightSibling->addFirstSiblingLink_noRefCt(
-          parser, lexer.sval  SOURCELOCARG( lexer.loc ) );
-        // cancelled(2) effect: parser->incRefCt();
-
-        // replace 'parser' with 'rightSibling' in the topmostParsers list
-        topmostParsers[0] = rightSibling;
-        // cancelled(2) effect: xassertdb(parser->referenceCount==2);         // rightSibling & topmostParsers[0]
-        // expand "parser->decRefCt();"
-        {
-          // cancelled(2) effect: parser->referenceCount = 1;
-        }
-        xassertdb(parser->referenceCount==1);         // rightSibling
-
-        xassertdb(rightSibling->referenceCount==0);   // just created
-        // expand "rightSibling->incRefCt();"
-        {
-          rightSibling->referenceCount = 1;
-        }
-        xassertdb(rightSibling->referenceCount==1);   // topmostParsers[0] refers to it
-
-        // get next token
-        goto getNextToken;
-      }
-
-      else {
-        // error or ambig; not deterministic
-      }
+   #if USE_MINI_LR
+    default:
+        break;
     }
-    // ------------------ end of mini-LR parser ------------------
-  #endif // USE_MINI_LR
+   #endif // USE_MINI_LR
 
-    // if we get here, we're dropping into the nondeterministic GLR
-    // algorithm in its full glory
-    if (!glr.nondeterministicParseToken()) {
-      return false;
-    }
-
-  #if USE_MINI_LR    // silence a warning when it's not enabled
-  getNextToken:
-  #endif
+//  #if USE_MINI_LR    // silence a warning when it's not enabled
+//  getNextToken:
+//  #endif
     // was that the last token?
     if (lexer.type == 0) {
       break;
     }
 
-    // get the next token
-    nextToken(&lexer);
-    #ifndef NDEBUG
-      tokenNumber++;
-    #endif
+    if (!savedTkns) {
+        // get the next token
+        nextToken(&lexer);
+        #ifndef NDEBUG
+          tokenNumber++;
+        #endif
+    }
   }
 
   // push stats into main object
@@ -1336,6 +1030,370 @@ string stackTraceString(StackNode *parser)
   return string("need to think about this some more..");
 }
 
+// zsf : moved here
+int GLR::deterministicParseToken() {
+//zsf : from innerGlr locals when moved all here
+// for each input symbol
+#if USE_MINI_LR
+  // reduction action function
+  UserActions::ReductionActionFunc reductionAction =
+    userAct->getReductionAction();
+
+#endif
+
+  ObjectPool<StackNode> &stackNodePool = *this->stackNodePool;
+  LexerInterface &lexer = *lexerPtr;
+
+  // try to cache a few values in locals (this didn't help any..)
+  //ActionEntry const * const actionTable = this->tables->actionTable;
+  //int const numTerms = this->tables->numTerms;
+
+tryDeterministic:
+  // --------------------- mini-LR parser -------------------------
+  // optimization: if there's only one active parser, and the
+  // action is unambiguous, and it doesn't involve traversing
+  // parts of the stack which are nondeterministic, then do the
+  // parse action the way an ordinary LR parser would
+  //
+  // please note:  The code in this section is cobbled together
+  // from various other GLR functions.  Everything here appears in
+  // at least one other place, so modifications will usually have
+  // to be done in both places.
+  //
+  // This code is the core of the parsing algorithm, so it's a bit
+  // hairy for its performance optimizations.
+  if (topmostParsers.length() == 1) {
+    StackNode *parser = topmostParsers[0];
+    xassertdb(parser->referenceCount==1);     // 'topmostParsers[0]' is referrer
+
+    #if ENABLE_EEF_COMPRESSION
+      if (tables->actionEntryIsError(parser->state, lexer.type)) {
+        // zsf -> original return -> system exit
+        return -1;    // parse error
+      }
+    #endif
+
+    ActionEntry action =
+      tables->getActionEntry_noError(parser->state, lexer.type);
+
+    // I decode reductions before shifts because:
+    //   - they are 4x more common in my C grammar
+    //   - decoding a reduction is one less integer comparison
+    // however I can only measure ~1% performance difference
+    if (tables->isReduceAction(action)) {
+      ACCOUNTING( localDetReduce++; )
+      int prodIndex = tables->decodeReduce(action, parser->state);
+      ParseTables::ProdInfo const &prodInfo = tables->getProdInfo(prodIndex);
+      int rhsLen = prodInfo.rhsLen;
+      if (rhsLen <= parser->determinDepth) {
+        // can reduce unambiguously
+
+        // I need to hide this declaration when debugging is off and
+        // optimizer and -Werror are on, because it provokes a warning
+        TRSPARSE_DECL( int startStateId = parser->state; )
+
+        // if we're tracing actions, I'm going to build a string
+        // that describes all of the RHS symbols
+        ACTION(
+          string rhsDescription("");
+          if (rhsLen == 0) {
+            // print something anyway
+            rhsDescription = " empty";
+          }
+        )
+
+        // record location of left edge; defaults to no location
+        // (used for epsilon rules)
+        // update: use location of lookahead token instead, for epsilons
+        SOURCELOC( SourceLoc leftEdge = lexer.loc; )
+
+        //::toPass.ensureIndexDoubler(rhsLen-1);
+        xassertdb(rhsLen <= MAX_RHSLEN);
+
+        // we will manually string the stack nodes together onto
+        // the free list in 'stackNodePool', and 'prev' will point
+        // to the head of the current list; at the end, we'll
+        // install the final value of 'prev' back into
+        // 'stackNodePool' as the new head of the list
+        StackNode *prev = stackNodePool.private_getHead();
+
+        #if USE_UNROLLED_REDUCE
+          // What follows is unrollings of the loop below,
+          // labeled "loop for arbitrary rhsLen".  Read that loop
+          // before the unrollings here, since I omit the comments
+          // here.  In general, this program should be correct
+          // whether USE_UNROLLED_REDUCE is set or not.
+          //
+          // To produce the unrolled versions, simply copy all of the
+          // noncomment lines from the general loop, and replace the
+          // occurrence of 'i' with the value of one less than the 'case'
+          // label number.
+          switch ((unsigned)rhsLen) {    // gcc produces slightly better code if I cast to unsigned first
+            case 1: {
+              SiblingLink &sib = parser->firstSib;
+              ::toPass[0] = sib.sval;
+              ACTION( rhsDescription =
+                stringc << " "
+                        << symbolDescription(parser->getSymbolC(), userAct, sib.sval)
+                        << rhsDescription; )
+              SOURCELOC(
+                if (sib.validLoc()) {
+                  leftEdge = sib.loc;
+                }
+              )
+              parser->nextInFreeList = prev;
+              prev = parser;
+              parser = sib.sib;
+              xassertdb(parser->referenceCount==1);
+              xassertdb(prev->referenceCount==1);
+              prev->decrementAllocCounter();
+              prev->firstSib.sib.setWithoutUpdateRefct(NULL);
+              xassertdb(parser->referenceCount==1);
+              // drop through into next case
+            }
+
+            case 0:
+              // nothing to do
+              goto afterGeneralLoop;
+          }
+        #endif // USE_UNROLLED_REDUCE
+
+        // ------ loop for arbitrary rhsLen ------
+        // pop off 'rhsLen' stack nodes, collecting as many semantic
+        // values into 'toPass'
+        // NOTE: this loop is the innermost inner loop of the entire
+        // parser engine -- even *one* branch inside the loop body
+        // costs about 30% end-to-end performance loss!
+        for (int i = rhsLen-1; i >= 0; i--) {
+          // grab 'parser's only sibling link
+          //SiblingLink *sib = parser->getUniqueLink();
+          SiblingLink &sib = parser->firstSib;
+
+          // Store its semantic value it into array that will be
+          // passed to user's routine.  Note that there is no need to
+          // dup() this value, since it will never be passed to
+          // another action routine (avoiding that overhead is
+          // another advantage to the LR mode).
+          ::toPass[i] = sib.sval;
+
+          // when tracing actions, continue building rhs desc
+          ACTION( rhsDescription =
+            stringc << " "
+                    << symbolDescription(parser->getSymbolC(), userAct, sib.sval)
+                    << rhsDescription; )
+
+          // not necessary:
+          //   sib.sval = NULL;                  // link no longer owns the value
+          // this assignment isn't necessary because the usual treatment
+          // of NULL is to ignore it, and I manually ignore *any* value
+          // in the inline-expanded code below
+
+          // if it has a valid source location, grab it
+          SOURCELOC(
+            if (sib.validLoc()) {
+              leftEdge = sib.loc;
+            }
+          )
+
+          // pop 'parser' and move to the next one
+          parser->nextInFreeList = prev;
+          prev = parser;
+          parser = sib.sib;
+
+          // don't actually increment, since I now no longer actually decrement
+          // cancelled(1) effect: parser->incRefCt();    // so 'parser' survives deallocation of 'sib'
+          // cancelled(1) observable: xassertdb(parser->referenceCount==1);       // 'sib' and the fake one
+
+          // so now it's just the one
+          xassertdb(parser->referenceCount==1);     // just 'sib'
+
+          xassertdb(prev->referenceCount==1);
+          // expand "prev->decRefCt();"             // deinit 'prev', dealloc 'sib'
+          {
+            // I don't actually decrement the reference count on 'prev'
+            // because it will be reset to 0 anyway when it is inited
+            // the next time it is used
+            //prev->referenceCount = 0;
+
+            // adjust the global count of stack nodes
+            prev->decrementAllocCounter();
+
+            // I previously had a test for "prev->firstSib.sval != NULL",
+            // but that can't happen because I set it to NULL above!
+            // (as the alias sib.sval)
+            // update: now I don't even set it to NULL because the code here
+            // has been changed to ignore *any* value
+            //if (prev->firstSib.sval != NULL) {
+            //  cout << "I GOT THE ANALYSIS WRONG!\n";
+            //}
+
+            // cancelled(1) effect: parser->decRefCt();
+            prev->firstSib.sib.setWithoutUpdateRefct(NULL);
+
+            // possible optimization: I could eliminiate
+            // "prev->firstSib.sib=NULL" if I consistently modified all
+            // creation of stack nodes to treat sib as a dead value:
+            // right after creation I would make sure the new
+            // sibling value *overwrites* sib, and no attempt is
+            // made to decrement a refct on the dead value
+
+            // this is obviated by the manual construction of the
+            // free list links (nestInFreeList) above
+            //stackNodePool.deallocNoDeinit(prev);
+          }
+
+          xassertdb(parser->referenceCount==1);     // fake refct only
+        } // end of general rhsLen loop
+
+      #if USE_UNROLLED_REDUCE    // suppress the warning when not using it..
+      afterGeneralLoop:
+      #endif
+        // having now manually strung the deallocated stack nodes together
+        // on the free list, I need to make the node pool's head point at them
+        stackNodePool.private_setHead(prev);
+
+        // call the user's action function (TREEBUILD)
+        SemanticValue sval =
+        #if USE_ACTIONS
+          reductionAction(userAct, prodIndex, ::toPass /*.getArray()*/
+                          SOURCELOCARG( leftEdge ) );
+        #else
+          NULL;
+        #endif
+
+        // now, push a new state; essentially, shift prodInfo.lhsIndex.
+        // do "glrShiftNonterminal(parser, prodInfo.lhsIndex, sval, leftEdge);",
+        // except avoid interacting with the worklists
+
+        // this is like a shift -- we need to know where to go; the
+        // 'goto' table has this information
+        StateId newState = tables->decodeGoto(
+          tables->getGotoEntry(parser->state, prodInfo.lhsIndex),
+          prodInfo.lhsIndex);
+
+        // debugging
+        TRSPARSE("state " << startStateId <<
+                 ", (unambig) reduce by " << prodIndex <<
+                 " (len=" << rhsLen <<
+                 "), back to " << parser->state <<
+                 " then out to " << newState);
+
+        // 'parser' has refct 1, reflecting the local variable only
+        xassertdb(parser->referenceCount==1);
+
+        // push new state
+        StackNode *newNode;
+        MAKE_STACK_NODE(newNode, newState, this, stackNodePool)
+
+        newNode->addFirstSiblingLink_noRefCt(
+          parser, sval  SOURCELOCARG( leftEdge ) );
+        // cancelled(3) effect: parser->incRefCt();
+
+        // cancelled(3) effect: xassertdb(parser->referenceCount==2);
+        // expand:
+        //   "parser->decRefCt();"                 // local variable "parser" about to go out of scope
+        {
+          // cancelled(3) effect: parser->referenceCount = 1;
+        }
+        xassertdb(parser->referenceCount==1);
+
+        // replace whatever is in 'topmostParsers[0]' with 'newNode'
+        topmostParsers[0] = newNode;
+        newNode->incRefCt();
+        xassertdb(newNode->referenceCount == 1);   // topmostParsers[0] is referrer
+
+        // emit some trace output
+        TRSACTION("  " <<
+                  symbolDescription(newNode->getSymbolC(), userAct, sval) <<
+                  " ->" << rhsDescription);
+
+        #if USE_KEEP
+          // see if the user wants to keep this reduction
+          if (!userAct->keepNontermValue(prodInfo.lhsIndex, sval)) {
+            ACTION( string lhsDesc =
+                      userAct->nonterminalDescription(prodInfo.lhsIndex, sval); )
+            TRSACTION("    CANCELLED " << lhsDesc);
+            this->printParseErrorMessage(newNode->state);
+            ACCOUNTING(
+              this->detShift += localDetShift;
+              this->detReduce += localDetReduce;
+            )
+
+            // TODO: I'm pretty sure I'm not properly cleaning
+            // up all of my state here..
+            // zsf -> original return -> system exit
+            return -1;
+          }
+        #endif // USE_KEEP
+
+        // after all this, we haven't shifted any tokens, so the token
+        // context remains; let's go back and try to keep acting
+        // determinstically (if at some point we can't be deterministic,
+        // then we drop into full GLR, which always ends by shifting)
+        goto tryDeterministic;
+
+        // Fall to nondeterministic case:
+        return 0;
+      }
+      else {
+        // Fall to nondeterministic case:
+        return 0;
+      }
+    }
+
+    else if (tables->isShiftAction(action)) {
+      ACCOUNTING( localDetShift++; )
+
+      // can shift unambiguously
+      StateId newState = tables->decodeShift(action, lexer.type);
+
+      TRSPARSE("state " << parser->state <<
+               ", (unambig) shift token " << lexer.tokenDesc() <<
+               ", to state " << newState);
+
+      NODE_COLUMN( this->globalNodeColumn++; )
+
+      StackNode *rightSibling;
+      MAKE_STACK_NODE(rightSibling, newState, this, stackNodePool);
+
+      rightSibling->addFirstSiblingLink_noRefCt(
+        parser, lexer.sval  SOURCELOCARG( lexer.loc ) );
+      // cancelled(2) effect: parser->incRefCt();
+
+      // replace 'parser' with 'rightSibling' in the topmostParsers list
+      topmostParsers[0] = rightSibling;
+      // cancelled(2) effect: xassertdb(parser->referenceCount==2);         // rightSibling & topmostParsers[0]
+      // expand "parser->decRefCt();"
+      {
+        // cancelled(2) effect: parser->referenceCount = 1;
+      }
+      xassertdb(parser->referenceCount==1);         // rightSibling
+
+      xassertdb(rightSibling->referenceCount==0);   // just created
+      // expand "rightSibling->incRefCt();"
+      {
+        rightSibling->referenceCount = 1;
+      }
+      xassertdb(rightSibling->referenceCount==1);   // topmostParsers[0] refers to it
+
+      // get next token
+      return 1;
+    }
+
+    else {
+      // no reduce, no shift, meaning
+      // error or ambig;
+      // Fall to nondeterministic case:
+      return 0;
+    }
+  } else {
+     // topmostParsers.length() > 1
+     // Fall to nondeterministic case:
+     return 0;
+  }
+  // ------------------ end of mini-LR parser ------------------
+
+}
 
 // return false if caller should return false; pulled out of
 // glrParse to reduce register pressure (but didn't help as

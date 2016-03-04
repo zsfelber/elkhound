@@ -14,7 +14,7 @@
 #include <string.h>     // strcmp
 
 // global list of L2 tokens for yielding to Bison
-CCLang cclang;
+CLang cclang;
 Lexer2 lexer2(cclang);
 Lexer2Token const *lastTokenYielded = NULL;
 

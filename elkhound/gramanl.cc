@@ -4248,7 +4248,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       << "  // declare the classifier function\n"
       << "  static int reclassifyToken(\n"
       << "    " << g.actionClassName << " *ths,\n"
-      << "    int oldTokenType, SemanticValue sval);\n"
+      << "    int oldTokenType, SemanticValue sval, int* multipleTokens);\n"
       << "\n"
       ;
 
@@ -4676,7 +4676,7 @@ void emitDupDelMerge(GrammarAnalysis const &g, EmitCode &out, EmitCode &dcl)
 
   // emit classify-term
   emitSwitchCode(g, out,
-    "/*static*/ int $acn::reclassifyToken($acn *ths, int oldTokenType, SemanticValue sval)",
+    "/*static*/ int $acn::reclassifyToken($acn *ths, int oldTokenType, SemanticValue sval, int* multipleTokens)",
     "oldTokenType",
     (ObjList<Symbol> const&)g.terminals,
     4 /*classifyCode*/,
