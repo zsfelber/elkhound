@@ -1336,6 +1336,7 @@ tryDeterministic:
         return 0;
       }
       else {
+        // prodInfo.rhsLen > parser->determinDepth
         // Fall to nondeterministic case:
         return 0;
       }
