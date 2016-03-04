@@ -4680,7 +4680,7 @@ void emitDupDelMerge(GrammarAnalysis const &g, EmitCode &out, EmitCode &dcl)
     "oldTokenType",
     (ObjList<Symbol> const&)g.terminals,
     4 /*classifyCode*/,
-    "      return ths->classify_$symName(($symType)sval);\n",
+    "      return ths->classify_$symName(oldTokenType, ($symType)sval, multipleTokens);\n",
     NULL);
     
   // and the virtual method which returns the classifier
@@ -4743,7 +4743,7 @@ void emitDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
   if (term && term->classifyCode) {
     emitFuncDecl(g, out, dcl, "int",
       stringc << "classify_" << sym.name
-              << "(" << symType << " " << term->classifyParam << ") ");
+              << "(int oldTokenType, " << symType << " " << term->classifyParam << ", int* multipleTokens) ");
     emitUserCode(out, term->classifyCode);
   }
 }
