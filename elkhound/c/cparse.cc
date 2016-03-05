@@ -7,7 +7,7 @@
 #include "cc_lang.h"     // CCLang
 #include "trace.h"       // trace
 
-ParseEnv::ParseEnv(StringTable &table, CLang &L)
+ParseEnv::ParseEnv(StringTable &table, CCLang &L)
   : str(table), 
     intType(table.add("int")),
     strRefAttr(table.add("attr")),

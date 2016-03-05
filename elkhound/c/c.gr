@@ -28,7 +28,7 @@ verbatim [
 
 context_class CParse : public UserActions, public ParseEnv {
 public:
-  CParse(StringTable &table, CLang &lang)
+  CParse(StringTable &table, CCLang &lang)
     : ParseEnv(table, lang) {}
 
   // when this is the last element in a parameter list, the function
