@@ -4,7 +4,7 @@
 #ifndef CCLANG_H
 #define CCLANG_H
 
-class CLang {
+class CCLang {
 public:
   // when this is true, and the parser sees "struct Foo { ... }",
   // it will pretend it also saw "typedef struct Foo Foo;" -- i.e.,
@@ -16,7 +16,7 @@ public:
   bool recognizeCppKeywords;
 
 public:
-  CLang() { ANSI_C(); }
+  CCLang() { ANSI_C(); }
 
   void ANSI_C();            // settings for ANSI C
   void ANSI_Cplusplus();    // settings for ANSI C++

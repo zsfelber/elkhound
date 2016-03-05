@@ -10,14 +10,14 @@
 
 
 // ---------------------- ParseTree --------------------
-ParseTreeAndTokens::ParseTreeAndTokens(CLang &L, SemanticValue &top)
+ParseTreeAndTokens::ParseTreeAndTokens(CCLang &L, SemanticValue &top)
   : treeTop(top),
     lexer2(L),
     userAct(NULL),
     tables(NULL)
 {}
 
-ParseTreeAndTokens::ParseTreeAndTokens(CLang &L, SemanticValue &top,
+ParseTreeAndTokens::ParseTreeAndTokens(CCLang &L, SemanticValue &top,
                                        StringTable &extTable)
   : treeTop(top),
     lexer2(L, extTable),

@@ -9,7 +9,7 @@
 #include "objlist.h"       // ObjList
 #include "c.ast.gen.h"     // C AST, for action function signatures
 
-class CLang;
+class CCLang;
 
 // parsing action state
 class ParseEnv {
@@ -18,10 +18,10 @@ public:
   StringRef intType;              // "int"
   StringRef strRefAttr;           // "attr"
   ObjList<StringHash> types;      // stack of hashes which identify names of types
-  CLang &lang;                   // language options
+  CCLang &lang;                   // language options
 
 public:
-  ParseEnv(StringTable &table, CLang &lang);
+  ParseEnv(StringTable &table, CCLang &lang);
   ~ParseEnv();
 
   void enterScope();

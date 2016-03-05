@@ -170,7 +170,7 @@ ScopedEnv::~ScopedEnv()
 
 
 // --------------------------- Env ----------------------------
-Env::Env(StringTable &table, CLang &alang)
+Env::Env(StringTable &table, CCLang &alang)
   : scopes(),
     typedefs(),
     compounds(),

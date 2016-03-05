@@ -17,7 +17,7 @@ using std::istream;
 using std::cout;
 using std::endl;
 
-class CLang;             // cc_lang.h
+class CCLang;             // cc_lang.h
 
 // this enumeration defines the terminal symbols that the parser
 // deals with
@@ -248,7 +248,7 @@ private:
 
 public:
   // language options
-  CLang &lang;
+  CCLang &lang;
 
   // storage of all the identifiers we encounter
   StringTable &idTable;
@@ -270,8 +270,8 @@ private:
   void init();
 
 public:
-  Lexer2(CLang &lang);                                // table is created locally
-  Lexer2(CLang &lang, StringTable &externalTable);    // table given externally
+  Lexer2(CCLang &lang);                                // table is created locally
+  Lexer2(CCLang &lang, StringTable &externalTable);    // table given externally
   ~Lexer2();
 
   SourceLoc startLoc() const;

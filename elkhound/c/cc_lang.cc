@@ -6,13 +6,13 @@
 
 #include "cc_lang.h"     // this module
 
-void CLang::ANSI_C()
+void CCLang::ANSI_C()
 {
   tagsAreTypes = false;
   recognizeCppKeywords = false;
 }
 
-void CLang::ANSI_Cplusplus()
+void CCLang::ANSI_Cplusplus()
 {
   tagsAreTypes = true;
   recognizeCppKeywords = true;

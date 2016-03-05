@@ -17,7 +17,7 @@
 #include "array.h"        // ArrayStack
 
 class StringTable;        // strtable.h
-class CLang;             // cc_lang.h
+class CCLang;             // cc_lang.h
 
 
 // thrown by some error functions
@@ -163,7 +163,7 @@ public:     // data
   StringTable &strTable;
 
   // language options
-  CLang &lang;
+  CCLang &lang;
 
 private:    // funcs
   void grab(Type const *t) {}
@@ -173,7 +173,7 @@ private:    // funcs
 
 public:     // funcs
   // empty toplevel environment
-  Env(StringTable &table, CLang &lang);
+  Env(StringTable &table, CCLang &lang);
   ~Env();
 
   // scope manipulation

@@ -48,7 +48,7 @@ void doit(int argc, char **argv)
   StringTable strTable;
 
   // parsing language options
-  CLang lang;
+  CCLang lang;
   lang.ANSI_Cplusplus();
 
 
