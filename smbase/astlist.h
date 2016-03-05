@@ -25,17 +25,19 @@ private:
   ASTList(ASTList const &obj);          // not allowed
 
 public:
-  ASTList()                             : list() {}
-  ~ASTList()                            { deleteAll(); }
+  bool const owning;
+
+  ASTList(bool owning=true)             : list(), owning(owning) {}
+  ~ASTList()                            { if (owning) deleteAll(); }
 
   // ctor to make singleton list; often quite useful
-  ASTList(T *elt)                       : list() { prepend(elt); }
+  ASTList(T *elt, bool owning=true)     : list(), owning(owning) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(ASTList<T> *src)              : list(&src->list) {}
-  void steal(ASTList<T> *src)           { deleteAll(); list.steal(&src->list); }
+  ASTList(ASTList<T> *src)              : list(src->owning?&src->list:0), owning(src->owning) { if (!owning) list.appendAll(src);}
+  void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
 
   // selectors
   int count() const                     { return list.count(); }

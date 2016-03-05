@@ -375,7 +375,7 @@ void xmlPrintPointer(std::ostream &os, char const *label, void const *p);
 template <class T>
 ASTList<T> * /*owner*/ cloneASTList(ASTList<T> const &src, int deepness=1, int listDeepness=1)
 {
-  ASTList<T> *ret = new ASTList<T>;
+  ASTList<T> *ret = new ASTList<T>(src.owning);
   deepness--;listDeepness--;
 
   if (deepness >= 0) {
@@ -398,11 +398,16 @@ ASTList<T> * /*owner*/ cloneASTList(ASTList<T> const &src, int deepness=1, int l
 template <class T>
 ASTList<T> * /*owner*/ shallowCloneASTList(ASTList<T> const &src)
 {
-  ASTList<T> *ret = new ASTList<T>;
+  ASTList<T> *ret ;
+  if (src.owning) {
+      ret = new ASTList<T>;
 
-  FOREACH_ASTLIST(T, src, iter) {
-    // list backbone is const, but nodes' constness leaks away..
-    ret->append(const_cast<T*>(iter.data()));
+      FOREACH_ASTLIST(T, src, iter) {
+        // list backbone is const, but nodes' constness leaks away..
+        ret->append(const_cast<T*>(iter.data()));
+      }
+  } else {
+      ret = new ASTList<T>(&src);
   }
 
   return ret;
