@@ -291,9 +291,9 @@ public:
 
   bool maximal;             // if true, use maximal munch disambiguation
   
-  ObjList<Production> productions;    //
   SObjList<Nonterminal> subsets;      // preferred subsets (for scannerless)
-  ObjList<Symbol> defaults;           // default type determination (of 1-symbol-wide productions) :
+  SObjList<Production> productions;   //it is a copy of pointers and not an item owner list (in contrast of ObjList)
+  SObjList<Symbol> defaults;          // default type determination (of 1-symbol-wide productions) :
                                       // analyzing its consistency
   bool deftravd = false;
 

@@ -606,7 +606,7 @@ void fillDefaultType(Nonterminal* nonterm) {
         std::string concur_types;
         // loop over default type providing single productions
         // (their single symbols were collected into 'defaults')
-        for (ObjListIter<Symbol> syIter(nonterm->defaults);
+        for (SObjListIter<Symbol> syIter(nonterm->defaults);
              !syIter.isDone(); syIter.adv()) {
             // convenient alias
             Symbol *sym = constcast(syIter.data());
@@ -671,7 +671,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
       }
 
       // loop over all productions
-      for (ObjListIter<Production> prodIter(nonterm->productions);
+      for (SObjListIter<Production> prodIter(nonterm->productions);
            !prodIter.isDone(); prodIter.adv()) {
         // convenient alias
         Production *prod = constcast(prodIter.data());
