@@ -212,7 +212,7 @@ public:      // data
 
 public:      // funcs
   ASTClass(string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : name(_name), args(_args), lastArgs(_lastArgs), bases(_bases), decls(_decls),
-    level(0), consumed(0), totArgs(false), totLastArgs(false){
+    level(0), consumed(0), parent(0), totArgs(false), totLastArgs(false){
   }
   ~ASTClass();
 

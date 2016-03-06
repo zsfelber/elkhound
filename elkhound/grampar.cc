@@ -618,20 +618,32 @@ void astParseDDM(Environment &env, Symbol *sym,
 
 void fillDefaultType(Nonterminal* nonterm) {
 
-    traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << " defaults:" << nonterm->defaults.count() << endl;
+    traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << endl;
     // also ignore circles:
     if (!nonterm->deftravd && isVoid(nonterm->type)) {
 
         nonterm->deftravd = true;
+        StringRef empty = grammarStringTable.add("");
 
         bool err_concur = false;
         std::string concur_types;
         // loop over default type providing single productions
         // (their single symbols were collected into 'defaults')
-        for (SObjListIter<Symbol> syIter(nonterm->defaults);
+        for (SObjListIter<Production> syIter(nonterm->productions);
              !syIter.isDone(); syIter.adv()) {
             // convenient alias
-            Symbol *sym = constcast(syIter.data());
+            Production *p = constcast(syIter.data());
+            Production::RHSElt *r = constcast(p->defaultSymbol);
+            if (!r) {
+                continue;
+            }
+
+            Symbol *sym = r->sym;
+            if (isVoid(sym->type)) {
+                p->defaultSymbol = NULL;
+                r->tag.str = empty;
+            }
+
             if (sym->isNonterminal()) {
                 Nonterminal &nt = sym->asNonterminal();
                 fillDefaultType(&nt);
@@ -700,7 +712,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
 
         // default action
         if (forceDefaults || prod->action.isNull()) {
-          prod->action.str = prod->defaultTagAction ? defaultTagAction : defaultAction;
+          prod->action.str = prod->defaultSymbol ? defaultTagAction : defaultAction;
         }
 
         if (forceDefaults) {
@@ -981,8 +993,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
   // generating default rule
   if (tags==1 && !found_tag_ne) {
     first->tag.str = "tag";
-    prod->defaultTagAction = true;
-    nonterm->appendDefault(first->sym);
+    prod->defaultSymbol = first;
   }
 
   nonterm->appendProd(prod);

@@ -642,11 +642,6 @@ void Nonterminal::appendProd(Production *prod) {
   productions.append(prod);
 }
 
-void Nonterminal::appendDefault(Symbol *sym) {
-  xassert(!sym->isEmptyString);
-  defaults.append(sym);
-}
-
 
 void Production::finished(int numTerms)
 {

@@ -301,8 +301,6 @@ public:
   
   SObjList<Nonterminal> subsets;      // preferred subsets (for scannerless)
   SObjList<Production> productions;   //it is a copy of pointers and not an item owner list (in contrast of ObjList)
-  SObjList<Symbol> defaults;          // default type determination (of 1-symbol-wide productions) :
-                                      // analyzing its consistency
   bool deftravd = false;
 
 protected:  // funcs
@@ -322,7 +320,6 @@ public:     // funcs
   virtual bool anyDDM() const;
 
   void appendProd(Production *prod);
-  void appendDefault(Symbol *sym);
 
 // ------ annotation ------
 public:     // data
@@ -379,7 +376,8 @@ public:	    // data
 
   // user-supplied reduction action code
   LocString action;
-  bool defaultTagAction = 0;
+  RHSElt* defaultSymbol = 0;          // default type determination (of 1-symbol-wide productions) :
+                                      // analyzing its consistency
 
 private:
   bool forbid_owned;
