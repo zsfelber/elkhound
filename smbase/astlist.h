@@ -31,12 +31,13 @@ public:
   ~ASTList()                            { if (owning) deleteAll(); }
 
   // ctor to make singleton list; often quite useful
-  ASTList(T *elt, bool owning=true)     : list(), owning(owning) { prepend(elt); }
+  ASTList(T *elt)                       : list(), owning(owning) { prepend(elt); }
+  ASTList(T *elt, bool owning)          : list(), owning(false) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(ASTList<T> *src)              : list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning) list.appendAll(src->list);}
+  ASTList(ASTList<T> *src)              : list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning&&src) list.appendAll(src->list);}
   void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
 
   // selectors
