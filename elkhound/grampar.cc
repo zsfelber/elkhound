@@ -386,6 +386,8 @@ TerminalOrSet astParseTokens(Environment &env, LocString const &name)
         s.set = true;
         s.s = &nt->first;
     } else {
+        s.set = false;
+        s.t = 0;
         astParseError(name, "undeclared token/noneterminal");
     }
   }
@@ -885,10 +887,14 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       ASTNEXTC(RH_forbid, f) {
         TerminalOrSet s = astParseTokens(env, f->tokName);
 
-        if (s.set) {
-            prod->addForbid(s.s, env.g.numTerminals());
-        } else {
-            prod->addForbid(s.t, env.g.numTerminals());
+        try {
+          if (s.set) {
+             prod->addForbid(s.s);
+          } else if (s.t) {
+             prod->addForbid(s.t, env.g.numTerminals());
+          }
+        } catch (std::exception) {
+           astParseError(f->tokName, "forbid_next : only single noneterminal allowed");
         }
         isAnnotation = true;
       }

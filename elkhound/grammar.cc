@@ -528,7 +528,7 @@ Production::Production(Nonterminal *L, char const *Ltag)
 
 Production::~Production()
 {
-  if (forbid) {
+  if (forbid_owned) {
     delete forbid;
   }
 }
@@ -734,20 +734,30 @@ DottedProduction const *Production::getDProdC(int dotPlace) const
 // total number of terminals, but oh well
 void Production::addForbid(Terminal *t, int numTerminals)
 {
-  if (!forbid) {
-    forbid = new TerminalSet(numTerminals);
+  if (forbid) {
+     if (!forbid_owned) {
+        throw std::exception();
+     }
+  } else {
+     forbid = new TerminalSet(numTerminals);
+     forbid_owned = true;
   }
 
   forbid->add(t->termIndex);
 }
 
-void Production::addForbid(TerminalSet *s, int numTerminals)
+void Production::addForbid(TerminalSet *s)
 {
-  if (!forbid) {
-    forbid = new TerminalSet(numTerminals);
+  if (forbid) {
+    if (forbid_owned) {
+        forbid->merge(*s);
+    } else {
+        throw std::exception();
+    }
+  } else {
+      forbid = s;
+      forbid_owned = false;
   }
-
-  forbid->merge(*s);
 }
 
 

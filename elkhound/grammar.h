@@ -381,7 +381,11 @@ public:	    // data
   LocString action;
   bool defaultTagAction = 0;
 
+private:
+  bool forbid_owned;
+
 private:    // funcs
+
   void computeDerived();
 
 public:	    // funcs
@@ -435,7 +439,7 @@ public:	    // funcs
 
   // add a terminal to the 'forbid' set
   void addForbid(Terminal *t, int totalNumTerminals);
-  void addForbid(TerminalSet *s, int totalNumTerminals);
+  void addForbid(TerminalSet *s);
 
   // print 'A -> B c D' (no newline)
   string toString(bool printType = true, bool printIndex = true) const;
