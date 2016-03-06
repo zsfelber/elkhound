@@ -741,6 +741,15 @@ void Production::addForbid(Terminal *t, int numTerminals)
   forbid->add(t->termIndex);
 }
 
+void Production::addForbid(TerminalSet *s, int numTerminals)
+{
+  if (!forbid) {
+    forbid = new TerminalSet(numTerminals);
+  }
+
+  forbid->merge(*s);
+}
+
 
 void Production::print(ostream &os) const
 {

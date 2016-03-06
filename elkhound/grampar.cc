@@ -371,6 +371,26 @@ void astParseGrammar(Grammar &g, GrammarAST *ast)
   }
 }
 
+// validate 'name'
+TerminalOrSet astParseTokens(Environment &env, LocString const &name)
+{
+  Terminal *t = env.g.findTerminal(name);
+  TerminalOrSet s;
+
+  if (t) {
+    s.set = false;
+    s.t = t;
+  } else {
+    Nonterminal *nt = env.g.findNonterminal(name);
+    if (nt) {
+        s.set = true;
+        s.s = &nt->first;
+    } else {
+        astParseError(name, "undeclared token/noneterminal");
+    }
+  }
+  return s;
+}
 
 // validate 'name'
 Terminal *astParseToken(Environment &env, LocString const &name)
@@ -431,7 +451,7 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
   }
 
   // type annotations
-  {                  
+  {
     FOREACH_ASTLIST(TermType, terms.types, iter) {
       TermType const &type = *(iter.data());
       trace("grampar") << "token type: name=" << type.name
@@ -863,10 +883,13 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       }
 
       ASTNEXTC(RH_forbid, f) {
-        Terminal *t = astParseToken(env, f->tokName);
-        if (!t) { break; }
+        TerminalOrSet s = astParseTokens(env, f->tokName);
 
-        prod->addForbid(t, env.g.numTerminals());
+        if (s.set) {
+            prod->addForbid(s.s, env.g.numTerminals());
+        } else {
+            prod->addForbid(s.t, env.g.numTerminals());
+        }
         isAnnotation = true;
       }
 

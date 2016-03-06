@@ -220,6 +220,14 @@ inline ObjList<Symbol> const &toObjList(ObjList<Terminal> const &list)
 // format: "t1 t2 t3"
 string terminalSequenceToString(TerminalList const &list);
 
+class TerminalSet;
+struct TerminalOrSet {
+    bool set;
+    union {
+        Terminal *t;
+        TerminalSet *s;
+    };
+};
 
 // ----------------- TerminalSet -------------------
 // used for the lookahead sets of LR items, and for the First()
@@ -427,6 +435,7 @@ public:	    // funcs
 
   // add a terminal to the 'forbid' set
   void addForbid(Terminal *t, int totalNumTerminals);
+  void addForbid(TerminalSet *s, int totalNumTerminals);
 
   // print 'A -> B c D' (no newline)
   string toString(bool printType = true, bool printIndex = true) const;

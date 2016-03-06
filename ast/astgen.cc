@@ -1482,18 +1482,18 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
   if (isTreeListType(arg->type)) {
     // clone an ASTList of tree nodes
     out << "(listDeepness>=0||" << argName << ".owning) ? ";
-    out << "cloneASTList(" << argName << ", deepness, listDeepness) : " << argName ;
+    out << "cloneASTList(" << argName << ", deepness, listDeepness) : constcast(&" << argName << ")" ;
   }
   else if (isListType(arg->type)) {
     if (streq(extractListType(arg->type), "LocString")) {
       // these are owned, so clone deeply
       out << "(listDeepness>=0||" << argName << ".owning) ? ";
-      out << "cloneASTList(" << argName << ", deepness, listDeepness) : " << argName ;
+      out << "cloneASTList(" << argName << ", deepness, listDeepness) : constcast(&" << argName << ")" ;
     }
     else {
       // clone an ASTList of non-tree nodes
       out << "(listDeepness>=0||" << argName << ".owning) ? ";
-      out << "shallowCloneASTList(" << argName << ") : " << argName ;
+      out << "shallowCloneASTList(" << argName << ") : constcast(&" << argName << ")" ;
     }
   }
   else if (isFakeListType(arg->type)) {
