@@ -23,7 +23,8 @@ SOURCES += main.cpp \
     ../elkhound/c/postorder.cc \
     ../elkhound/c/stubs.cc \
     ../elkhound/c/tcheck.cc \
-    ../elkhound/c/treeout.cc
+    ../elkhound/c/treeout.cc \
+    ../elkhound/c/c.gr.gen.cc
 
 DISTFILES += \
     ../elkhound/c/testcout \

@@ -16,8 +16,9 @@
 #include "mlsstr.h"          // MLSubstrate
 #include "util.h"
 
-#include <fstream>         // ifstream
+#include <fstream>           // ifstream
 #include <ctype.h>           // isspace, isalnum
+#include <sstream>           // stringstream
 
 #define LIT_STR(s) LocString(SL_INIT, grammarStringTable.add(s))
 
@@ -620,12 +621,14 @@ void fillDefaultType(Nonterminal* nonterm) {
 
     traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << endl;
     // also ignore circles:
-    if (!nonterm->deftravd && isVoid(nonterm->type)) {
+    if (!nonterm->deftravd) {
 
         nonterm->deftravd = true;
         StringRef empty = grammarStringTable.add("");
 
         bool err_concur = false;
+        bool err_in_one = false;
+        bool init_void = isVoid(nonterm->type);
         std::string concur_types;
         // loop over default type providing single productions
         // (their single symbols were collected into 'defaults')
@@ -633,15 +636,15 @@ void fillDefaultType(Nonterminal* nonterm) {
              !syIter.isDone(); syIter.adv()) {
             // convenient alias
             Production *p = constcast(syIter.data());
-            Production::RHSElt *r = constcast(p->defaultSymbol);
-            if (!r) {
-                continue;
-            }
 
-            Symbol *sym = r->sym;
-            if (isVoid(sym->type)) {
-                p->defaultSymbol = NULL;
-                r->tag.str = empty;
+            Symbol *sym;
+            if (p->defaultSymbol) {
+                sym = p->defaultSymbol->sym;
+            } else {
+                if (!p->action) {
+                   err_in_one = true;
+                }
+                continue;
             }
 
             if (sym->isNonterminal()) {
@@ -649,26 +652,66 @@ void fillDefaultType(Nonterminal* nonterm) {
                 fillDefaultType(&nt);
             }
 
-            traceProgress() << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << endl;
+            if (isVoid(sym->type)) {
+                // remove "tag" for void args:
+                p->defaultSymbol->tag.str = empty;
+                p->defaultSymbol = NULL;
 
-            if (!isVoid(nonterm->type) && nonterm->type != sym->type) {
-                if (!err_concur) {
-                    concur_types = concur_types + nonterm->type;
-                }
-                err_concur = true;
-                concur_types = concur_types + "," + sym->type;
-            } else if (!nonterm->type_is_default && !isVoid(sym->type)) {
-                nonterm->type = sym->type;
-                nonterm->type_is_default = true;
+                err_in_one = true;
+
+                continue;
             }
+
+            if (init_void) {
+
+                traceProgress() << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << endl;
+
+                if (!isVoid(nonterm->type) && nonterm->type != sym->type) {
+                    if (!err_concur) {
+                        concur_types = concur_types + nonterm->type;
+                    }
+                    err_concur = true;
+                    concur_types = concur_types + "," + sym->type;
+                } else if (!nonterm->type_is_default) {
+                    nonterm->type = sym->type;
+                    nonterm->type_is_default = true;
+                }
+            } else {
+                traceProgress() << "Nonterminal: " << nonterm->name << "  non-void   production type:" << sym->type << endl;
+            }
+        }
+
+        if (err_in_one) {
+            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is failed in case of one or more productions." << endl;
         }
         if (err_concur) {
             cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is not possible, candidates:"
                  << concur_types << endl;
             //errors++;
-        } else if (isVoid(nonterm->type)) {
+        }
+
+        if (!err_in_one && !err_concur && isVoid(nonterm->type)) {
             cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but after looking for default type it is still void." << endl;
             //errors++;
+        }
+
+        if (err_in_one || err_concur) {
+            if (nonterm->type_is_default) {
+                nonterm->type = "void";
+                nonterm->type_is_default = false;
+            } else {
+                traceProgress() << "Nonterminal   type errors: " << nonterm->name << "  user defined type kept:" << nonterm->type << endl;
+            }
+
+            for (SObjListIter<Production> syIter(nonterm->productions);
+                 !syIter.isDone(); syIter.adv()) {
+                Production *p = constcast(syIter.data());
+                if (p->defaultSymbol) {
+                    std::stringstream s;
+                    s<<"/* return "<< p->defaultSymbol ->tag.str <<";  /* inconsistent nonterm("<<nonterm->name<<") type*/";
+                    p->action.str = grammarStringTable.add(s.str().c_str());
+                }
+            }
         }
     }
 }
@@ -676,7 +719,7 @@ void fillDefaultType(Nonterminal* nonterm) {
 void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
 {
   // language defaults
-  StringRef defaultType, defaultAction, defaultTagAction;
+  StringRef defaultType, defaultAction;
   if (g.targetLang.equals("OCaml")) {
     defaultType = grammarStringTable.add("unit");
     defaultAction = grammarStringTable.add("()");
@@ -684,7 +727,6 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   else /*C*/ {
     defaultType = grammarStringTable.add("void");
     defaultAction = grammarStringTable.add("return;");
-    defaultTagAction = grammarStringTable.add("return tag;");
   }
 
   // hook to allow me to force defaults everywhere (this is useful
@@ -712,7 +754,14 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
 
         // default action
         if (forceDefaults || prod->action.isNull()) {
-          prod->action.str = prod->defaultSymbol ? defaultTagAction : defaultAction;
+            if (prod->defaultSymbol) {
+                std::stringstream s;
+                s<<"return "<< prod->defaultSymbol ->tag.str <<";";
+                StringRef defaultTagAction = grammarStringTable.add(s.str().c_str());
+                prod->action.str = defaultTagAction;
+            } else {
+                prod->action.str = defaultAction;
+            }
         }
 
         if (forceDefaults) {
@@ -794,16 +843,16 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast)
   ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
   rhs->append(rhs1);
   rhs->append(rhs2);
-  char const *action = g.targetLang.equals("OCaml")? " top " :
-                       firstNT->type.equals("void")? " return; " :
-                                                     " return top; ";
-  ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, LIT_STR(action).clone());
-
+  // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
+  //char const *action = g.targetLang.equals("OCaml")? " top " :
+  //                     firstNT->type.equals("void")? " return; " :
+  //                                                   " return top; ";
+  ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
   // build an even earlier start symbol
   TF_nonterm *earlyStartNT
     = new TF_nonterm(
         LIT_STR("__EarlyStartSymbol").clone(),   // name
-        firstNT->type.clone(),                   // type
+        new LocString(SL_UNKNOWN, NULL)/*firstNT->type.clone()*/,                   // type
         NULL,                                    // empty list of functions
         new ASTList<ProdDecl>(startProd),        // productions
         NULL                                     // subsets
@@ -863,7 +912,6 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
   prod->action = prodDecl->actionCode;
 
   int tags = 0;
-  bool found_tag_ne = false;
   Production::RHSElt *first = 0;
 
   // deal with RHS elements
@@ -982,18 +1030,19 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       // add it to the production
       Production::RHSElt * r = prod->append(s, symTag);
 
-      if (symTag.length()) {
-          found_tag_ne = true;
-      } else {
-          if (!first) first = r;
-          tags++;
-      }
+      if (!first) first = r;
+      tags++;
     }
   }
   // generating default rule
-  if (tags==1 && !found_tag_ne) {
-    first->tag.str = "tag";
+  if (synthesizedStart ? tags==2 : (tags==1)) {
+    if (!first->tag.length()) {
+       first->tag.str = synthesizedStart ? "top" : "tag";
+    }
     prod->defaultSymbol = first;
+  } else if (synthesizedStart && isVoid(nonterm->type)) {
+    traceProgress() << "tags: " << tags << endl;
+    astParseErrorCont(env, nonterm->name, "Synthetic start is missing type, and unable to determine default.");
   }
 
   nonterm->appendProd(prod);

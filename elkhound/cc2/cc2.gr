@@ -650,9 +650,9 @@ nonterm UnnamedNamespaceDefinition {
   -> "namespace" "{" NamespaceBody "}";
 }
 
-nonterm DeclarationSeqOpt {
-  -> empty;
-  -> DeclarationSeq;
+nonterm(int) DeclarationSeqOpt {
+  -> empty           {return 0;}
+  -> DeclarationSeq  {return 1;}
 }
 
 nonterm NamespaceBody {

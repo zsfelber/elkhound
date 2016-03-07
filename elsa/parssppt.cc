@@ -81,7 +81,7 @@ class SimpleActions : public TrivialUserActions {
 public:
   virtual ReclassifyFunc getReclassifier();
   static int reclassifyToken(UserActions *ths,
-    int oldTokenType, SemanticValue sval);
+    int oldTokenType, SemanticValue sval, int *multipleTokens);
 };
 
 UserActions::ReclassifyFunc SimpleActions::getReclassifier()
@@ -96,7 +96,7 @@ UserActions::ReclassifyFunc SimpleActions::getReclassifier()
   }
 }
 
-STATICDEF int SimpleActions::reclassifyToken(UserActions *, int type, SemanticValue)
+STATICDEF int SimpleActions::reclassifyToken(UserActions *, int type, SemanticValue, int *multipleTokens)
 {
   if (type == TOK_NAME) {
     return TOK_VARIABLE_NAME;
