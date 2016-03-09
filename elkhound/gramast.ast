@@ -12,7 +12,8 @@ class GrammarAST (ASTList<TopForm> forms) {
   // to some things that are supposed to exist and be unique
   public TF_terminals *terms;
   public TF_nonterm *firstNT;    // textually first nonterminal
-  
+  public TF_nonterm *earlyStartNT;
+
   public bool allowContinuedNonterminals = false;
   
   ctor { terms=NULL; firstNT=NULL; };

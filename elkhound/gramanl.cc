@@ -1983,6 +1983,9 @@ void GrammarAnalysis
   }
   int nontermIndex = B->asNonterminalC().ntIndex;
 
+  // get beta (what follows B in 'item')
+  DottedProduction const *beta = nextDProd(item->dprod);
+
   // could pull this out of even this fn, to the caller, but I don't
   // see any difference in time when I make it static (which simulates
   // the effect, though static itself is a bad idea because it makes
@@ -2013,7 +2016,7 @@ void GrammarAnalysis
     DottedProduction const *newDP = getDProd(&prod, 0 /*dot at left*/);
 
     // get beta (what follows B in 'item')
-    DottedProduction const *beta = nextDProd(item->dprod);
+    // DottedProduction const *beta = nextDProd(item->dprod);
 
     // get First(beta) -> new item's lookahead
     newItemLA = beta->firstSet;
@@ -3971,6 +3974,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname)
   computeFirst();
   computeDProdFirsts();
 
+  // used for SLR1 status checks only :
   traceProgress(1) << "follow...\n";
   computeFollow();
 
@@ -4968,88 +4972,96 @@ int inner_entry(int argc, char **argv)
     SHIFT;
   }
 
-  // parse the AST into a Grammar
-  GrammarAnalysis g;
-  if (useML) {
-    g.targetLang = "OCaml";
-  }
-  parseGrammarAST(g, ast);
-  ast.del();              // done with it
 
-  if (tracingSys("treebuild")) {
-    cout << "replacing given actions with treebuilding actions\n";
-    g.addTreebuildingActions();
-  }
-  g.printProductions(trace("grammar") << endl);
+  int multiIndex = 0;
 
-  string setsFname = stringc << prefix << ".out";
-  g.runAnalyses(tracingSys("lrtable")? setsFname.c_str() : NULL);
-  if (g.errors) {
-    return 2;
-  }
+  do {
 
-  if (!useML) {
-    // emit some C++ code
-    string hFname = stringc << prefix << ".h";
-    string ccFname = stringc << prefix << ".cc";
-    traceProgress() << "emitting C++ code to " << ccFname
-                    << " and " << hFname << " ...\n";
+      // parse the AST into a Grammar
+      GrammarAnalysis g;
+      if (useML) {
+        g.targetLang = "OCaml";
+      }
+      parseGrammarAST(g, ast, multiIndex);
+      if (!MULTIPLE_START || multiIndex < 0) {
+          ast.del();              // done with it
+      }
 
-    try {
-      emitActionCode(g, hFname, ccFname, grammarFname);
-    }
-    catch (...) {
-      if (!leavePartialOutputs) {
-        cout << "(deleting output files due to error)\n";
-        remove(hFname.c_str());
-        remove(ccFname.c_str());
+      if (tracingSys("treebuild")) {
+        cout << "replacing given actions with treebuilding actions\n";
+        g.addTreebuildingActions();
+      }
+      g.printProductions(trace("grammar") << endl);
+
+      string setsFname = stringc << prefix << ".out";
+      g.runAnalyses(tracingSys("lrtable")? setsFname.c_str() : NULL);
+      if (g.errors) {
+        return 2;
+      }
+
+      if (!useML) {
+        // emit some C++ code
+        string hFname = stringc << prefix << ".h";
+        string ccFname = stringc << prefix << ".cc";
+        traceProgress() << "emitting C++ code to " << ccFname
+                        << " and " << hFname << " ...\n";
+
+        try {
+          emitActionCode(g, hFname, ccFname, grammarFname);
+        }
+        catch (...) {
+          if (!leavePartialOutputs) {
+            cout << "(deleting output files due to error)\n";
+            remove(hFname.c_str());
+            remove(ccFname.c_str());
+          }
+          else {
+            cout << "(note: partial output files have not been deleted)\n";
+          }
+          throw;
+        }
       }
       else {
-        cout << "(note: partial output files have not been deleted)\n";
+        // emit some ML code
+        string mliFname = stringc << prefix << ".mli";
+        string mlFname = stringc << prefix << ".ml";
+        traceProgress() << "emitting OCaml code to " << mlFname
+                        << " and " << mliFname << " ...\n";
+
+        try {
+          emitMLActionCode(g, mliFname, mlFname, grammarFname);
+        }
+        catch (...) {
+          if (!leavePartialOutputs) {
+            cout << "(deleting output files due to error)\n";
+            remove(mliFname.c_str());
+            remove(mlFname.c_str());
+          }
+          else {
+            cout << "(note: partial output files have not been deleted)\n";
+          }
+          throw;
+        }
       }
-      throw;
-    }
-  }
-  else {
-    // emit some ML code
-    string mliFname = stringc << prefix << ".mli";
-    string mlFname = stringc << prefix << ".ml";
-    traceProgress() << "emitting OCaml code to " << mlFname
-                    << " and " << mliFname << " ...\n";
 
-    try {
-      emitMLActionCode(g, mliFname, mlFname, grammarFname);
-    }
-    catch (...) {
-      if (!leavePartialOutputs) {
-        cout << "(deleting output files due to error)\n";
-        remove(mliFname.c_str());
-        remove(mlFname.c_str());
+      // before using 'xfer' we have to tell it about the string table
+      flattenStrTable = &grammarStringTable;
+
+      // write it in a bison-compatible format as well
+      if (tracingSys("bison")) {
+        string bisonFname = stringc << prefix << ".y";
+        traceProgress() << "writing bison-compatible grammar to " << bisonFname << endl;
+        ofstream out(bisonFname.c_str());
+        g.printAsBison(out);
       }
-      else {
-        cout << "(note: partial output files have not been deleted)\n";
+
+      traceProgress() << "done\n";
+
+      // this doesn't work
+      if (tracingSys("explore")) {
+        grammarExplorer(g);
       }
-      throw;
-    }
-  }
-
-  // before using 'xfer' we have to tell it about the string table
-  flattenStrTable = &grammarStringTable;
-
-  // write it in a bison-compatible format as well
-  if (tracingSys("bison")) {
-    string bisonFname = stringc << prefix << ".y";
-    traceProgress() << "writing bison-compatible grammar to " << bisonFname << endl;
-    ofstream out(bisonFname.c_str());
-    g.printAsBison(out);
-  }
-
-  traceProgress() << "done\n";
-
-  // this doesn't work
-  if (tracingSys("explore")) {
-    grammarExplorer(g);
-  }
+  } while (MULTIPLE_START && multiIndex >= 0);
 
   return 0;
 }

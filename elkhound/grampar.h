@@ -98,17 +98,17 @@ public:
 // --------------- grampar's external interface -----------
 // parse grammar file 'fname' into grammar 'g', throwing exceptions
 // if there are problems
-void readGrammarFile(Grammar &g, rostring fname);
+void readGrammarFile(Grammar &g, rostring fname, int &multiIndex);
 
 // just do the parsing stage
-GrammarAST *parseGrammarFile(rostring fname, bool useML);
+GrammarAST *parseGrammarFile(rostring fname, bool useML, int &multiIndex);
 
 // merge two grammar descriptions; neither argument is consumed,
 // but subtrees of the 2nd argument get moved into the first tree
 void mergeGrammar(GrammarAST *base, GrammarAST *ext);
 
 // GrammarAST -> Grammar
-void parseGrammarAST(Grammar &g, GrammarAST *treeTop);
+void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex);
 
 
 // thrown when there is an error parsing the AST

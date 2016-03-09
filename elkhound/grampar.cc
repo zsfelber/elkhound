@@ -20,6 +20,8 @@
 #include <ctype.h>           // isspace, isalnum
 #include <sstream>           // stringstream
 
+static bool const MULTIPLE_START = true;
+
 #define LIT_STR(s) LocString(SL_INIT, grammarStringTable.add(s))
 
 inline bool isVoid(char const * tp) {
@@ -820,7 +822,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
 }
 
 
-void synthesizeStartRule(Grammar &g, GrammarAST *ast)
+void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
 {
   // get the first nonterminal; this is the user's start symbol
   TF_nonterm *firstNT = ast->firstNT;
@@ -835,31 +837,65 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast)
   }
   if (!eof) {
     astParseError("you have to have an EOF token, with code 0");
+    return;
   }
+  if (MULTIPLE_START) {
+      ProdDecl *prod = firstNT->productions.nth(multiIndex);
+      multiIndex++;
+      if (multiIndex >= firstNT->productions.count()) {
+          multiIndex = -1;
+      }
 
-  // build a start production
-  RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), firstNT->name.clone());
-  RHSElt *rhs2 = new RH_name(LIT_STR("").clone(), eof->name.clone());
-  ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
-  rhs->append(rhs1);
-  rhs->append(rhs2);
-  // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
-  //char const *action = g.targetLang.equals("OCaml")? " top " :
-  //                     firstNT->type.equals("void")? " return; " :
-  //                                                   " return top; ";
-  ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
-  // build an even earlier start symbol
-  TF_nonterm *earlyStartNT
-    = new TF_nonterm(
-        LIT_STR("__EarlyStartSymbol").clone(),   // name
-        new LocString(SL_UNKNOWN, NULL)/*firstNT->type.clone()*/,                   // type
-        NULL,                                    // empty list of functions
-        new ASTList<ProdDecl>(startProd),        // productions
-        NULL                                     // subsets
-      );
+      RHSElt *poss_eof = prod->rhs.last();
+      RH_name *rh_eof = 0;
+      if (poss_eof && poss_eof->kind()==RH_name::RH_NAME) {
+          rh_eof = poss_eof->asRH_name();
+          if (strcmp(eof->name, eof->name)) {
+            rh_eof = 0;
+          }
+      }
+      if (!rh_eof) {
+          rh_eof = new RH_name(LIT_STR("").clone(), eof->name.clone());
+          prod->rhs.append(rh_eof);
+      }
+      if (ast->earlyStartNT) {
+          ast->earlyStartNT->productions.removeFirst();
+          ast->earlyStartNT->productions.prepend(prod);
+      } else {
+          ast->earlyStartNT
+                  = new TF_nonterm(
+                      LIT_STR("__EarlyStartSymbol").clone(),   // name
+                      new LocString(SL_UNKNOWN, NULL)/*firstNT->type.clone()*/,                   // type
+                      NULL,                                    // empty list of functions
+                      new ASTList<ProdDecl>(prod, false),      // productions
+                      NULL                                     // subsets
+                    );
+      }
+  } else {
 
-  // put it into the AST
-  ast->forms.prepend(earlyStartNT);
+      // build a start production
+      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), firstNT->name.clone());
+      RHSElt *rhs2 = new RH_name(LIT_STR("").clone(), eof->name.clone());
+      ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
+      rhs->append(rhs1);
+      rhs->append(rhs2);
+      // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
+      //char const *action = g.targetLang.equals("OCaml")? " top " :
+      //                     firstNT->type.equals("void")? " return; " :
+      //                                                   " return top; ";
+      ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
+      // build an even earlier start symbol
+      ast->earlyStartNT
+        = new TF_nonterm(
+            LIT_STR("__EarlyStartSymbol").clone(),   // name
+            new LocString(SL_UNKNOWN, NULL)/*firstNT->type.clone()*/,                   // type
+            NULL,                                    // empty list of functions
+            new ASTList<ProdDecl>(startProd),        // productions
+            NULL                                     // subsets
+          );
+      // put it into the AST
+      ast->forms.prepend(ast->earlyStartNT);
+  }
 }
 
 
@@ -1444,7 +1480,7 @@ GrammarAST *parseGrammarFile(rostring origFname, bool useML)
 }
 
 
-void parseGrammarAST(Grammar &g, GrammarAST *treeTop)
+void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex)
 {
   setAnnotations(treeTop);
   
@@ -1456,7 +1492,7 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop)
   //addDefaultTypesActions(g, treeTop);
 
   // synthesize a rule "TrueStart -> Start EOF"
-  synthesizeStartRule(g, treeTop);
+  synthesizeStartRule(g, treeTop, multiIndex);
 
   // parse the AST into a Grammar
   traceProgress() << "parsing grammar AST..\n";
@@ -1472,12 +1508,12 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop)
 }
 
 
-void readGrammarFile(Grammar &g, rostring fname)
+void readGrammarFile(Grammar &g, rostring fname, int &multiIndex)
 {
   // make sure the tree gets deleted
   Owner<GrammarAST> treeTop(parseGrammarFile(fname, false /*useML*/));
 
-  parseGrammarAST(g, treeTop);
+  parseGrammarAST(g, treeTop, multiIndex);
 
   treeTop.del();
 
@@ -1509,67 +1545,74 @@ int main(int argc, char **argv)
 
   bool printCode = true;
 
-  // read the file
-  Grammar g1;
-  readGrammarFile(g1, argv[1]);
+  int multiIndex = 0;
 
-  // and print the grammar
-  char const g1Fname[] = "grammar.g1.tmp";
-  traceProgress() << "printing initial grammar to " << g1Fname << "\n";
-  {
-    ofstream out(g1Fname);
-    g1.printSymbolTypes(out);
-    g1.printProductions(out, printCode);
-  }
+  do {
+      // read the file
+      Grammar g1;
+      readGrammarFile(g1, argv[1], multiIndex);
 
-  //if (tracingSys("cat-grammar")) {
-    system("cat grammar.g1.tmp");
-  //}
+      // and print the grammar
+      char const g1Fname[] = "grammar.g1.tmp";
+      traceProgress() << "printing initial grammar to " << g1Fname << "\n";
+      {
+        ofstream out(g1Fname);
+        g1.printSymbolTypes(out);
+        g1.printProductions(out, printCode);
+      }
 
-  // before using 'xfer' we have to tell it about the string table
-  flattenStrTable = &grammarStringTable;
+      //if (tracingSys("cat-grammar")) {
+        system("cat grammar.g1.tmp");
+      //}
 
-  // write it to a binary file
-  char const binFname[] = "grammar.bin.tmp";
-  traceProgress() << "writing initial grammar to " << binFname << "\n";
-  {
-    BFlatten flat(binFname, false /*reading*/);
-    g1.xfer(flat);
-  }
+      // before using 'xfer' we have to tell it about the string table
+      flattenStrTable = &grammarStringTable;
 
-  // read it back
-  traceProgress() << "reading grammar from " << binFname << "\n";
-  Grammar g2;
-  {
-    BFlatten flat(binFname, true /*reading*/);
-    g2.xfer(flat);
-  }
+      // write it to a binary file
+      char const binFname[] = "grammar.bin.tmp";
+      traceProgress() << "writing initial grammar to " << binFname << "\n";
+      {
+        BFlatten flat(binFname, false /*reading*/);
+        g1.xfer(flat);
+      }
 
-  // print that too
-  char const g2Fname[] = "grammar.g2.tmp";
-  traceProgress() << "printing just-read grammar to " << g2Fname << "\n";
-  {
-    ofstream out(g2Fname);
-    g2.printSymbolTypes(out);
-    g2.printProductions(out, printCode);
-  }
+      // read it back
+      traceProgress() << "reading grammar from " << binFname << "\n";
+      Grammar g2;
+      {
+        BFlatten flat(binFname, true /*reading*/);
+        g2.xfer(flat);
+      }
 
-  // compare the two written files
-  int result = system(stringc << "diff " << g1Fname << " " << g2Fname);
-  if (result != 0) {
-    cout << "the two ascii representations differ!!\n";
-    return 4;
-  }
+      // print that too
+      char const g2Fname[] = "grammar.g2.tmp";
+      traceProgress() << "printing just-read grammar to " << g2Fname << "\n";
+      {
+        ofstream out(g2Fname);
+        g2.printSymbolTypes(out);
+        g2.printProductions(out, printCode);
+      }
 
-  // remove the temp files
-  if (!tracingSys("keep-tmp")) {
-    remove(g1Fname);
-    remove(g2Fname);
-    remove(binFname);
-  }
+      // compare the two written files
+      int result = system(stringc << "diff " << g1Fname << " " << g2Fname);
+      if (result != 0) {
+        cout << "the two ascii representations differ!!\n";
+        return 4;
+      }
 
-  cout << "successfully parsed, printed, wrote, and read a grammar!\n";
+      // remove the temp files
+      if (!tracingSys("keep-tmp")) {
+        remove(g1Fname);
+        remove(g2Fname);
+        remove(binFname);
+      }
+
+      cout << "successfully parsed, printed, wrote, and read a grammar!\n";
+
+  } while (MULTIPLE_START && multiIndex >= 0);
+
   return 0;
+
 }
 
 #endif // TEST_GRAMPAR
