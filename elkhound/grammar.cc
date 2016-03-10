@@ -338,7 +338,7 @@ void TerminalSet::init(int numTerms)
   if (numTerms != 0) {
     // allocate enough space for one bit per terminal; I assume
     // 8 bits per byte
-    bitmapLen = (numTerms + 7) / 8;
+    bitmapLen = (numTerms + 7)  >> 3;
     bitmap = new unsigned char[bitmapLen];
 
     // initially the set will be empty
@@ -349,6 +349,30 @@ void TerminalSet::init(int numTerms)
     // to allocate some space
     bitmapLen = 0;
     bitmap = NULL;
+  }
+}
+
+void TerminalSet::convert(SObjList<Terminal>& oldts, ObjList<Terminal>& newts) {
+  TerminalSet dup(*this);
+  init(newts.count());
+  int ind = 7;
+
+  unsigned char const bits[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+
+  for (int i = 0; i < dup.bitmapLen; i++) {
+    unsigned char byte = dup.bitmap[i];
+    for (int b = 0; b < 7; b++, ind--, byte >>= 1) {
+        unsigned char bit = byte & 1;
+        if (bit) {
+           Terminal * t = oldts.nth(ind);
+           xassert(ind == t->externalTermIndex);
+           int nbyti = t->termIndex >> 3;
+           int nbiti = t->termIndex & 7;
+
+           bitmap[nbyti] |= bits[nbiti];
+        }
+    }
+    ind += 16;
   }
 }
 
@@ -389,7 +413,7 @@ void TerminalSet::reset(int numTerms)
 
 unsigned char *TerminalSet::getByte(int id) const
 {
-  int offset = (unsigned)id / 8;
+  int offset = (unsigned)id >> 3;
   xassert(offset < bitmapLen);
 
   return bitmap + offset;
@@ -521,6 +545,7 @@ Production::Production(Nonterminal *L, char const *Ltag)
     right(),
     precedence(0),
     forbid(NULL),
+    forbid_owned(false),
     rhsLen(-1),
     prodIndex(-1),
     firstSet(0)       // don't allocate bitmap yet
@@ -537,6 +562,7 @@ Production::~Production()
 Production::Production(Flatten &flat)
   : left(NULL),
     forbid(NULL),
+    forbid_owned(false),
     action(flat),
     firstSet(flat)
 {}

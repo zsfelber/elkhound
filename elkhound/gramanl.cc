@@ -1427,10 +1427,18 @@ void GrammarAnalysis::initializeAuxData()
         delete[] indexedProds;
         indexedProds = NULL;
       }
+
       computeIndexedNonterms();
       computeIndexedTerms();
       resetFirstFollow();
       computeProductionsByLHS();
+
+      MUTATE_EACH_PRODUCTION(productions, iter) {        // (constness)
+        Production * prod = iter.data();
+        if (prod->forbid_owned) {
+            prod->forbid->convert(allTerminals, terminals);
+        }
+      }
   }
 
 

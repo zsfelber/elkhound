@@ -250,7 +250,7 @@ private:    // funcs
   void init(int numTerms);
   unsigned char *getByte(int terminalId) const;
   int getBit(int terminalId) const
-    { return ((unsigned)terminalId % 8); }
+    { return ((unsigned)terminalId & 7); }
 
 public:     // funcs
   TerminalSet(int numTerms=0);                   // allocate new set, initially empty
@@ -259,6 +259,8 @@ public:     // funcs
 
   TerminalSet& operator= (TerminalSet const &obj)
     { copy(obj); return *this; }
+
+  void convert(SObjList<Terminal>& oldts, ObjList<Terminal>& newts);
 
   TerminalSet(Flatten&);
   void xfer(Flatten &flat);
@@ -376,14 +378,12 @@ public:	    // data
   ObjList<RHSElt> right;        // right hand side; terminals & nonterminals
   int precedence;               // precedence level for disambiguation (0 for none specified)
   TerminalSet *forbid;          // (nullable owner) forbidden next tokens
+  bool forbid_owned;
 
   // user-supplied reduction action code
   LocString action;
   RHSElt* defaultSymbol = 0;          // default type determination (of 1-symbol-wide productions) :
                                       // analyzing its consistency
-
-private:
-  bool forbid_owned;
 
 private:    // funcs
 
