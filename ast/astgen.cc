@@ -1361,12 +1361,12 @@ void CGen::emitDestroyField(bool isOwner, rostring type, rostring name)
     // explicitly destroy list elements, because it's easy to do, and
     // because if there is a problem, it's much easier to see its
     // role in a debugger backtrace
-    out << "  " << name << ".deleteAll();\n";
+    out << "  " << name << ".deleteAllOwning();\n";
   }
   else if (isListType(type)) {
     if (streq(extractListType(type), "LocString")) {
       // these are owned even though they aren't actually tree nodes
-      out << "  " << name << ".deleteAll();\n";
+      out << "  " << name << ".deleteAllOwning();\n";
 
       // TODO: this analysis is duplicated below, during cloning;
       // the astgen tool should do a better job of encapsulating

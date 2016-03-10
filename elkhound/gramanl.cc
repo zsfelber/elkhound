@@ -21,6 +21,7 @@
 #include <fstream>     // ofstream
 #include <stdlib.h>      // getenv
 #include <stdio.h>       // printf
+#include <sstream>       // stringstream
 
 using std::ostream;
 using std::ofstream;
@@ -1374,6 +1375,63 @@ void GrammarAnalysis::initializeAuxData()
 
   computeProductionsByLHS();
   computeReachable();
+
+  bool changed = false;
+  MUTATE_EACH_TERMINAL(terminals, iter) {
+    if (!iter.data()->reachable) {
+      urTerminals.append(iter.data());
+      iter.removeAndStuck();
+      changed = true;
+    }
+  }
+  MUTATE_EACH_NONTERMINAL(nonterminals, iter) {
+    Nonterminal *nt = iter.data();
+    if (!nt->reachable) {
+      urNonterminals.append(nt);
+      iter.removeAndStuck();
+      SFOREACH_OBJLIST(Production, nt->productions, pter) {
+          Production const *prod = pter.data();
+          productions.removeItem(prod);
+      }
+      changed = true;
+    }
+  }
+  if (changed) {
+      cout << "Terminals : ";
+      for (ObjListMutator<Terminal> sym(terminals);
+           !sym.isDone(); sym.adv()) {
+          cout<<sym.data()->toString()<<",";
+      }
+      cout << endl << "Nonterminals : ";
+      for (ObjListMutator<Nonterminal> sym(nonterminals);
+           !sym.isDone(); sym.adv()) {
+          cout<<sym.data()->toString()<<",";
+      }
+      cout << endl ;
+
+
+      if (indexedNonterms != NULL) {
+        delete indexedNonterms;
+      }
+
+      if (indexedTerms != NULL) {
+        delete indexedTerms;
+      }
+
+      if (productionsByLHS != NULL) {
+        // empties all lists automatically because of "[]"
+        delete[] productionsByLHS;
+      }
+
+      if (indexedProds != NULL) {
+        delete[] indexedProds;
+      }
+      computeIndexedNonterms();
+      computeIndexedTerms();
+      resetFirstFollow();
+      computeProductionsByLHS();
+  }
+
 
   // finish the productions before we compute the
   // dotted productions
@@ -3911,9 +3969,10 @@ void pretendUsed(...)
 
 void GrammarAnalysis::exampleGrammar()
 {
+  int multiIndex = 0;
   // at one time I was using this to verify my LR item set
   // construction code; this function isn't even called anymore..
-  readGrammarFile(*this, "examples/asu419.gr");
+  readGrammarFile(*this, "examples/asu419.gr", multiIndex);
 
   char const *input[] = {
     " id                 $",
@@ -4060,19 +4119,13 @@ void GrammarAnalysis::runAnalyses(char const *setsFname)
   {                   
     if (setsOutput) {
       *setsOutput << "unreachable nonterminals:\n";
-    }
-    int ct=0;
-    FOREACH_NONTERMINAL(nonterminals, iter) {
-      if (!iter.data()->reachable) {
-        ct++;
 
-        if (setsOutput) {
+        FOREACH_NONTERMINAL(urNonterminals, iter) {
           *setsOutput << "  " << iter.data()->name << "\n";
         }
-      }
     }
 
-    reportUnexpected(ct, expectedUNRNonterms, "unreachable nonterminals");
+    reportUnexpected(urNonterminals.count(), expectedUNRNonterms, "unreachable nonterminals");
 
     // bison also reports the number of productions under all the
     // unreachable nonterminals, but that doesn't seem especially
@@ -4080,19 +4133,13 @@ void GrammarAnalysis::runAnalyses(char const *setsFname)
 
     if (setsOutput) {
       *setsOutput << "unreachable terminals:\n";
-    }
-    ct=0;
-    FOREACH_TERMINAL(terminals, jter) {
-      if (!jter.data()->reachable) {
-        ct++;
 
-        if (setsOutput) {
+        FOREACH_TERMINAL(urTerminals, jter) {
           *setsOutput << "  " << jter.data()->name << "\n";
         }
-      }
     }
 
-    reportUnexpected(ct, expectedUNRTerms, "unreachable terminals");
+    reportUnexpected(urTerminals.count(), expectedUNRTerms, "unreachable terminals");
   }
 
   // print the item sets
@@ -4858,6 +4905,8 @@ void emitSwitchCode(Grammar const &g, EmitCode &out,
          "\n";
 }
 
+// !! for IDE !!
+#define GRAMANL_MAIN
 
 // ------------------------- main --------------------------
 // TODO: split this into its own source file
@@ -4883,7 +4932,7 @@ int inner_entry(int argc, char **argv)
 
   // as long as this remains 0-length, it means to use
   // the default naming scheme
-  string prefix;
+  string prefix0;
 
   // true to use ML, false to use C
   bool useML = false;
@@ -4905,7 +4954,7 @@ int inner_entry(int argc, char **argv)
     }
     else if (0==strcmp(op, "o")) {
       SHIFT;
-      prefix = argv[0];
+      prefix0 = argv[0];
       SHIFT;
     }
     else if (0==strcmp(op, "testRW")) {
@@ -4950,9 +4999,9 @@ int inner_entry(int argc, char **argv)
     return 0;
   }
 
-  if (!prefix.length()) {
+  if (!prefix0.length()) {
     // default naming scheme
-    prefix = replace(argv[0], ".gr", "");
+    prefix0 = replace(argv[0], ".gr", "");
   }
 
   SourceLocManager mgr;
@@ -4974,8 +5023,54 @@ int inner_entry(int argc, char **argv)
 
 
   int multiIndex = 0;
+  int result = 0;
+
+  setAnnotations(ast);
+
+
+  if (MULTIPLE_START && ast->firstNT && ast->firstNT->productions.count()>1) {
+      cout << "Multiple start productions, generating numbered grammars:" << ast->firstNT->productions.count() << endl;
+  } else {
+      multiIndex = -1;
+      if (!ast->firstNT) {
+          cout << "! ast->firstNT" << endl;
+      }
+      if (MULTIPLE_START) {
+          cout << "Multiple start but discarded." << endl;
+      }
+  }
 
   do {
+
+      string prefix;
+
+      if (multiIndex>=0) {
+          ProdDecl *pdecl = ast->firstNT->productions.nth(multiIndex);
+          std::stringstream s;
+          int names = 0;
+          LocString name;
+          FOREACH_ASTLIST(RHSElt, pdecl->rhs, iter) {
+            RHSElt *n = constcast(iter.data());
+            if (n->isRH_name()) {
+                names++;
+                if (names > 1) {
+                    break;
+                }
+                name = n->asRH_name()->name;
+            }
+          }
+          if (names == 1) {
+              s << prefix0 << name;
+          } else {
+              s << prefix0 << multiIndex;
+          }
+          prefix = s.str().c_str();
+      } else {
+          prefix = prefix0;
+      }
+      cout << endl << "Processing : " << prefix << endl;
+      //ast->forms.nth(0)->debugPrint(cout, 0);
+
 
       // parse the AST into a Grammar
       GrammarAnalysis g;
@@ -4983,7 +5078,8 @@ int inner_entry(int argc, char **argv)
         g.targetLang = "OCaml";
       }
       parseGrammarAST(g, ast, multiIndex);
-      if (!MULTIPLE_START || multiIndex < 0) {
+
+      if (multiIndex<0) {
           ast.del();              // done with it
       }
 
@@ -4996,7 +5092,8 @@ int inner_entry(int argc, char **argv)
       string setsFname = stringc << prefix << ".out";
       g.runAnalyses(tracingSys("lrtable")? setsFname.c_str() : NULL);
       if (g.errors) {
-        return 2;
+        result |= 2;
+        continue;
       }
 
       if (!useML) {
@@ -5018,7 +5115,8 @@ int inner_entry(int argc, char **argv)
           else {
             cout << "(note: partial output files have not been deleted)\n";
           }
-          throw;
+          result |= -1;
+          continue;
         }
       }
       else {
@@ -5040,7 +5138,8 @@ int inner_entry(int argc, char **argv)
           else {
             cout << "(note: partial output files have not been deleted)\n";
           }
-          throw;
+          result |= -1;
+          continue;
         }
       }
 
@@ -5061,9 +5160,9 @@ int inner_entry(int argc, char **argv)
       if (tracingSys("explore")) {
         grammarExplorer(g);
       }
-  } while (MULTIPLE_START && multiIndex >= 0);
+  } while (multiIndex >= 0);
 
-  return 0;
+  return result;
 }
 
 void entry(int argc, char **argv)

@@ -153,6 +153,7 @@ protected:
   VoidList &list; 	  // underlying list
   VoidNode *prev;         // (serf) previous node; NULL if at list's head
   VoidNode *current;      // (serf) node we're considered to be pointing at
+  bool stuck = false;
 
 public:
   VoidListMutator(VoidList &lst)   : list(lst) { reset(); }
@@ -170,7 +171,7 @@ public:
 
   // iterator actions
   bool isDone() const              { return current == NULL; }
-  void adv()                       { prev = current;  current = current->next; }
+  void adv()                       { if (stuck) stuck = false; else {prev = current;  current = current->next;} }
   void *data()                     { return current->data; }
   void *&dataRef()                 { return current->data; }
 
@@ -192,6 +193,11 @@ public:
   void *remove();
     // 'current' is removed from the list and returned, and whatever was
     // next becomes the new 'current'
+  void *removeAndStuck()
+  {
+    stuck = true;
+    return remove();
+  }
 
   // debugging
   void selfCheck() const

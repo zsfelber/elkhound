@@ -16,7 +16,7 @@ class GrammarAST (ASTList<TopForm> forms) {
 
   public bool allowContinuedNonterminals = false;
   
-  ctor { terms=NULL; firstNT=NULL; };
+  ctor { terms=NULL; firstNT=NULL; earlyStartNT=NULL;};
 }
 
 

@@ -68,6 +68,8 @@ terminals {
 }
 
 
+nonterm Start -> Exp;
+
 // syntax: The third and final section is a sequence of nonterminal
 // ('nonterm') definitions.  The first nonterminal is always the start
 // symbol of the grammar.

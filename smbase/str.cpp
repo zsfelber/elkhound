@@ -28,7 +28,7 @@ char const nul_byte = 0;
 // 'emptyString' to be const because it gets assigned to 's', but it
 // is nevertheless the intent that I never modify 'nul_byte'
 char * const string::emptyString = const_cast<char*>(&nul_byte);
-
+char * const string::nullString = "<null>";
 
 string::string(char const *src, int length, SmbaseStringFunc)
 {
@@ -55,7 +55,7 @@ void string::dup(char const *src)
 
 void string::kill()
 {
-  if (s != emptyString) {
+  if (s != emptyString && s != nullString) {
     delete s;
   }
 }
@@ -306,7 +306,9 @@ void stringBuilder::grow(int newMinLength)
   char *temp = new char[newMinSize];
   xassert(len+1 <= newMinSize);    // prevent overrun
   memcpy(temp, s, len+1);          // copy null too
-  delete[] s;
+  if (s != nullString && s != emptyString) {
+      delete s;
+  }
   s = temp;
 
   // adjust other variables

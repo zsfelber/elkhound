@@ -20,8 +20,6 @@
 #include <ctype.h>           // isspace, isalnum
 #include <sstream>           // stringstream
 
-static bool const MULTIPLE_START = true;
-
 #define LIT_STR(s) LocString(SL_INIT, grammarStringTable.add(s))
 
 inline bool isVoid(char const * tp) {
@@ -839,7 +837,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
     astParseError("you have to have an EOF token, with code 0");
     return;
   }
-  if (MULTIPLE_START) {
+  if (multiIndex >= 0) {
       ProdDecl *prod = firstNT->productions.nth(multiIndex);
       multiIndex++;
       if (multiIndex >= firstNT->productions.count()) {
@@ -850,7 +848,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
       RH_name *rh_eof = 0;
       if (poss_eof && poss_eof->kind()==RH_name::RH_NAME) {
           rh_eof = poss_eof->asRH_name();
-          if (strcmp(eof->name, eof->name)) {
+          if (strcmp(rh_eof->name, eof->name)) {
             rh_eof = 0;
           }
       }
@@ -862,6 +860,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
           ast->earlyStartNT->productions.removeFirst();
           ast->earlyStartNT->productions.prepend(prod);
       } else {
+          ast->forms.removeItem(firstNT);
           ast->earlyStartNT
                   = new TF_nonterm(
                       LIT_STR("__EarlyStartSymbol").clone(),   // name
@@ -870,6 +869,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
                       new ASTList<ProdDecl>(prod, false),      // productions
                       NULL                                     // subsets
                     );
+          ast->forms.prepend(ast->earlyStartNT);
       }
   } else {
 
@@ -1071,7 +1071,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
     }
   }
   // generating default rule
-  if (synthesizedStart ? tags==2 : (tags==1)) {
+  if (synthesizedStart ? tags<=2 : (tags==1)) {
     if (!first->tag.length()) {
        first->tag.str = synthesizedStart ? "top" : "tag";
     }
@@ -1482,8 +1482,7 @@ GrammarAST *parseGrammarFile(rostring origFname, bool useML)
 
 void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex)
 {
-  setAnnotations(treeTop);
-  
+
   // look at TF_options before synthesizing start rule,
   // so we can know what language is the target
   astParseOptions(g, treeTop);
@@ -1513,6 +1512,7 @@ void readGrammarFile(Grammar &g, rostring fname, int &multiIndex)
   // make sure the tree gets deleted
   Owner<GrammarAST> treeTop(parseGrammarFile(fname, false /*useML*/));
 
+  setAnnotations(treeTop);
   parseGrammarAST(g, treeTop, multiIndex);
 
   treeTop.del();
@@ -1546,6 +1546,12 @@ int main(int argc, char **argv)
   bool printCode = true;
 
   int multiIndex = 0;
+  if (MULTIPLE_START && treeTop->firstNT && treeTop->firstNT->productions.count()>1) {
+
+  } else {
+      multiIndex = -1;
+  }
+
 
   do {
       // read the file
@@ -1609,7 +1615,7 @@ int main(int argc, char **argv)
 
       cout << "successfully parsed, printed, wrote, and read a grammar!\n";
 
-  } while (MULTIPLE_START && multiIndex >= 0);
+  } while (multiIndex >= 0);
 
   return 0;
 

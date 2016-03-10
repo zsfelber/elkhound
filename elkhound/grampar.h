@@ -101,11 +101,13 @@ public:
 void readGrammarFile(Grammar &g, rostring fname, int &multiIndex);
 
 // just do the parsing stage
-GrammarAST *parseGrammarFile(rostring fname, bool useML, int &multiIndex);
+GrammarAST *parseGrammarFile(rostring fname, bool useML);
 
 // merge two grammar descriptions; neither argument is consumed,
 // but subtrees of the 2nd argument get moved into the first tree
 void mergeGrammar(GrammarAST *base, GrammarAST *ext);
+
+void setAnnotations(GrammarAST *ast);
 
 // GrammarAST -> Grammar
 void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex);

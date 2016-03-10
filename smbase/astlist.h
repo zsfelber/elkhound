@@ -31,8 +31,8 @@ public:
   ~ASTList()                            { if (owning) deleteAll(); }
 
   // ctor to make singleton list; often quite useful
-  ASTList(T *elt)                       : list(), owning(owning) { prepend(elt); }
-  ASTList(T *elt, bool owning)          : list(), owning(false) { prepend(elt); }
+  ASTList(T *elt)                       : list(), owning(true) { prepend(elt); }
+  ASTList(T *elt, bool owning)          : list(), owning(owning) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
@@ -70,6 +70,7 @@ public:
 
   // deletion
   void deleteFirst()                    { delete (T*)list.removeFirst(); }
+  void deleteAllOwning();
   void deleteAll();
 
   // list-as-set: selectors
@@ -87,6 +88,14 @@ public:
   void debugPrint(std::ostream& os) const        { list.debugPrint(os); }
 };
 
+
+template <class T>
+void ASTList<T>::deleteAllOwning()
+{
+  if (owning) {
+    deleteAll();
+  }
+}
 
 template <class T>
 void ASTList<T>::deleteAll()

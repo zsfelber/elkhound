@@ -58,6 +58,8 @@ typedef LocString LiteralCode;
 // refers to this string table
 extern StringTable grammarStringTable;
 
+static const bool MULTIPLE_START = true;
+
 
 // ---------------- Symbol --------------------
 // either a nonterminal or terminal symbol
@@ -481,6 +483,8 @@ class Grammar {
 public:	    // data
   ObjList<Nonterminal> nonterminals;    // (owner list)
   ObjList<Terminal> terminals;          // (owner list)
+  ObjList<Nonterminal> urNonterminals;  // (owner list)
+  ObjList<Terminal> urTerminals;        // (owner list)
   ObjList<Production> productions;      // (owner list)
   Nonterminal *startSymbol;             // (serf) a particular nonterminal
 

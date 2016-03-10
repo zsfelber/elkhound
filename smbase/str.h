@@ -53,14 +53,15 @@ protected:     // data
   // 10/12/00: switching to never letting s be NULL
   char *s;     	       	       	       // string contents; never NULL
   static char * const emptyString;     // a global ""; should never be modified
+  static char * const nullString;
 
 protected:     // funcs
   void dup(char const *source);        // copies, doesn't dealloc first
   void kill();                         // dealloc if str != 0
 
 public:	       // funcs
-  string(string const &src) { dup(src.s); }
-  string(char const *src) { dup(src); }
+  string(string const &src) { if (src.s) dup(src.s); else s = nullString; }
+  string(char const *src) { if (src) dup(src); else s = nullString; }
   string() { s=emptyString; }
   ~string() { kill(); }
 

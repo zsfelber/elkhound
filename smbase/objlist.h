@@ -179,6 +179,7 @@ public:
 
   // removal
   T *remove()                           { return (T*)mut.remove(); }
+  T *removeAndStuck()                   { return (T*)mut.removeAndStuck(); }
     // 'current' is removed from the list and returned, and whatever was
     // next becomes the new 'current'
 
