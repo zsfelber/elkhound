@@ -33,6 +33,7 @@ public:     // data
   // to change this for its own purposes, and currently does so for
   // token reclassification
   int type;
+  int internalType;
 
   // semantic value; this is what will be passed to the reduction
   // actions when this token is on the right hand side of a rule

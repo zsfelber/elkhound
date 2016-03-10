@@ -945,6 +945,7 @@ STATICDEF bool GLR
 
     if (savedTkns) {
         lexer.type = *savedTkn;
+        lexer.internalType = userAct->toInternalType(lexer.type);
         savedTkns--;
         savedTkn++;
 #ifndef NDEBUG
@@ -954,11 +955,13 @@ STATICDEF bool GLR
         // get token type, possibly using token reclassification
         #if USE_RECLASSIFY
           lexer.type = reclassifyToken(userAct, lexer.type, lexer.sval, multiTokensBuffer);
+          lexer.internalType = userAct->toInternalType(lexer.type);
           // zsf : support reclassify as multiple-token-sequence (practical eg. '>>' ->  '>' '>'  with generic types)
           if (lexer.type < 0) {
               savedTkns = - lexer.type - 1;
               savedTkn = multiTokensBuffer + 1;
               lexer.type = *multiTokensBuffer;
+              lexer.internalType = userAct->toInternalType(lexer.type);
           }
         #else     // this is what bccgr does
           //if (lexer.type == 1 /*L2_NAME*/) {
@@ -1067,14 +1070,14 @@ tryDeterministic:
     xassertdb(parser->referenceCount==1);     // 'topmostParsers[0]' is referrer
 
     #if ENABLE_EEF_COMPRESSION
-      if (tables->actionEntryIsError(parser->state, lexer.type)) {
+      if (tables->actionEntryIsError(parser->state, lexer.internalType)) {
         // zsf -> original return -> system exit
         return -1;    // parse error
       }
     #endif
 
     ActionEntry action =
-      tables->getActionEntry_noError(parser->state, lexer.type);
+      tables->getActionEntry_noError(parser->state, lexer.internalType);
 
     // I decode reductions before shifts because:
     //   - they are 4x more common in my C grammar
@@ -1346,7 +1349,7 @@ tryDeterministic:
       ACCOUNTING( localDetShift++; )
 
       // can shift unambiguously
-      StateId newState = tables->decodeShift(action, lexer.type);
+      StateId newState = tables->decodeShift(action, lexer.internalType);
 
       TRSPARSE("state " << parser->state <<
                ", (unambig) shift token " << lexer.tokenDesc() <<

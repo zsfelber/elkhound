@@ -129,6 +129,10 @@ public:
   virtual char const *terminalName(int termId)=0;
   virtual char const *nonterminalName(int termId)=0;
 
+  virtual int toInternalType(int type) {
+     return type;
+  }
+
   // get the parse tables for this grammar; the default action
   // complains that no tables are defined
   virtual ParseTables *makeTables();

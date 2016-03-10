@@ -181,6 +181,7 @@ public:     // data
 public:     // data
   // terminal class index - this terminal's id; -1 means unassigned
   int termIndex;
+  int externalTermIndex;
 
 protected:  // funcs  
   virtual void internalPrintDDM(ostream &os) const;
@@ -485,6 +486,7 @@ public:	    // data
   ObjList<Terminal> terminals;          // (owner list)
   ObjList<Nonterminal> urNonterminals;  // (owner list)
   ObjList<Terminal> urTerminals;        // (owner list)
+  SObjList<Terminal> allTerminals;      //  ----------
   ObjList<Production> productions;      // (owner list)
   Nonterminal *startSymbol;             // (serf) a particular nonterminal
 

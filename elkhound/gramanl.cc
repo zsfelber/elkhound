@@ -57,7 +57,6 @@ static bool const LR1 = false;
 // context-sensitivity of LR(1))
 static bool const LALR1 = true;
 
-
 #if !defined(NDEBUG)     // track unauthorized malloc's
   #define TRACK_MALLOC
 #endif
@@ -1242,13 +1241,20 @@ void GrammarAnalysis::computeIndexedTerms()
   loopi(numTerminals()) {
     indexedTerms[i] = NULL;      // used to track id duplication
   }
+  int ti = 0;
   for (ObjListMutator<Terminal> sym(terminals);
        !sym.isDone(); sym.adv()) {
+    sym.data()->externalTermIndex = sym.data()->termIndex;
+    sym.data()->termIndex = ti++;
     int index = sym.data()->termIndex;   // map: symbol to index
     if (indexedTerms[index] != NULL) {
       xfailure(stringc << "terminal index collision at index " << index);
     }
     indexedTerms[index] = sym.data();    // map: index to symbol
+  }
+  for (ObjListMutator<Terminal> sym(urTerminals);
+       !sym.isDone(); sym.adv()) {
+      sym.data()->termIndex = 0;
   }
 }
 
@@ -1276,14 +1282,16 @@ void GrammarAnalysis::computeProductionsByLHS()
 
   // fill in both maps
   {
+    int pi = 0;
     MUTATE_EACH_PRODUCTION(productions, prod) {        // (constness)
       int LHSindex = prod.data()->left->ntIndex;
       xassert(LHSindex < numNonterms);
 
       productionsByLHS[LHSindex].append(prod.data());
+      prod.data()->prodIndex = pi++;
       indexedProds[prod.data()->prodIndex] = prod.data();
     }
-  }                                                      
+  }
 
   // verify we filled the 'prodIndex' map
   for (int id=0; id<numProds; id++) {
@@ -1378,6 +1386,7 @@ void GrammarAnalysis::initializeAuxData()
 
   bool changed = false;
   MUTATE_EACH_TERMINAL(terminals, iter) {
+    allTerminals.append(iter.data());
     if (!iter.data()->reachable) {
       urTerminals.append(iter.data());
       iter.removeAndStuck();
@@ -1397,34 +1406,26 @@ void GrammarAnalysis::initializeAuxData()
     }
   }
   if (changed) {
-      cout << "Terminals : ";
-      for (ObjListMutator<Terminal> sym(terminals);
-           !sym.isDone(); sym.adv()) {
-          cout<<sym.data()->toString()<<",";
-      }
-      cout << endl << "Nonterminals : ";
-      for (ObjListMutator<Nonterminal> sym(nonterminals);
-           !sym.isDone(); sym.adv()) {
-          cout<<sym.data()->toString()<<",";
-      }
-      cout << endl ;
-
 
       if (indexedNonterms != NULL) {
         delete indexedNonterms;
+        indexedNonterms = NULL;
       }
 
       if (indexedTerms != NULL) {
         delete indexedTerms;
+        indexedTerms = NULL;
       }
 
       if (productionsByLHS != NULL) {
         // empties all lists automatically because of "[]"
         delete[] productionsByLHS;
+        productionsByLHS = NULL;
       }
 
       if (indexedProds != NULL) {
         delete[] indexedProds;
+        indexedProds = NULL;
       }
       computeIndexedNonterms();
       computeIndexedTerms();
@@ -3891,6 +3892,7 @@ void GrammarAnalysis::addTreebuildingActions()
 {
   #define STR(s) LITERAL_LOCSTRING(grammarStringTable.add(s))
 
+
   // prepend an #include to the verbatim
   {
     StringRef extra = grammarStringTable.add(
@@ -4237,6 +4239,8 @@ string actionFuncName(Production const &prod)
 void emitActionCode(GrammarAnalysis const &g, rostring hFname,
                     rostring ccFname, rostring srcFname)
 {
+  #define STR(s) LITERAL_LOCSTRING(grammarStringTable.add(s))
+
   EmitCode dcl(hFname);
   if (!dcl) {
     throw_XOpen(hFname);
@@ -4247,7 +4251,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
                          ".", "_"),
                          "/", "_"),
                          "-", "_");
-      
+
   // prologue
   dcl << "// " << hFname << "\n"
       << "// *** DO NOT EDIT BY HAND ***\n"
@@ -4257,8 +4261,8 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       << "#define " << latchName << "\n"
       << "\n"
       << "#include \"useract.h\"     // UserActions\n"
-      << "\n"
-      ;
+      << "\n" ;
+
 
   // insert the stand-alone verbatim sections
   {FOREACH_OBJLIST(LocString, g.verbatim, iter) {
@@ -4271,6 +4275,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
   {
     int ct=0;
     FOREACH_OBJLIST(LocString, g.actionClasses, iter) {
+
       if (ct++ > 0) {
         // end the previous class; the following body will open
         // another one, and the brace following the action list
@@ -4281,8 +4286,17 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       dcl << "\n"
           << "// parser context class\n"
           << "class ";
-      emitUserCode(dcl, *(iter.data()), false /*braces*/);
+      LocString s = *(iter.data());
+      std::string code = s.str;
+      code.replace(code.find_first_of("CsParse"), 7, g.actionClassName.str);
+      s = STR(code.c_str());
+      emitUserCode(dcl, s, false /*braces*/);
   }}
+
+  if (g.terminals.count() != g.allTerminals.count()) {
+      dcl << "\n"
+          << "   virtual int toInternalType(int type);\n";
+  }
 
   // we end the context class with declarations of the action functions
   dcl << "\n"
@@ -4331,6 +4345,40 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
   out << "#include <iostream>    // cout\n";
   out << "#include <stdlib.h>      // abort\n";
   out << "\n";
+  if (g.terminals.count() != g.allTerminals.count()) {
+
+      out << "enum _Int_TokenType {\n" << "   ";
+      FOREACH_OBJLIST(Terminal, g.terminals, iter) {
+        Terminal const * t = iter.data();
+        out << "_INT_" << t->name << ", ";
+      }
+      out << "\n};\n"
+          << "\n";
+      out << "int _To_Ext_TokenType[] = {\n" << "   ";
+      FOREACH_OBJLIST(Terminal, g.terminals, iter) {
+          Terminal const * t = iter.data();
+          out << t->name << ", ";
+      }
+      out << "\n};\n"
+          << "\n";
+      out << "int _To_Int_TokenType[] = {\n" << "   ";
+      SFOREACH_OBJLIST(Terminal, g.allTerminals, iter) {
+          Terminal const * t = iter.data();
+          if (t->termIndex) {
+              out << "_INT_" << t->name << ", ";
+          } else {
+              out << "0, ";
+          }
+      }
+      out << "\n};\n"
+          << "\n";
+
+      out << "int "<<g.actionClassName<<"::toInternalType(int type) {\n"
+          << "   return _To_Int_TokenType[type];\n"
+          << "}\n\n";
+
+  }
+
 
   NOSOURCELOC(
     out << "// parser-originated location information is disabled by\n"
@@ -5042,11 +5090,10 @@ int inner_entry(int argc, char **argv)
 
   do {
 
-      string prefix;
+      string prefix, pref;
 
       if (multiIndex>=0) {
           ProdDecl *pdecl = ast->firstNT->productions.nth(multiIndex);
-          std::stringstream s;
           int names = 0;
           LocString name;
           FOREACH_ASTLIST(RHSElt, pdecl->rhs, iter) {
@@ -5059,12 +5106,25 @@ int inner_entry(int argc, char **argv)
                 name = n->asRH_name()->name;
             }
           }
-          if (names == 1) {
-              s << prefix0 << name;
-          } else {
-              s << prefix0 << multiIndex;
+          {
+              std::stringstream s;
+              if (names == 1) {
+                  s << name;
+              } else {
+                  s << multiIndex;
+              }
+              pref = s.str().c_str();
           }
-          prefix = s.str().c_str();
+
+          {
+              std::stringstream s;
+              if (names == 1) {
+                  s << prefix0 << "_" << name;
+              } else {
+                  s << prefix0 << "_" << multiIndex;
+              }
+              prefix = s.str().c_str();
+          }
       } else {
           prefix = prefix0;
       }
@@ -5081,6 +5141,14 @@ int inner_entry(int argc, char **argv)
 
       if (multiIndex<0) {
           ast.del();              // done with it
+      }
+
+      {
+          std::stringstream s;
+
+          s << g.actionClassName << pref;
+          g.actionClassName.str = STR(s.str().c_str());
+          cout << "actionClassName:" << g.actionClassName << endl;
       }
 
       if (tracingSys("treebuild")) {
