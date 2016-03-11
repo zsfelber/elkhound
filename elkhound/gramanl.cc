@@ -173,6 +173,7 @@ Symbol const *DottedProduction::symbolAfterDotC() const
 
 void DottedProduction::print(ostream &os) const
 {
+  os << "[" << prod->prodIndex << "] ";
   os << prod->left->name << " ->";
 
   int position = 0;
@@ -271,6 +272,16 @@ void LRItem::print(ostream &os, GrammarAnalysis const &g) const
 {
   dprod->print(os);
   lookahead.print(os, g);      // prints the separating comma, if necessary
+}
+
+string LRItem::toString(Grammar const &g) const
+{
+#define STR(st) LITERAL_LOCSTRING(grammarStringTable.add(st))
+
+    std::stringstream s;
+    dprod->print(s);
+    lookahead.print(s, g);
+    return s.str().c_str();
 }
 
 
@@ -839,6 +850,9 @@ void ItemSet::print(ostream &os, GrammarAnalysis const &g,
 
     // print its text
     os << "  ";
+    if (item->isDotAtEnd()) {
+       os << "can reduce by ";
+    }
     item->print(os, g);
     os << "      ";
 
@@ -873,9 +887,10 @@ void ItemSet::print(ostream &os, GrammarAnalysis const &g,
     }
   }
   
-  for (int p=0; p<numDotsAtEnd; p++) {
-    os << "  can reduce by " << dotsAtEnd[p]->getProd()->toString() << endl;
-  }
+  //for (int p=0; p<numDotsAtEnd; p++) {
+      //os << "  can reduce by " << dotsAtEnd[p]->getProd()->toString() << endl;
+      //os << "  can reduce by " << dotsAtEnd[p]->toString(g) << endl;
+  //}
 }
 
 

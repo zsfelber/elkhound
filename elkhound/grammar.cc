@@ -538,7 +538,7 @@ bool TerminalSet::removeSet(TerminalSet const &obj)
       os << t->toString(); \
 
 
-void TerminalSet::print(ostream &os, Grammar const &g, char const *lead) const
+void TerminalSet::print(std::ostream &os, Grammar const &g, char const *lead) const
 {
     int ct=0;
     FOREACH_TERMINAL(g.terminals, iter) {
@@ -547,7 +547,7 @@ void TerminalSet::print(ostream &os, Grammar const &g, char const *lead) const
 }
 
 
-void TerminalSet::print_ext(ostream &os, Grammar const &g, char const *lead) const
+void TerminalSet::print_ext(std::ostream &os, Grammar const &g, char const *lead) const
 {
     int ct=0;
     SFOREACH_TERMINAL(g.allTerminals, iter) {

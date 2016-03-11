@@ -23,6 +23,8 @@
 #include "okhasharr.h"    // OwnerKHashArray
 #include "glrconfig.h"    // SOURCELOC
 #include "parsetables.h"  // ParseTables, GrowArray
+#include <sstream>
+#include <ostream>
 
 using std::ostream;
 using std::ofstream;
@@ -199,6 +201,8 @@ public:    // funcs
   bool isExtendingShift(Nonterminal const *A, Terminal const *t) const;
 
   void print(ostream &os, GrammarAnalysis const &g) const;
+
+  string toString(Grammar const &g) const;
 };
 
 

@@ -288,8 +288,8 @@ public:     // funcs
   bool merge(TerminalSet const &obj);     // union; returns true if merging changed set
   bool removeSet(TerminalSet const &obj); // intersect with complement; returns true if this changed set
 
-  void print(ostream &os, Grammar const &g, char const *lead = ", ") const;
-  void print_ext(ostream &os, Grammar const &g, char const *lead = ", ") const;
+  void print(std::ostream &os, Grammar const &g, char const *lead = ", ") const;
+  void print_ext(std::ostream &os, Grammar const &g, char const *lead = ", ") const;
 };
 
 
