@@ -1385,8 +1385,9 @@ void GrammarAnalysis::initializeAuxData()
   computeReachable();
 
   bool changed = false;
+  allTerminalCnt = terminals.count();
   MUTATE_EACH_TERMINAL(terminals, iter) {
-    iter.data()->externalTermIndex = allTerminals.count();
+    iter.data()->externalTermIndex = iter.data()->termIndex;
     allTerminals.append(iter.data());
     if (!iter.data()->reachable) {
       urTerminals.append(iter.data());
@@ -4374,7 +4375,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       out << "int _To_Int_TokenType[] = {\n" << "   ";
       SFOREACH_OBJLIST(Terminal, g.allTerminals, iter) {
           Terminal const * t = iter.data();
-          if (t->termIndex) {
+          if (t && t->termIndex) {
               out << "_INT_" << t->name << ", ";
           } else {
               out << "0, ";

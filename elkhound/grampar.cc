@@ -1032,7 +1032,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       nonterm = env.g.getOrMakeNonterminal(symName);
     }
 
-    if (term && term->termIndex==0 && !synthesizedStart) {
+    if (term && term->termCode==0 && !synthesizedStart) {
       astParseError(symName, "you cannot use the EOF token in your rules");
     }
 

@@ -358,7 +358,7 @@ void TerminalSet::init(int numTerms)
 void TerminalSet::convert(Grammar& g) {
   SObjList<Terminal>& oldts = g.allTerminals;
   ObjList<Terminal>& newts = g.terminals;
-  xassert(bitmapLen == ((oldts.count()+7)>>3));
+  xassert(bitmapLen == ((g.allTerminalCnt+7)>>3));
 
 
   TerminalSet dup(*this);
@@ -370,20 +370,27 @@ void TerminalSet::convert(Grammar& g) {
   SObjListIter<Terminal> iter(oldts);
   for (int i = 0; i < dup.bitmapLen; i++) {
     unsigned char byte = dup.bitmap[i];
-    for (int b = 0; b < 8 && !iter.isDone(); b++, ind++, iter.adv()) {
-        if (byte&bits[b]) {
-           Terminal * t = constcast(iter.data());
-           try {
-              xassert(ind == t->externalTermIndex);
-           } catch (...) {
-              std::cout << "ind:" << ind << " t->externalTermIndex:" << t->externalTermIndex << std::endl;
-              throw;
-           }
+    for (unsigned char bit = 0x01; bit && !iter.isDone(); iter.adv()) {
+        Terminal * t = constcast(iter.data());
+        if (t) {
+            if (byte&bit) {
+               std::cout << t->name << " : " << t->externalTermIndex << "->" << t->termIndex << std::endl;
+               try {
+                  xassert(ind == t->externalTermIndex);
+               } catch (...) {
+                  std::cout << "ind:" << ind << " t->externalTermIndex:" << t->externalTermIndex << std::endl;
+                  throw;
+               }
 
-           int nbyti = t->termIndex >> 3;
-           int nbiti = t->termIndex & 7;
+               if (t->termIndex) {
+                   int nbyti = t->termIndex >> 3;
+                   int nbiti = t->termIndex & 7;
 
-           bitmap[nbyti] |= bits[nbiti];
+                   bitmap[nbyti] |= bits[nbiti];
+               }
+            }
+            bit<<=1;
+            ind++;
         }
     }
   }
@@ -391,7 +398,7 @@ void TerminalSet::convert(Grammar& g) {
   if (oldts.count() || newts.count()) {
       ostream & os = trace("conflict");
       os << "\nTerminalSet converted from:\n";
-      dup.print_ext(os, g);
+      dup.print_ext(os, g, "");
       os << "\n";
 
       os << "to             TerminalSet:\n";
@@ -519,7 +526,7 @@ bool TerminalSet::removeSet(TerminalSet const &obj)
 
 #define print_terminal_adv(termIndexField) \
       Terminal const *t = iter.data(); \
-      if (!contains(t->termIndexField)) continue; \
+      if (!t || !contains(t->termIndexField)) continue; \
       if (suppressExcept &&                  /* suppressing..*/ \
           suppressExcept != t) continue;     /* and this isn't the exception*/ \
       if (ct++ == 0) { \
@@ -1059,7 +1066,7 @@ bool Grammar::declareToken(LocString const &symbolName, int code,
   Terminal *term = getOrMakeTerminal(symbolName);
 
   // assign fields specified in %token declaration
-  term->termIndex = code;
+  term->termCode = code;
   term->alias = alias;
 
   return true;

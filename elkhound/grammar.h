@@ -180,6 +180,7 @@ public:     // data
 // ------ annotation ------
 public:     // data
   // terminal class index - this terminal's id; -1 means unassigned
+  int termCode;
   int termIndex;
   int externalTermIndex;
 
@@ -193,7 +194,7 @@ public:     // funcs
       precedence(0),
       associativity(AK_NONASSOC),
       classifyParam(NULL),
-      termIndex(-1)
+      termCode(-1)
   {}
 
   Terminal(Flatten &flat);

@@ -388,7 +388,7 @@ protected:  // data
 
   // index the symbols on their integer ids
   Nonterminal **indexedNonterms;        // (owner -> serfs) ntIndex -> Nonterminal
-  Terminal **indexedTerms;              // (owner -> serfs) termIndex -> Terminal
+  Terminal **indexedTerms;              // (owner -> serfs) termIndex-> Terminal
   // numNonterms==Grammar::numNonterminals(), numTerms==Grammar::numTerminals()
   int numNonterms;                      // length of 'indexedNonterms' array
   int numTerms;                         //   "     "         terms       "
