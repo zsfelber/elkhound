@@ -31,6 +31,7 @@
 #include "strobjdict.h"  // StringObjDict
 #include "owner.h"       // Owner
 #include "asockind.h"    // AssocKind
+#include "array.h"       // GrowArray
 
 using std::ostream;
 using std::ofstream;
@@ -194,7 +195,8 @@ public:     // funcs
       precedence(0),
       associativity(AK_NONASSOC),
       classifyParam(NULL),
-      termCode(-1)
+      termCode(-1),
+      termIndex(-1)
   {}
 
   Terminal(Flatten &flat);
@@ -249,9 +251,9 @@ public:     // data
 
 private:    // funcs
   void init(int numTerms);
-  unsigned char *getByte(int terminalId) const;
-  int getBit(int terminalId) const
-    { return ((unsigned)terminalId & 7); }
+  unsigned char *getByte(int terminalIndex) const;
+  int getBit(int terminalIndex) const
+    { return ((unsigned)terminalIndex & 7); }
 
 public:     // funcs
   TerminalSet(int numTerms=0);                   // allocate new set, initially empty
@@ -272,14 +274,14 @@ public:     // funcs
   // true when the # of symbols is 0; an unfinished state
   bool nullMap() const { return bitmap==NULL; }
 
-  bool contains(int terminalId) const;
+  bool contains(int terminalIndex) const;
   
   // NOTE: can only compare dotted productions which have the
   // same number of symbols (assertion fail otherwise)
   bool isEqual(TerminalSet const &obj) const;
 
-  void add(int terminalId);
-  void remove(int terminalId);
+  void add(int terminalIndex);
+  void remove(int terminalIndex);
   void clear();
 
   void copy(TerminalSet const &obj);      // lengths must be the same
@@ -491,6 +493,9 @@ public:	    // data
   SObjList<Terminal> allTerminals;      //  ----------
   ObjList<Production> productions;      // (owner list)
   ObjList<Production> urProductions;    // (owner list)
+  bool terminalCodeMapped;
+  GrowArray<Terminal*> codeHasTerm;
+  int maxCode;
   Nonterminal *startSymbol;             // (serf) a particular nonterminal
 
   // the special terminal for the empty string; does not appear in the
@@ -507,6 +512,7 @@ public:	    // data
 
   // name of the class into which the action functions are placed
   LocString actionClassName;
+  StringRef actionClassName0;
 
   // verbatim action class declaration, and additional codes from
   // extension modules to append to it (but see note of 11/13/04

@@ -4,7 +4,7 @@
 // the 'forbid' directive should ensure this
 option shift_reduce_conflicts 0;
 
-option unreachable_terminals 96;
+option unreachable_terminals 0;
 
 context_class Forbid : public UserActions {
 public:

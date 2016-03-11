@@ -358,7 +358,7 @@ void TerminalSet::init(int numTerms)
 void TerminalSet::convert(Grammar& g) {
   SObjList<Terminal>& oldts = g.allTerminals;
   ObjList<Terminal>& newts = g.terminals;
-  xassert(bitmapLen == ((g.allTerminalCnt+7)>>3));
+  xassert(bitmapLen == ((oldts.count()+7)>>3));
 
 
   TerminalSet dup(*this);
@@ -370,27 +370,23 @@ void TerminalSet::convert(Grammar& g) {
   SObjListIter<Terminal> iter(oldts);
   for (int i = 0; i < dup.bitmapLen; i++) {
     unsigned char byte = dup.bitmap[i];
-    for (unsigned char bit = 0x01; bit && !iter.isDone(); iter.adv()) {
+    for (unsigned char bit = 0x01; bit && !iter.isDone(); iter.adv(), bit<<=1, ind++) {
         Terminal * t = constcast(iter.data());
-        if (t) {
-            if (byte&bit) {
-               std::cout << t->name << " : " << t->externalTermIndex << "->" << t->termIndex << std::endl;
-               try {
-                  xassert(ind == t->externalTermIndex);
-               } catch (...) {
-                  std::cout << "ind:" << ind << " t->externalTermIndex:" << t->externalTermIndex << std::endl;
-                  throw;
-               }
+        if (t && (byte&bit)) {
+           std::cout << t->name << " : " << t->externalTermIndex << "->" << t->termIndex << std::endl;
+           try {
+              xassert(ind == t->externalTermIndex);
+           } catch (...) {
+              std::cout << "ind:" << ind << " t->externalTermIndex:" << t->externalTermIndex << std::endl;
+              throw;
+           }
 
-               if (t->termIndex) {
-                   int nbyti = t->termIndex >> 3;
-                   int nbiti = t->termIndex & 7;
+           if (t->termIndex) {
+               int nbyti = t->termIndex >> 3;
+               int nbiti = t->termIndex & 7;
 
-                   bitmap[nbyti] |= bits[nbiti];
-               }
-            }
-            bit<<=1;
-            ind++;
+               bitmap[nbyti] |= bits[nbiti];
+           }
         }
     }
   }
@@ -443,19 +439,19 @@ void TerminalSet::reset(int numTerms)
 }
 
 
-unsigned char *TerminalSet::getByte(int id) const
+unsigned char *TerminalSet::getByte(int index) const
 {
-  int offset = (unsigned)id >> 3;
+  int offset = (unsigned)index >> 3;
   xassert(offset < bitmapLen);
 
   return bitmap + offset;
 }
 
 
-bool TerminalSet::contains(int id) const
+bool TerminalSet::contains(int index) const
 {
-  unsigned char *p = getByte(id);
-  return (*p >> getBit(id)) & 1 == 1;
+  unsigned char *p = getByte(index);
+  return (*p >> getBit(index)) & 1 == 1;
 }
 
 
@@ -466,17 +462,17 @@ bool TerminalSet::isEqual(TerminalSet const &obj) const
 }
 
 
-void TerminalSet::add(int id)
+void TerminalSet::add(int index)
 {
-  unsigned char *p = getByte(id);
-  *p |= (unsigned char)(1 << getBit(id));
+  unsigned char *p = getByte(index);
+  *p |= (unsigned char)(1 << getBit(index));
 }
 
 
-void TerminalSet::remove(int id)
+void TerminalSet::remove(int index)
 {                             
-  unsigned char *p = getByte(id);
-  *p &= (unsigned char)(~(1 << getBit(id)));
+  unsigned char *p = getByte(index);
+  *p &= (unsigned char)(~(1 << getBit(index)));
 }
 
 
@@ -921,7 +917,10 @@ Grammar::Grammar()
     expectedSR(-1),
     expectedRR(-1),
     expectedUNRNonterms(-1),
-    expectedUNRTerms(-1)
+    expectedUNRTerms(-1),
+    terminalCodeMapped(0),
+    codeHasTerm(0),
+    maxCode(0)
 {}
 
 
@@ -1062,10 +1061,13 @@ bool Grammar::declareToken(LocString const &symbolName, int code,
     return false;
   }
 
+  int index = terminals.count();
+
   // create a new terminal class
   Terminal *term = getOrMakeTerminal(symbolName);
 
   // assign fields specified in %token declaration
+  term->termIndex = index;
   term->termCode = code;
   term->alias = alias;
 

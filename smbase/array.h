@@ -6,6 +6,7 @@
 
 #include "xassert.h"      // xassert
 #include <stdlib.h>       // qsort
+#include <string.h>
 
 
 // -------------------- Array ----------------------
@@ -114,6 +115,13 @@ public:      // funcs
   // necessary)
   void ensureIndexDoubler(int index)
     { if (sz-1 < index) { eidLoop(index); } }
+  void ensureIndexDoubler(int index, int fill) {
+      if (sz-1 < index) {
+          int oldsz = sz;
+          eidLoop(index);
+          memset(arr+oldsz, fill, sizeof(T)*(sz-oldsz));
+      }
+  }
 
   // set an element, using the doubler if necessary
   void setIndexDoubler(int index, T const &value)

@@ -1242,19 +1242,13 @@ void GrammarAnalysis::computeIndexedTerms()
   loopi(numTerminals()) {
     indexedTerms[i] = NULL;      // used to track id duplication
   }
-  int ti = 0;
+  int index = 0;// map: symbol to index
   for (ObjListMutator<Terminal> sym(terminals);
-       !sym.isDone(); sym.adv()) {
-    sym.data()->termIndex = ti++;
-    int index = sym.data()->termIndex;   // map: symbol to index
+       !sym.isDone(); sym.adv(), index++) {
     if (indexedTerms[index] != NULL) {
       xfailure(stringc << "terminal index collision at index " << index);
     }
     indexedTerms[index] = sym.data();    // map: index to symbol
-  }
-  for (ObjListMutator<Terminal> sym(urTerminals);
-       !sym.isDone(); sym.adv()) {
-      sym.data()->termIndex = 0;
   }
 }
 
@@ -1385,16 +1379,35 @@ void GrammarAnalysis::initializeAuxData()
   computeReachable();
 
   bool changed = false;
-  allTerminalCnt = terminals.count();
+  int ti=0, eti=0;
   MUTATE_EACH_TERMINAL(terminals, iter) {
-    iter.data()->externalTermIndex = iter.data()->termIndex;
-    allTerminals.append(iter.data());
-    if (!iter.data()->reachable) {
-      urTerminals.append(iter.data());
+    Terminal *t = iter.data();
+
+    allTerminals.append(t);
+    t->externalTermIndex = eti;
+    eti++;
+
+    int code = t->termCode;
+    if (code>maxCode) maxCode = code;
+    codeHasTerm.ensureIndexDoubler(code, 0);
+
+    if (t->reachable) {
+      if (t->termIndex != ti) {
+          terminalCodeMapped = true;
+          t->termIndex = ti;
+          changed = true;
+      }
+      codeHasTerm[code] = t;
+      ti++;
+    } else {
+      terminalCodeMapped = true;
+      t->termIndex = 0;
+      urTerminals.append(t);
       iter.removeAndStuck();
       changed = true;
     }
   }
+
   MUTATE_EACH_NONTERMINAL(nonterminals, iter) {
     Nonterminal *nt = iter.data();
     if (!nt->reachable) {
@@ -4299,12 +4312,12 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
           << "class ";
       LocString s = *(iter.data());
       std::string code = s.str;
-      code.replace(code.find_first_of("CsParse"), 7, g.actionClassName.str);
+      code.replace(code.find_first_of(g.actionClassName0), strlen(g.actionClassName0), g.actionClassName.str);
       s = STR(code.c_str());
       emitUserCode(dcl, s, false /*braces*/);
   }}
 
-  if (g.terminals.count() != g.allTerminals.count()) {
+  if (g.terminalCodeMapped) {
       dcl << "\n"
           << "   virtual int toInternalType(int type);\n";
   }
@@ -4356,7 +4369,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
   out << "#include <iostream>    // cout\n";
   out << "#include <stdlib.h>      // abort\n";
   out << "\n";
-  if (g.terminals.count() != g.allTerminals.count()) {
+  if (g.terminalCodeMapped) {
 
       out << "enum _Int_TokenType {\n" << "   ";
       FOREACH_OBJLIST(Terminal, g.terminals, iter) {
@@ -4373,9 +4386,9 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       out << "\n};\n"
           << "\n";
       out << "int _To_Int_TokenType[] = {\n" << "   ";
-      SFOREACH_OBJLIST(Terminal, g.allTerminals, iter) {
-          Terminal const * t = iter.data();
-          if (t && t->termIndex) {
+      for(int i = 0; i<=g.maxCode; i++) {
+          Terminal const * t = g.codeHasTerm[i];
+          if (t) {
               out << "_INT_" << t->name << ", ";
           } else {
               out << "0, ";
@@ -4501,14 +4514,14 @@ void emitDescriptions(GrammarAnalysis const &g, EmitCode &out)
   // emit a map of terminal ids to their names
   {
     out << "static char const *termNames[] = {\n";
-    for (int code=0; code < g.numTerminals(); code++) {
-      Terminal const *t = g.getTerminal(code);
+    for (int index=0; index < g.numTerminals(); index++) {
+      Terminal const *t = g.getTerminal(index);
       if (!t) {
         // no terminal for that code
-        out << "  \"(no terminal)\",  // " << code << "\n";
+        out << "  \"(no terminal)\",  // " << index << "\n";
       }
       else {
-        out << "  \"" << t->name << "\",  // " << code << "\n";
+        out << "  \"" << t->name << "\",  // -> " << t->termCode << "  " << index << "\n";
       }
     }
     out << "};\n"
@@ -5158,6 +5171,7 @@ int inner_entry(int argc, char **argv)
       {
           std::stringstream s;
 
+          g.actionClassName0 = g.actionClassName.str;
           s << g.actionClassName << pref;
           g.actionClassName.str = STR(s.str().c_str());
           cout << "actionClassName:" << g.actionClassName << endl;
