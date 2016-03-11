@@ -373,10 +373,10 @@ void TerminalSet::convert(Grammar& g) {
     for (unsigned char bit = 0x01; bit && !iter.isDone(); iter.adv(), bit<<=1, ind++) {
         Terminal * t = constcast(iter.data());
         if (t && (byte&bit)) {
-           std::cout << t->name << " : " << t->externalTermIndex << "->" << t->termIndex << std::endl;
            try {
               xassert(ind == t->externalTermIndex);
            } catch (...) {
+              std::cout << t->name << " : " << t->externalTermIndex << "->" << t->termIndex << std::endl;
               std::cout << "ind:" << ind << " t->externalTermIndex:" << t->externalTermIndex << std::endl;
               throw;
            }
@@ -392,7 +392,7 @@ void TerminalSet::convert(Grammar& g) {
   }
 
   if (oldts.count() || newts.count()) {
-      ostream & os = trace("conflict");
+      ostream & os = trace("prec");
       os << "\nTerminalSet converted from:\n";
       dup.print_ext(os, g, "");
       os << "\n";
