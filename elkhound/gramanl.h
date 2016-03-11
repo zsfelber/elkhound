@@ -200,7 +200,7 @@ public:    // funcs
   // true if this item is "A -> alpha * t beta"
   bool isExtendingShift(Nonterminal const *A, Terminal const *t) const;
 
-  void print(ostream &os, GrammarAnalysis const &g) const;
+  void print(ostream &os, Grammar const &g) const;
 
   string toString(Grammar const &g) const;
 };

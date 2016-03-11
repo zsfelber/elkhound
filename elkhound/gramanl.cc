@@ -268,7 +268,7 @@ bool LRItem::isExtendingShift(Nonterminal const *A, Terminal const *t) const
 }
 
 
-void LRItem::print(ostream &os, GrammarAnalysis const &g) const
+void LRItem::print(ostream &os, Grammar const &g) const
 {
   dprod->print(os);
   lookahead.print(os, g);      // prints the separating comma, if necessary
@@ -276,11 +276,8 @@ void LRItem::print(ostream &os, GrammarAnalysis const &g) const
 
 string LRItem::toString(Grammar const &g) const
 {
-#define STR(st) LITERAL_LOCSTRING(grammarStringTable.add(st))
-
     std::stringstream s;
-    dprod->print(s);
-    lookahead.print(s, g);
+    print(s, g);
     return s.str().c_str();
 }
 
@@ -850,8 +847,11 @@ void ItemSet::print(ostream &os, GrammarAnalysis const &g,
 
     // print its text
     os << "  ";
+    if (item->isDotAtStart()) {
+        os << "(nonkernel) ";
+    }
     if (item->isDotAtEnd()) {
-       os << "can reduce by ";
+        os << "can reduce by ";
     }
     item->print(os, g);
     os << "      ";
@@ -886,11 +886,14 @@ void ItemSet::print(ostream &os, GrammarAnalysis const &g,
          << " go to " << nontermTransition[n]->id << endl;
     }
   }
-  
-  //for (int p=0; p<numDotsAtEnd; p++) {
+
+  for (int p=0; p<numDotsAtEnd; p++) {
       //os << "  can reduce by " << dotsAtEnd[p]->getProd()->toString() << endl;
-      //os << "  can reduce by " << dotsAtEnd[p]->toString(g) << endl;
-  //}
+      LRItem const * le = dotsAtEnd[p];
+      if (le->isDotAtStart()) {
+          os << "  (nonkernel) can reduce by " << le->toString(g) << endl;
+      }
+  }
 }
 
 
