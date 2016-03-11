@@ -871,27 +871,29 @@ void ItemSet::print(ostream &os, GrammarAnalysis const &g,
     os << endl;
   }
 
-  // print transition function directly, since I'm now throwing
-  // away items sometimes
-  for (int t=0; t<terms; t++) {
-    if (termTransition[t]) {
-      os << "  on terminal " << g.getTerminal(t)->name 
-         << " go to " << termTransition[t]->id << endl;
-    }
-  }
+  if (!nonkernel) {
+      // print transition function directly, since I'm now throwing
+      // away items sometimes
+      for (int t=0; t<terms; t++) {
+        if (termTransition[t]) {
+          os << "  on terminal " << g.getTerminal(t)->name
+             << " go to " << termTransition[t]->id << endl;
+        }
+      }
 
-  for (int n=0; n<nonterms; n++) {
-    if (nontermTransition[n]) {
-      os << "  on nonterminal " << g.getNonterminal(n)->name 
-         << " go to " << nontermTransition[n]->id << endl;
-    }
-  }
+      for (int n=0; n<nonterms; n++) {
+        if (nontermTransition[n]) {
+          os << "  on nonterminal " << g.getNonterminal(n)->name
+             << " go to " << nontermTransition[n]->id << endl;
+        }
+      }
 
-  for (int p=0; p<numDotsAtEnd; p++) {
-      //os << "  can reduce by " << dotsAtEnd[p]->getProd()->toString() << endl;
-      LRItem const * le = dotsAtEnd[p];
-      if (le->isDotAtStart()) {
-          os << "  (nonkernel) can reduce by " << le->toString(g) << endl;
+      for (int p=0; p<numDotsAtEnd; p++) {
+          //os << "  can reduce by " << dotsAtEnd[p]->getProd()->toString() << endl;
+          LRItem const * le = dotsAtEnd[p];
+          if (le->isDotAtStart()) {
+              os << "  (nonkernel) can reduce by " << le->toString(g) << endl;
+          }
       }
   }
 }
