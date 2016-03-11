@@ -17,6 +17,7 @@
 #include "ckheap.h"      // numMallocCalls
 #include "genml.h"       // emitMLActionCode
 #include "util.h"
+#include "asthelp.h"
 
 #include <fstream>     // ofstream
 #include <stdlib.h>      // getenv
@@ -1244,7 +1245,6 @@ void GrammarAnalysis::computeIndexedTerms()
   int ti = 0;
   for (ObjListMutator<Terminal> sym(terminals);
        !sym.isDone(); sym.adv()) {
-    sym.data()->externalTermIndex = sym.data()->termIndex;
     sym.data()->termIndex = ti++;
     int index = sym.data()->termIndex;   // map: symbol to index
     if (indexedTerms[index] != NULL) {
@@ -1386,6 +1386,7 @@ void GrammarAnalysis::initializeAuxData()
 
   bool changed = false;
   MUTATE_EACH_TERMINAL(terminals, iter) {
+    iter.data()->externalTermIndex = allTerminals.count();
     allTerminals.append(iter.data());
     if (!iter.data()->reachable) {
       urTerminals.append(iter.data());
@@ -1399,7 +1400,8 @@ void GrammarAnalysis::initializeAuxData()
       urNonterminals.append(nt);
       iter.removeAndStuck();
       SFOREACH_OBJLIST(Production, nt->productions, pter) {
-          Production const *prod = pter.data();
+          Production * prod = constcast(pter.data());
+          urProductions.append(prod);
           productions.removeItem(prod);
       }
       changed = true;
@@ -1436,7 +1438,7 @@ void GrammarAnalysis::initializeAuxData()
       MUTATE_EACH_PRODUCTION(productions, iter) {        // (constness)
         Production * prod = iter.data();
         if (prod->forbid_owned) {
-            prod->forbid->convert(allTerminals, terminals);
+            prod->forbid->convert(*this);
         }
       }
   }
@@ -5088,11 +5090,12 @@ int inner_entry(int argc, char **argv)
       cout << "Multiple start productions, generating numbered grammars:" << ast->firstNT->productions.count() << endl;
   } else {
       multiIndex = -1;
-      if (!ast->firstNT) {
+      if (ast->firstNT) {
+          if (MULTIPLE_START) {
+              cout << "Single start symbol." << endl;
+          }
+      } else {
           cout << "! ast->firstNT" << endl;
-      }
-      if (MULTIPLE_START) {
-          cout << "Multiple start but discarded." << endl;
       }
   }
 

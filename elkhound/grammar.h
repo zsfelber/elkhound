@@ -260,7 +260,7 @@ public:     // funcs
   TerminalSet& operator= (TerminalSet const &obj)
     { copy(obj); return *this; }
 
-  void convert(SObjList<Terminal>& oldts, ObjList<Terminal>& newts);
+  void convert(Grammar& g);
 
   TerminalSet(Flatten&);
   void xfer(Flatten &flat);
@@ -286,6 +286,7 @@ public:     // funcs
   bool removeSet(TerminalSet const &obj); // intersect with complement; returns true if this changed set
 
   void print(ostream &os, Grammar const &g, char const *lead = ", ") const;
+  void print_ext(ostream &os, Grammar const &g, char const *lead = ", ") const;
 };
 
 
@@ -488,6 +489,7 @@ public:	    // data
   ObjList<Terminal> urTerminals;        // (owner list)
   SObjList<Terminal> allTerminals;      //  ----------
   ObjList<Production> productions;      // (owner list)
+  ObjList<Production> urProductions;    // (owner list)
   Nonterminal *startSymbol;             // (serf) a particular nonterminal
 
   // the special terminal for the empty string; does not appear in the

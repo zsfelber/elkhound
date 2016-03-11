@@ -9,6 +9,7 @@
 #include "strutil.h"   // quoted, parseQuotedString
 #include "flatten.h"   // Flatten
 #include "flatutil.h"  // various xfer helpers
+#include "asthelp.h"
 
 #include <stdarg.h>    // variable-args stuff
 #include <stdio.h>     // FILE, etc.
@@ -330,7 +331,9 @@ TerminalSet::TerminalSet(int numTerms)
 TerminalSet::TerminalSet(TerminalSet const &obj)
 {
   init(obj.bitmapLen * 8);    // close enough; same # of bytes at least
-  copy(obj);
+  if (bitmapLen) {
+      copy(obj);
+  }
 }
 
 void TerminalSet::init(int numTerms)
@@ -352,28 +355,50 @@ void TerminalSet::init(int numTerms)
   }
 }
 
-void TerminalSet::convert(SObjList<Terminal>& oldts, ObjList<Terminal>& newts) {
+void TerminalSet::convert(Grammar& g) {
+  SObjList<Terminal>& oldts = g.allTerminals;
+  ObjList<Terminal>& newts = g.terminals;
+  xassert(bitmapLen == ((oldts.count()+7)>>3));
+
+
   TerminalSet dup(*this);
   init(newts.count());
-  int ind = 7;
 
   unsigned char const bits[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 
+  int ind = 0;
+  SObjListIter<Terminal> iter(oldts);
   for (int i = 0; i < dup.bitmapLen; i++) {
     unsigned char byte = dup.bitmap[i];
-    for (int b = 0; b < 7; b++, ind--, byte >>= 1) {
-        unsigned char bit = byte & 1;
-        if (bit) {
-           Terminal * t = oldts.nth(ind);
-           xassert(ind == t->externalTermIndex);
+    for (int b = 0; b < 8 && !iter.isDone(); b++, ind++, iter.adv()) {
+        if (byte&bits[b]) {
+           Terminal * t = constcast(iter.data());
+           try {
+              xassert(ind == t->externalTermIndex);
+           } catch (...) {
+              std::cout << "ind:" << ind << " t->externalTermIndex:" << t->externalTermIndex << std::endl;
+              throw;
+           }
+
            int nbyti = t->termIndex >> 3;
            int nbiti = t->termIndex & 7;
 
            bitmap[nbyti] |= bits[nbiti];
         }
     }
-    ind += 16;
   }
+
+  if (oldts.count() || newts.count()) {
+      ostream & os = trace("conflict");
+      os << "\nTerminalSet converted from:\n";
+      dup.print_ext(os, g);
+      os << "\n";
+
+      os << "to             TerminalSet:\n";
+      print(os, g, "");
+      os << "\n";
+  }
+
 }
 
 
@@ -492,28 +517,39 @@ bool TerminalSet::removeSet(TerminalSet const &obj)
 }
 
 
+#define print_terminal_adv(termIndexField) \
+      Terminal const *t = iter.data(); \
+      if (!contains(t->termIndexField)) continue; \
+      if (suppressExcept &&                  /* suppressing..*/ \
+          suppressExcept != t) continue;     /* and this isn't the exception*/ \
+      if (ct++ == 0) { \
+        /* by waiting until now to print this, if the set has no symbols */ \
+        /* (e.g. we're in SLR(1) mode), then the comma won't be printed */ \
+        /* either */ \
+        os << lead; \
+      } \
+      else { \
+        os << "/"; \
+      } \
+     \
+      os << t->toString(); \
+
+
 void TerminalSet::print(ostream &os, Grammar const &g, char const *lead) const
 {
-  int ct=0;
-  FOREACH_TERMINAL(g.terminals, iter) {
-    Terminal const *t = iter.data();
-    if (!contains(t->termIndex)) continue;
-
-    if (suppressExcept &&                  // suppressing..
-        suppressExcept != t) continue;     // and this isn't the exception
-
-    if (ct++ == 0) {
-      // by waiting until now to print this, if the set has no symbols
-      // (e.g. we're in SLR(1) mode), then the comma won't be printed
-      // either
-      os << lead;
+    int ct=0;
+    FOREACH_TERMINAL(g.terminals, iter) {
+        print_terminal_adv(termIndex);
     }
-    else {
-      os << "/";
-    }
+}
 
-    os << t->toString();
-  }
+
+void TerminalSet::print_ext(ostream &os, Grammar const &g, char const *lead) const
+{
+    int ct=0;
+    SFOREACH_TERMINAL(g.allTerminals, iter) {
+        print_terminal_adv(externalTermIndex);
+    }
 }
 
 
