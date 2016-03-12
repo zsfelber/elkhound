@@ -4333,6 +4333,10 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       LocString s = *(iter.data());
       std::string code = s.str;
       code.replace(code.find_first_of(g.actionClassName0), strlen(g.actionClassName0), g.actionClassName.str);
+      for (int i = 0; i<code.length() && (i = code.find("${class}", i, 8))!=std::string::npos; i+=8) {
+          code.replace(i, 8, g.actionClassName.str);
+      }
+
       s = STR(code.c_str());
       emitUserCode(dcl, s, false /*braces*/);
   }}
