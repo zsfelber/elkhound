@@ -17,8 +17,11 @@
 #include <string.h>        // strncmp
 #include <fstream>       // std::ofstream
 #include <ctype.h>         // isalnum
-#include <sstream>
+#include <string>
 #include <exception>
+#include <set>
+#include <sstream>
+#include <algorithm>
 
 // propertly a member of ListClass below, but I don't like nested
 // things
@@ -371,8 +374,8 @@ private:        // funcs
   void emitBaseClassDecls(ASTClass const &cls, int ct);
   static char const *virtualIfChildren(TF_class const &cls);
   void emitCtorFields(ASTList<CtorArg> const &args,
-                      ASTList<CtorArg> const &lastArgs);
-  void innerEmitCtorFields(ASTList<CtorArg> const &args);
+                      ASTList<CtorArg> const &lastArgs, std::set<std::string> &userMembers);
+  void innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::string> &userMembers);
   void emitCtorFormal(int &ct, CtorArg const *arg);
   void emitCtorFormals(int &ct, ASTList<CtorArg> const &args);
   void emitCtorDefn(ASTClass const &cls, ASTClass const *parent, ASTList<CtorArg> const *totArgs=0, ASTList<CtorArg> const *totLastArgs=0);
@@ -380,7 +383,7 @@ private:        // funcs
   void initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args);
   void emitCommonFuncs(rostring virt);
   void emitKindLeafFuncs(ASTClass const &ctor, rostring virt, rostring level);
-  void emitUserDecls(ASTList<Annotation> const &decls);
+  void emitUserDecls(ASTList<Annotation> const &decls, std::set<std::string> &userMembers);
   void emitCtor(ASTClass const &ctor, ASTClass const &parent);
 
   void emitVisitorInterfacePrelude(rostring visitorName);
@@ -552,8 +555,10 @@ void HGen::emitTFClass(TF_class const &cls)
     out << "  friend class ASTXmlReader;\n";
   }
 
+  std::set<std::string> userMembers;
+  emitUserDecls(cls.super->decls, userMembers);
 
-  emitCtorFields(cls.super->args, cls.super->lastArgs);
+  emitCtorFields(cls.super->args, cls.super->lastArgs, userMembers);
   if (cls.super->parent)
       emitCtorDefn(*(cls.super), cls.super->parent->super//, &cls.super->getArgs(), &cls.super->getLastArgs()
                    );
@@ -630,7 +635,7 @@ void HGen::emitTFClass(TF_class const &cls)
     out << "  void gdb() const;\n\n";
   }
 
-  emitUserDecls(cls.super->decls);
+  //emitUserDecls(cls.super->decls);
 
   // close the declaration of the parent class
   out << "};\n";
@@ -660,26 +665,29 @@ void HGen::emitBaseClassDecls(ASTClass const &cls, int ct)
 
 // emit data fields implied by the constructor
 void HGen::emitCtorFields(ASTList<CtorArg> const &args,
-                          ASTList<CtorArg> const &lastArgs)
+                          ASTList<CtorArg> const &lastArgs, std::set<std::string> &userMembers)
 {
   out << "public:      // data\n";
-  innerEmitCtorFields(args);
-  innerEmitCtorFields(lastArgs);
+  innerEmitCtorFields(args, userMembers);
+  innerEmitCtorFields(lastArgs, userMembers);
   out << "\n";
 }
 
-void HGen::innerEmitCtorFields(ASTList<CtorArg> const &args)
+void HGen::innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::string> &userMembers)
 {
   // go over the arguments in the ctor and declare fields for them
   {
     FOREACH_ASTLIST(CtorArg, args, arg) {
-      char const *star = "";
-      if (isTreeNode(arg.data()->type)) {
-        // make it a pointer in the concrete representation
-        star = "*";
-      }
+      std::string s(arg.data()->name.c_str());
+      if (std::find(userMembers.begin(), userMembers.end(), s) == userMembers.end()) {
+          char const *star = "";
+          if (isTreeNode(arg.data()->type)) {
+            // make it a pointer in the concrete representation
+            star = "*";
+          }
 
-      out << "  " << arg.data()->type << " " << star << arg.data()->name << ";\n";
+          out << "  " << arg.data()->type << " " << star << arg.data()->name << ";\n";
+      }
     }
   }
 }
@@ -854,12 +862,20 @@ void HGen::emitKindLeafFuncs(ASTClass const &ctor, rostring virt, rostring level
 }
 
 // emit user-supplied declarations
-void HGen::emitUserDecls(ASTList<Annotation> const &decls)
+void HGen::emitUserDecls(ASTList<Annotation> const &decls, std::set<std::string> &userMembers)
 {
   FOREACH_ASTLIST(Annotation, decls, iter) {
     // in the header, we only look at userdecl annotations
     if (iter.data()->kind() == Annotation::USERDECL) {
       UserDecl const &decl = *( iter.data()->asUserDeclC() );
+
+      std::istringstream is(decl.code.c_str());
+      std::string buf;
+      if (is) is >> buf;
+      if (is) is >> buf;
+
+      userMembers.insert(buf);
+
       if (decl.access() == AC_PUBLIC ||
           decl.access() == AC_PRIVATE ||
           decl.access() == AC_PROTECTED) {
@@ -902,7 +918,10 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   emitBaseClassDecls(ctor, 1 /*ct*/);
   out << " {\n";
 
-  emitCtorFields(ctor.args, ctor.lastArgs);
+  std::set<std::string> userMembers;
+  emitUserDecls(ctor.decls, userMembers);
+
+  emitCtorFields(ctor.args, ctor.lastArgs, userMembers);
   emitCtorDefn(ctor, &parent);
 
   // destructor
@@ -931,7 +950,7 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   }
 
   out << "\n";
-  emitUserDecls(ctor.decls);
+  //emitUserDecls(ctor.decls);
 
   // emit implementation declarations for parent's pure virtuals
   FOREACH_ASTLIST(Annotation, parent.decls, iter) {
