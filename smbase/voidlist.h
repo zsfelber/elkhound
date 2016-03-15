@@ -35,6 +35,8 @@ class VoidListMutator;
 // then 'diff' could simply be subtraction.
 typedef int (*VoidDiff)(void *left, void *right, void *extra);
 
+typedef bool (*VoidEq)(void *left, void *right);
+
 
 // list of void*; at this level, the void* are completely opaque;
 // the list won't attempt to delete(), compare them, or anything else
@@ -76,6 +78,7 @@ public:
 
   // list-as-set: selectors
   int indexOf(void *item) const;     // returns index of *first* occurrance, or -1 if not present
+  int indexOf(void *item, VoidEq eq) const;     // returns index of *first* occurrance, or -1 if not present
   int indexOfF(void *item) const;    // same as indexOf, but throws exception if not present
   bool contains(void *item) const    // true if the item appears in the list
     { return indexOf(item) >= 0; }
@@ -85,6 +88,8 @@ public:
   bool appendUnique(void *newitem);  // append   "            "
   void removeItem(void *item);       // remove first occurrance -- must exist
   bool removeIfPresent(void *item);  // remove first occurrance; return true if changed
+  bool removeIfPresent(void *item, VoidEq eq);  // remove first occurrance; return true if changed
+  bool removeItems(VoidList const &lst, VoidEq eq);   // remove all; return true if changed
 
   // complex modifiers
   void reverse();
@@ -97,6 +102,7 @@ public:
   // multiple lists
   void concat(VoidList &tail);           // tail is emptied, nodes appended to this
   void appendAll(VoidList const &tail);  // tail is untouched.. but its contents are now exposed to non-constness... ug... oh well
+  void appendAllNew(VoidList const &tail, VoidEq eq);
   void prependAll(VoidList const &head);
   VoidList& operator= (VoidList const &src);  // afterwards, 'this' and 'src' have same contents
 

@@ -51,7 +51,9 @@ public:
   // insertion
   void prepend(void *newitem);
   void append(void *newitem);
-  void appendAll(VoidTailList &src);
+  void appendAll(VoidTailList const &src);
+  void appendAllNew(VoidTailList const &src, VoidEq eq);
+  void reappendAll(VoidTailList const &src, VoidEq eq);
   void insertAt(void *newitem, int index);
   void concat(VoidTailList &tail);
 

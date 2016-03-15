@@ -194,6 +194,17 @@ int VoidList::indexOf(void *item) const
   return -1;
 }
 
+int VoidList::indexOf(void *item, VoidEq eq) const
+{
+  int index = 0;
+  for (VoidNode *p = top; p != NULL; p = p->next, index++) {
+    if (eq(p->data, item)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
 
 int VoidList::indexOfF(void *item) const
 {
@@ -250,6 +261,27 @@ bool VoidList::removeIfPresent(void *item)
     removeAt(index);
     return true;
   }
+}
+
+bool VoidList::removeIfPresent(void *item, VoidEq eq)
+{
+  // for now, not a real fast implementation
+  int index = indexOf(item, eq);
+  if (index == -1) {
+    return false;   // not there
+  }
+  else {
+    removeAt(index);
+    return true;
+  }
+}
+
+bool VoidList::removeItems(VoidList const &lst, VoidEq eq) {   // remove all; return true if changed
+  bool removed = false;
+  for(VoidNode *p = lst.top; p; p = p->next) {
+      removed |= removeIfPresent(p->data, eq);
+  }
+  return removed;
 }
 
 
@@ -539,6 +571,20 @@ void VoidList::appendAll(VoidList const &tail)
   for (; !srcIter.isDone(); srcIter.adv()) {
     destIter.append(srcIter.data());
   }
+}
+
+void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
+{
+  VoidList dest;
+  VoidListIter srcIter(tail);
+  for (; !srcIter.isDone(); srcIter.adv()) {
+    void *item = srcIter.data();
+    int index = indexOf(item, eq);
+    if (index == -1) {
+       dest.append(item);
+    }
+  }
+  concat(dest);
 }
 
 

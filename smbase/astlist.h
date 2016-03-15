@@ -38,6 +38,7 @@ public:
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
   ASTList(ASTList<T> *src)              : list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning&&src) list.appendAll(src->list);}
+  ASTList(ASTList<T> *src,bool owning)  : list((src&&owning)?&src->list:0), owning(owning) { if (!owning&&src) list.appendAll(src->list);}
   void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
 
   // selectors
@@ -55,6 +56,8 @@ public:
   void prepend(T *newitem)              { list.prepend(newitem); }
   void append(T *newitem)               { list.append(newitem); }
   void appendAll(ASTList<T> &tail)      { list.appendAll(tail.list); }
+  void appendAllNew(ASTList<T> const &tail, VoidEq eq)    { list.appendAllNew(tail.list, eq); }
+  void reappendAll(ASTList<T> const &tail, VoidEq eq)    { list.reappendAll(tail.list, eq); }
   void insertAt(T *newitem, int index)  { list.insertAt(newitem, index); }
   void concat(ASTList<T> &tail)         { list.concat(tail.list); }
 

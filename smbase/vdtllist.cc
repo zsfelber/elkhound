@@ -37,7 +37,7 @@ void VoidTailList::append(void *newitem)
   }
 }
 
-void VoidTailList::appendAll(VoidTailList &src)
+void VoidTailList::appendAll(VoidTailList const &src)
 {
   VoidList::appendAll(src);
   if (!tail) {
@@ -46,6 +46,23 @@ void VoidTailList::appendAll(VoidTailList &src)
   if (tail) {
       while (tail->next) tail = tail->next;
   }
+}
+
+void VoidTailList::appendAllNew(VoidTailList const &src, VoidEq eq)
+{
+    VoidList::appendAllNew(src, eq);
+    if (!tail) {
+        tail = top;
+    }
+    if (tail) {
+        while (tail->next) tail = tail->next;
+    }
+}
+
+void VoidTailList::reappendAll(VoidTailList const &src, VoidEq eq)
+{
+  VoidList::removeItems(src, eq);
+  appendAll(src);
 }
 
 void VoidTailList::insertAt(void *newitem, int index)

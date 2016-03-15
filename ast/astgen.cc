@@ -21,7 +21,6 @@
 #include <exception>
 #include <set>
 #include <sstream>
-#include <algorithm>
 
 // propertly a member of ListClass below, but I don't like nested
 // things
@@ -378,7 +377,7 @@ private:        // funcs
   void innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::string> &userMembers);
   void emitCtorFormal(int &ct, CtorArg const *arg);
   void emitCtorFormals(int &ct, ASTList<CtorArg> const &args);
-  void emitCtorDefn(ASTClass const &cls, ASTClass const *parent, ASTList<CtorArg> const *totArgs=0, ASTList<CtorArg> const *totLastArgs=0);
+  void emitCtorDefn(ASTClass const &cls, ASTClass const *parent);
   void passParentCtorArgs(int &ct, ASTList<CtorArg> const &args);
   void initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args);
   void emitCommonFuncs(rostring virt);
@@ -560,8 +559,7 @@ void HGen::emitTFClass(TF_class const &cls)
 
   emitCtorFields(cls.super->args, cls.super->lastArgs, userMembers);
   if (cls.super->parent)
-      emitCtorDefn(*(cls.super), cls.super->parent->super//, &cls.super->getArgs(), &cls.super->getLastArgs()
-                   );
+      emitCtorDefn(*(cls.super), cls.super->parent->super);
   else
       emitCtorDefn(*(cls.super), 0);
 
@@ -679,7 +677,8 @@ void HGen::innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::strin
   {
     FOREACH_ASTLIST(CtorArg, args, arg) {
       std::string s(arg.data()->name.c_str());
-      if (std::find(userMembers.begin(), userMembers.end(), s) == userMembers.end()) {
+
+      if (!userMembers.count(s)) {
           char const *star = "";
           if (isTreeNode(arg.data()->type)) {
             // make it a pointer in the concrete representation
@@ -737,16 +736,35 @@ bool isFuncDecl(UserDecl const *ud)
          ud->amod->hasMod("func");
 }
 
+bool cmpCtorArgs(CtorArg* left, CtorArg* right) {
+    if (left) {
+        if (right) {
+            return left->name.equals(right->name);
+        } else {
+            return false;
+        }
+    } else {
+        if (right) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+}
+
 // emit the definition of the constructor itself
-void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent, ASTList<CtorArg> const *args, ASTList<CtorArg> const *lastArgs)
+void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
 {
+  bool da = 0;
+  ASTList<CtorArg> *args = constcast(&cls.args), *lastArgs = constcast(&cls.lastArgs);
   if (parent) {
-      if (!args) {
-          args = &parent->getArgs();
-      }
-      if (!lastArgs) {
-          lastArgs = &parent->getLastArgs();
-      }
+      da = true;
+
+      args = new ASTList<CtorArg>(constcast(&parent->getArgs()), false);
+      args->reappendAll(cls.args, (VoidEq)&cmpCtorArgs);
+
+      lastArgs = new ASTList<CtorArg>(constcast(&cls.lastArgs), false);
+      lastArgs->appendAllNew(parent->getLastArgs(), (VoidEq)&cmpCtorArgs);
   }
   // declare the constructor
   {
@@ -756,14 +774,8 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent, ASTList<Cto
     // list of formal parameters to the constructor
     {
       int ct = 0;
-      if (args) {
-        emitCtorFormals(ct, *args);
-      }
-      emitCtorFormals(ct, cls.args);
-      emitCtorFormals(ct, cls.lastArgs);
-      if (lastArgs) {
-        emitCtorFormals(ct, *lastArgs);
-      }
+      emitCtorFormals(ct, *args);
+      emitCtorFormals(ct, *lastArgs);
     }
     out << ")";
 
@@ -773,12 +785,8 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent, ASTList<Cto
 
       if (parent) {
         out << " : " << parent->name << "(";
-        if (args) {
-           passParentCtorArgs(ct, *args);
-        }
-        if (lastArgs) {
-           passParentCtorArgs(ct, *lastArgs);
-        }
+        passParentCtorArgs(ct, parent->getArgs());
+        passParentCtorArgs(ct, parent->getLastArgs());
         ct++;     // make sure we print a comma, below
         out << ")";
       }
@@ -808,6 +816,11 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent, ASTList<Cto
     out << " {\n";
     emitFiltered(cls.decls, AC_CTOR, "    ");
     out << "  }\n";
+  }
+
+  if (da) {
+      delete args;
+      delete lastArgs;
   }
 }
 
@@ -3177,6 +3190,7 @@ TF_enum *findEnum(ASTSpecFile *base, rostring name)
   return NULL;    // not found
 }
 
+
 void mergeItself(ASTSpecFile *base)
 {
     const int ct = base->forms.count();
@@ -3221,16 +3235,16 @@ void mergeItself(ASTSpecFile *base)
 
               c->super->parent = s;
               c->super->level = s->super->level + 1;
-              c->super->totArgs.appendAll(s->super->getArgs());
+              c->super->totArgs.reappendAll(s->super->getArgs(), (VoidEq)&cmpCtorArgs);
               o<<" "<<c->super->name<<".totArgs1+=(<-"<<s->super->name<<"):";
               c->super->totArgs.debugPrint(o);
-              c->super->totLastArgs.appendAll(s->super->getLastArgs());
+              c->super->totLastArgs.reappendAll(s->super->getLastArgs(), (VoidEq)&cmpCtorArgs);
               o<<" "<<c->super->name<<".totLastArgs1+=(<-"<<s->super->name<<"):";
               c->super->totLastArgs.debugPrint(o);
-              c->super->totArgs.appendAll(c->super->args);
+              c->super->totArgs.reappendAll(c->super->args, (VoidEq)&cmpCtorArgs);
               o<<" "<<c->super->name<<".totArgs2+=(<-"<<c->super->name<<".args):";
               c->super->totArgs.debugPrint(o);
-              c->super->totLastArgs.appendAll(c->super->lastArgs);
+              c->super->totLastArgs.reappendAll(c->super->lastArgs, (VoidEq)&cmpCtorArgs);
               o<<" "<<c->super->name<<".totLastArgs2+=(<-"<<c->super->name<<".lastArgs):";
               c->super->totLastArgs.debugPrint(o);
               o<<std::endl;
