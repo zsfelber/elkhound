@@ -75,6 +75,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_COLON ":"
 %token TOK_SEMICOLON ";"
 %token <loc> TOK_ARROW "->"
+%token <loc> TOK_TRAVERSE "~>"
 %token TOK_LPAREN "("
 %token TOK_RPAREN ")"
 %token TOK_COMMA ","
@@ -305,6 +306,7 @@ Productions: /* empty */                   { $$ = new ASTList<ProdDecl>; }
 Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3); }
           | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4); }
           | "delete" "->" RHS ";"          { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL()); }
+          | "~>" RHS Action                { $$ = new ProdDecl($1, PDK_TRAVERSE, $2, $3); }
           ;
 
 /* yields: LocString */

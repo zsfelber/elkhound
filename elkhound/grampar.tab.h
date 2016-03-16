@@ -1,14 +1,13 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.0.2.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,75 +30,58 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Tokens.  */
+#ifndef YY_YY_GRAMPAR_TAB_H_INCLUDED
+# define YY_YY_GRAMPAR_TAB_H_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
+
+/* Token type.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     TOK_INTEGER = 258,
-     TOK_NAME = 259,
-     TOK_STRING = 260,
-     TOK_LIT_CODE = 261,
-     TOK_LBRACE = 262,
-     TOK_RBRACE = 263,
-     TOK_COLON = 264,
-     TOK_SEMICOLON = 265,
-     TOK_ARROW = 266,
-     TOK_LPAREN = 267,
-     TOK_RPAREN = 268,
-     TOK_COMMA = 269,
-     TOK_TERMINALS = 270,
-     TOK_TOKEN = 271,
-     TOK_NONTERM = 272,
-     TOK_FUN = 273,
-     TOK_VERBATIM = 274,
-     TOK_IMPL_VERBATIM = 275,
-     TOK_PRECEDENCE = 276,
-     TOK_OPTION = 277,
-     TOK_EXPECT = 278,
-     TOK_CONTEXT_CLASS = 279,
-     TOK_SUBSETS = 280,
-     TOK_DELETE = 281,
-     TOK_REPLACE = 282,
-     TOK_FORBID_NEXT = 283
-   };
+  enum yytokentype
+  {
+    TOK_INTEGER = 258,
+    TOK_NAME = 259,
+    TOK_STRING = 260,
+    TOK_LIT_CODE = 261,
+    TOK_LBRACE = 262,
+    TOK_RBRACE = 263,
+    TOK_COLON = 264,
+    TOK_SEMICOLON = 265,
+    TOK_ARROW = 266,
+    TOK_TRAVERSE = 267,
+    TOK_LPAREN = 268,
+    TOK_RPAREN = 269,
+    TOK_COMMA = 270,
+    TOK_TERMINALS = 271,
+    TOK_TOKEN = 272,
+    TOK_NONTERM = 273,
+    TOK_FUN = 274,
+    TOK_VERBATIM = 275,
+    TOK_IMPL_VERBATIM = 276,
+    TOK_PRECEDENCE = 277,
+    TOK_OPTION = 278,
+    TOK_EXPECT = 279,
+    TOK_CONTEXT_CLASS = 280,
+    TOK_SUBSETS = 281,
+    TOK_DELETE = 282,
+    TOK_REPLACE = 283,
+    TOK_FORBID_NEXT = 284
+  };
 #endif
-/* Tokens.  */
-#define TOK_INTEGER 258
-#define TOK_NAME 259
-#define TOK_STRING 260
-#define TOK_LIT_CODE 261
-#define TOK_LBRACE 262
-#define TOK_RBRACE 263
-#define TOK_COLON 264
-#define TOK_SEMICOLON 265
-#define TOK_ARROW 266
-#define TOK_LPAREN 267
-#define TOK_RPAREN 268
-#define TOK_COMMA 269
-#define TOK_TERMINALS 270
-#define TOK_TOKEN 271
-#define TOK_NONTERM 272
-#define TOK_FUN 273
-#define TOK_VERBATIM 274
-#define TOK_IMPL_VERBATIM 275
-#define TOK_PRECEDENCE 276
-#define TOK_OPTION 277
-#define TOK_EXPECT 278
-#define TOK_CONTEXT_CLASS 279
-#define TOK_SUBSETS 280
-#define TOK_DELETE 281
-#define TOK_REPLACE 282
-#define TOK_FORBID_NEXT 283
 
-
-
-
+/* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 105 "grampar.y"
+typedef union YYSTYPE YYSTYPE;
+union YYSTYPE
 {
+#line 106 "grampar.y" /* yacc.c:1909  */
+
   int num;
   LocString *str;
   SourceLoc loc;
@@ -123,14 +103,15 @@ typedef union YYSTYPE
   ProdDecl *prodDecl;
   ASTList<RHSElt> *rhsList;
   RHSElt *rhsElt;
-}
-/* Line 1529 of yacc.c.  */
-#line 129 "grampar.tab.h"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
+
+#line 108 "grampar.tab.h" /* yacc.c:1909  */
+};
 # define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
 #endif
 
 
 
+int yyparse (void);
+
+#endif /* !YY_YY_GRAMPAR_TAB_H_INCLUDED  */

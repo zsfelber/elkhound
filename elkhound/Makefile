@@ -214,14 +214,17 @@ gramast.ast.gen.cc gramast.ast.gen.h: gramast.ast $(AST)/astgen
 grampar.tab.cc grampar.tab.h grampar.codes.h: grampar.y
 	bison -d -v grampar.y
 	mv -f grampar.tab.c tmp
+	sed -ie 's/grampar.tab.c/grampar.tab.cc/' tmp
 	sed -e 's/typedef union {/typedef union YYSTYPE {/' \
 	    -e 's/__attribute__ ((__unused__))//' \
 	  <tmp >grampar.tab.cc
 	mv -f grampar.tab.h tmp
 	sed -e 's/typedef union {/typedef union YYSTYPE {/' <tmp >grampar.tab.h
 	rm tmp
-	grep '# *define' grampar.tab.h >grampar.codes.h
-
+	perl -ne "print if (\$$ok); \$$ok = (\$$ok || /\/\* Token type.*/) && !(/\#endif/)" grampar.tab.h >grampar.codes.h
+	#bison 2 ->
+	#grep '# *define' grampar.tab.h >grampar.codes.h
+	#bison 3 ->
 
 # new C++ grammar with treebuilding actions
 cc2/cc2t.gr.gen.cc cc2/cc2t.gr.gen.h cc2/cc2t.gr.gen.y: cc2/cc2.gr c/c.tok elkhound

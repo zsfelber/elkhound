@@ -1,30 +1,33 @@
+#ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-#define TOK_INTEGER 258
-#define TOK_NAME 259
-#define TOK_STRING 260
-#define TOK_LIT_CODE 261
-#define TOK_LBRACE 262
-#define TOK_RBRACE 263
-#define TOK_COLON 264
-#define TOK_SEMICOLON 265
-#define TOK_ARROW 266
-#define TOK_LPAREN 267
-#define TOK_RPAREN 268
-#define TOK_COMMA 269
-#define TOK_TERMINALS 270
-#define TOK_TOKEN 271
-#define TOK_NONTERM 272
-#define TOK_FUN 273
-#define TOK_VERBATIM 274
-#define TOK_IMPL_VERBATIM 275
-#define TOK_PRECEDENCE 276
-#define TOK_OPTION 277
-#define TOK_EXPECT 278
-#define TOK_CONTEXT_CLASS 279
-#define TOK_SUBSETS 280
-#define TOK_DELETE 281
-#define TOK_REPLACE 282
-#define TOK_FORBID_NEXT 283
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
+  enum yytokentype
+  {
+    TOK_INTEGER = 258,
+    TOK_NAME = 259,
+    TOK_STRING = 260,
+    TOK_LIT_CODE = 261,
+    TOK_LBRACE = 262,
+    TOK_RBRACE = 263,
+    TOK_COLON = 264,
+    TOK_SEMICOLON = 265,
+    TOK_ARROW = 266,
+    TOK_TRAVERSE = 267,
+    TOK_LPAREN = 268,
+    TOK_RPAREN = 269,
+    TOK_COMMA = 270,
+    TOK_TERMINALS = 271,
+    TOK_TOKEN = 272,
+    TOK_NONTERM = 273,
+    TOK_FUN = 274,
+    TOK_VERBATIM = 275,
+    TOK_IMPL_VERBATIM = 276,
+    TOK_PRECEDENCE = 277,
+    TOK_OPTION = 278,
+    TOK_EXPECT = 279,
+    TOK_CONTEXT_CLASS = 280,
+    TOK_SUBSETS = 281,
+    TOK_DELETE = 282,
+    TOK_REPLACE = 283,
+    TOK_FORBID_NEXT = 284
+  };
+#endif
