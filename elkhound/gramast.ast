@@ -76,16 +76,21 @@ enum ProdDeclKind {
   PDK_NEW,        // new production (most productions are new)
   PDK_DELETE,     // means to delete the production from the base spec
   PDK_REPLACE,    // replace original production with this one
+  PDK_TRAVERSE,   // Using '~>' for multilevel ast-tree-parsing. The left side of the rule, a single token
+                  // which is included in parent grammar. The right side defines a child grammar.
+                  // Hiding a branch of rules this way is used to reduce possible # conflicts and improving
+                  // error recovery (because of this true-style top-to-bottom behavior).
 };
 
 // production: rhs description, and code to execute upon recognition
-class ProdDecl (SourceLoc loc, ProdDeclKind kind, ASTList<RHSElt> rhs, LocString actionCode);
+class ProdDecl (SourceLoc loc, ProdDeclKind kind, ASTList<RHSElt> rhs, LocString actionCode, LocString name);
 
 // one of the things that appears after the '->', i.e. the
 // right-hand-side elements
 class RHSElt {
   -> RH_name(LocString tag, LocString name);         // tagged terminal or nonterminal reference
   -> RH_string(LocString tag, LocString str);        // tagged terminal reference by string alias
+  -> RH_attr(LocString tag, LocString attrName, LocString attrValue);         // tagged traverse nonterminal ast attribute reference
   
   // assigns a specific precedence level to a rule
   -> RH_prec(LocString tokName);                  

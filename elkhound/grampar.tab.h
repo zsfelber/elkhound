@@ -52,26 +52,27 @@ extern int yydebug;
     TOK_LBRACE = 262,
     TOK_RBRACE = 263,
     TOK_COLON = 264,
-    TOK_SEMICOLON = 265,
-    TOK_ARROW = 266,
-    TOK_TRAVERSE = 267,
-    TOK_LPAREN = 268,
-    TOK_RPAREN = 269,
-    TOK_COMMA = 270,
-    TOK_TERMINALS = 271,
-    TOK_TOKEN = 272,
-    TOK_NONTERM = 273,
-    TOK_FUN = 274,
-    TOK_VERBATIM = 275,
-    TOK_IMPL_VERBATIM = 276,
-    TOK_PRECEDENCE = 277,
-    TOK_OPTION = 278,
-    TOK_EXPECT = 279,
-    TOK_CONTEXT_CLASS = 280,
-    TOK_SUBSETS = 281,
-    TOK_DELETE = 282,
-    TOK_REPLACE = 283,
-    TOK_FORBID_NEXT = 284
+    TOK_COLON_COLON = 265,
+    TOK_SEMICOLON = 266,
+    TOK_ARROW = 267,
+    TOK_TRAVERSE = 268,
+    TOK_LPAREN = 269,
+    TOK_RPAREN = 270,
+    TOK_COMMA = 271,
+    TOK_TERMINALS = 272,
+    TOK_TOKEN = 273,
+    TOK_NONTERM = 274,
+    TOK_FUN = 275,
+    TOK_VERBATIM = 276,
+    TOK_IMPL_VERBATIM = 277,
+    TOK_PRECEDENCE = 278,
+    TOK_OPTION = 279,
+    TOK_EXPECT = 280,
+    TOK_CONTEXT_CLASS = 281,
+    TOK_SUBSETS = 282,
+    TOK_DELETE = 283,
+    TOK_REPLACE = 284,
+    TOK_FORBID_NEXT = 285
   };
 #endif
 
@@ -80,7 +81,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 109 "grampar.y" /* yacc.c:1909  */
+#line 113 "grampar.y" /* yacc.c:1909  */
 
   int num;
   LocString *str;
@@ -104,7 +105,7 @@ union YYSTYPE
   ASTList<RHSElt> *rhsList;
   RHSElt *rhsElt;
 
-#line 108 "grampar.tab.h" /* yacc.c:1909  */
+#line 109 "grampar.tab.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

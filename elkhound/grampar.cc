@@ -875,7 +875,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
       //char const *action = g.targetLang.equals("OCaml")? " top " :
       //                     firstNT->type.equals("void")? " return; " :
       //                                                   " return top; ";
-      ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
+      ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL), new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
       // build an even earlier start symbol
       ast->earlyStartNT
         = new TF_nonterm(

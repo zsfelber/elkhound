@@ -155,6 +155,7 @@ HWHITE    [ \t\f\v\r]
   /* -------- punctuators, operators, keywords --------- */
 "}"                TOK_UPD_COL;  return TOK_RBRACE;
 ":"                TOK_UPD_COL;  return TOK_COLON;
+"::"               TOK_UPD_COL;  return TOK_COLON_COLON;
 ")"                TOK_UPD_COL;  return TOK_RPAREN;
 ","                TOK_UPD_COL;  return TOK_COMMA;
 

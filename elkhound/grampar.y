@@ -27,7 +27,10 @@
 
 // Bison calls yyerror(msg) on error; we need the extra
 // parameter too, so the macro shoehorns it in there
-#define yyerror(msg) grampar_yyerror(msg, YYPARSE_PARAM)
+// bison2:
+// #define yyerror(msg) grampar_yyerror(msg, YYPARSE_PARAM)
+// bison3:
+#define yyerror(pp, msg) grampar_yyerror(msg, pp)
 
 // rename the externally-visible parsing routine to make it
 // specific to this instance, so multiple bison-generated
@@ -62,8 +65,8 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 
 /* ================== bison declarations =================== */
 // don't use globals
-%pure_parser
-
+//bison2 : %pure_parser -> bison3
+%define api.pure full
 
 /* ===================== tokens ============================ */
 /* tokens that have many lexical spellings */
@@ -76,6 +79,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_LBRACE "{"
 %token TOK_RBRACE "}"
 %token TOK_COLON ":"
+%token TOK_COLON_COLON "::"
 %token TOK_SEMICOLON ";"
 %token <loc> TOK_ARROW "->"
 %token <loc> TOK_TRAVERSE "~>"
@@ -152,6 +156,8 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %type <prodDecl> Production
 %type <rhsList> RHS
 %type <rhsElt> RHSElt
+%type <rhsList> RHS2
+%type <rhsElt> RHSElt2
 
 
 /* ===================== productions ======================= */
@@ -306,10 +312,10 @@ Productions: /* empty */                   { $$ = new ASTList<ProdDecl>; }
            ;
 
 /* yields: ProdDecl */
-Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3); }
-          | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4); }
-          | "delete" "->" RHS ";"          { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL()); }
-          | "~>" RHS Action                { $$ = new ProdDecl($1, PDK_TRAVERSE, $2, $3); }
+Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3, nolocNULL()); }
+          | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4, nolocNULL()); }
+          | "delete"  "->" RHS ";"         { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL(), nolocNULL()); }
+          | TOK_NAME  "->" RHS2 Action     { $$ = new ProdDecl($2, PDK_TRAVERSE, $3, $4, $1); }
           ;
 
 /* yields: LocString */
@@ -320,6 +326,10 @@ Action: TOK_LIT_CODE                       { $$ = $1; }
 /* yields: ASTList<RHSElt> */
 RHS: /* empty */                           { $$ = new ASTList<RHSElt>; }
    | RHS RHSElt                            { ($$=$1)->append($2); }
+   ;
+
+RHS2: /* empty */                           { $$ = new ASTList<RHSElt>; }
+   | RHS2 RHSElt2                            { ($$=$1)->append($2); }
    ;
 
 /*
@@ -334,6 +344,17 @@ RHSElt: TOK_NAME                { $$ = new RH_name(sameloc($1, ""), $1); }
       | TOK_NAME ":" TOK_STRING { $$ = new RH_string($1, $3); }
       | "precedence" "(" NameOrString ")"    { $$ = new RH_prec($3); }
       | "forbid_next" "(" NameOrString ")"   { $$ = new RH_forbid($3); }
+      ;
+
+RHSElt2: RHSElt
+      | TOK_NAME ":" TOK_STRING ":" TOK_NAME   { $$ = new RH_attr($1, $3, $5); }
+      | TOK_NAME ":" TOK_STRING ":" TOK_STRING { $$ = new RH_attr($1, $3, $5); }
+      | TOK_STRING ":" TOK_NAME              { $$ = new RH_attr(sameloc($1, ""), $1, $3); }
+      | TOK_STRING ":" TOK_STRING            { $$ = new RH_attr(sameloc($1, ""), $1, $3); }
+      | TOK_NAME ":" TOK_STRING "::" TOK_NAME   { $$ = new RH_attr($1, $3, $5); }
+      | TOK_NAME ":" TOK_STRING "::" TOK_STRING { $$ = new RH_attr($1, $3, $5); }
+      | TOK_STRING "::" TOK_NAME              { $$ = new RH_attr(sameloc($1, ""), $1, $3); }
+      | TOK_STRING "::" TOK_STRING            { $$ = new RH_attr(sameloc($1, ""), $1, $3); }
       ;
         
 /* yields: ASTList<LocString> */
