@@ -23,7 +23,8 @@ class StringTable;        // strtable.h
 // name of extra parameter to yyparse (i.e. the context in
 // which the parser operates, instead of that being stored
 // in some collection of globals)
-#define YYPARSE_PARAM parseParam
+// removed -> %parse-param %lex-param %param https://lwn.net/Articles/561990/
+// #define YYPARSE_PARAM parseParam
 
 // type of thing extra param points at
 struct ParseParams {

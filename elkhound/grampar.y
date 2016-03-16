@@ -19,7 +19,8 @@
 #endif
 
 // name of extra parameter to yylex
-#define YYLEX_PARAM parseParam
+// removed -> %parse-param %lex-param %param https://lwn.net/Articles/561990/
+//#define YYLEX_PARAM parseParam
 
 // make it call my yylex
 #define yylex(lv, param) grampar_yylex(lv, param)
@@ -56,6 +57,8 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 
 %}
 
+// %parse-param %lex-param %param https://lwn.net/Articles/561990/
+%param {void* parseParam}
 
 /* ================== bison declarations =================== */
 // don't use globals
