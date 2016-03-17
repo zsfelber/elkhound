@@ -10,13 +10,13 @@ verbatim {
 class GrammarAST (ASTList<TopForm> forms) {
   // annotations, filled in during initial checking, pointing
   // to some things that are supposed to exist and be unique
-  public TF_terminals *terms;
-  public TF_nonterm *firstNT;    // textually first nonterminal
-  public TF_nonterm *earlyStartNT;
+  public TF_terminals *terms = NULL;
+  public TF_nonterm *firstNT = NULL;    // textually first nonterminal
+  public TF_nonterm *earlyStartNT = NULL;
+  public TF_nonterm *childrenNT = NULL;
 
   public bool allowContinuedNonterminals = false;
   
-  ctor { terms=NULL; firstNT=NULL; earlyStartNT=NULL;};
 }
 
 

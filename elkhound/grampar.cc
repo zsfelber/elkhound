@@ -84,13 +84,13 @@ XASTParse::~XASTParse()
 
 // -------------------- AST parser support ---------------------
 // fwd-decl of parsing fns
-void astParseGrammar(Grammar &g, GrammarAST *treeTop);
+void astParseGrammar(Grammar &g, GrammarAST *treeTop, TermDecl const *eof, int & multiIndex);
 void astParseTerminals(Environment &env, TF_terminals const &terms);
 void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt);
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        ProdDecl const *prod);
+                        ProdDecl const *prod, TermDecl const *eof, int & multiIndex);
 
 
 // really a static semantic error, more than a parse error..
@@ -302,7 +302,7 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
 
 
 // map the grammar definition AST into a Grammar data structure
-void astParseGrammar(Grammar &g, GrammarAST *ast)
+void astParseGrammar(Grammar &g, GrammarAST *ast, TermDecl const *eof, int & multiIndex)
 {
   // default, empty environment
   Environment env(g);
@@ -357,7 +357,7 @@ void astParseGrammar(Grammar &g, GrammarAST *ast)
       Environment newEnv(env);
 
       // parse it
-      astParseNonterm(newEnv, ast, nt);
+      astParseNonterm(newEnv, ast, nt, eof, multiIndex);
     }
   }
 
@@ -811,76 +811,74 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   }*/
 }
 
-
-void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
-{
-  // get the first nonterminal; this is the user's start symbol
-  TF_nonterm *firstNT = ast->firstNT;
-
-  // find the name of the user's EOF token
-  TermDecl const *eof = NULL;
-  FOREACH_ASTLIST(TermDecl, ast->terms->decls, iter) {
-    if (iter.data()->code == 0) {
-      eof = iter.data();
-      break;
+void createEarlyRule(GrammarAST *ast, ProdDecl *prod, TermDecl const *eof) {
+    RHSElt *poss_eof = prod->rhs.last();
+    RH_name *rh_eof = 0;
+    if (poss_eof && poss_eof->kind()==RH_name::RH_NAME) {
+        rh_eof = poss_eof->asRH_name();
+        if (strcmp(rh_eof->name, eof->name)) {
+          rh_eof = 0;
+        }
     }
-  }
-  if (!eof) {
-    astParseError("you have to have an EOF token, with code 0");
-    return;
-  }
-  if (multiIndex >= 0) {
-      ProdDecl *prod = firstNT->productions.nth(multiIndex);
-      multiIndex++;
-      if (multiIndex >= firstNT->productions.count()) {
-          multiIndex = -1;
-      }
+    if (!rh_eof) {
+        rh_eof = new RH_name(LIT_STR("").clone(), eof->name.clone());
+        prod->rhs.append(rh_eof);
+    }
+    if (ast->earlyStartNT) {
+        ast->earlyStartNT->productions.removeFirst();
+        ast->earlyStartNT->productions.prepend(prod);
+    } else {
+        ast->forms.removeItem(ast->firstNT);
+        ast->earlyStartNT
+                = new TF_nonterm(
+                    LIT_STR("__EarlyStartSymbol").clone(),   // name
+                    new LocString(SL_UNKNOWN, NULL)/*ast->firstNT->type.clone()*/,                   // type
+                    NULL,                                    // empty list of functions
+                    new ASTList<ProdDecl>(prod, false),      // productions  TODO memleak?
+                    NULL                                     // subsets
+                  );
+        ast->forms.prepend(ast->earlyStartNT);
+    }
+}
 
-      RHSElt *poss_eof = prod->rhs.last();
-      RH_name *rh_eof = 0;
-      if (poss_eof && poss_eof->kind()==RH_name::RH_NAME) {
-          rh_eof = poss_eof->asRH_name();
-          if (strcmp(rh_eof->name, eof->name)) {
-            rh_eof = 0;
-          }
+void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &multiIndex)
+{
+
+  if (multiIndex >= 0) {
+      int ind;
+      if (multiIndex < ast->firstNT->productions.count()) {
+
+          ProdDecl *prod = ast->firstNT->productions.nth(multiIndex);
+          createEarlyRule(ast, prod, eof);
+
+      } else if (ast->childrenNT &&
+                 (ind = multiIndex - ast->firstNT->productions.count()) < ast->childrenNT->productions.count() ) {
+
+          ProdDecl *prod = ast->childrenNT->productions.nth(ind);
+          createEarlyRule(ast, prod, eof);
       }
-      if (!rh_eof) {
-          rh_eof = new RH_name(LIT_STR("").clone(), eof->name.clone());
-          prod->rhs.append(rh_eof);
-      }
-      if (ast->earlyStartNT) {
-          ast->earlyStartNT->productions.removeFirst();
-          ast->earlyStartNT->productions.prepend(prod);
-      } else {
-          ast->forms.removeItem(firstNT);
-          ast->earlyStartNT
-                  = new TF_nonterm(
-                      LIT_STR("__EarlyStartSymbol").clone(),   // name
-                      new LocString(SL_UNKNOWN, NULL)/*firstNT->type.clone()*/,                   // type
-                      NULL,                                    // empty list of functions
-                      new ASTList<ProdDecl>(prod, false),      // productions
-                      NULL                                     // subsets
-                    );
-          ast->forms.prepend(ast->earlyStartNT);
+      multiIndex++;
+      if (multiIndex >= (ast->firstNT->productions.count() + (ast->childrenNT?ast->childrenNT->productions.count():0)) ) {
+          multiIndex = -1;
       }
   } else {
 
       // build a start production
-      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), firstNT->name.clone());
+      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), ast->firstNT->name.clone());
       RHSElt *rhs2 = new RH_name(LIT_STR("").clone(), eof->name.clone());
       ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
       rhs->append(rhs1);
       rhs->append(rhs2);
       // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
       //char const *action = g.targetLang.equals("OCaml")? " top " :
-      //                     firstNT->type.equals("void")? " return; " :
+      //                     ast->firstNT->type.equals("void")? " return; " :
       //                                                   " return top; ";
       ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL), new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
       // build an even earlier start symbol
       ast->earlyStartNT
         = new TF_nonterm(
             LIT_STR("__EarlyStartSymbol").clone(),   // name
-            new LocString(SL_UNKNOWN, NULL)/*firstNT->type.clone()*/,                   // type
+            new LocString(SL_UNKNOWN, NULL)/*ast->firstNT->type.clone()*/,                   // type
             NULL,                                    // empty list of functions
             new ASTList<ProdDecl>(startProd),        // productions
             NULL                                     // subsets
@@ -891,7 +889,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
 }
 
 
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt)
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex)
 {
   LocString const &name = nt->name;
 
@@ -903,7 +901,7 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt)
 
   // iterate over the productions
   FOREACH_ASTLIST(ProdDecl, nt->productions, iter) {
-    astParseProduction(env, ast, nonterm, iter.data());
+    astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex);
   }
 
   // parse dup/del/merge
@@ -928,7 +926,7 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt)
 
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        ProdDecl const *prodDecl)
+                        ProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex)
 {
   // is this the special start symbol I inserted?
   bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
@@ -937,18 +935,6 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
   Production *prod = new Production(nonterm, "this");
 
   if (prodDecl->kind == PDK_TRAVERSE) {
-      // find the name of the user's EOF token
-      TermDecl const *eof = NULL;
-      FOREACH_ASTLIST(TermDecl, ast->terms->decls, iter) {
-        if (iter.data()->code == 0) {
-          eof = iter.data();
-          break;
-        }
-      }
-      if (!eof) {
-        astParseError("you have to have an EOF token, with code 0");
-        return;
-      }
 
       ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
       ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
@@ -963,7 +949,24 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
       // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
       ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW, rhs, prodDecl->actionCode.clone(), LIT_STR(s.str().c_str()).clone());
-      ast->earlyStartNT->productions.append(newStart);
+
+      if (ast->childrenNT) {
+          ast->childrenNT->productions.append(newStart);
+      } else {
+          ast->childrenNT
+                  = new TF_nonterm(
+                      LIT_STR("__GeneratedChildren").clone(),   // name
+                      new LocString(SL_UNKNOWN, NULL),          // type
+                      NULL,                                     // empty list of functions
+                      new ASTList<ProdDecl>(newStart),          // productions
+                      NULL                                      // subsets
+                    );
+      }
+
+      if (multiIndex == -1) {
+          // reset to this ast->childrenNT :
+          multiIndex = ast->firstNT->productions.count() + ast->childrenNT->productions.count() - 1;
+      }
 
       // "return tag" is fine
       constcast(prodDecl->actionCode).str = NULL;
@@ -1519,15 +1522,32 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex)
   // so we can know what language is the target
   astParseOptions(g, treeTop);
 
+  if (!treeTop->firstNT) {
+      astParseError("you have to define at least 1 nonterm symbol");
+      return;
+  }
+  // find the name of the user's EOF token
+  TermDecl const *eof = NULL;
+  FOREACH_ASTLIST(TermDecl, treeTop->terms->decls, iter) {
+    if (iter.data()->code == 0) {
+      eof = iter.data();
+      break;
+    }
+  }
+  if (!eof) {
+    astParseError("you have to have an EOF token, with code 0");
+    return;
+  }
+
   // moved to after parse
   //addDefaultTypesActions(g, treeTop);
 
   // synthesize a rule "TrueStart -> Start EOF"
-  synthesizeStartRule(g, treeTop, multiIndex);
+  synthesizeStartRule(g, treeTop, eof, multiIndex);
 
   // parse the AST into a Grammar
   traceProgress() << "parsing grammar AST..\n";
-  astParseGrammar(g, treeTop);
+  astParseGrammar(g, treeTop, eof, multiIndex);
 
   // fill in default types and actions
   addDefaultTypesActions(g, treeTop);
