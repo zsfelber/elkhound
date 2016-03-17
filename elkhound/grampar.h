@@ -113,6 +113,7 @@ void setAnnotations(GrammarAST *ast);
 // GrammarAST -> Grammar
 void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex);
 
+void astParseError(rostring msg);
 
 // thrown when there is an error parsing the AST
 class XASTParse : public xBase {

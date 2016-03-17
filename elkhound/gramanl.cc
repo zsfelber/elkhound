@@ -5212,9 +5212,23 @@ int inner_entry(int argc, char **argv)
       string prefix, pref;
 
       if (multiIndex>=0) {
-          ProdDecl *pdecl = ast->firstNT->productions.nth(multiIndex);
+          int ind;
+          if (multiIndex < ast->firstNT->productions.count()) {
 
-          get_names(ast->firstNT, pdecl, multiIndex, prefix0, pref, prefix);
+              ProdDecl *prod = ast->firstNT->productions.nth(multiIndex);
+              get_names(ast->firstNT, prod, multiIndex, prefix0, pref, prefix);
+
+          } else if (ast->childrenNT &&
+                     (ind = multiIndex - ast->firstNT->productions.count()) < ast->childrenNT->productions.count() ) {
+
+              ProdDecl *prod = ast->childrenNT->productions.nth(ind);
+              get_names(ast->childrenNT, prod, multiIndex, prefix0, pref, prefix);
+          } else {
+              std::stringstream s;
+              s << "multiIndex " << multiIndex << " of " << ast->firstNT->productions.count()
+                << " + " << (ast->childrenNT?ast->childrenNT->productions.count():0);
+              astParseError(s.str().c_str());
+          }
 
       } else {
           prefix = prefix0;
