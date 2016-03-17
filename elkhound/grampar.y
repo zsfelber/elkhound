@@ -312,10 +312,10 @@ Productions: /* empty */                   { $$ = new ASTList<ProdDecl>; }
            ;
 
 /* yields: ProdDecl */
-Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3, nolocNULL()); }
-          | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4, nolocNULL()); }
-          | "delete"  "->" RHS ";"         { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL(), nolocNULL()); }
-          | TOK_NAME  "->" RHS2 Action     { $$ = new ProdDecl($2, PDK_TRAVERSE, $3, $4, $1); }
+Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3, nolocNULL(), nolocNULL()); }
+          | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4, nolocNULL(), nolocNULL()); }
+          | "delete"  "->" RHS ";"         { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL(), nolocNULL(), nolocNULL()); }
+          | TOK_NAME  "->" RHS2 Action     { $$ = new ProdDecl($2, PDK_TRAVERSE, $3, $4, $1, nolocNULL()); }
           ;
 
 /* yields: LocString */

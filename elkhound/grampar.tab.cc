@@ -1658,25 +1658,25 @@ yyreduce:
 
   case 45:
 #line 315 "grampar.y" /* yacc.c:1646  */
-    { (yyval.prodDecl) = new ProdDecl((yyvsp[-2].loc), PDK_NEW, (yyvsp[-1].rhsList), (yyvsp[0].str), nolocNULL()); }
+    { (yyval.prodDecl) = new ProdDecl((yyvsp[-2].loc), PDK_NEW, (yyvsp[-1].rhsList), (yyvsp[0].str), nolocNULL(), nolocNULL()); }
 #line 1663 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 46:
 #line 316 "grampar.y" /* yacc.c:1646  */
-    { (yyval.prodDecl) = new ProdDecl((yyvsp[-2].loc), PDK_REPLACE,(yyvsp[-1].rhsList), (yyvsp[0].str), nolocNULL()); }
+    { (yyval.prodDecl) = new ProdDecl((yyvsp[-2].loc), PDK_REPLACE,(yyvsp[-1].rhsList), (yyvsp[0].str), nolocNULL(), nolocNULL()); }
 #line 1669 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 47:
 #line 317 "grampar.y" /* yacc.c:1646  */
-    { (yyval.prodDecl) = new ProdDecl((yyvsp[-2].loc), PDK_DELETE, (yyvsp[-1].rhsList), nolocNULL(), nolocNULL()); }
+    { (yyval.prodDecl) = new ProdDecl((yyvsp[-2].loc), PDK_DELETE, (yyvsp[-1].rhsList), nolocNULL(), nolocNULL(), nolocNULL()); }
 #line 1675 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 48:
 #line 318 "grampar.y" /* yacc.c:1646  */
-    { (yyval.prodDecl) = new ProdDecl((yyvsp[-2].loc), PDK_TRAVERSE, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str)); }
+    { (yyval.prodDecl) = new ProdDecl((yyvsp[-2].loc), PDK_TRAVERSE, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), nolocNULL()); }
 #line 1681 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 

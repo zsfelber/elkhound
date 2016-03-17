@@ -827,12 +827,14 @@ void createEarlyRule(GrammarAST *ast, ProdDecl *prod, TermDecl const *eof) {
     if (ast->earlyStartNT) {
         ast->earlyStartNT->productions.removeFirst();
         ast->earlyStartNT->productions.prepend(prod);
+        ast->earlyStartNT->type.str = prod->type.str;
     } else {
         ast->forms.removeItem(ast->firstNT);
+
         ast->earlyStartNT
                 = new TF_nonterm(
                     LIT_STR("__EarlyStartSymbol").clone(),   // name
-                    new LocString(SL_UNKNOWN, NULL)/*ast->firstNT->type.clone()*/,                   // type
+                    prod->type.clone()/*ast->firstNT->type.clone()*/,                   // type
                     NULL,                                    // empty list of functions
                     new ASTList<ProdDecl>(prod, false),      // productions  TODO memleak?
                     NULL                                     // subsets
@@ -873,7 +875,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
       //char const *action = g.targetLang.equals("OCaml")? " top " :
       //                     ast->firstNT->type.equals("void")? " return; " :
       //                                                   " return top; ";
-      ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL), new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
+      ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL), new LocString(SL_UNKNOWN, NULL), new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
       // build an even earlier start symbol
       ast->earlyStartNT
         = new TF_nonterm(
@@ -935,42 +937,51 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
   Production *prod = new Production(nonterm, "this");
 
   if (prodDecl->kind == PDK_TRAVERSE) {
-
-      ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
-      ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
-      RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
-      rhs->steal(&orhs, false);
-      rhs->append(reof);
-
-      orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
-
-      std::stringstream s;
-      s << nonterm->name << "$" << prodDecl->name;
-
-      // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-      ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW, rhs, prodDecl->actionCode.clone(), LIT_STR(s.str().c_str()).clone());
-
-      if (ast->childrenNT) {
-          ast->childrenNT->productions.append(newStart);
+      if (prodDecl->traversed) {
+          xassert(!constcast(prodDecl->actionCode).str);
       } else {
-          ast->childrenNT
-                  = new TF_nonterm(
-                      LIT_STR("__GeneratedChildren").clone(),   // name
-                      new LocString(SL_UNKNOWN, NULL),          // type
-                      NULL,                                     // empty list of functions
-                      new ASTList<ProdDecl>(newStart),          // productions
-                      NULL                                      // subsets
-                    );
-      }
 
-      if (multiIndex == -1) {
-          // reset to this ast->childrenNT :
-          multiIndex = ast->firstNT->productions.count() + ast->childrenNT->productions.count() - 1;
-      }
+          constcast(prodDecl)->traversed = true;
 
-      // "return tag" is fine
-      constcast(prodDecl->actionCode).str = NULL;
+          ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
+          ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
+          RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
+          rhs->steal(&orhs, false);
+          rhs->append(reof);
+
+          orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
+
+          std::stringstream s;
+          s << nonterm->name << "$" << prodDecl->name;
+          std::cout << "Traversing " << s.str() << std::endl;
+
+          // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
+          ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW, rhs, prodDecl->actionCode.clone(), LIT_STR(s.str().c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
+
+          if (ast->childrenNT) {
+              ast->childrenNT->productions.append(newStart);
+          } else {
+              ast->childrenNT
+                      = new TF_nonterm(
+                          LIT_STR("__GeneratedChildren").clone(),   // name
+                          new LocString(SL_UNKNOWN, NULL),          // type
+                          NULL,                                     // empty list of functions
+                          new ASTList<ProdDecl>(newStart),          // productions
+                          NULL                                      // subsets
+                        );
+          }
+
+          if (multiIndex == -1) {
+              // reset to this ast->childrenNT :
+              multiIndex = ast->firstNT->productions.count() + ast->childrenNT->productions.count() - 1;
+          }
+
+          // "return tag" is fine
+          constcast(prodDecl->actionCode).str = NULL;
+      }
   }
+
+
   // put the code into it
   prod->action = prodDecl->actionCode;
 

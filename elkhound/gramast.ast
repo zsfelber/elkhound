@@ -91,7 +91,9 @@ enum RHAttrKind {
 };
 
 // production: rhs description, and code to execute upon recognition
-class ProdDecl (SourceLoc loc, ProdDeclKind kind, ASTList<RHSElt> rhs, LocString actionCode, LocString name);
+class ProdDecl (SourceLoc loc, ProdDeclKind kind, ASTList<RHSElt> rhs, LocString actionCode, LocString name, LocString type) {
+  public bool traversed = false;
+}
 
 // one of the things that appears after the '->', i.e. the
 // right-hand-side elements
