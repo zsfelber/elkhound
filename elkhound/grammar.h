@@ -59,8 +59,6 @@ typedef LocString LiteralCode;
 // refers to this string table
 extern StringTable grammarStringTable;
 
-static const bool MULTIPLE_START = true;
-
 
 // ---------------- Symbol --------------------
 // either a nonterminal or terminal symbol

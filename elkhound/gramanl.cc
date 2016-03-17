@@ -5015,6 +5015,48 @@ void emitSwitchCode(Grammar const &g, EmitCode &out,
 #include <stdio.h>             // remove
 #include <stdlib.h>            // system
 
+void get_names(TF_nonterm const * nt, ProdDecl const * pdecl, int multiIndex, string const & prefix0, string & pref, string & prefix) {
+    int names = 0;
+    std::stringstream sname;
+    if (pdecl->name && pdecl->name.isNonNull()) {
+        sname << pdecl->name;
+        names = 1;
+        if (sname.str().find_first_of("$") == std::string::npos) {
+            sname.seekp(0);
+            sname << nt->name << "$" << pdecl->name;
+        }
+    } else {
+        FOREACH_ASTLIST(RHSElt, pdecl->rhs, iter) {
+          RHSElt *n = constcast(iter.data());
+          if (n->isRH_name()) {
+              names++;
+              if (names > 1) {
+                  break;
+              }
+              sname << n->asRH_name()->name;
+          }
+        }
+    }
+    {
+        if (names == 1) {
+            pref = sname.str().c_str();
+        } else {
+            std::stringstream s;
+            s << multiIndex;
+            pref = s.str().c_str();
+        }
+    }
+
+    {
+        std::stringstream s;
+        if (names == 1) {
+            s << prefix0 << "_" << sname.str();
+        } else {
+            s << prefix0 << "_" << multiIndex;
+        }
+        prefix = s.str().c_str();
+    }
+}
 
 int inner_entry(int argc, char **argv)
 {
@@ -5123,15 +5165,43 @@ int inner_entry(int argc, char **argv)
 
   setAnnotations(ast);
 
+  int startSymbols;
+  std::stringstream s;
 
-  if (MULTIPLE_START && ast->firstNT && ast->firstNT->productions.count()>1) {
-      cout << "Multiple start productions, generating numbered grammars:" << ast->firstNT->productions.count() << endl;
+  if (ast->firstNT) {
+      startSymbols = ast->firstNT->productions.count();
+      FOREACH_ASTLIST_NC(ProdDecl, ast->firstNT->productions, iter2) {
+          string prefix0, pref, prefix;
+          get_names(ast->firstNT, iter2.data(), multiIndex++, prefix0, pref, prefix);
+          s << pref << ", ";
+      }
+  } else {
+      startSymbols = 0;
+  }
+
+  FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
+    if (iter.data()->isTF_nonterm()) {
+        FOREACH_ASTLIST_NC(ProdDecl, iter.data()->asTF_nonterm()->productions, iter2) {
+            if (iter2.data()->name && iter2.data()->name.isNonNull()) {
+                string prefix0, pref, prefix;
+                get_names(iter.data()->asTF_nonterm(), iter2.data(), multiIndex++, prefix0, pref, prefix);
+                startSymbols++;
+                s << pref << ", ";
+            }
+        }
+    }
+  }
+  if (s.tellp()) {
+      s.seekp(s.tellp()-3);
+  }
+
+  if (startSymbols > 1) {
+      cout << "Multiple start productions, generating grammars: #" << startSymbols << " " << s.str() << endl;
+      multiIndex = 0;
   } else {
       multiIndex = -1;
       if (ast->firstNT) {
-          if (MULTIPLE_START) {
-              cout << "Single start symbol." << endl;
-          }
+          cout << "Single start symbol: " << s.str() << endl;
       } else {
           cout << "! ast->firstNT" << endl;
       }
@@ -5143,42 +5213,9 @@ int inner_entry(int argc, char **argv)
 
       if (multiIndex>=0) {
           ProdDecl *pdecl = ast->firstNT->productions.nth(multiIndex);
-          int names = 0;
-          LocString name;
-          if (pdecl->name && pdecl->name.isNonNull()) {
-              name = pdecl->name;
-              names = 1;
-          } else {
-              FOREACH_ASTLIST(RHSElt, pdecl->rhs, iter) {
-                RHSElt *n = constcast(iter.data());
-                if (n->isRH_name()) {
-                    names++;
-                    if (names > 1) {
-                        break;
-                    }
-                    name = n->asRH_name()->name;
-                }
-              }
-          }
-          {
-              std::stringstream s;
-              if (names == 1) {
-                  s << name;
-              } else {
-                  s << multiIndex;
-              }
-              pref = s.str().c_str();
-          }
 
-          {
-              std::stringstream s;
-              if (names == 1) {
-                  s << prefix0 << "_" << name;
-              } else {
-                  s << prefix0 << "_" << multiIndex;
-              }
-              prefix = s.str().c_str();
-          }
+          get_names(ast->firstNT, pdecl, multiIndex, prefix0, pref, prefix);
+
       } else {
           prefix = prefix0;
       }
