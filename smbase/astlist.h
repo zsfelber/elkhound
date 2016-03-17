@@ -40,6 +40,7 @@ public:
   ASTList(ASTList<T> *src)              : list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning&&src) list.appendAll(src->list);}
   ASTList(ASTList<T> *src,bool owning)  : list((src&&owning)?&src->list:0), owning(owning) { if (!owning&&src) list.appendAll(src->list);}
   void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
+  void steal(ASTList<T> *src,bool deleteOrig)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list, deleteOrig); }
 
   // selectors
   int count() const                     { return list.count(); }

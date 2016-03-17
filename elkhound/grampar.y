@@ -347,14 +347,14 @@ RHSElt: TOK_NAME                { $$ = new RH_name(sameloc($1, ""), $1); }
       ;
 
 RHSElt2: RHSElt
-      | TOK_NAME ":" TOK_STRING ":" TOK_NAME   { $$ = new RH_attr($1, $3, $5); }
-      | TOK_NAME ":" TOK_STRING ":" TOK_STRING { $$ = new RH_attr($1, $3, $5); }
-      | TOK_STRING ":" TOK_NAME              { $$ = new RH_attr(sameloc($1, ""), $1, $3); }
-      | TOK_STRING ":" TOK_STRING            { $$ = new RH_attr(sameloc($1, ""), $1, $3); }
-      | TOK_NAME ":" TOK_STRING "::" TOK_NAME   { $$ = new RH_attr($1, $3, $5); }
-      | TOK_NAME ":" TOK_STRING "::" TOK_STRING { $$ = new RH_attr($1, $3, $5); }
-      | TOK_STRING "::" TOK_NAME              { $$ = new RH_attr(sameloc($1, ""), $1, $3); }
-      | TOK_STRING "::" TOK_STRING            { $$ = new RH_attr(sameloc($1, ""), $1, $3); }
+      | TOK_NAME ":" TOK_STRING ":" TOK_NAME   { $$ = new RH_attr(RHA_NAME, $1, $3, $5); }
+      | TOK_NAME ":" TOK_STRING ":" TOK_STRING { $$ = new RH_attr(RHA_STRING, $1, $3, $5); }
+      | TOK_STRING ":" TOK_NAME              { $$ = new RH_attr(RHA_NAME, sameloc($1, ""), $1, $3); }
+      | TOK_STRING ":" TOK_STRING            { $$ = new RH_attr(RHA_STRING, sameloc($1, ""), $1, $3); }
+      | TOK_NAME ":" TOK_STRING "::" TOK_NAME   { $$ = new RH_attr(RHA_TOKENS, $1, $3, $5); }
+      | TOK_NAME ":" TOK_STRING "::" TOK_STRING { $$ = new RH_attr(RHA_STRTOKENS, $1, $3, $5); }
+      | TOK_STRING "::" TOK_NAME              { $$ = new RH_attr(RHA_TOKENS, sameloc($1, ""), $1, $3); }
+      | TOK_STRING "::" TOK_STRING            { $$ = new RH_attr(RHA_STRTOKENS, sameloc($1, ""), $1, $3); }
       ;
         
 /* yields: ASTList<LocString> */

@@ -5145,15 +5145,20 @@ int inner_entry(int argc, char **argv)
           ProdDecl *pdecl = ast->firstNT->productions.nth(multiIndex);
           int names = 0;
           LocString name;
-          FOREACH_ASTLIST(RHSElt, pdecl->rhs, iter) {
-            RHSElt *n = constcast(iter.data());
-            if (n->isRH_name()) {
-                names++;
-                if (names > 1) {
-                    break;
+          if (pdecl->name && pdecl->name.isNonNull()) {
+              name = pdecl->name;
+              names = 1;
+          } else {
+              FOREACH_ASTLIST(RHSElt, pdecl->rhs, iter) {
+                RHSElt *n = constcast(iter.data());
+                if (n->isRH_name()) {
+                    names++;
+                    if (names > 1) {
+                        break;
+                    }
+                    name = n->asRH_name()->name;
                 }
-                name = n->asRH_name()->name;
-            }
+              }
           }
           {
               std::stringstream s;

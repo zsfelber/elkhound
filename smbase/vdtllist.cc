@@ -17,6 +17,23 @@ void VoidTailList::steal(VoidTailList *src)
   }
 }
 
+void VoidTailList::steal(VoidTailList *src, bool deleteOrig)
+{
+  if (src) {
+    top = src->top;
+    tail = src->tail;
+    src->top = NULL;
+    src->tail = NULL;
+    if (deleteOrig) {
+        delete src;
+    }
+  }
+  else {
+    top = NULL;
+    tail = NULL;
+  }
+}
+
 void VoidTailList::prepend(void *newitem)
 {
   VoidList::prepend(newitem);

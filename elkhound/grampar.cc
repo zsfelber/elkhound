@@ -88,8 +88,8 @@ void astParseGrammar(Grammar &g, GrammarAST *treeTop);
 void astParseTerminals(Environment &env, TF_terminals const &terms);
 void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
-void astParseNonterm(Environment &env, TF_nonterm const *nt);
-void astParseProduction(Environment &env, Nonterminal *nonterm,
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt);
+void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         ProdDecl const *prod);
 
 
@@ -357,7 +357,7 @@ void astParseGrammar(Grammar &g, GrammarAST *ast)
       Environment newEnv(env);
 
       // parse it
-      astParseNonterm(newEnv, nt);
+      astParseNonterm(newEnv, ast, nt);
     }
   }
 
@@ -891,7 +891,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, int &multiIndex)
 }
 
 
-void astParseNonterm(Environment &env, TF_nonterm const *nt)
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt)
 {
   LocString const &name = nt->name;
 
@@ -903,7 +903,7 @@ void astParseNonterm(Environment &env, TF_nonterm const *nt)
 
   // iterate over the productions
   FOREACH_ASTLIST(ProdDecl, nt->productions, iter) {
-    astParseProduction(env, nonterm, iter.data());
+    astParseProduction(env, ast, nonterm, iter.data());
   }
 
   // parse dup/del/merge
@@ -927,7 +927,7 @@ void astParseNonterm(Environment &env, TF_nonterm const *nt)
 }
 
 
-void astParseProduction(Environment &env, Nonterminal *nonterm,
+void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         ProdDecl const *prodDecl)
 {
   // is this the special start symbol I inserted?
@@ -936,6 +936,38 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
   // build a production; use 'this' as the tag for LHS elements
   Production *prod = new Production(nonterm, "this");
 
+  if (prodDecl->kind == PDK_TRAVERSE) {
+      // find the name of the user's EOF token
+      TermDecl const *eof = NULL;
+      FOREACH_ASTLIST(TermDecl, ast->terms->decls, iter) {
+        if (iter.data()->code == 0) {
+          eof = iter.data();
+          break;
+        }
+      }
+      if (!eof) {
+        astParseError("you have to have an EOF token, with code 0");
+        return;
+      }
+
+      ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
+      ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
+      RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
+      rhs->steal(&orhs, false);
+      rhs->append(reof);
+
+      orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
+
+      std::stringstream s;
+      s << nonterm->name << "$" << prodDecl->name;
+
+      // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
+      ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW, rhs, prodDecl->actionCode.clone(), LIT_STR(s.str().c_str()).clone());
+      ast->earlyStartNT->productions.append(newStart);
+
+      // "return tag" is fine
+      constcast(prodDecl->actionCode).str = NULL;
+  }
   // put the code into it
   prod->action = prodDecl->actionCode;
 
@@ -947,15 +979,23 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
     RHSElt const *n = iter.data();
     LocString symName;
     LocString symTag;
+    LocString attrName;
     bool isString = false;
     bool isAnnotation = false;
 
     // pull various info out of the AST node
     ASTSWITCHC(RHSElt, n) {
-      ASTCASEC(RH_name, tname) {
-        symName = tname->name;
-        symTag = tname->tag;
-      }
+        ASTCASEC(RH_name, tname) {
+          symName = tname->name;
+          symTag = tname->tag;
+        }
+
+        ASTNEXTC(RH_attr, tattr) {
+          symTag = tattr->tag;
+          attrName = tattr->attrName;
+          symName = tattr->attrValue;
+          isString = tattr->akind & RHA_STRING;
+        }
 
       ASTNEXTC(RH_string, ts) {
         symName = ts->str;
@@ -1064,7 +1104,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
   }
   // generating default rule
   if (synthesizedStart ? tags<=2 : (tags==1)) {
-    if (!first->tag.length()) {
+    if (!first->tag || !first->tag.length()) {
        first->tag.str = synthesizedStart ? "top" : "tag";
     }
     prod->defaultSymbol = first;

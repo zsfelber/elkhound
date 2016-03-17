@@ -1754,49 +1754,49 @@ yyreduce:
 
   case 62:
 #line 350 "grampar.y" /* yacc.c:1646  */
-    { (yyval.rhsElt) = new RH_attr((yyvsp[-4].str), (yyvsp[-2].str), (yyvsp[0].str)); }
+    { (yyval.rhsElt) = new RH_attr(RHA_NAME, (yyvsp[-4].str), (yyvsp[-2].str), (yyvsp[0].str)); }
 #line 1759 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 63:
 #line 351 "grampar.y" /* yacc.c:1646  */
-    { (yyval.rhsElt) = new RH_attr((yyvsp[-4].str), (yyvsp[-2].str), (yyvsp[0].str)); }
+    { (yyval.rhsElt) = new RH_attr(RHA_STRING, (yyvsp[-4].str), (yyvsp[-2].str), (yyvsp[0].str)); }
 #line 1765 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 64:
 #line 352 "grampar.y" /* yacc.c:1646  */
-    { (yyval.rhsElt) = new RH_attr(sameloc((yyvsp[-2].str), ""), (yyvsp[-2].str), (yyvsp[0].str)); }
+    { (yyval.rhsElt) = new RH_attr(RHA_NAME, sameloc((yyvsp[-2].str), ""), (yyvsp[-2].str), (yyvsp[0].str)); }
 #line 1771 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 65:
 #line 353 "grampar.y" /* yacc.c:1646  */
-    { (yyval.rhsElt) = new RH_attr(sameloc((yyvsp[-2].str), ""), (yyvsp[-2].str), (yyvsp[0].str)); }
+    { (yyval.rhsElt) = new RH_attr(RHA_STRING, sameloc((yyvsp[-2].str), ""), (yyvsp[-2].str), (yyvsp[0].str)); }
 #line 1777 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 66:
 #line 354 "grampar.y" /* yacc.c:1646  */
-    { (yyval.rhsElt) = new RH_attr((yyvsp[-4].str), (yyvsp[-2].str), (yyvsp[0].str)); }
+    { (yyval.rhsElt) = new RH_attr(RHA_TOKENS, (yyvsp[-4].str), (yyvsp[-2].str), (yyvsp[0].str)); }
 #line 1783 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 67:
 #line 355 "grampar.y" /* yacc.c:1646  */
-    { (yyval.rhsElt) = new RH_attr((yyvsp[-4].str), (yyvsp[-2].str), (yyvsp[0].str)); }
+    { (yyval.rhsElt) = new RH_attr(RHA_STRTOKENS, (yyvsp[-4].str), (yyvsp[-2].str), (yyvsp[0].str)); }
 #line 1789 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 68:
 #line 356 "grampar.y" /* yacc.c:1646  */
-    { (yyval.rhsElt) = new RH_attr(sameloc((yyvsp[-2].str), ""), (yyvsp[-2].str), (yyvsp[0].str)); }
+    { (yyval.rhsElt) = new RH_attr(RHA_TOKENS, sameloc((yyvsp[-2].str), ""), (yyvsp[-2].str), (yyvsp[0].str)); }
 #line 1795 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 69:
 #line 357 "grampar.y" /* yacc.c:1646  */
-    { (yyval.rhsElt) = new RH_attr(sameloc((yyvsp[-2].str), ""), (yyvsp[-2].str), (yyvsp[0].str)); }
+    { (yyval.rhsElt) = new RH_attr(RHA_STRTOKENS, sameloc((yyvsp[-2].str), ""), (yyvsp[-2].str), (yyvsp[0].str)); }
 #line 1801 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
