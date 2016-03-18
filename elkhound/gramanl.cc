@@ -5242,6 +5242,8 @@ int inner_entry(int argc, char **argv)
       if (useML) {
         g.targetLang = "OCaml";
       }
+      g.prefix0 = prefix0;
+
       parseGrammarAST(g, ast, multiIndex);
 
       if (multiIndex<0) {

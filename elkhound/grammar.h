@@ -540,6 +540,9 @@ public:	    // data
   int expectedUNRNonterms;              // # unreachable nonterminals
   int expectedUNRTerms;                 // # unreachable terminals
 
+
+  string prefix0;
+
 public:     // funcs
   Grammar();                            // set everything manually
   ~Grammar();

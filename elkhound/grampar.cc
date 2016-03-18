@@ -949,6 +949,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           case PDK_TRAVERSE_GR:
           case PDK_TRAVERSE_TKNS:
               ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
+              LocString *origAction;
+              std::stringstream s;
+              s << "AstTreeNodeLexer treeLexer = new AstTreeNodeLexer(tag, lexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
                   FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
                         LocString symName;
@@ -968,7 +971,34 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                             astParseError(symName, "Traverse mode '>' should all be followed by terminals.");
                         }
                   }
+                  origAction = prodDecl->actionCode.clone();
+                  //constcast(prodDecl->actionCode).str = "";
+                  s << ", false);" << endl;
+              } else {
+                  origAction = prodDecl->actionCode.clone();
+                  s << ");" << endl;
               }
+              s << "// initialize the parser" << endl;
+              //s << "GLR glrNode("<<env.g.prefix0 << nonterm->name << "$" << prodDecl->name<<"::parseTables, tblCsOutline);" << endl;
+              s << "GLR glrNode(_usr_"<< nonterm->name << "$" << prodDecl->name<<", _usr_"<< nonterm->name << "$" << prodDecl->name<<"::parseTables);" << endl;
+              s << "" << endl;
+              s << "// parse the input" << endl;
+              if (isVoid(nonterm->type)) {
+                  s << "if (!glrNode.glrParse(treeLexer, (SemanticValue&)tag)) {" << endl;
+                  s << "  // trace something;" << endl;
+                  s << "  tag = NULL;" << endl;
+                  s << "}" << endl;
+                  s << "return tag;" << endl;
+              } else {
+                  s << nonterm->type <<" * result;" << endl;
+                  s << "if (!glrNode.glrParse(treeLexer, (SemanticValue&)result)) {" << endl;
+                  s << "  // trace something;" << endl;
+                  s << "  result = NULL;" << endl;
+                  s << "}" << endl;
+                  s << "return result;" << endl;
+              }
+              // "return tag" is fine
+              constcast(prodDecl->actionCode).str = LIT_STR(s.str().c_str()).clone();
               ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
               RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
               rhs->steal(&orhs, false);
@@ -981,7 +1011,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               std::cout << "Traversing " << s.str() << std::endl;
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-              ProdDecl *newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, prodDecl->actionCode.clone(), LIT_STR(s.str().c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
+              ProdDecl *newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, origAction, LIT_STR(s.str().c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
 
               if (ast->childrenNT) {
                   ast->childrenNT->productions.append(newStart);
@@ -1001,8 +1031,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   multiIndex = ast->firstNT->productions.count() + ast->childrenNT->productions.count() - 1;
               }
 
-              // "return tag" is fine
-              constcast(prodDecl->actionCode).str = NULL;
+              break;
+          default:
+              astParseError(toString(prodDecl->pkind), "Invalid traverse mode production declaration.");
               break;
           }
       }

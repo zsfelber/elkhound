@@ -36,7 +36,10 @@ typedef unsigned long SemanticValue;
 // derived from this, and the parser will carry it along to invoke
 // the various action functions
 class UserActions {
+  ParseTables * parseTables;
 public:
+  UserActions() { parseTables = makeTables(); }
+
   // allow abstract user to delete
   virtual ~UserActions();
 
