@@ -949,8 +949,8 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               } else {
                   st0 << nonterm->type;
               }
-              vpref = "var";
-              << nonterm->name
+              sv0 << nonterm->name << "$" << prodDecl->name;
+              vpref = sv0.str().c_str();
           } else {
               st0 << tpref;
           }
@@ -985,7 +985,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   sv << vpref << "_" << vi;
                   ind << indent << "   ";
 
-                  astParseProduction(env, ast, NULL, iter.data(), eof, multiIndex, st.str().c_str(), sv.str().c_str(), &buf, ind.str().c_str());
+                  astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex, st.str().c_str(), sv.str().c_str(), &buf, ind.str().c_str());
 
                   buf << indent << "} else {" << std::endl;
                   buf << indent << "   var = NULL; goto done;" << std::endl;
@@ -1025,8 +1025,8 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << indent << ");" << std::endl;
               }
               buf << indent << "// initialize the parser" << std::endl;
-              //s << "GLR glrNode("<<env.g.prefix0 << nonterm->name << "$" << prodDecl->name<<"::parseTables, tblCsOutline);" << std::endl;
-              buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< nonterm->name << "$" << prodDecl->name<<", _usr_"<< nonterm->name << "$" << prodDecl->name<<"::parseTables, "<<vpref<<");" << std::endl;
+              //s << "GLR glrNode("<<env.g.prefix0 << vpref<<"::parseTables, tblCsOutline);" << std::endl;
+              buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< vpref<<", _usr_"<< vpref<<"::parseTables, "<<vpref<<");" << std::endl;
               buf << indent << " = NULL;" << std::endl;
               buf << indent << "// parse the input" << std::endl;
               buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)"<<vpref<<")) {" << std::endl;
@@ -1035,7 +1035,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "   goto done;" << std::endl;
               buf << indent << "}" << std::endl;
 
-              nms << nonterm->name << "$" << prodDecl->name;
+              nms << vpref;
               std::cout << "Traversing " << nms.str() << std::endl;
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
