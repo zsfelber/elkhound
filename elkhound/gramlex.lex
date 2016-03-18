@@ -157,9 +157,7 @@ HWHITE    [ \t\f\v\r]
   /* -------- punctuators, operators, keywords --------- */
 "}"                TOK_UPD_COL;  return TOK_RBRACE;
 ":"                TOK_UPD_COL;  return TOK_COLON;
-"="                TOK_UPD_COL;  return TOK_VALIDATE;
-">"                TOK_UPD_COL;  return TOK_TOKENS;
-")"                TOK_UPD_COL;  return TOK_RPAREN;
+<INITIAL,RHS,FUN>")"                   TOK_UPD_COL;  return TOK_RPAREN;
 ","                TOK_UPD_COL;  return TOK_COMMA;
 
 "terminals"        TOK_UPD_COL;  return TOK_TERMINALS;
@@ -191,13 +189,19 @@ HWHITE    [ \t\f\v\r]
   return TOK_ARROW;
 }
 
-">" {
+"~>" {
+  TOK_UPD_COL;
+  BEGIN(RHS);
+  return TOK_TREE;
+}
+
+<INITIAL,RHS>">" {
   TOK_UPD_COL;
   BEGIN(RHS);
   return TOK_TOKENS;
 }
 
-"=" {
+<INITIAL,RHS>"=" {
   TOK_UPD_COL;
   BEGIN(EQ);
   return TOK_VALIDATE;
@@ -247,13 +251,16 @@ HWHITE    [ \t\f\v\r]
 }
 
 <EQ>{
+
   "(" {
     TOK_UPD_COL;
     eqs++;
     return TOK_LPAREN;
   }
+
   ")" {
-    if (!--eqs) {
+    TOK_UPD_COL;
+    if (!(--eqs)) {
        BEGIN(RHS);
     }
     return TOK_RPAREN;

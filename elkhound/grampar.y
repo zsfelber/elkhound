@@ -81,6 +81,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_COLON ":"
 %token TOK_SEMICOLON ";"
 %token <loc> TOK_ARROW "->"
+%token <loc> TOK_TREE "~>"
 %token <loc> TOK_VALIDATE "="
 %token <loc> TOK_TOKENS ">"
 %token TOK_LPAREN "("
@@ -315,7 +316,7 @@ Productions: /* empty */                   { $$ = new ASTList<ProdDecl>; }
 Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3, nolocNULL(), nolocNULL()); }
           | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4, nolocNULL(), nolocNULL()); }
           | "delete"  "->" RHS ";"         { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL(), nolocNULL(), nolocNULL()); }
-          | TreeValidation0                { $$ = $1; }
+          | "~>" TreeValidation0           { $$ = $2; }
           ;
 
 TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = NULL; }
@@ -326,7 +327,7 @@ TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = NU
           | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new ProdDecl($4, PDK_NEW, $5, $6, nolocNULL(), nolocNULL()); }
           ;
 
-TreeValidations: TreeValidation                                        { $$ = NULL; }
+TreeValidations: /* empty */                                           { $$ = NULL; }
           | TreeValidations TreeValidation                             { $$ = NULL; }
           ;
 

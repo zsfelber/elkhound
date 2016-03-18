@@ -89,7 +89,8 @@ GrammarLexer::GrammarLexer(isEmbedTok test, StringTable &strtbl,
     stringLiteral(""),
     includeFileName(""),
     strtable(strtbl),
-    errors(0)
+    errors(0),
+    eqs(0)
 {
   trace("tmp") << "source is " << source << std::endl;
 
