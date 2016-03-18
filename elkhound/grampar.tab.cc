@@ -1696,37 +1696,37 @@ yyreduce:
 
   case 49:
 #line 326 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-4].loc), PDK_TRAVERSE_VAL, NULL, (yyvsp[0].str), (yyvsp[-5].str), nolocNULL(), nolocNULL(), (yyvsp[-2].treeProdDecls)); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-4].loc), PDK_TRAVERSE_VAL, NULL, (yyvsp[0].str), (yyvsp[-5].str), sameloc((yyvsp[-5].str), ""), sameloc((yyvsp[-5].str), ""), (yyvsp[-2].treeProdDecls)); }
 #line 1701 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 50:
 #line 327 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-4].loc), PDK_TRAVERSE_VAL, NULL, (yyvsp[0].str), (yyvsp[-5].str), nolocNULL(), (yyvsp[-7].str), (yyvsp[-2].treeProdDecls)); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-4].loc), PDK_TRAVERSE_VAL, NULL, (yyvsp[0].str), (yyvsp[-5].str), sameloc((yyvsp[-7].str), ""), (yyvsp[-7].str), (yyvsp[-2].treeProdDecls)); }
 #line 1707 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 51:
 #line 328 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-2].loc), PDK_TRAVERSE_TKNS, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), nolocNULL(), nolocNULL(), NULL); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-2].loc), PDK_TRAVERSE_TKNS, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), sameloc((yyvsp[-3].str), ""), sameloc((yyvsp[-3].str), ""), NULL); }
 #line 1713 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 52:
 #line 329 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-2].loc), PDK_TRAVERSE_TKNS, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), nolocNULL(), (yyvsp[-5].str), NULL); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-2].loc), PDK_TRAVERSE_TKNS, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), sameloc((yyvsp[-5].str), ""), (yyvsp[-5].str), NULL); }
 #line 1719 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 53:
 #line 330 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-2].loc), PDK_TRAVERSE_GR, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), nolocNULL(), nolocNULL(), NULL); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-2].loc), PDK_TRAVERSE_GR, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), sameloc((yyvsp[-3].str), ""), sameloc((yyvsp[-3].str), ""), NULL); }
 #line 1725 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 54:
 #line 331 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-2].loc), PDK_TRAVERSE_GR, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), nolocNULL(), (yyvsp[-5].str), NULL); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-2].loc), PDK_TRAVERSE_GR, (yyvsp[-1].rhsList), (yyvsp[0].str), (yyvsp[-3].str), sameloc((yyvsp[-5].str), ""), (yyvsp[-5].str), NULL); }
 #line 1731 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
@@ -1744,13 +1744,13 @@ yyreduce:
 
   case 57:
 #line 338 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, nolocNULL(), (yyvsp[-1].str), nolocNULL(), nolocNULL(), NULL); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-1].str)->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc((yyvsp[-1].str), ""), (yyvsp[-1].str), sameloc((yyvsp[-1].str), ""), sameloc((yyvsp[-1].str), ""), NULL); }
 #line 1749 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 58:
 #line 339 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, nolocNULL(), (yyvsp[-1].str), nolocNULL(), (yyvsp[-3].str), NULL); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((yyvsp[-3].str)->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc((yyvsp[-3].str), ""), (yyvsp[-1].str), sameloc((yyvsp[-3].str), ""), (yyvsp[-3].str), NULL); }
 #line 1755 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 

@@ -323,20 +323,20 @@ Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, 
           | "~>" TreeValidation0           { $$ = $2; }
           ;
 
-TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, nolocNULL(), nolocNULL(), $4); }
-          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action   { $$ = new TreeProdDecl($4, PDK_TRAVERSE_VAL, NULL, $8, $3, nolocNULL(), $1, $6); }
-          | TOK_NAME ">" RHS2 Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3, $4, $1, nolocNULL(), nolocNULL(), NULL); }
-          | TOK_NAME ":" TOK_NAME ">" RHS2  Action                     { $$ = new TreeProdDecl($4, PDK_TRAVERSE_TKNS, $5, $6, $3, nolocNULL(), $1, NULL); }
-          | TOK_NAME "->" RHS Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3, $4, $1, nolocNULL(), nolocNULL(), NULL); }
-          | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5, $6, $3, nolocNULL(), $1, NULL); }
+TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, sameloc($1, ""), sameloc($1, ""), $4); }
+          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action   { $$ = new TreeProdDecl($4, PDK_TRAVERSE_VAL, NULL, $8, $3, sameloc($1, ""), $1, $6); }
+          | TOK_NAME ">" RHS2 Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3, $4, $1, sameloc($1, ""), sameloc($1, ""), NULL); }
+          | TOK_NAME ":" TOK_NAME ">" RHS2  Action                     { $$ = new TreeProdDecl($4, PDK_TRAVERSE_TKNS, $5, $6, $3, sameloc($1, ""), $1, NULL); }
+          | TOK_NAME "->" RHS Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3, $4, $1, sameloc($1, ""), sameloc($1, ""), NULL); }
+          | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5, $6, $3, sameloc($1, ""), $1, NULL); }
           ;
 
 TreeValidations: /* empty */                                           { $$ = new ASTList<TreeProdDecl>; }
           | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: TOK_NAME ";"                                           { $$ = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, nolocNULL(), $1, nolocNULL(), nolocNULL(), NULL); }
-          | TOK_NAME ":" TOK_NAME ";"                                  { $$ = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, nolocNULL(), $3, nolocNULL(), $1, NULL); }
+TreeValidation: TOK_NAME ";"                                           { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $1, sameloc($1, ""), sameloc($1, ""), NULL); }
+          | TOK_NAME ":" TOK_NAME ";"                                  { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $3, sameloc($1, ""), $1, NULL); }
           | TreeValidation0                                            { $$ = $1; }
           ;
 

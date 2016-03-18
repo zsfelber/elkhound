@@ -90,7 +90,7 @@ void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prod, TermDecl const *eof, int & multiIndex, const char* tpref = 0, const char* vpref = 0, std::stringstream * buf = 0, const char* indent = "");
+                        AbstractProdDecl const *prod, TermDecl const *eof, int & multiIndex, std::string tpref = "", std::string vpref = "", std::stringstream * buf = 0, std::string indent = "");
 
 
 // really a static semantic error, more than a parse error..
@@ -928,7 +928,7 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex, const char* tpref, const char* vpref, std::stringstream * _buf, const char* indent)
+                        AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex, std::string tpref, std::string vpref, std::stringstream * _buf, std::string indent)
 {
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
@@ -939,26 +939,29 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           constcast(prodDecl)->traversed = true;
 
           std::stringstream buf0;
+          if (!_buf) {
+              _buf = &buf0;
+          }
           std::stringstream st0,sv0;
-          std::stringstream & buf = (_buf ? *_buf : buf0);
+          std::stringstream & buf = *_buf;
 
-          bool v0 = !vpref;
-          if (!vpref) {
+          bool v0 = !vpref.length();
+          if (v0) {
               if (isVoid(nonterm->type)) {
                   st0 << "Ast_" << nonterm->name;
               } else {
                   st0 << nonterm->type;
               }
               sv0 << nonterm->name << "$" << prodDecl->name;
-              vpref = sv0.str().c_str();
+              vpref = sv0.str();
           } else {
               st0 << tpref;
           }
           if (v0) {
-              buf << st0.str() << " var = tag;" << std::endl;
+              buf << st0.str() << " "<<vpref<<" = tag;" << std::endl;
           }
           st0 << "::Type__";
-          tpref = st0.str().c_str();
+          tpref = st0.str();
 
           ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
           LocString *origAction = prodDecl->actionCode.clone();
@@ -970,7 +973,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           int vi = 0;
           ProdDecl *newStart;
-          std::stringstream nms;
+          std::string a,b,c;
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
@@ -981,14 +984,14 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                     << " = " << vpref << "->" << iter.data()->name << ";" << std::endl;
                   buf << indent << "if ("<<vpref<< "_" << vi<<") {" << std::endl;
                   std::stringstream st, sv, ind;
-                  st << tpref << iter.data()->name << "::Type__" ;
-                  sv << vpref << "_" << vi;
-                  ind << indent << "   ";
+                  st << tpref << iter.data()->name << "::Type__" << std::flush;
+                  sv << vpref << "_" << vi << std::flush;
+                  ind << indent << "   " << std::flush;
 
-                  astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex, st.str().c_str(), sv.str().c_str(), &buf, ind.str().c_str());
+                  astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex, st.str(), sv.str(), _buf, ind.str());
 
                   buf << indent << "} else {" << std::endl;
-                  buf << indent << "   var = NULL; goto done;" << std::endl;
+                  buf << indent << "   "<<vpref<<" = NULL; goto done;" << std::endl;
                   buf << indent << "}" << std::endl;
 
                   vi++;
@@ -1035,11 +1038,10 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "   goto done;" << std::endl;
               buf << indent << "}" << std::endl;
 
-              nms << vpref;
-              std::cout << "Traversing " << nms.str() << std::endl;
+              std::cout << "Traversing " << vpref << std::endl;
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-              newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, origAction, LIT_STR(nms.str().c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
+              newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, origAction, LIT_STR(vpref.c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
 
               if (ast->childrenNT) {
                   ast->childrenNT->productions.append(newStart);
@@ -1067,7 +1069,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           if (v0) {
               buf << "done:" << std::endl;
-              buf << "return var;" << std::endl;
+              buf << "return "<<vpref<<";" << std::endl;
           }
 
           constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone()->str;
