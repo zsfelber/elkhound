@@ -932,9 +932,8 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 {
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
-      if (prodDecl->traversed) {
-          xassert(!constcast(prodDecl->actionCode).str);
-      } else {
+
+      if (!prodDecl->traversed) {
 
           constcast(prodDecl)->traversed = true;
 
@@ -948,17 +947,15 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           bool v0 = !vpref.length();
           if (v0) {
               if (isVoid(nonterm->type)) {
-                  st0 << "Ast_" << nonterm->name;
+                  st0 << "Ast_" << prodDecl->name;
               } else {
                   st0 << nonterm->type;
               }
               sv0 << nonterm->name << "$" << prodDecl->name;
               vpref = sv0.str();
+              buf << st0.str() << "* "<<vpref<<" = tag;" << std::endl;
           } else {
               st0 << tpref;
-          }
-          if (v0) {
-              buf << st0.str() << " "<<vpref<<" = tag;" << std::endl;
           }
           st0 << "::Type__";
           tpref = st0.str();
@@ -1030,12 +1027,12 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "// initialize the parser" << std::endl;
               //s << "GLR glrNode("<<env.g.prefix0 << vpref<<"::parseTables, tblCsOutline);" << std::endl;
               buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< vpref<<", _usr_"<< vpref<<"::parseTables, "<<vpref<<");" << std::endl;
-              buf << indent << " = NULL;" << std::endl;
+              buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
               buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)"<<vpref<<")) {" << std::endl;
               buf << indent << "} else {" << std::endl;
               buf << indent << "   // TODO trace something" << std::endl;
-              buf << indent << "   goto done;" << std::endl;
+              buf << indent << "   "<<vpref<<" = NULL; goto done;" << std::endl;
               buf << indent << "}" << std::endl;
 
               std::cout << "Traversing " << vpref << std::endl;
@@ -1075,8 +1072,13 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone()->str;
 
           orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
+
+          if (v0) {
+              goto produce;
+          }
       }
   } else {
+      produce:
 
       // is this the special start symbol I inserted?
       bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
