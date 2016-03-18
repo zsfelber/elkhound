@@ -90,7 +90,7 @@ void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prod, TermDecl const *eof, int & multiIndex, const char* tpref = 0, const char* vpref = 0, std::stringstream * buf = 0);
+                        AbstractProdDecl const *prod, TermDecl const *eof, int & multiIndex, const char* tpref = 0, const char* vpref = 0, std::stringstream * buf = 0, const char* indent = "");
 
 
 // really a static semantic error, more than a parse error..
@@ -928,7 +928,7 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex, const char* tpref, const char* vpref, std::stringstream * _buf)
+                        AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex, const char* tpref, const char* vpref, std::stringstream * _buf, const char* indent)
 {
   // is this the special start symbol I inserted?
   bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
@@ -946,6 +946,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           std::stringstream buf0;
           std::stringstream & buf = (_buf ? *_buf : buf0);
 
+          bool v0 = !vpref;
           if (!vpref) {
               vpref = "var";
           }
@@ -954,38 +955,48 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           case PDK_TRAVERSE_VAL:
               std::stringstream st0;
               if (!tpref) {
-                  std::string t0;
                   if (isVoid(nonterm->type)) {
                       st0 << "Ast_" << nonterm->name;
-                      t0 = st0.str();
+                      buf << indent << st0.str();
                       st0 << "::Type__";
                   } else {
                       st0 << nonterm->type;
-                      t0 = s.str();
+                      buf << indent << s.str();
                       st0 << "::Type__";
                   }
                   tpref = st0.str().c_str();
-                  buf << t0 << " var = tag;" << std::endl;
+                  buf << indent << " var = tag;" << std::endl;
               }
-              buf << "" << std::endl;
+              buf << indent << "bool result"<< vpref<<";" << std::endl;
+              buf << indent << "if ("<< vpref<<") {" << std::endl;
               int vi = 0;
+
+              buf << indent << "" << std::endl;
               FOREACH_ASTLIST(TreeProdDecl, prodDecl->asTreeProdDecl()->treeValidations, iter) {
-                  buf << tpref << iter.data()->name << " " << vpref << "_" << vi
+                  buf << indent << tpref << iter.data()->name << " " << vpref << "_" << vi
                     << " = " << vpref << "->" << iter.data()->name << ";" << std::endl;
-                  vi++;
-              }
-              vi = 0;
-              buf << "" << std::endl;
-              FOREACH_ASTLIST(TreeProdDecl, prodDecl->asTreeProdDecl()->treeValidations, iter) {
-                  buf << "if ("<< vpref<<") {" << std::endl;
-                  std::stringstream st, sv;
+                  std::stringstream st, sv, ind;
                   st << tpref << iter.data()->name << "::Type__" ;
                   sv << vpref << "_" << vi;
-                  astParseProduction(env, ast, NULL, iter.data(), eof, multiIndex, st.str().c_str(), sv.str().c_str(), &buf);
-                  buf << "}" << std::endl;
+                  ind << indent << "   ";
+                  astParseProduction(env, ast, NULL, iter.data(), eof, multiIndex, st.str().c_str(), sv.str().c_str(), &buf, ind.str().c_str());
+                  buf << indent << "if (!result"<<vpref<< "_" << vi<<") {" << endl;
+                  buf << indent << "   goto invalid;" << std::endl;
+                  buf << indent << "}" << std::endl;
 
                   vi++;
               }
+              buf << indent << "} else {" << std::endl;
+              buf << indent << "   goto invalid;" << std::endl;
+              buf << indent << "}" << std::endl;
+
+              if (v0) {
+
+                  buf << "invalid:" << std::endl;
+                  buf << "return NULL;" << std::endl;
+
+              }
+
               break;
 
           case PDK_TRAVERSE_GR:
@@ -993,11 +1004,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
               LocString *origAction = prodDecl->actionCode.clone();
 
-              if (!tpref) {
-                  tpref = vpref = "";
-              }
-
-              buf << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer("<<vpref<<", lexer";
+              buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer("<<vpref<<", lexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
                   FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
                         LocString symName;
@@ -1017,25 +1024,27 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                             astParseError(symName, "Traverse mode '>' should all be followed by terminals.");
                         }
                   }
-                  buf << ", false);" << endl;
+                  buf << indent << ", false);" << endl;
               } else {
-                  buf << ");" << endl;
+                  buf << indent << ");" << endl;
               }
-              buf << "// initialize the parser" << endl;
+              buf << indent << "// initialize the parser" << endl;
               //s << "GLR glrNode("<<env.g.prefix0 << nonterm->name << "$" << prodDecl->name<<"::parseTables, tblCsOutline);" << endl;
-              buf << "GLR glrNode"<<vpref<<"(_usr_"<< nonterm->name << "$" << prodDecl->name<<", _usr_"<< nonterm->name << "$" << prodDecl->name<<"::parseTables, tag);" << endl;
-              buf << "" << endl;
-              buf << "// parse the input" << endl;
+              buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< nonterm->name << "$" << prodDecl->name<<", _usr_"<< nonterm->name << "$" << prodDecl->name<<"::parseTables, tag);" << endl;
+              buf << indent << "" << endl;
+              buf << indent << "// parse the input" << endl;
               if (isVoid(nonterm->type)) {
-                  buf << "Ast_" << nonterm->name <<" * result;" << endl;
+                  buf << indent << "Ast_" << nonterm->name <<" * result;" << endl;
               } else {
-                  buf << nonterm->type <<" result;" << endl;
+                  buf << indent << nonterm->type <<" result;" << endl;
               }
-              buf << "if (!glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)result)) {" << endl;
-              buf << "  // trace something;" << endl;
-              buf << "  result = NULL;" << endl;
-              buf << "}" << endl;
-              buf << "return result;" << endl;
+              buf << indent << "if (!glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)result)) {" << endl;
+              buf << indent << "   // TODO trace something" << endl;
+              buf << indent << "   result"<<vpref<<" = NULL;" << endl;
+              buf << indent << "}" << endl;
+              if (v0) {
+                  buf << indent << "return result;" << endl;
+              }
 
               constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone();
 
@@ -1047,7 +1056,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
 
               std::stringstream buf;
-              buf << nonterm->name << "$" << prodDecl->name;
+              buf << indent << nonterm->name << "$" << prodDecl->name;
               std::cout << "Traversing " << buf.str() << std::endl;
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
