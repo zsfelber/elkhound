@@ -67,7 +67,7 @@ class PrecSpec (AssocKind kind, int prec, ASTList<LocString> tokens);
 // specification function: formals + code
 class SpecFunc (LocString name, ASTList<LocString> formals, LocString code)
 {
-  public LocString nthFormal(int i) const
+  public(func) LocString nthFormal(int i) const
     { return *( formals.nthC(i) ); };
 }
 
@@ -100,7 +100,6 @@ class ProdDecl (SourceLoc loc, ProdDeclKind kind, ASTList<RHSElt> rhs, LocString
 class RHSElt {
   -> RH_name(LocString tag, LocString name);         // tagged terminal or nonterminal reference
   -> RH_string(LocString tag, LocString str);        // tagged terminal reference by string alias
-  -> RH_attr(RHAttrKind akind, LocString tag, LocString attrName, LocString attrValue);         // tagged traverse nonterminal ast attribute reference
   
   // assigns a specific precedence level to a rule
   -> RH_prec(LocString tokName);                  

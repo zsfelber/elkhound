@@ -98,6 +98,8 @@ HWHITE    [ \t\f\v\r]
  * or the TOK_NAME meaning the type has been omitted */
 %s OPTIONAL_TYPE
 
+%s EQ
+
 
 /* ---------------------- rules ----------------------- */
 %%
@@ -155,7 +157,8 @@ HWHITE    [ \t\f\v\r]
   /* -------- punctuators, operators, keywords --------- */
 "}"                TOK_UPD_COL;  return TOK_RBRACE;
 ":"                TOK_UPD_COL;  return TOK_COLON;
-"::"               TOK_UPD_COL;  return TOK_COLON_COLON;
+"="                TOK_UPD_COL;  return TOK_VALIDATE;
+">"                TOK_UPD_COL;  return TOK_TOKENS;
 ")"                TOK_UPD_COL;  return TOK_RPAREN;
 ","                TOK_UPD_COL;  return TOK_COMMA;
 
@@ -186,6 +189,18 @@ HWHITE    [ \t\f\v\r]
   TOK_UPD_COL;
   BEGIN(RHS);
   return TOK_ARROW;
+}
+
+">" {
+  TOK_UPD_COL;
+  BEGIN(RHS);
+  return TOK_TOKENS;
+}
+
+"=" {
+  TOK_UPD_COL;
+  BEGIN(EQ);
+  return TOK_VALIDATE;
 }
 
   /* "{" in a RHS begins embedded */
@@ -229,6 +244,20 @@ HWHITE    [ \t\f\v\r]
 <INITIAL,RHS,FUN>"(" {
   TOK_UPD_COL;
   return TOK_LPAREN;
+}
+
+<EQ>{
+  "(" {
+    TOK_UPD_COL;
+    eqs++;
+    return TOK_LPAREN;
+  }
+  ")" {
+    if (!--eqs) {
+       BEGIN(RHS);
+    }
+    return TOK_RPAREN;
+  }
 }
 
   /* function beginning */

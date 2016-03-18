@@ -1004,12 +1004,12 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           symTag = tname->tag;
         }
 
-        ASTNEXTC(RH_attr, tattr) {
+        /*ASTNEXTC(RH_attr, tattr) {
           symTag = tattr->tag;
           attrName = tattr->attrName;
           symName = tattr->attrValue;
           isString = tattr->akind & RHA_STRING;
-        }
+        }*/
 
       ASTNEXTC(RH_string, ts) {
         symName = ts->str;

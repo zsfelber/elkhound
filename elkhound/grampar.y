@@ -79,10 +79,10 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_LBRACE "{"
 %token TOK_RBRACE "}"
 %token TOK_COLON ":"
-%token TOK_COLON_COLON "::"
 %token TOK_SEMICOLON ";"
 %token <loc> TOK_ARROW "->"
-%token <loc> TOK_TRAVERSE "~>"
+%token <loc> TOK_VALIDATE "="
+%token <loc> TOK_TOKENS ">"
 %token TOK_LPAREN "("
 %token TOK_RPAREN ")"
 %token TOK_COMMA ","
@@ -153,7 +153,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %type <stringList> FormalsOpt Formals Subsets
 
 %type <prodDecls> Productions
-%type <prodDecl> Production
+%type <prodDecl> Production TreeValidation0 TreeValidation TreeValidations 
 %type <rhsList> RHS
 %type <rhsElt> RHSElt
 %type <rhsList> RHS2
@@ -315,7 +315,24 @@ Productions: /* empty */                   { $$ = new ASTList<ProdDecl>; }
 Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3, nolocNULL(), nolocNULL()); }
           | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4, nolocNULL(), nolocNULL()); }
           | "delete"  "->" RHS ";"         { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL(), nolocNULL(), nolocNULL()); }
-          | TOK_NAME  "->" RHS2 Action     { $$ = new ProdDecl($2, PDK_TRAVERSE, $3, $4, $1, nolocNULL()); }
+          | TreeValidation0                { $$ = $1; }
+          ;
+
+TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = NULL; }
+          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action   { $$ = NULL; }
+          | TOK_NAME ">" RHS2 Action                                   { $$ = NULL; }
+          | TOK_NAME ":" TOK_NAME ">" RHS2  Action                     { $$ = NULL; }
+          | TOK_NAME "->" RHS Action                                   { $$ = new ProdDecl($2, PDK_NEW, $3, $4, nolocNULL(), nolocNULL()); }
+          | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new ProdDecl($4, PDK_NEW, $5, $6, nolocNULL(), nolocNULL()); }
+          ;
+
+TreeValidations: TreeValidation                                        { $$ = NULL; }
+          | TreeValidations TreeValidation                             { $$ = NULL; }
+          ;
+
+TreeValidation: TOK_NAME ";"                                           { $$ = NULL; }
+          | TOK_NAME ":" TOK_NAME ";"                                  { $$ = NULL; }
+          | TreeValidation0                                            { $$ = $1; }
           ;
 
 /* yields: LocString */
@@ -329,7 +346,7 @@ RHS: /* empty */                           { $$ = new ASTList<RHSElt>; }
    ;
 
 RHS2: /* empty */                           { $$ = new ASTList<RHSElt>; }
-   | RHS2 RHSElt2                            { ($$=$1)->append($2); }
+   | RHS2 RHSElt2                           { ($$=$1)->append($2); }
    ;
 
 /*
@@ -338,23 +355,15 @@ RHS2: /* empty */                           { $$ = new ASTList<RHSElt>; }
  * are to be referenced anywhere in the actions or conditions for the form
  */
 /* yields: RHSElt */
-RHSElt: TOK_NAME                { $$ = new RH_name(sameloc($1, ""), $1); }
-      | TOK_NAME ":" TOK_NAME   { $$ = new RH_name($1, $3); }
-      | TOK_STRING              { $$ = new RH_string(sameloc($1, ""), $1); }
-      | TOK_NAME ":" TOK_STRING { $$ = new RH_string($1, $3); }
+RHSElt: RHSElt2
       | "precedence" "(" NameOrString ")"    { $$ = new RH_prec($3); }
       | "forbid_next" "(" NameOrString ")"   { $$ = new RH_forbid($3); }
       ;
 
-RHSElt2: RHSElt
-      | TOK_NAME ":" TOK_STRING ":" TOK_NAME   { $$ = new RH_attr(RHA_NAME, $1, $3, $5); }
-      | TOK_NAME ":" TOK_STRING ":" TOK_STRING { $$ = new RH_attr(RHA_STRING, $1, $3, $5); }
-      | TOK_STRING ":" TOK_NAME              { $$ = new RH_attr(RHA_NAME, sameloc($1, ""), $1, $3); }
-      | TOK_STRING ":" TOK_STRING            { $$ = new RH_attr(RHA_STRING, sameloc($1, ""), $1, $3); }
-      | TOK_NAME ":" TOK_STRING "::" TOK_NAME   { $$ = new RH_attr(RHA_TOKENS, $1, $3, $5); }
-      | TOK_NAME ":" TOK_STRING "::" TOK_STRING { $$ = new RH_attr(RHA_STRTOKENS, $1, $3, $5); }
-      | TOK_STRING "::" TOK_NAME              { $$ = new RH_attr(RHA_TOKENS, sameloc($1, ""), $1, $3); }
-      | TOK_STRING "::" TOK_STRING            { $$ = new RH_attr(RHA_STRTOKENS, sameloc($1, ""), $1, $3); }
+RHSElt2:  TOK_NAME                { $$ = new RH_name(sameloc($1, ""), $1); }
+      | TOK_NAME ":" TOK_NAME   { $$ = new RH_name($1, $3); }
+      | TOK_STRING              { $$ = new RH_string(sameloc($1, ""), $1); }
+      | TOK_NAME ":" TOK_STRING { $$ = new RH_string($1, $3); }
       ;
         
 /* yields: ASTList<LocString> */

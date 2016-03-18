@@ -93,6 +93,8 @@ private:     // data
   
   int prevToken;                   // last token code yielded (ugly hack)
 
+  int eqs = 0;// zsf
+
 public:      // data
   // todo: can eliminate commentStartLine in favor of tokenStartLoc?
   //int commentStartLine;            // for reporting unterminated C comments
@@ -158,7 +160,7 @@ public:      // funcs
   int yylexInc();
 
   // begin an embedded sequence
-  void beginEmbed(char finish, int mode, int initNest = 0)
+  void beginEmbed(char finish, int mode = 0, int initNest = 0)
   {
     embedded->reset(initNest);
     embedFinish = finish;

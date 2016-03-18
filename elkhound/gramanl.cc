@@ -4332,7 +4332,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
           << "class ";
       LocString s = *(iter.data());
       std::string code = s.str;
-      code.replace(code.find_first_of(g.actionClassName0), strlen(g.actionClassName0), g.actionClassName.str);
+      code.replace(code.find(g.actionClassName0), strlen(g.actionClassName0), g.actionClassName.str);
       for (int i = 0; i<code.length() && (i = code.find("${class}", i, 8))!=std::string::npos; i+=8) {
           code.replace(i, 8, g.actionClassName.str);
       }
@@ -5021,7 +5021,7 @@ void get_names(TF_nonterm const * nt, ProdDecl const * pdecl, int multiIndex, st
     if (pdecl->name && pdecl->name.isNonNull()) {
         sname << pdecl->name;
         names = 1;
-        if (sname.str().find_first_of("$") == std::string::npos) {
+        if (sname.str().find("$") == std::string::npos) {
             sname.seekp(0);
             sname << nt->name << "$" << pdecl->name;
         }

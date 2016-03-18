@@ -892,6 +892,9 @@ void HGen::emitUserDecls(ASTList<Annotation> const &decls, std::set<std::string>
       if (decl.access() == AC_PUBLIC ||
           decl.access() == AC_PRIVATE ||
           decl.access() == AC_PROTECTED) {
+
+        bool isf = isFuncDecl(&decl) || decl.code.contains('(');
+
         out << "  " << toString(decl.access()) << ": ";
 
         if (decl.amod->hasMod("virtual")) {
@@ -899,8 +902,10 @@ void HGen::emitUserDecls(ASTList<Annotation> const &decls, std::set<std::string>
         }
         out << decl.code;
 
-        if (isFuncDecl(&decl) && decl.init.length() > 0) {
-          out << " = " << decl.init;     // the "=0" of a pure virtual function
+        if (isf) {
+            if (decl.init.length() > 0) {
+                out << " = " << decl.init;     // the "=0" of a pure virtual function
+            }
         }
         out << ";";
 
@@ -912,6 +917,10 @@ void HGen::emitUserDecls(ASTList<Annotation> const &decls, std::set<std::string>
           }
         }
         out << "\n";
+
+        if (!isf && std::string(decl.code.c_str()).find(" static ")==std::string::npos) {
+            out << "  typedef " << extractFieldType(decl.code) << " Type__" << extractFieldName(decl.code) << ";\n";
+        }
       }
       if (decl.access() == AC_PUREVIRT) {
         // this is the parent class: declare it pure virtual
