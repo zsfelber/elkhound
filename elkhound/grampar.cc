@@ -116,7 +116,7 @@ void astParseErrorCont(Environment &env, LocString const &failToken,
                        rostring msg)
 {
   XASTParse x(failToken, msg);
-  cout << x.why() << endl;
+  cout << x.why() << std::endl;
   env.errors++;
 }
 
@@ -426,7 +426,7 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
       int code = term.code;
       StringRef name = term.name;
       trace("grampar") << "token: code=" << code
-                       << ", name=" << name << endl;
+                       << ", name=" << name << std::endl;
 
       if (!env.g.declareToken(term.name, code, term.alias)) {
         astParseError(term.name, "token already declared");
@@ -450,7 +450,7 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
     FOREACH_ASTLIST(TermType, terms.types, iter) {
       TermType const &type = *(iter.data());
       trace("grampar") << "token type: name=" << type.name
-                       << ", type=" << type.type << endl;
+                       << ", type=" << type.type << std::endl;
 
       // look up the name
       Terminal *t = astParseToken(env, type.name);
@@ -611,7 +611,7 @@ void astParseDDM(Environment &env, Symbol *sym,
 
 void fillDefaultType(Nonterminal* nonterm) {
 
-    traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << endl;
+    traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << std::endl;
     // also ignore circles:
     if (!nonterm->deftravd) {
 
@@ -656,7 +656,7 @@ void fillDefaultType(Nonterminal* nonterm) {
 
             if (init_void) {
 
-                traceProgress() << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << endl;
+                traceProgress() << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << std::endl;
 
                 if (!isVoid(nonterm->type) && nonterm->type != sym->type) {
                     if (!err_concur) {
@@ -669,21 +669,21 @@ void fillDefaultType(Nonterminal* nonterm) {
                     nonterm->type_is_default = true;
                 }
             } else {
-                traceProgress() << "Nonterminal: " << nonterm->name << "  non-void   production type:" << sym->type << endl;
+                traceProgress() << "Nonterminal: " << nonterm->name << "  non-void   production type:" << sym->type << std::endl;
             }
         }
 
         if (err_in_one) {
-            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is failed in case of one or more productions." << endl;
+            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is failed in case of one or more productions." << std::endl;
         }
         if (err_concur) {
             cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is not possible, candidates:"
-                 << concur_types << endl;
+                 << concur_types << std::endl;
             //errors++;
         }
 
         if (!err_in_one && !err_concur && isVoid(nonterm->type)) {
-            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but after looking for default type it is still void." << endl;
+            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but after looking for default type it is still void." << std::endl;
             //errors++;
         }
 
@@ -692,7 +692,7 @@ void fillDefaultType(Nonterminal* nonterm) {
                 nonterm->type = "void";
                 nonterm->type_is_default = false;
             } else {
-                traceProgress() << "Nonterminal   type errors: " << nonterm->name << "  user defined type kept:" << nonterm->type << endl;
+                traceProgress() << "Nonterminal   type errors: " << nonterm->name << "  user defined type kept:" << nonterm->type << std::endl;
             }
 
             for (SObjListIter<Production> syIter(nonterm->productions);
@@ -930,11 +930,6 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex, const char* tpref, const char* vpref, std::stringstream * _buf, const char* indent)
 {
-  // is this the special start symbol I inserted?
-  bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
-
-  // build a production; use 'this' as the tag for LHS elements
-  Production *prod = new Production(nonterm, "this");
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
       if (prodDecl->traversed) {
@@ -944,123 +939,107 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           constcast(prodDecl)->traversed = true;
 
           std::stringstream buf0;
+          std::stringstream st0,sv0;
           std::stringstream & buf = (_buf ? *_buf : buf0);
 
           bool v0 = !vpref;
           if (!vpref) {
+              if (isVoid(nonterm->type)) {
+                  st0 << "Ast_" << nonterm->name;
+              } else {
+                  st0 << nonterm->type;
+              }
               vpref = "var";
+              << nonterm->name
+          } else {
+              st0 << tpref;
           }
+          if (v0) {
+              buf << st0.str() << " var = tag;" << std::endl;
+          }
+          st0 << "::Type__";
+          tpref = st0.str().c_str();
+
+          ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
+          LocString *origAction = prodDecl->actionCode.clone();
+
+          ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
+          RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
+          rhs->steal(&orhs, false);
+          rhs->append(reof);
+
+          int vi = 0;
+          ProdDecl *newStart;
+          std::stringstream nms;
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
-              std::stringstream st0;
-              if (!tpref) {
-                  if (isVoid(nonterm->type)) {
-                      st0 << "Ast_" << nonterm->name;
-                      buf << indent << st0.str();
-                      st0 << "::Type__";
-                  } else {
-                      st0 << nonterm->type;
-                      buf << indent << s.str();
-                      st0 << "::Type__";
-                  }
-                  tpref = st0.str().c_str();
-                  buf << indent << " var = tag;" << std::endl;
-              }
-              buf << indent << "bool result"<< vpref<<";" << std::endl;
-              buf << indent << "if ("<< vpref<<") {" << std::endl;
-              int vi = 0;
 
               buf << indent << "" << std::endl;
-              FOREACH_ASTLIST(TreeProdDecl, prodDecl->asTreeProdDecl()->treeValidations, iter) {
+              FOREACH_ASTLIST(TreeProdDecl, constcast(prodDecl)->asTreeProdDecl()->treeValidations, iter) {
                   buf << indent << tpref << iter.data()->name << " " << vpref << "_" << vi
                     << " = " << vpref << "->" << iter.data()->name << ";" << std::endl;
+                  buf << indent << "if ("<<vpref<< "_" << vi<<") {" << std::endl;
                   std::stringstream st, sv, ind;
                   st << tpref << iter.data()->name << "::Type__" ;
                   sv << vpref << "_" << vi;
                   ind << indent << "   ";
+
                   astParseProduction(env, ast, NULL, iter.data(), eof, multiIndex, st.str().c_str(), sv.str().c_str(), &buf, ind.str().c_str());
-                  buf << indent << "if (!result"<<vpref<< "_" << vi<<") {" << endl;
-                  buf << indent << "   goto invalid;" << std::endl;
+
+                  buf << indent << "} else {" << std::endl;
+                  buf << indent << "   var = NULL; goto done;" << std::endl;
                   buf << indent << "}" << std::endl;
 
                   vi++;
-              }
-              buf << indent << "} else {" << std::endl;
-              buf << indent << "   goto invalid;" << std::endl;
-              buf << indent << "}" << std::endl;
-
-              if (v0) {
-
-                  buf << "invalid:" << std::endl;
-                  buf << "return NULL;" << std::endl;
-
               }
 
               break;
 
           case PDK_TRAVERSE_GR:
           case PDK_TRAVERSE_TKNS:
-              ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
-              LocString *origAction = prodDecl->actionCode.clone();
 
               buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer("<<vpref<<", lexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
                   FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
-                        LocString symName;
+                       LocString symName;
                         ASTSWITCHC(RHSElt, iter.data()) {
-                        ASTCASEC(RH_name, tname) {
-                            symName = tname->name;
-                        }
-                        ASTNEXTC(RH_string, ts) {
-                            symName = ts->str;
-                        }
-                        ASTDEFAULTC {
-                          xfailure("bad RHSElt kind");
-                        }
+                            ASTCASEC(RH_name, tname) {
+                                symName = tname->name;
+                            }
+                            ASTNEXTC(RH_string, ts) {
+                                symName = ts->str;
+                            }
+                            ASTDEFAULTC {
+                              xfailure("bad RHSElt kind");
+                            }
+                            ASTENDCASEC
                         }
                         Terminal *term = env.g.findTerminal(symName);
                         if (!term) {
                             astParseError(symName, "Traverse mode '>' should all be followed by terminals.");
                         }
                   }
-                  buf << indent << ", false);" << endl;
+                  buf << indent << ", false);" << std::endl;
               } else {
-                  buf << indent << ");" << endl;
+                  buf << indent << ");" << std::endl;
               }
-              buf << indent << "// initialize the parser" << endl;
-              //s << "GLR glrNode("<<env.g.prefix0 << nonterm->name << "$" << prodDecl->name<<"::parseTables, tblCsOutline);" << endl;
-              buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< nonterm->name << "$" << prodDecl->name<<", _usr_"<< nonterm->name << "$" << prodDecl->name<<"::parseTables, tag);" << endl;
-              buf << indent << "" << endl;
-              buf << indent << "// parse the input" << endl;
-              if (isVoid(nonterm->type)) {
-                  buf << indent << "Ast_" << nonterm->name <<" * result;" << endl;
-              } else {
-                  buf << indent << nonterm->type <<" result;" << endl;
-              }
-              buf << indent << "if (!glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)result)) {" << endl;
-              buf << indent << "   // TODO trace something" << endl;
-              buf << indent << "   result"<<vpref<<" = NULL;" << endl;
-              buf << indent << "}" << endl;
-              if (v0) {
-                  buf << indent << "return result;" << endl;
-              }
+              buf << indent << "// initialize the parser" << std::endl;
+              //s << "GLR glrNode("<<env.g.prefix0 << nonterm->name << "$" << prodDecl->name<<"::parseTables, tblCsOutline);" << std::endl;
+              buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< nonterm->name << "$" << prodDecl->name<<", _usr_"<< nonterm->name << "$" << prodDecl->name<<"::parseTables, "<<vpref<<");" << std::endl;
+              buf << indent << " = NULL;" << std::endl;
+              buf << indent << "// parse the input" << std::endl;
+              buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)"<<vpref<<")) {" << std::endl;
+              buf << indent << "} else {" << std::endl;
+              buf << indent << "   // TODO trace something" << std::endl;
+              buf << indent << "   goto done;" << std::endl;
+              buf << indent << "}" << std::endl;
 
-              constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone();
-
-              ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
-              RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
-              rhs->steal(&orhs, false);
-              rhs->append(reof);
-
-              orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
-
-              std::stringstream buf;
-              buf << indent << nonterm->name << "$" << prodDecl->name;
-              std::cout << "Traversing " << buf.str() << std::endl;
+              nms << nonterm->name << "$" << prodDecl->name;
+              std::cout << "Traversing " << nms.str() << std::endl;
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-              ProdDecl *newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, origAction, LIT_STR(buf.str().c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
+              newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, origAction, LIT_STR(nms.str().c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
 
               if (ast->childrenNT) {
                   ast->childrenNT->productions.append(newStart);
@@ -1082,167 +1061,182 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               break;
           default:
-              astParseError(toString(prodDecl->pkind), "Invalid traverse mode production declaration.");
+              astParseError("Invalid traverse mode production declaration.");
               break;
           }
-      }
-  }
 
-
-  // put the code into it
-  prod->action = prodDecl->actionCode;
-
-  int tags = 0;
-  Production::RHSElt *first = 0;
-
-  // deal with RHS elements
-  FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
-    RHSElt const *n = iter.data();
-    LocString symName;
-    LocString symTag;
-    LocString attrName;
-    bool isString = false;
-    bool isAnnotation = false;
-
-    // pull various info out of the AST node
-    ASTSWITCHC(RHSElt, n) {
-        ASTCASEC(RH_name, tname) {
-          symName = tname->name;
-          symTag = tname->tag;
-        }
-
-        /*ASTNEXTC(RH_attr, tattr) {
-          symTag = tattr->tag;
-          attrName = tattr->attrName;
-          symName = tattr->attrValue;
-          isString = tattr->akind & RHA_STRING;
-        }*/
-
-      ASTNEXTC(RH_string, ts) {
-        symName = ts->str;
-        symTag = ts->tag;
-        isString = true;
-      }
-
-      ASTNEXTC(RH_prec, p) {
-        Terminal *t = astParseToken(env, p->tokName);
-        if (!t) { break; }
-
-        // apply the specified precedence
-        prod->precedence = t->precedence;
-        isAnnotation = true;
-      }
-
-      ASTNEXTC(RH_forbid, f) {
-        TerminalOrSet s = astParseTokens(env, f->tokName);
-
-        try {
-          if (s.set) {
-             prod->addForbid(s.s);
-          } else if (s.t) {
-             prod->addForbid(s.t, env.g.numTerminals());
+          if (v0) {
+              buf << "done:" << std::endl;
+              buf << "return var;" << std::endl;
           }
-        } catch (std::exception) {
-           astParseError(f->tokName, "forbid_next : only single noneterminal allowed");
+
+          constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone()->str;
+
+          orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
+      }
+  } else {
+
+      // is this the special start symbol I inserted?
+      bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
+
+      // build a production; use 'this' as the tag for LHS elements
+      Production *prod = new Production(nonterm, "this");
+
+      // put the code into it
+      prod->action = prodDecl->actionCode;
+
+      int tags = 0;
+      Production::RHSElt *first = 0;
+
+      // deal with RHS elements
+      FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
+        RHSElt const *n = iter.data();
+        LocString symName;
+        LocString symTag;
+        LocString attrName;
+        bool isString = false;
+        bool isAnnotation = false;
+
+        // pull various info out of the AST node
+        ASTSWITCHC(RHSElt, n) {
+            ASTCASEC(RH_name, tname) {
+              symName = tname->name;
+              symTag = tname->tag;
+            }
+
+            /*ASTNEXTC(RH_attr, tattr) {
+              symTag = tattr->tag;
+              attrName = tattr->attrName;
+              symName = tattr->attrValue;
+              isString = tattr->akind & RHA_STRING;
+            }*/
+
+          ASTNEXTC(RH_string, ts) {
+            symName = ts->str;
+            symTag = ts->tag;
+            isString = true;
+          }
+
+          ASTNEXTC(RH_prec, p) {
+            Terminal *t = astParseToken(env, p->tokName);
+            if (!t) { break; }
+
+            // apply the specified precedence
+            prod->precedence = t->precedence;
+            isAnnotation = true;
+          }
+
+          ASTNEXTC(RH_forbid, f) {
+            TerminalOrSet s = astParseTokens(env, f->tokName);
+
+            try {
+              if (s.set) {
+                 prod->addForbid(s.s);
+              } else if (s.t) {
+                 prod->addForbid(s.t, env.g.numTerminals());
+              }
+            } catch (std::exception) {
+               astParseError(f->tokName, "forbid_next : only single noneterminal allowed");
+            }
+            isAnnotation = true;
+          }
+
+          ASTDEFAULTC {
+            xfailure("bad RHSElt kind");
+          }
+
+          ASTENDCASEC
         }
-        isAnnotation = true;
+
+        if (isAnnotation) {
+          // code below is for things other than annotations
+          continue;
+        }
+
+        // see which (if either) thing this name already is
+        Terminal *term = env.g.findTerminal(symName);
+        Nonterminal *nonterm = env.g.findNonterminal(symName);
+        if (term && nonterm) {
+          if (isString) {
+            astParseError(symName, "token alias has same name as a nonterminal");
+          }
+          else {
+            astParseError(symName, "token and nonterminal have same name");
+          }
+          nonterm = NULL;                // error recovery
+        }
+
+        // syntax rules
+        if (isString  &&  !term) {
+          astParseError(symName, "terminals must be declared");
+        }
+
+        if (!term && !nonterm) {
+          astParseErrorCont(env, symName, "undeclared symbol");
+
+          // synthesize one anyway so we can find more errors
+          nonterm = env.g.getOrMakeNonterminal(symName);
+        }
+
+        if (term && term->termIndex==0 && !synthesizedStart) {
+          astParseError(symName, "you cannot use the EOF token in your rules");
+        }
+
+        if (symTag.equals("loc")) {
+          // bad because loc is the name of the automatically-propagated
+          // source location information
+          astParseErrorCont(env, symTag, "cannot use \"loc\" as a tag");
+        }
+
+        // whenever we see a terminal, copy its precedence spec to
+        // the production; thus, the last symbol appearing in the
+        // production will be the one that gives the precedence
+        if (term) {
+          prod->precedence = term->precedence;
+        }
+
+        // decide which symbol to put in the production
+        Symbol *s;
+        if (nonterm) {
+          s = nonterm;            // could do these two with a bitwise OR
+        }                         // if I were feeling extra clever today
+        else {
+          s = term;
+        }
+
+        if (s->isEmptyString) {
+          // "empty" is a syntactic convenience; it doesn't get
+          // added to the production
+        }
+        else {
+          // add it to the production
+          Production::RHSElt * r = prod->append(s, symTag);
+
+          if (!first) first = r;
+          tags++;
+        }
+      }
+      // generating default rule
+      if (synthesizedStart ? tags<=2 : (tags==1)) {
+        if (!first->tag || !first->tag.length()) {
+           first->tag.str = synthesizedStart ? "top" : "tag";
+        }
+        prod->defaultSymbol = first;
+      } else if (synthesizedStart && isVoid(nonterm->type)) {
+        traceProgress() << "tags: " << tags << std::endl;
+        astParseErrorCont(env, nonterm->name, "Synthetic start is missing type, and unable to determine default.");
       }
 
-      ASTDEFAULTC {
-        xfailure("bad RHSElt kind");
-      }
+      nonterm->appendProd(prod);
 
-      ASTENDCASEC
-    }
+      // after constructing the production we need to do this
+      // update: no we don't -- GrammarAnalysis takes care of it (and
+      // complains if we do)
+      //prod->finished();
 
-    if (isAnnotation) {
-      // code below is for things other than annotations
-      continue;
-    }
-
-    // see which (if either) thing this name already is
-    Terminal *term = env.g.findTerminal(symName);
-    Nonterminal *nonterm = env.g.findNonterminal(symName);
-    if (term && nonterm) {
-      if (isString) {
-        astParseError(symName, "token alias has same name as a nonterminal");
-      }
-      else {
-        astParseError(symName, "token and nonterminal have same name");
-      }
-      nonterm = NULL;                // error recovery
-    }
-
-    // syntax rules
-    if (isString  &&  !term) {
-      astParseError(symName, "terminals must be declared");
-    }
-
-    if (!term && !nonterm) {
-      astParseErrorCont(env, symName, "undeclared symbol");
-
-      // synthesize one anyway so we can find more errors
-      nonterm = env.g.getOrMakeNonterminal(symName);
-    }
-
-    if (term && term->termIndex==0 && !synthesizedStart) {
-      astParseError(symName, "you cannot use the EOF token in your rules");
-    }
-
-    if (symTag.equals("loc")) {
-      // bad because loc is the name of the automatically-propagated
-      // source location information
-      astParseErrorCont(env, symTag, "cannot use \"loc\" as a tag");
-    }
-
-    // whenever we see a terminal, copy its precedence spec to
-    // the production; thus, the last symbol appearing in the
-    // production will be the one that gives the precedence
-    if (term) {
-      prod->precedence = term->precedence;
-    }
-
-    // decide which symbol to put in the production
-    Symbol *s;
-    if (nonterm) {
-      s = nonterm;            // could do these two with a bitwise OR
-    }                         // if I were feeling extra clever today
-    else {
-      s = term;
-    }
-
-    if (s->isEmptyString) {
-      // "empty" is a syntactic convenience; it doesn't get
-      // added to the production
-    }
-    else {
-      // add it to the production
-      Production::RHSElt * r = prod->append(s, symTag);
-
-      if (!first) first = r;
-      tags++;
-    }
+      // add production to grammar
+      env.g.addProduction(prod);
   }
-  // generating default rule
-  if (synthesizedStart ? tags<=2 : (tags==1)) {
-    if (!first->tag || !first->tag.length()) {
-       first->tag.str = synthesizedStart ? "top" : "tag";
-    }
-    prod->defaultSymbol = first;
-  } else if (synthesizedStart && isVoid(nonterm->type)) {
-    traceProgress() << "tags: " << tags << endl;
-    astParseErrorCont(env, nonterm->name, "Synthetic start is missing type, and unable to determine default.");
-  }
-
-  nonterm->appendProd(prod);
-
-  // after constructing the production we need to do this
-  // update: no we don't -- GrammarAnalysis takes care of it (and
-  // complains if we do)
-  //prod->finished();
-
-  // add production to grammar
-  env.g.addProduction(prod);
 }
 
 
@@ -1286,7 +1280,7 @@ int grampar_yylex(YYSTYPE *lvalp, void *parseParam)
   }
   catch (xBase &x) {
     // e.g. malformed fundecl
-    cout << lexer.curLocStr() << ": " << x << endl;
+    cout << lexer.curLocStr() << ": " << x << std::endl;
 
     // optimistically try just skipping the bad token
     return grampar_yylex(lvalp, parseParam);
@@ -1299,7 +1293,7 @@ int grampar_yylex(YYSTYPE *lvalp, void *parseParam)
 void grampar_yyerror(char const *message, void *parseParam)
 {
   ParseParams *par = (ParseParams*)parseParam;
-  cout << par->lexer.curLocStr() << ": " << message << endl;
+  cout << par->lexer.curLocStr() << ": " << message << std::endl;
 }
 
 
@@ -1613,7 +1607,7 @@ GrammarAST *parseGrammarFile(rostring origFname, bool useML)
 
   ParseParams params(lexer);
 
-  traceProgress() << "parsing grammar source: " << fname << endl;
+  traceProgress() << "parsing grammar source: " << fname << std::endl;
   int retval = grampar_yyparse(&params);
   if (retval==0 && lexer.errors==0) {
     GrammarAST *ret = params.treeTop;

@@ -1744,13 +1744,13 @@ yyreduce:
 
   case 57:
 #line 338 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, NULL, (yyvsp[-1].str), nolocNULL(), nolocNULL(), NULL); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, nolocNULL(), (yyvsp[-1].str), nolocNULL(), nolocNULL(), NULL); }
 #line 1749 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 
   case 58:
 #line 339 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, NULL, (yyvsp[-1].str), nolocNULL(), (yyvsp[-3].str), NULL); }
+    { (yyval.treeProdDecl) = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, nolocNULL(), (yyvsp[-1].str), nolocNULL(), (yyvsp[-3].str), NULL); }
 #line 1755 "grampar.tab.cc" /* yacc.c:1646  */
     break;
 

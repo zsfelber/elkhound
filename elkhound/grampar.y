@@ -335,8 +335,8 @@ TreeValidations: /* empty */                                           { $$ = ne
           | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: TOK_NAME ";"                                           { $$ = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, NULL, $1, nolocNULL(), nolocNULL(), NULL); }
-          | TOK_NAME ":" TOK_NAME ";"                                  { $$ = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, NULL, $3, nolocNULL(), $1, NULL); }
+TreeValidation: TOK_NAME ";"                                           { $$ = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, nolocNULL(), $1, nolocNULL(), nolocNULL(), NULL); }
+          | TOK_NAME ":" TOK_NAME ";"                                  { $$ = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, nolocNULL(), $3, nolocNULL(), $1, NULL); }
           | TreeValidation0                                            { $$ = $1; }
           ;
 
