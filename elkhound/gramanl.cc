@@ -5015,7 +5015,7 @@ void emitSwitchCode(Grammar const &g, EmitCode &out,
 #include <stdio.h>             // remove
 #include <stdlib.h>            // system
 
-void get_names(TF_nonterm const * nt, ProdDecl const * pdecl, int multiIndex, string const & prefix0, string & pref, string & prefix) {
+void get_names(TF_nonterm const * nt, AbstractProdDecl const * pdecl, int multiIndex, string const & prefix0, string & pref, string & prefix) {
     int names = 0;
     std::stringstream sname;
     if (pdecl->name && pdecl->name.isNonNull()) {
@@ -5170,7 +5170,7 @@ int inner_entry(int argc, char **argv)
 
   if (ast->firstNT) {
       startSymbols = ast->firstNT->productions.count();
-      FOREACH_ASTLIST_NC(ProdDecl, ast->firstNT->productions, iter2) {
+      FOREACH_ASTLIST_NC(AbstractProdDecl, ast->firstNT->productions, iter2) {
           string prefix0, pref, prefix;
           get_names(ast->firstNT, iter2.data(), multiIndex++, prefix0, pref, prefix);
           s << pref << ", ";
@@ -5181,8 +5181,8 @@ int inner_entry(int argc, char **argv)
 
   FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
     if (iter.data()->isTF_nonterm()) {
-        FOREACH_ASTLIST_NC(ProdDecl, iter.data()->asTF_nonterm()->productions, iter2) {
-            if (iter2.data()->name && iter2.data()->name.isNonNull()) {
+        FOREACH_ASTLIST_NC(AbstractProdDecl, iter.data()->asTF_nonterm()->productions, iter2) {
+            if (iter2.data()->name && iter2.data()->name.isNonNull() && iter2.data()->pkind>=PDK_TRAVERSE_GR) {
                 string prefix0, pref, prefix;
                 get_names(iter.data()->asTF_nonterm(), iter2.data(), multiIndex++, prefix0, pref, prefix);
                 startSymbols++;
@@ -5215,13 +5215,13 @@ int inner_entry(int argc, char **argv)
           int ind;
           if (multiIndex < ast->firstNT->productions.count()) {
 
-              ProdDecl *prod = ast->firstNT->productions.nth(multiIndex);
+              AbstractProdDecl *prod = ast->firstNT->productions.nth(multiIndex);
               get_names(ast->firstNT, prod, multiIndex, prefix0, pref, prefix);
 
           } else if (ast->childrenNT &&
                      (ind = multiIndex - ast->firstNT->productions.count()) < ast->childrenNT->productions.count() ) {
 
-              ProdDecl *prod = ast->childrenNT->productions.nth(ind);
+              AbstractProdDecl *prod = ast->childrenNT->productions.nth(ind);
               get_names(ast->childrenNT, prod, multiIndex, prefix0, pref, prefix);
           } else {
               std::stringstream s;

@@ -101,12 +101,14 @@ union YYSTYPE
   SpecFunc *specFunc;
   ASTList<LocString> *stringList;
 
-  ASTList<ProdDecl> *prodDecls;
-  ProdDecl *prodDecl;
+  ASTList<AbstractProdDecl> *absProdDecls;
+  AbstractProdDecl *absProdDecl;
+  ASTList<TreeProdDecl> *treeProdDecls;
+  TreeProdDecl *treeProdDecl;
   ASTList<RHSElt> *rhsList;
   RHSElt *rhsElt;
 
-#line 110 "grampar.tab.h" /* yacc.c:1909  */
+#line 112 "grampar.tab.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

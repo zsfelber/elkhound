@@ -129,8 +129,10 @@ AssocKind whichKind(LocString * /*owner*/ kind);
   SpecFunc *specFunc;
   ASTList<LocString> *stringList;
 
-  ASTList<ProdDecl> *prodDecls;
-  ProdDecl *prodDecl;
+  ASTList<AbstractProdDecl> *absProdDecls;
+  AbstractProdDecl *absProdDecl;
+  ASTList<TreeProdDecl> *treeProdDecls;
+  TreeProdDecl *treeProdDecl;
   ASTList<RHSElt> *rhsList;
   RHSElt *rhsElt;
 }
@@ -153,8 +155,10 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %type <specFunc> SpecFunc
 %type <stringList> FormalsOpt Formals Subsets
 
-%type <prodDecls> Productions
-%type <prodDecl> Production TreeValidation0 TreeValidation TreeValidations 
+%type <absProdDecls> Productions
+%type <absProdDecl> Production
+%type <treeProdDecls> TreeValidations 
+%type <treeProdDecl> TreeValidation0 TreeValidation 
 %type <rhsList> RHS
 %type <rhsElt> RHSElt
 %type <rhsList> RHS2
@@ -302,13 +306,13 @@ Formals: TOK_NAME                     { $$ = new ASTList<LocString>($1); }
 /* yields: TopForm (always TF_nonterm) */
 Nonterminal: "nonterm" Type TOK_NAME Production
                { $$ = new TF_nonterm($3, $2, new ASTList<SpecFunc>,
-                                     new ASTList<ProdDecl>($4), NULL); }
+                                     new ASTList<AbstractProdDecl>($4), NULL); }
            | "nonterm" Type TOK_NAME "{" SpecFuncs Productions Subsets "}"
                { $$ = new TF_nonterm($3, $2, $5, $6, $7); }
            ;
 
 /* yields: ASTList<ProdDecl> */
-Productions: /* empty */                   { $$ = new ASTList<ProdDecl>; }
+Productions: /* empty */                   { $$ = new ASTList<AbstractProdDecl>; }
            | Productions Production        { ($$=$1)->append($2); }
            ;
 
@@ -319,20 +323,20 @@ Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, 
           | "~>" TreeValidation0           { $$ = $2; }
           ;
 
-TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = NULL; }
-          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action   { $$ = NULL; }
-          | TOK_NAME ">" RHS2 Action                                   { $$ = NULL; }
-          | TOK_NAME ":" TOK_NAME ">" RHS2  Action                     { $$ = NULL; }
-          | TOK_NAME "->" RHS Action                                   { $$ = new ProdDecl($2, PDK_NEW, $3, $4, nolocNULL(), nolocNULL()); }
-          | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new ProdDecl($4, PDK_NEW, $5, $6, nolocNULL(), nolocNULL()); }
+TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, nolocNULL(), nolocNULL(), $4); }
+          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action   { $$ = new TreeProdDecl($4, PDK_TRAVERSE_VAL, NULL, $8, $3, nolocNULL(), $1, $6); }
+          | TOK_NAME ">" RHS2 Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3, $4, $1, nolocNULL(), nolocNULL(), NULL); }
+          | TOK_NAME ":" TOK_NAME ">" RHS2  Action                     { $$ = new TreeProdDecl($4, PDK_TRAVERSE_TKNS, $5, $6, $3, nolocNULL(), $1, NULL); }
+          | TOK_NAME "->" RHS Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3, $4, $1, nolocNULL(), nolocNULL(), NULL); }
+          | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5, $6, $3, nolocNULL(), $1, NULL); }
           ;
 
-TreeValidations: /* empty */                                           { $$ = NULL; }
-          | TreeValidations TreeValidation                             { $$ = NULL; }
+TreeValidations: /* empty */                                           { $$ = new ASTList<TreeProdDecl>; }
+          | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: TOK_NAME ";"                                           { $$ = NULL; }
-          | TOK_NAME ":" TOK_NAME ";"                                  { $$ = NULL; }
+TreeValidation: TOK_NAME ";"                                           { $$ = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, NULL, $1, nolocNULL(), nolocNULL(), NULL); }
+          | TOK_NAME ":" TOK_NAME ";"                                  { $$ = new TreeProdDecl((SourceLoc)0, PDK_TRAVERSE_VAL, NULL, NULL, $3, nolocNULL(), $1, NULL); }
           | TreeValidation0                                            { $$ = $1; }
           ;
 

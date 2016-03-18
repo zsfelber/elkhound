@@ -43,7 +43,7 @@ class TopForm {
     LocString name,                    // nonterm name
     LocString type,                    // semantic value type
     ASTList<SpecFunc> funcs,           // special situation action functions
-    ASTList<ProdDecl> productions,     // productions (right-hand side alternatives)
+    ASTList<AbstractProdDecl> productions,     // productions (right-hand side alternatives)
     ASTList<LocString> subsets         // preference subset nonterminals (for scannerless)
   );
 }
@@ -76,12 +76,18 @@ enum ProdDeclKind {
   PDK_NEW,        // new production (most productions are new)
   PDK_DELETE,     // means to delete the production from the base spec
   PDK_REPLACE,    // replace original production with this one
-  PDK_TRAVERSE,   // Multilevel ast-tree-parsing syntax : terminal->symbol1 symbol2 .... The left side of the
-                  // rule, a single token which is included in parent grammar. The right side defines a child
-                  // grammar starting point. Hiding a branch of rules this way is used to reduce possible 
-                  // # conflicts and improving error recovery (because of this true-style top-to-bottom 
+  PDK_TRAVERSE_GR,// with '->'
+  PDK_TRAVERSE_VAL, // with '='
+  PDK_TRAVERSE_TKNS,// with '>'
+                  // Multilevel ast-tree-parsing
+                  // syntax : ~> terminal -> = > symbol1 symbol2 .... 
+                  // A single token is only included in parent grammar (on the right hand side). One of the '->' 
+                  //  '=' '>' symbols defines a child grammar starting point, of the three possible grammar types respectively. 
+                  //  Hiding a branch of rules this way is used to eliminate  
+                  // possible # conflicts and improving error recovery (because of this true-style top-to-bottom 
                   // behavior). Requires a first-pass parsing step (after lexing but before de-facto parsing) 
-                  // to determine complex tokens like {} block () block or ","-separated sections.
+                  // to determine complex tokens like {} block () block or ","-separated sections (main parser's tokens are these
+                  // collapsed tree nodes).
 };
 enum RHAttrKind {
   RHA_NAME,       // 0
@@ -90,9 +96,14 @@ enum RHAttrKind {
   RHA_STRTOKENS,  // 3
 };
 
-// production: rhs description, and code to execute upon recognition
-class ProdDecl (SourceLoc loc, ProdDeclKind kind, ASTList<RHSElt> rhs, LocString actionCode, LocString name, LocString type) {
+class AbstractProdDecl(SourceLoc loc, ProdDeclKind pkind, ASTList<RHSElt> rhs, LocString actionCode, LocString name, LocString type) {
   public bool traversed = false;
+
+  // production: rhs description, and code to execute upon recognition
+  -> ProdDecl;
+
+  -> TreeProdDecl (LocString tag, ASTList<TreeProdDecl> treeValidations);
+
 }
 
 // one of the things that appears after the '->', i.e. the

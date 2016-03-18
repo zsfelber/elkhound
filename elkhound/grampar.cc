@@ -90,7 +90,7 @@ void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        ProdDecl const *prod, TermDecl const *eof, int & multiIndex);
+                        AbstractProdDecl const *prod, TermDecl const *eof, int & multiIndex);
 
 
 // really a static semantic error, more than a parse error..
@@ -811,7 +811,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   }*/
 }
 
-void createEarlyRule(GrammarAST *ast, ProdDecl *prod, TermDecl const *eof) {
+void createEarlyRule(GrammarAST *ast, AbstractProdDecl *prod, TermDecl const *eof) {
     RHSElt *poss_eof = prod->rhs.last();
     RH_name *rh_eof = 0;
     if (poss_eof && poss_eof->kind()==RH_name::RH_NAME) {
@@ -836,7 +836,7 @@ void createEarlyRule(GrammarAST *ast, ProdDecl *prod, TermDecl const *eof) {
                     LIT_STR("__EarlyStartSymbol").clone(),   // name
                     prod->type.clone()/*ast->firstNT->type.clone()*/,                   // type
                     NULL,                                    // empty list of functions
-                    new ASTList<ProdDecl>(prod, false),      // productions  TODO memleak?
+                    new ASTList<AbstractProdDecl>(prod, false),      // productions  TODO memleak?
                     NULL                                     // subsets
                   );
         ast->forms.prepend(ast->earlyStartNT);
@@ -850,13 +850,13 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
       int ind;
       if (multiIndex < ast->firstNT->productions.count()) {
 
-          ProdDecl *prod = ast->firstNT->productions.nth(multiIndex);
+          AbstractProdDecl *prod = ast->firstNT->productions.nth(multiIndex);
           createEarlyRule(ast, prod, eof);
 
       } else if (ast->childrenNT &&
                  (ind = multiIndex - ast->firstNT->productions.count()) < ast->childrenNT->productions.count() ) {
 
-          ProdDecl *prod = ast->childrenNT->productions.nth(ind);
+          AbstractProdDecl *prod = ast->childrenNT->productions.nth(ind);
           createEarlyRule(ast, prod, eof);
       }
       multiIndex++;
@@ -882,7 +882,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
             LIT_STR("__EarlyStartSymbol").clone(),   // name
             new LocString(SL_UNKNOWN, NULL)/*ast->firstNT->type.clone()*/,                   // type
             NULL,                                    // empty list of functions
-            new ASTList<ProdDecl>(startProd),        // productions
+            new ASTList<AbstractProdDecl>(startProd),        // productions
             NULL                                     // subsets
           );
       // put it into the AST
@@ -902,7 +902,7 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
   nonterm->type = nt->type;
 
   // iterate over the productions
-  FOREACH_ASTLIST(ProdDecl, nt->productions, iter) {
+  FOREACH_ASTLIST(AbstractProdDecl, nt->productions, iter) {
     astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex);
   }
 
@@ -928,7 +928,7 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        ProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex)
+                        AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex)
 {
   // is this the special start symbol I inserted?
   bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
@@ -936,48 +936,75 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
   // build a production; use 'this' as the tag for LHS elements
   Production *prod = new Production(nonterm, "this");
 
-  if (prodDecl->kind == PDK_TRAVERSE) {
+  if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
       if (prodDecl->traversed) {
           xassert(!constcast(prodDecl->actionCode).str);
       } else {
 
           constcast(prodDecl)->traversed = true;
 
-          ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
-          ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
-          RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
-          rhs->steal(&orhs, false);
-          rhs->append(reof);
+          switch (prodDecl->pkind) {
+          case PDK_TRAVERSE_VAL:
 
-          orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
+          case PDK_TRAVERSE_GR:
+          case PDK_TRAVERSE_TKNS:
+              ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
+              if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
+                  FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
+                        LocString symName;
+                        ASTSWITCHC(RHSElt, iter.data()) {
+                        ASTCASEC(RH_name, tname) {
+                            symName = tname->name;
+                        }
+                        ASTNEXTC(RH_string, ts) {
+                            symName = ts->str;
+                        }
+                        ASTDEFAULTC {
+                          xfailure("bad RHSElt kind");
+                        }
+                        }
+                        Terminal *term = env.g.findTerminal(symName);
+                        if (!term) {
+                            astParseError(symName, "Traverse mode '>' should all be followed by terminals.");
+                        }
+                  }
+              }
+              ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
+              RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
+              rhs->steal(&orhs, false);
+              rhs->append(reof);
 
-          std::stringstream s;
-          s << nonterm->name << "$" << prodDecl->name;
-          std::cout << "Traversing " << s.str() << std::endl;
+              orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
 
-          // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-          ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW, rhs, prodDecl->actionCode.clone(), LIT_STR(s.str().c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
+              std::stringstream s;
+              s << nonterm->name << "$" << prodDecl->name;
+              std::cout << "Traversing " << s.str() << std::endl;
 
-          if (ast->childrenNT) {
-              ast->childrenNT->productions.append(newStart);
-          } else {
-              ast->childrenNT
-                      = new TF_nonterm(
-                          LIT_STR("__GeneratedChildren").clone(),   // name
-                          new LocString(SL_UNKNOWN, NULL),          // type
-                          NULL,                                     // empty list of functions
-                          new ASTList<ProdDecl>(newStart),          // productions
-                          NULL                                      // subsets
-                        );
+              // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
+              ProdDecl *newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, prodDecl->actionCode.clone(), LIT_STR(s.str().c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
+
+              if (ast->childrenNT) {
+                  ast->childrenNT->productions.append(newStart);
+              } else {
+                  ast->childrenNT
+                          = new TF_nonterm(
+                              LIT_STR("__GeneratedChildren").clone(),   // name
+                              new LocString(SL_UNKNOWN, NULL),          // type
+                              NULL,                                     // empty list of functions
+                              new ASTList<AbstractProdDecl>(newStart),          // productions
+                              NULL                                      // subsets
+                            );
+              }
+
+              if (multiIndex == -1) {
+                  // reset to this ast->childrenNT :
+                  multiIndex = ast->firstNT->productions.count() + ast->childrenNT->productions.count() - 1;
+              }
+
+              // "return tag" is fine
+              constcast(prodDecl->actionCode).str = NULL;
+              break;
           }
-
-          if (multiIndex == -1) {
-              // reset to this ast->childrenNT :
-              multiIndex = ast->firstNT->productions.count() + ast->childrenNT->productions.count() - 1;
-          }
-
-          // "return tag" is fine
-          constcast(prodDecl->actionCode).str = NULL;
       }
   }
 
@@ -1325,7 +1352,7 @@ bool equalRHSElt(RHSElt const *elt1, RHSElt const *elt2)
 }
 
 
-bool equalRHS(ProdDecl const *prod1, ProdDecl const *prod2)
+bool equalRHS(AbstractProdDecl const *prod1, AbstractProdDecl const *prod2)
 {
   if (prod1->rhs.count() != prod2->rhs.count()) {
     return false;
@@ -1341,19 +1368,19 @@ bool equalRHS(ProdDecl const *prod1, ProdDecl const *prod2)
 }
 
 
-void mergeProduction(TF_nonterm *base, ProdDecl *ext)
+void mergeProduction(TF_nonterm *base, AbstractProdDecl *ext)
 {
   bool found = false;
 
   // look for a production with an identical RHS
-  FOREACH_ASTLIST_NC(ProdDecl, base->productions, iter) {
-    ProdDecl *prod = iter.data();
+  FOREACH_ASTLIST_NC(AbstractProdDecl, base->productions, iter) {
+    AbstractProdDecl *prod = iter.data();
 
     // check RHSs for equality
     if (equalRHS(prod, ext)) {
       found = true;
 
-      if (ext->kind == PDK_NEW) {
+      if (ext->pkind == PDK_NEW || ext->pkind >= PDK_TRAVERSE_GR) {
         astParseError(ext->loc,
                       "production has the same RHS as an existing production; "
                       "if intent is to replace, use the 'replace' keyword");
@@ -1364,18 +1391,18 @@ void mergeProduction(TF_nonterm *base, ProdDecl *ext)
       base->productions.removeItem(prod);
       delete prod;
 
-      if (ext->kind == PDK_DELETE) {
+      if (ext->pkind == PDK_DELETE) {
         delete ext;       // drop new on the floor, too
         return;
       }
 
       // will replace old with new
-      xassert(ext->kind == PDK_REPLACE);
+      xassert(ext->pkind == PDK_REPLACE);
       break;
     }
   }
 
-  if (ext->kind != PDK_NEW && !found) {
+  if (ext->pkind > PDK_NEW && ext->pkind < PDK_TRAVERSE_GR && !found) {
     astParseError(ext->loc,
                   "production marked with 'delete' or 'replace' does not match "
                   "any in the base specification");
