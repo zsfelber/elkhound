@@ -943,6 +943,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           }
           std::stringstream st0,sv0;
           std::stringstream & buf = *_buf;
+          std::string tp;
 
           bool v0 = !vpref.length();
           if (v0) {
@@ -957,8 +958,10 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           } else {
               st0 << tpref;
           }
+          tp = st0.str();
           st0 << "::Type__";
           tpref = st0.str();
+          std::cout << "Traversing " << vpref << std::endl;
 
           ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
           LocString *origAction = prodDecl->actionCode.clone();
@@ -981,7 +984,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                     << " = " << vpref << "->" << iter.data()->name << ";" << std::endl;
                   buf << indent << "if ("<<vpref<< "_" << vi<<") {" << std::endl;
                   std::stringstream st, sv, ind;
-                  st << tpref << iter.data()->name << "::Type__" << std::flush;
+                  st << tpref << iter.data()->name << std::flush;
                   sv << vpref << "_" << vi << std::flush;
                   ind << indent << "   " << std::flush;
 
@@ -1035,10 +1038,11 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "   "<<vpref<<" = NULL; goto done;" << std::endl;
               buf << indent << "}" << std::endl;
 
-              std::cout << "Traversing " << vpref << std::endl;
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-              newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, origAction, LIT_STR(vpref.c_str()).clone(), nonterm->type?LIT_STR(nonterm->type).clone():new LocString(SL_UNKNOWN, NULL));
+              newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, origAction,
+                                      LIT_STR(vpref.c_str()).clone(), LIT_STR(tp.c_str()).clone());
+              newStart->traversed = true;
 
               if (ast->childrenNT) {
                   ast->childrenNT->productions.append(newStart);
