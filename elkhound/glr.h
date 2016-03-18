@@ -331,6 +331,8 @@ public:
   // parse tables derived from the grammar
   ParseTables *tables;                      // (serf)
 
+  void * parentNode;
+
   // ---- parser state between tokens ----
   // I keep a pointer to this so I can ask for token descriptions
   // inside some of the helper functions
@@ -451,7 +453,7 @@ private:    // funcs
                          StackNode const *node) const;
 
 public:     // funcs
-  GLR(UserActions *userAct, ParseTables *tables);
+  GLR(UserActions *userAct, ParseTables *tables, void * parentNode = 0);
   ~GLR();
 
   // ------- primary interface -------

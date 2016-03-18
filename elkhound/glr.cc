@@ -562,9 +562,10 @@ bool parserListContains(ArrayStack<StackNode*> &list, StackNode *node)
 
 
 // ------------------------- GLR ---------------------------
-GLR::GLR(UserActions *user, ParseTables *t)
+GLR::GLR(UserActions *user, ParseTables *t, void * parentNode)
   : userAct(user),
     tables(t),
+    parentNode(parentNode),
     lexerPtr(NULL),
     topmostParsers(),
     parserIndex(NULL),
