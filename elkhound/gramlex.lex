@@ -98,8 +98,6 @@ HWHITE    [ \t\f\v\r]
  * or the TOK_NAME meaning the type has been omitted */
 %s OPTIONAL_TYPE
 
-%s EQ
-
 
 /* ---------------------- rules ----------------------- */
 %%
@@ -157,7 +155,7 @@ HWHITE    [ \t\f\v\r]
   /* -------- punctuators, operators, keywords --------- */
 "}"                TOK_UPD_COL;  return TOK_RBRACE;
 ":"                TOK_UPD_COL;  return TOK_COLON;
-<INITIAL,RHS,FUN>")"                   TOK_UPD_COL;  return TOK_RPAREN;
+")"                TOK_UPD_COL;  eqs--;  return TOK_RPAREN;
 ","                TOK_UPD_COL;  return TOK_COMMA;
 
 "terminals"        TOK_UPD_COL;  return TOK_TERMINALS;
@@ -203,7 +201,7 @@ HWHITE    [ \t\f\v\r]
 
 <INITIAL,RHS>"=" {
   TOK_UPD_COL;
-  BEGIN(EQ);
+  BEGIN(RHS);
   return TOK_VALIDATE;
 }
 
@@ -224,7 +222,7 @@ HWHITE    [ \t\f\v\r]
    * ";", the semicolon gets out of RHS mode */
 <INITIAL,RHS>";" {
   TOK_UPD_COL;
-  BEGIN(INITIAL);     // if in RHS, reset to INITIAL
+  if (!eqs) BEGIN(INITIAL);     // if in RHS, reset to INITIAL
   return TOK_SEMICOLON;
 }
 
@@ -240,6 +238,7 @@ HWHITE    [ \t\f\v\r]
   /* so now this begins embedded */
 <OPTIONAL_TYPE>"(" {
   TOK_UPD_COL;
+  eqs++;
   BEGIN(LITCODE);
   beginEmbed(')', TOK_LIT_CODE);
 }
@@ -247,24 +246,8 @@ HWHITE    [ \t\f\v\r]
   /* otherwise it's just itself */
 <INITIAL,RHS,FUN>"(" {
   TOK_UPD_COL;
+  eqs++;
   return TOK_LPAREN;
-}
-
-<EQ>{
-
-  "(" {
-    TOK_UPD_COL;
-    eqs++;
-    return TOK_LPAREN;
-  }
-
-  ")" {
-    TOK_UPD_COL;
-    if (!(--eqs)) {
-       BEGIN(RHS);
-    }
-    return TOK_RPAREN;
-  }
 }
 
   /* function beginning */
