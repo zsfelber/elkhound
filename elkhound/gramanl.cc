@@ -5015,28 +5015,25 @@ void emitSwitchCode(Grammar const &g, EmitCode &out,
 #include <stdio.h>             // remove
 #include <stdlib.h>            // system
 
-void get_names(TF_nonterm const * nt, AbstractProdDecl const * pdecl, int multiIndex, string const & prefix0, string & pref, string & prefix) {
+void get_names(AbstractProdDecl const * pdecl, int multiIndex, string const & prefix0, string & pref, string & prefix) {
     int names = 0;
     std::stringstream sname;
-    if (pdecl->name && pdecl->name.isNonNull()) {
+    FOREACH_ASTLIST(RHSElt, pdecl->rhs, iter) {
+      RHSElt *n = constcast(iter.data());
+      if (n->isRH_name()) {
+          names++;
+          if (names > 1) {
+              break;
+          }
+          sname << n->asRH_name()->name;
+      }
+    }
+
+    if (names!=1 && pdecl->name && pdecl->name.isNonNull()) {
         sname << pdecl->name;
         names = 1;
-        if (sname.str().find("$") == std::string::npos) {
-            sname.seekp(0);
-            sname << nt->name << "$" << pdecl->name;
-        }
-    } else {
-        FOREACH_ASTLIST(RHSElt, pdecl->rhs, iter) {
-          RHSElt *n = constcast(iter.data());
-          if (n->isRH_name()) {
-              names++;
-              if (names > 1) {
-                  break;
-              }
-              sname << n->asRH_name()->name;
-          }
-        }
     }
+
     {
         if (names == 1) {
             pref = sname.str().c_str();
@@ -5165,68 +5162,24 @@ int inner_entry(int argc, char **argv)
 
   setAnnotations(ast);
 
-  int startSymbols;
-  std::stringstream s;
-
-  if (ast->firstNT) {
-      startSymbols = ast->firstNT->productions.count();
-      FOREACH_ASTLIST_NC(AbstractProdDecl, ast->firstNT->productions, iter2) {
-          string prefix0, pref, prefix;
-          get_names(ast->firstNT, iter2.data(), multiIndex++, prefix0, pref, prefix);
-          s << pref << ", ";
-      }
-  } else {
-      startSymbols = 0;
-  }
-
-  FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
-    if (iter.data()->isTF_nonterm()) {
-        FOREACH_ASTLIST_NC(AbstractProdDecl, iter.data()->asTF_nonterm()->productions, iter2) {
-            if (iter2.data()->name && iter2.data()->name.isNonNull() && iter2.data()->pkind>=PDK_TRAVERSE_GR) {
-                string prefix0, pref, prefix;
-                get_names(iter.data()->asTF_nonterm(), iter2.data(), multiIndex++, prefix0, pref, prefix);
-                startSymbols++;
-                s << pref << ", ";
-            }
-        }
-    }
-  }
-  if (s.tellp()) {
-      s.seekp(s.tellp()-3);
-  }
-
-  if (startSymbols > 1) {
-      cout << "Multiple start productions, generating grammars: #" << startSymbols << " " << s.str() << endl;
-      multiIndex = 0;
-  } else {
-      multiIndex = -1;
-      if (ast->firstNT) {
-          cout << "Single start symbol: " << s.str() << endl;
-      } else {
-          cout << "! ast->firstNT" << endl;
-      }
-  }
-
   do {
 
       string prefix, pref;
 
-      if (multiIndex>=0) {
-          int ind;
-          if (multiIndex < ast->firstNT->productions.count()) {
+      if (multiIndex>0) {
 
-              AbstractProdDecl *prod = ast->firstNT->productions.nth(multiIndex);
-              get_names(ast->firstNT, prod, multiIndex, prefix0, pref, prefix);
+          std::stringstream s;
 
-          } else if (ast->childrenNT &&
-                     (ind = multiIndex - ast->firstNT->productions.count()) < ast->childrenNT->productions.count() ) {
+          if (ast->childrenNT &&
+                     multiIndex <= ast->childrenNT->productions.count() ) {
 
-              AbstractProdDecl *prod = ast->childrenNT->productions.nth(ind);
-              get_names(ast->childrenNT, prod, multiIndex, prefix0, pref, prefix);
+              AbstractProdDecl *prod = ast->childrenNT->productions.nth(multiIndex-1);
+              pref = prod->name.str;
+              s << prefix0 << "_" << pref;
+              prefix = s.str().c_str();
           } else {
-              std::stringstream s;
-              s << "multiIndex " << multiIndex << " of " << ast->firstNT->productions.count()
-                << " + " << (ast->childrenNT?ast->childrenNT->productions.count():0);
+              s << "multiIndex " << multiIndex << " of "
+                << (ast->childrenNT?ast->childrenNT->productions.count():0);
               astParseError(s.str().c_str());
           }
 

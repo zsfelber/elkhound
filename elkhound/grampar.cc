@@ -90,7 +90,7 @@ void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prod, TermDecl const *eof, int & multiIndex, std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::stringstream * buf = 0, std::string indent = "");
+                        AbstractProdDecl const *prod, int prodi, TermDecl const *eof, int & multiIndex, std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::stringstream * buf = 0, std::string indent = "   ");
 
 
 // really a static semantic error, more than a parse error..
@@ -846,22 +846,12 @@ void createEarlyRule(GrammarAST *ast, AbstractProdDecl *prod, TermDecl const *eo
 void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &multiIndex)
 {
 
-  if (multiIndex >= 0) {
-      int ind;
-      if (multiIndex < ast->firstNT->productions.count()) {
+  if (multiIndex > 0) {
+      if (ast->childrenNT &&
+                 multiIndex <= ast->childrenNT->productions.count() ) {
 
-          AbstractProdDecl *prod = ast->firstNT->productions.nth(multiIndex);
+          AbstractProdDecl *prod = ast->childrenNT->productions.nth(multiIndex-1);
           createEarlyRule(ast, prod, eof);
-
-      } else if (ast->childrenNT &&
-                 (ind = multiIndex - ast->firstNT->productions.count()) < ast->childrenNT->productions.count() ) {
-
-          AbstractProdDecl *prod = ast->childrenNT->productions.nth(ind);
-          createEarlyRule(ast, prod, eof);
-      }
-      multiIndex++;
-      if (multiIndex >= (ast->firstNT->productions.count() + (ast->childrenNT?ast->childrenNT->productions.count():0)) ) {
-          multiIndex = -1;
       }
   } else {
 
@@ -888,6 +878,13 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
       // put it into the AST
       ast->forms.prepend(ast->earlyStartNT);
   }
+
+  if (multiIndex >= 0) {
+      multiIndex++;
+      if (multiIndex > (ast->childrenNT?ast->childrenNT->productions.count():0) ) {
+          multiIndex = -1;
+      }
+  }
 }
 
 
@@ -902,8 +899,9 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
   nonterm->type = nt->type;
 
   // iterate over the productions
+  int prodi = 0;
   FOREACH_ASTLIST(AbstractProdDecl, nt->productions, iter) {
-    astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex);
+    astParseProduction(env, ast, nonterm, iter.data(), prodi++, eof, multiIndex);
   }
 
   // parse dup/del/merge
@@ -928,10 +926,13 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex, std::string tpref, std::string vpref, std::string fvpref, std::stringstream * _buf, std::string indent)
+                        AbstractProdDecl const *prodDecl, int prodi,
+                        TermDecl const *eof, int & multiIndex, std::string tpref, std::string vpref, std::string fvpref, std::stringstream * _buf, std::string indent)
 {
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
+
+      bool v0 = !vpref.length();
 
       if (!prodDecl->traversed) {
 
@@ -945,11 +946,11 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           std::stringstream & buf = *_buf;
           std::string tp;
 
-          bool v0 = !vpref.length();
           if (v0) {
               st0 << "Ast_" << prodDecl->name;
               vpref = "";
               fvpref = "tag";
+              buf << indent << "" << std::endl;
           } else {
               st0 << tpref;
           }
@@ -971,22 +972,23 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           int vi = 0;
           LocString * type ;
           ProdDecl *newStart;
+          std::stringstream nms;
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
 
               buf << indent << "" << std::endl;
               FOREACH_ASTLIST(TreeProdDecl, constcast(prodDecl)->asTreeProdDecl()->treeValidations, iter) {
-                  buf << indent << tpref << iter.data()->name << " " << vpref << "_" << vi
-                    << " = " << vpref << "->" << iter.data()->name << ";" << std::endl;
-                  buf << indent << "if ("<<vpref<< "_" << vi<<") {" << std::endl;
+                  buf << indent << tpref << iter.data()->name << " tag" << vpref << "_" << vi
+                    << " = tag" << vpref << "->" << iter.data()->name << ";" << std::endl;
+                  buf << indent << "if (tag"<<vpref<< "_" << vi<<") {" << std::endl;
                   std::stringstream st, sv, sfv, ind;
                   st << tpref << iter.data()->name << std::flush;
                   sv << vpref << "_" << vi << std::flush;
                   sfv << fvpref << "->" << iter.data()->name << std::flush;
                   ind << indent << "   " << std::flush;
 
-                  astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex, st.str(), sv.str(), sfv.str(), _buf, ind.str());
+                  astParseProduction(env, ast, nonterm, iter.data(), vi, eof, multiIndex, st.str(), sv.str(), sfv.str(), _buf, ind.str());
 
                   buf << indent << "} else {" << std::endl;
                   buf << indent << "   tag = NULL; goto done;" << std::endl;
@@ -1000,7 +1002,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           case PDK_TRAVERSE_GR:
           case PDK_TRAVERSE_TKNS:
 
-              buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer("<<vpref<<", lexer";
+              buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer(tag"<<vpref<<", lexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
                   FOREACH_ASTLIST(RHSElt, *rhs, iter) {
                        LocString symName;
@@ -1027,10 +1029,10 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               }
               buf << indent << "// initialize the parser" << std::endl;
               //s << "GLR glrNode("<<env.g.prefix0 << vpref<<"::parseTables, tblCsOutline);" << std::endl;
-              buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< vpref<<", _usr_"<< vpref<<"::parseTables, "<<vpref<<");" << std::endl;
+              buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< vpref<<", _usr_"<< vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
-              buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)"<<vpref<<")) {" << std::endl;
+              buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)tag"<<vpref<<")) {" << std::endl;
               buf << indent << "} else {" << std::endl;
               buf << indent << "   // TODO trace something" << std::endl;
               buf << indent << "   tag = NULL; goto done;" << std::endl;
@@ -1040,8 +1042,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                           LIT_STR(nonterm->type).clone() : LIT_STR(tp.c_str()).clone();
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
+              nms << nonterm->name << "_" << prodi << vpref;
               newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, origAction,
-                                       new LocString(SL_UNKNOWN, NULL), type);
+                                       LIT_STR(nms.str().c_str()).clone(), type);
               // newStart->traversed = true;
 
               if (ast->childrenNT) {
@@ -1059,7 +1062,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               if (multiIndex == -1) {
                   // reset to this ast->childrenNT :
-                  multiIndex = ast->firstNT->productions.count() + ast->childrenNT->productions.count() - 1;
+                  multiIndex = ast->childrenNT->productions.count();
               }
 
               break;
@@ -1070,17 +1073,19 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           if (v0) {
               buf << "done:" << std::endl;
-              buf << "return "<<vpref<<";" << std::endl;
+              buf << "return tag;" << std::endl;
           }
 
           constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone()->str;
 
           orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
 
-          if (v0) {
-              goto produce;
-          }
       }
+
+      if (v0) {
+          goto produce;
+      }
+
   } else {
       produce:
 
@@ -1718,11 +1723,6 @@ int main(int argc, char **argv)
   bool printCode = true;
 
   int multiIndex = 0;
-  if (MULTIPLE_START && treeTop->firstNT && treeTop->firstNT->productions.count()>1) {
-
-  } else {
-      multiIndex = -1;
-  }
 
 
   do {
