@@ -4508,6 +4508,7 @@ void emitCommon(  string &prefix0,
         << bufHead.str().c_str()
         << bufHeadFun.str().c_str();
     dcl << "};\n\n";
+    dcl << "#endif\n\n";
 
     out << "// " << ccFname << "\n";
     out << "// *** DO NOT EDIT BY HAND ***\n";

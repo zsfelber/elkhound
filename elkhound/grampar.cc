@@ -1109,7 +1109,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               std::stringstream s;
               s << std::endl;
-              s << "   " << type->str << " * result = parsers->parse_" << nonterm->ntIndex << "_" << prodi << "(tag);" << std::endl;
+              s << "   " << type->str << " result = parsers->parse_" << nonterm->ntIndex << "_" << prodi << "(tag);" << std::endl;
               s << "   return result;" << std::endl;
 
               constcast(prodDecl->actionCode).str = LIT_STR(s.str().c_str()).clone()->str;
