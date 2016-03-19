@@ -545,7 +545,7 @@ public:	    // data
 
   string prefix0, pref;
 
-  std::stringstream bufIncl, bufHead, bufHeadFun, bufCc;
+  std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
 
 public:     // funcs
   Grammar();                            // set everything manually

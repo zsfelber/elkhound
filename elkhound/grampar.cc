@@ -1024,7 +1024,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           case PDK_TRAVERSE_GR:
           case PDK_TRAVERSE_TKNS:
 
-              buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer(tag"<<vpref<<", lexer";
+              buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer(tag"<<vpref<<", charLexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
                   FOREACH_ASTLIST(RHSElt, *rhs, iter) {
                        LocString symName;
@@ -1045,15 +1045,16 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                             astParseError(symName, "Traverse mode '>' should all be followed by terminals.");
                         }
                   }
-                  buf << indent << ", false);" << std::endl;
+                  buf << ", false);" << std::endl;
               } else {
-                  buf << indent << ");" << std::endl;
+                  buf << ");" << std::endl;
               }
 
               nms << nonterm->name << "_" << prodi << vpref;
 
               env.g.bufIncl << "#include \""<< env.g.prefix0 << nms.str() <<".h\"" << std::endl;
               env.g.bufHead << "   "<< nms.str() <<" _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << ";" << std::endl;
+              env.g.bufConsBase << ", _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << "(this)";
 
               buf << indent << "// initialize the parser" << std::endl;
               buf << indent << "GLR glrNode"<<vpref<<"(_usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref<<", _usr_"

@@ -4398,21 +4398,21 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
   out << "\n";
   if (g.terminalCodeMapped) {
 
-      out << "enum _Int_TokenType {\n" << "   ";
+      out << "enum _Int_TokenType {\n   ";
       FOREACH_OBJLIST(Terminal, g.terminals, iter) {
         Terminal const * t = iter.data();
         out << "_INT_" << t->name << ", ";
       }
       out << "\n};\n"
           << "\n";
-      out << "int _To_Ext_TokenType[] = {\n" << "   ";
+      out << "int _To_Ext_TokenType[] = {\n   ";
       FOREACH_OBJLIST(Terminal, g.terminals, iter) {
           Terminal const * t = iter.data();
           out << t->name << ", ";
       }
       out << "\n};\n"
           << "\n";
-      out << "int _To_Int_TokenType[] = {\n" << "   ";
+      out << "int _To_Int_TokenType[] = {\n   ";
       for(int i = 0; i<=g.maxCode; i++) {
           Terminal const * t = g.codeHasTerm[i];
           if (t) {
@@ -4473,7 +4473,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
 }
 
 void emitCommon(  string &prefix0,
-                  std::stringstream& bufIncl, std::stringstream& bufHead,
+                  std::stringstream& bufIncl, std::stringstream& bufHead, std::stringstream& bufConsBase,
                   std::stringstream& bufHeadFun, std::stringstream& bufCc,
                   rostring hFname, rostring ccFname, rostring srcFname) {
 
@@ -4505,8 +4505,9 @@ void emitCommon(  string &prefix0,
     dcl << "\n";
     dcl << "class " << prefix0 << "Parsers {\n";
     dcl << "public:\n"
-        << bufHead.str().c_str()
-        << bufHeadFun.str().c_str();
+        << bufHead.str().c_str() << "\n"
+        << bufConsBase.str().c_str() << "\n"
+        << bufHeadFun.str().c_str() << "\n";
     dcl << "};\n\n";
     dcl << "#endif\n\n";
 
@@ -5214,7 +5215,10 @@ int inner_entry(int argc, char **argv)
 
   setAnnotations(ast);
 
-  std::stringstream bufIncl, bufHead, bufHeadFun, bufCc;
+  std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
+
+
+  bool first = true;
 
   do {
 
@@ -5254,6 +5258,33 @@ int inner_entry(int argc, char **argv)
 
       parseGrammarAST(g, ast, multiIndex);
 
+      if (first && ast->firstNT) {
+          first = false;
+          Nonterminal *nt = g.findNonterminal(ast->firstNT->name);
+
+          if (nt && nt->type) {
+
+              bufIncl << "#include \""<< prefix <<".h\"" << std::endl;
+              bufHead << "   LexerInterface* charLexer;" << std::endl;
+              bufHead << "   LexerInterface* startLexer;" << std::endl;
+              bufHead << "   "<< nt->type << " result;" << std::endl;
+              bufHead << "   "<< g.actionClassName <<" _usr_;" << std::endl;
+              bufConsBase<< "   "<< prefix0 <<"Parsers(LexerInterface* charLexer, LexerInterface* startLexer) : charLexer(charLexer), startLexer(startLexer), result(NULL), _usr_(this)";
+              bufHeadFun << std::endl
+                         << "   {" << std::endl;
+              bufHeadFun << "      // initialize the parser" << std::endl;
+              bufHeadFun << "      GLR glr(_usr_, _usr_::parseTables);" << std::endl;
+              bufHeadFun << "" << std::endl;
+              bufHeadFun << "      // parse the input" << std::endl;
+              bufHeadFun << "      if (glr.glrParse(startLexer, (SemanticValue&)result)) {" << std::endl;
+              bufHeadFun << "      } else {" << std::endl;
+              bufHeadFun << "         // TODO trace something" << std::endl;
+              bufHeadFun << "      }" << std::endl;
+              bufHeadFun << "   }" << std::endl;
+
+          }
+      }
+
       if (ast->earlyStartNT) {
           ast->earlyStartNT->debugPrint(trace("prec"), 0, "Generated early start symbol:");
       }
@@ -5282,10 +5313,11 @@ int inner_entry(int argc, char **argv)
       string setsFname = stringc << prefix << ".out";
       g.runAnalyses(tracingSys("lrtable")? setsFname.c_str() : NULL);
 
-      bufIncl << g.bufIncl.str();
-      bufHead<< g.bufHead.str();
-      bufHeadFun<< g.bufHeadFun.str();
-      bufCc<< g.bufCc.str();
+      bufIncl << g.bufIncl.str() << std::flush;
+      bufHead<< g.bufHead.str() << std::flush;
+      bufConsBase<< g.bufConsBase.str() << std::flush;
+      bufHeadFun<< g.bufHeadFun.str() << std::flush;
+      bufCc<< g.bufCc.str() << std::flush;
 
       if (g.errors) {
         result |= 2;
@@ -5365,7 +5397,7 @@ int inner_entry(int argc, char **argv)
                   << " and " << hFname << " ...\n";
 
   emitCommon(prefix0,
-             bufIncl, bufHead,
+             bufIncl, bufHead, bufConsBase,
              bufHeadFun, bufCc,
              hFname, ccFname, grammarFname);
 
