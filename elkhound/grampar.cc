@@ -948,14 +948,14 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               _buf = &buf0;
           }
           std::stringstream &bufAct=*_bufAct, &buf=*_buf;
-          std::stringstream st0,sv0;
+          std::stringstream st0;
           std::string tp;
 
           if (v0) {
               st0 << "Ast_" << prodDecl->name;
               vpref = "";
               fvpref = "tag";
-              buf << indent << "" << std::endl;
+              bufAct << indent << "" << std::endl;
           } else {
               st0 << tpref;
           }
@@ -1089,12 +1089,12 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           if (v0) {
               std::stringstream sd;
-              sd << bufAct;
-              sd << buf;
+              sd << bufAct.str();
+              sd << buf.str();
               sd << "done:" << std::endl;
               sd << "return tag;" << std::endl;
 
-              constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone()->str;
+              constcast(prodDecl->actionCode).str = LIT_STR(sd.str().c_str()).clone()->str;
               orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
           }
 

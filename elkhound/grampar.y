@@ -157,7 +157,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 
 %type <absProdDecls> Productions
 %type <absProdDecl> Production
-%type <treeProdDecls> TreeValidations TreeValidationsOpt 
+%type <treeProdDecls> TreeValidations 
 %type <treeProdDecl> TreeValidation0 TreeValidation 
 %type <rhsList> RHS
 %type <rhsElt> RHSElt
@@ -323,23 +323,19 @@ Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, 
           | "~>" TreeValidation0           { $$ = $2; }
           ;
 
-TreeValidation0: TOK_NAME "=" "(" TreeValidationsOpt ")"  Action       { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, sameloc($1, ""), sameloc($1, ""), $4); }
-          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidationsOpt ")" Action{ $$ = new TreeProdDecl($4, PDK_TRAVERSE_VAL, NULL, $8, $3, sameloc($1, ""), $1, $6); }
-          | TOK_NAME ">" RHS2 Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3, $4, $1, sameloc($1, ""), sameloc($1, ""), NULL); }
-          | TOK_NAME ":" TOK_NAME ">" RHS2  Action                     { $$ = new TreeProdDecl($4, PDK_TRAVERSE_TKNS, $5, $6, $3, sameloc($1, ""), $1, NULL); }
-          | TOK_NAME "->" RHS Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3, $4, $1, sameloc($1, ""), sameloc($1, ""), NULL); }
-          | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5, $6, $3, sameloc($1, ""), $1, NULL); }
+TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, sameloc($1, ""), sameloc($1, NULL), $4); }
+          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action   { $$ = new TreeProdDecl($4, PDK_TRAVERSE_VAL, NULL, $8, $3, sameloc($1, ""), $1, $6); }
+          | TOK_NAME ">" RHS2 Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL); }
+          | TOK_NAME ":" TOK_NAME ">" RHS2  Action                     { $$ = new TreeProdDecl($4, PDK_TRAVERSE_TKNS, $5,  $6, $3, sameloc($1, ""), $1, NULL); }
+          | TOK_NAME "->" RHS Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL); }
+          | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5,    $6, $3, sameloc($1, ""), $1, NULL); }
           ;
 
-TreeValidationsOpt: /* empty */                                        { $$ = NULL; }
-          | TreeValidations                                            { $$=$1; }
-          ;
-
-TreeValidations: TreeValidation                                        { $$ = new ASTList<TreeProdDecl>($1); }
+TreeValidations: /* empty */                                           { $$ = new ASTList<TreeProdDecl>; }
           | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: TOK_NAME ";"                                           { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $1, sameloc($1, ""), sameloc($1, ""), NULL); }
+TreeValidation: TOK_NAME ";"                                           { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $1, sameloc($1, ""), sameloc($1, NULL), NULL); }
           | TOK_NAME ":" TOK_NAME ";"                                  { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $3, sameloc($1, ""), $1, NULL); }
           | TreeValidation0                                            { $$ = $1; }
           ;

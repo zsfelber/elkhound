@@ -50,6 +50,8 @@ void StringTable::clear()
 
 StringRef StringTable::add(char const *src)
 {
+  if (!src) return NULL;
+
   // see if it's already here
   StringRef ret = get(src);
   if (ret) {
