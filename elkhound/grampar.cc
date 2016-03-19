@@ -984,7 +984,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               buf << indent << "" << std::endl;
               FOREACH_ASTLIST(TreeProdDecl, constcast(prodDecl)->asTreeProdDecl()->treeValidations, iter) {
-                  buf << indent << tpref << iter.data()->name << " tag" << vpref << "_" << vi
+                  buf << indent << tpref << iter.data()->name << " *tag" << vpref << "_" << vi
                     << " = tag" << vpref << "->" << iter.data()->name << ";" << std::endl;
                   buf << indent << "if (tag"<<vpref<< "_" << vi<<") {" << std::endl;
                   std::stringstream st, sv, sfv, ind;
@@ -994,7 +994,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   ind << indent << "   " << std::flush;
 
                   if (iter.data()->tag && iter.data()->tag.isNonNull()) {
-                      bufAct << "   " << tpref << iter.data()->name << " "
+                      bufAct << "   " << tpref << iter.data()->name << " *"
                              << iter.data()->tag << " = NULL;" << std::endl;
                       buf << indent << "   " << iter.data()->tag << " = tag"
                           << vpref << "_" << vi << ";" << std::endl;
@@ -1043,8 +1043,15 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               } else {
                   buf << indent << ");" << std::endl;
               }
+
+              type = v0 && nonterm->type && nonterm->type ?
+                          LIT_STR(nonterm->type).clone() : LIT_STR(tp.c_str()).clone();
+
+              nms << nonterm->name << "_" << prodi << vpref;
+
+              env.g.bufIncl << "#include \""<< env.g.prefix0 << nms.str() <<".h\"" << std::endl;
+              env.g.bufHead << "   "<< nms.str() <<" _usr_"<< vpref << ";" << std::endl;
               buf << indent << "// initialize the parser" << std::endl;
-              //s << "GLR glrNode("<<env.g.prefix0 << vpref<<"::parseTables, tblCsOutline);" << std::endl;
               buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< vpref<<", _usr_"<< vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
@@ -1054,11 +1061,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "   tag = NULL; goto done;" << std::endl;
               buf << indent << "}" << std::endl;
 
-              type = v0 && nonterm->type && nonterm->type ?
-                          LIT_STR(nonterm->type).clone() : LIT_STR(tp.c_str()).clone();
-
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-              nms << nonterm->name << "_" << prodi << vpref;
               newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, origAction,
                                        LIT_STR(nms.str().c_str()).clone(), type);
               // newStart->traversed = true;

@@ -23,7 +23,6 @@
 #include "okhasharr.h"    // OwnerKHashArray
 #include "glrconfig.h"    // SOURCELOC
 #include "parsetables.h"  // ParseTables, GrowArray
-#include <sstream>
 #include <ostream>
 
 using std::ostream;

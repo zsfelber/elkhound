@@ -32,6 +32,7 @@
 #include "owner.h"       // Owner
 #include "asockind.h"    // AssocKind
 #include "array.h"       // GrowArray
+#include <sstream>
 
 using std::ostream;
 using std::ofstream;
@@ -541,7 +542,9 @@ public:	    // data
   int expectedUNRTerms;                 // # unreachable terminals
 
 
-  string prefix0;
+  string prefix0, pref;
+
+  std::stringstream bufIncl, bufHead, bufCc;
 
 public:     // funcs
   Grammar();                            // set everything manually

@@ -4306,6 +4306,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       << "\n"
       << "#include \"useract.h\"     // UserActions\n"
       << "\n" ;
+  dcl << g.bufIncl.str().c_str();
 
 
   // insert the stand-alone verbatim sections
@@ -4345,6 +4346,8 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       dcl << "\n"
           << "   virtual int toInternalType(int type);\n";
   }
+  dcl << "public:\n"
+      << g.bufHead.str().c_str();
 
   // we end the context class with declarations of the action functions
   dcl << "\n"
@@ -4456,6 +4459,8 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
 
   g.tables->finishTables();
   g.tables->emitConstructionCode(out, string(g.actionClassName), "makeTables");
+
+  out << g.bufCc.str().c_str();
 
   // I put this last in the context class, and make it public
   dcl << "\n"
@@ -5195,6 +5200,7 @@ int inner_entry(int argc, char **argv)
       if (useML) {
         g.targetLang = "OCaml";
       }
+      g.pref = pref;
       g.prefix0 = prefix0;
 
       parseGrammarAST(g, ast, multiIndex);

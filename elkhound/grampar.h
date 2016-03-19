@@ -90,8 +90,6 @@ public:      // data
   // reference to the one we're really using
   int &errors;
 
-  std::stringstream bufIncl, bufHead, bufCc;
-
 public:
   Environment(Grammar &G);             // new env
   Environment(Environment &prevEnv);   // nested env
