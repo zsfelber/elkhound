@@ -88,7 +88,7 @@ void astParseGrammar(Grammar &g, GrammarAST *treeTop, TermDecl const *eof, int &
 void astParseTerminals(Environment &env, TF_terminals const &terms);
 void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex);
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prod, int prodi, TermDecl const *eof, int & multiIndex,
                         std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::string indent = "   ",
@@ -352,6 +352,7 @@ void astParseGrammar(Grammar &g, GrammarAST *ast, TermDecl const *eof, int & mul
 
   // process nonterminal bodies
   {
+    int ni = 0;
     FOREACH_ASTLIST(TopForm, ast->forms, iter) {
       if (!iter.data()->isTF_nonterm()) continue;
       TF_nonterm const *nt = iter.data()->asTF_nontermC();
@@ -361,7 +362,7 @@ void astParseGrammar(Grammar &g, GrammarAST *ast, TermDecl const *eof, int & mul
       Environment newEnv(env);
 
       // parse it
-      astParseNonterm(newEnv, ast, nt, eof, multiIndex);
+      astParseNonterm(newEnv, ast, nt, eof, ni++, multiIndex);
     }
   }
 
@@ -892,7 +893,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
 }
 
 
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex)
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex, int & multiIndex)
 {
   LocString const &name = nt->name;
 
@@ -901,6 +902,8 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
   xassert(nonterm);
 
   nonterm->type = nt->type;
+  nonterm->ntIndex = ntIndex;
+
 
   // iterate over the productions
   int prodi = 0;
@@ -1057,9 +1060,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               nms << nonterm->name << "_" << prodi << vpref;
 
               bufIncl << "#include \""<< env.g.prefix0 << nms.str() <<".h\"" << std::endl;
-              bufHead << "   "<< nms.str() <<" _usr_" << prodi << vpref << ";" << std::endl;
+              bufHead << "   "<< nms.str() <<" _usr_" << nonterm->ntIndex << vpref << ";" << std::endl;
               buf << indent << "// initialize the parser" << std::endl;
-              buf << indent << "GLR glrNode"<<vpref<<"(_usr_" << prodi << vpref<<", _usr_" << prodi << vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
+              buf << indent << "GLR glrNode"<<vpref<<"(_usr_" << nonterm->ntIndex << vpref<<", _usr_" << nonterm->ntIndex << vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
               buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)tag"<<vpref<<")) {" << std::endl;
