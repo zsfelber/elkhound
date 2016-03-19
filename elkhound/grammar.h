@@ -33,6 +33,7 @@
 #include "asockind.h"    // AssocKind
 #include "array.h"       // GrowArray
 #include <sstream>
+#include <string>
 
 using std::ostream;
 using std::ofstream;
@@ -387,6 +388,9 @@ public:	    // data
   LocString action;
   RHSElt* defaultSymbol = 0;          // default type determination (of 1-symbol-wide productions) :
                                       // analyzing its consistency
+
+  std::string bufIncl;
+  std::string bufHead;
 
 private:    // funcs
 

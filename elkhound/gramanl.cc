@@ -1430,7 +1430,14 @@ void GrammarAnalysis::initializeAuxData()
 
   MUTATE_EACH_NONTERMINAL(nonterminals, iter) {
     Nonterminal *nt = iter.data();
-    if (!nt->reachable) {
+    if (nt->reachable) {
+
+        SFOREACH_OBJLIST(Production, nt->productions, pter) {
+            Production * prod = constcast(pter.data());
+            bufIncl << prod->bufIncl;
+            bufHead << prod->bufHead;
+        }
+    } else {
       urNonterminals.append(nt);
       iter.removeAndStuck();
       SFOREACH_OBJLIST(Production, nt->productions, pter) {

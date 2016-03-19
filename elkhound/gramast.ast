@@ -4,6 +4,7 @@
 verbatim {
   #include "locstr.h"       // LocString
   #include "asockind.h"     // AssocKind
+  #include <string>
 }
 
 // the entire grammar spec
@@ -98,6 +99,9 @@ enum RHAttrKind {
 
 class AbstractProdDecl(SourceLoc loc, ProdDeclKind pkind, ASTList<RHSElt> rhs, LocString actionCode, LocString name, LocString type) {
   public bool traversed = false;
+
+  public std::string bufIncl;
+  public std::string bufHead;
 
   // production: rhs description, and code to execute upon recognition
   -> ProdDecl;
