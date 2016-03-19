@@ -5250,6 +5250,9 @@ int inner_entry(int argc, char **argv)
           ast->earlyStartNT->debugPrint(trace("prec"), 0, "Generated early start symbol:");
       }
       if (multiIndex<0) {
+          if (ast->childrenNT) {
+              ast->childrenNT->debugPrint(trace("prec"), 0, "Generated child start symbols:");
+          }
           ast.del();              // done with it
       }
 
@@ -5341,9 +5344,6 @@ int inner_entry(int argc, char **argv)
       }
   } while (multiIndex >= 0);
 
-  if (ast->childrenNT) {
-      ast->childrenNT->debugPrint(trace("prec"), 0, "Generated child start symbols:");
-  }
 
   return result;
 }
