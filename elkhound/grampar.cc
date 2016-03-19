@@ -90,7 +90,7 @@ void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prod, TermDecl const *eof, int & multiIndex, std::string tpref = "", std::string vpref = "", std::stringstream * buf = 0, std::string indent = "");
+                        AbstractProdDecl const *prod, TermDecl const *eof, int & multiIndex, std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::stringstream * buf = 0, std::string indent = "");
 
 
 // really a static semantic error, more than a parse error..
@@ -656,7 +656,7 @@ void fillDefaultType(Nonterminal* nonterm) {
 
             if (init_void) {
 
-                traceProgress() << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << std::endl;
+                //trace("prec") << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << std::endl;
 
                 if (!isVoid(nonterm->type) && nonterm->type != sym->type) {
                     if (!err_concur) {
@@ -669,21 +669,21 @@ void fillDefaultType(Nonterminal* nonterm) {
                     nonterm->type_is_default = true;
                 }
             } else {
-                traceProgress() << "Nonterminal: " << nonterm->name << "  non-void   production type:" << sym->type << std::endl;
+                //trace("prec") << "Nonterminal: " << nonterm->name << "  non-void   production type:" << sym->type << std::endl;
             }
         }
 
         if (err_in_one) {
-            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is failed in case of one or more productions." << std::endl;
+            trace("prec") << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is failed in case of one or more productions." << std::endl;
         }
         if (err_concur) {
-            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is not possible, candidates:"
+            trace("prec") << "Nonterminal " << nonterm->name << " has an undefined (default) type, but determining default type is not possible, candidates:"
                  << concur_types << std::endl;
             //errors++;
         }
 
         if (!err_in_one && !err_concur && isVoid(nonterm->type)) {
-            cout << "Nonterminal " << nonterm->name << " has an undefined (default) type, but after looking for default type it is still void." << std::endl;
+            trace("prec") << "Nonterminal " << nonterm->name << " has an undefined (default) type, but after looking for default type it is still void." << std::endl;
             //errors++;
         }
 
@@ -928,7 +928,7 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex, std::string tpref, std::string vpref, std::stringstream * _buf, std::string indent)
+                        AbstractProdDecl const *prodDecl, TermDecl const *eof, int & multiIndex, std::string tpref, std::string vpref, std::string fvpref, std::stringstream * _buf, std::string indent)
 {
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
@@ -947,33 +947,30 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           bool v0 = !vpref.length();
           if (v0) {
-              if (isVoid(nonterm->type)) {
-                  st0 << "Ast_" << prodDecl->name;
-              } else {
-                  st0 << nonterm->type;
-              }
-              sv0 << nonterm->name << "$" << prodDecl->name;
-              vpref = sv0.str();
-              buf << st0.str() << "* "<<vpref<<" = tag;" << std::endl;
+              st0 << "Ast_" << prodDecl->name;
+              vpref = "";
+              fvpref = "tag";
           } else {
               st0 << tpref;
           }
           tp = st0.str();
           st0 << "::Type__";
           tpref = st0.str();
-          std::cout << "Traversing " << vpref << std::endl;
+          trace("prec") << "Traversing " << nonterm->name << " : " << tp << " : " << fvpref << std::endl;
 
           ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
           LocString *origAction = prodDecl->actionCode.clone();
 
-          ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
+          ASTList<RHSElt> *rhs;
+
+          rhs = new ASTList<RHSElt>();
           RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
           rhs->steal(&orhs, false);
           rhs->append(reof);
 
           int vi = 0;
+          LocString * type ;
           ProdDecl *newStart;
-          std::string a,b,c;
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
@@ -983,15 +980,16 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << indent << tpref << iter.data()->name << " " << vpref << "_" << vi
                     << " = " << vpref << "->" << iter.data()->name << ";" << std::endl;
                   buf << indent << "if ("<<vpref<< "_" << vi<<") {" << std::endl;
-                  std::stringstream st, sv, ind;
+                  std::stringstream st, sv, sfv, ind;
                   st << tpref << iter.data()->name << std::flush;
                   sv << vpref << "_" << vi << std::flush;
+                  sfv << fvpref << "->" << iter.data()->name << std::flush;
                   ind << indent << "   " << std::flush;
 
-                  astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex, st.str(), sv.str(), _buf, ind.str());
+                  astParseProduction(env, ast, nonterm, iter.data(), eof, multiIndex, st.str(), sv.str(), sfv.str(), _buf, ind.str());
 
                   buf << indent << "} else {" << std::endl;
-                  buf << indent << "   "<<vpref<<" = NULL; goto done;" << std::endl;
+                  buf << indent << "   tag = NULL; goto done;" << std::endl;
                   buf << indent << "}" << std::endl;
 
                   vi++;
@@ -1004,7 +1002,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer("<<vpref<<", lexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
-                  FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
+                  FOREACH_ASTLIST(RHSElt, *rhs, iter) {
                        LocString symName;
                         ASTSWITCHC(RHSElt, iter.data()) {
                             ASTCASEC(RH_name, tname) {
@@ -1035,14 +1033,16 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)"<<vpref<<")) {" << std::endl;
               buf << indent << "} else {" << std::endl;
               buf << indent << "   // TODO trace something" << std::endl;
-              buf << indent << "   "<<vpref<<" = NULL; goto done;" << std::endl;
+              buf << indent << "   tag = NULL; goto done;" << std::endl;
               buf << indent << "}" << std::endl;
 
+              type = v0 && nonterm->type && nonterm->type ?
+                          LIT_STR(nonterm->type).clone() : LIT_STR(tp.c_str()).clone();
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-              newStart = new ProdDecl(SL_INIT, prodDecl->pkind, rhs, origAction,
-                                      LIT_STR(vpref.c_str()).clone(), LIT_STR(tp.c_str()).clone());
-              newStart->traversed = true;
+              newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, origAction,
+                                       new LocString(SL_UNKNOWN, NULL), type);
+              // newStart->traversed = true;
 
               if (ast->childrenNT) {
                   ast->childrenNT->productions.append(newStart);
@@ -1050,7 +1050,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   ast->childrenNT
                           = new TF_nonterm(
                               LIT_STR("__GeneratedChildren").clone(),   // name
-                              new LocString(SL_UNKNOWN, NULL),          // type
+                              type->clone(),          // type
                               NULL,                                     // empty list of functions
                               new ASTList<AbstractProdDecl>(newStart),          // productions
                               NULL                                      // subsets

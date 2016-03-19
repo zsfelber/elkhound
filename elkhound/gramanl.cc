@@ -5246,6 +5246,9 @@ int inner_entry(int argc, char **argv)
 
       parseGrammarAST(g, ast, multiIndex);
 
+      if (ast->earlyStartNT) {
+          ast->earlyStartNT->debugPrint(trace("prec"), 0, "Generated early start symbol:");
+      }
       if (multiIndex<0) {
           ast.del();              // done with it
       }
@@ -5337,6 +5340,10 @@ int inner_entry(int argc, char **argv)
         grammarExplorer(g);
       }
   } while (multiIndex >= 0);
+
+  if (ast->childrenNT) {
+      ast->childrenNT->debugPrint(trace("prec"), 0, "Generated child start symbols:");
+  }
 
   return result;
 }
