@@ -982,6 +982,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           ProdDecl *newStart;
           std::stringstream nms;
 
+          type = v0 && nonterm->type  ?
+                      LIT_STR(nonterm->type).clone() : LIT_STR(tp.c_str()).clone();
+
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
 
@@ -1047,9 +1050,6 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << indent << ");" << std::endl;
               }
 
-              type = v0 && nonterm->type && nonterm->type ?
-                          LIT_STR(nonterm->type).clone() : LIT_STR(tp.c_str()).clone();
-
               nms << nonterm->name << "_" << prodi << vpref;
 
               env.g.bufIncl << "#include \""<< env.g.prefix0 << nms.str() <<".h\"" << std::endl;
@@ -1068,7 +1068,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
               newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, origAction,
-                                       LIT_STR(nms.str().c_str()).clone(), type);
+                                       LIT_STR(nms.str().c_str()).clone(), type->clone());
               // newStart->traversed = true;
 
               if (ast->childrenNT) {
@@ -1097,9 +1097,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           if (v0) {
 
-              env.g.bufHeadFun << "   " << type->str << " * parse_" << nonterm->ntIndex << "_" << prodi << "("
+              env.g.bufHeadFun << "   " << type->str << " parse_" << nonterm->ntIndex << "_" << prodi << "("
                                << tp <<"* tag);" << std::endl;
-              env.g.bufCc << type->str << " * "<< env.g.prefix0 << "Parsers::parse_" << nonterm->ntIndex << "_" << prodi << "("
+              env.g.bufCc << type->str << " "<< env.g.prefix0 << "Parsers::parse_" << nonterm->ntIndex << "_" << prodi << "("
                                << tp <<"* tag) {" << std::endl;
               env.g.bufCc << bufAct.str();
               env.g.bufCc << buf.str();
