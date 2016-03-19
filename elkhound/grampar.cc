@@ -1057,9 +1057,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               nms << nonterm->name << "_" << prodi << vpref;
 
               bufIncl << "#include \""<< env.g.prefix0 << nms.str() <<".h\"" << std::endl;
-              bufHead << "   "<< nms.str() <<" _usr_"<< vpref << ";" << std::endl;
+              bufHead << "   "<< nms.str() <<" _usr_" << prodi << vpref << ";" << std::endl;
               buf << indent << "// initialize the parser" << std::endl;
-              buf << indent << "GLR glrNode"<<vpref<<"(_usr_"<< vpref<<", _usr_"<< vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
+              buf << indent << "GLR glrNode"<<vpref<<"(_usr_" << prodi << vpref<<", _usr_" << prodi << vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
               buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)tag"<<vpref<<")) {" << std::endl;
