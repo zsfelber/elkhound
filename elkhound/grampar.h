@@ -9,6 +9,7 @@
 #include "exc.h"          // xBase
 #include "strsobjdict.h"  // StringSObjDict
 #include "locstr.h"       // LocString
+#include <sstream>
 
 // linkdepend: grampar.tab.cc
 
@@ -88,6 +89,8 @@ public:      // data
   
   // reference to the one we're really using
   int &errors;
+
+  std::stringstream bufIncl, bufHead, bufCc;
 
 public:
   Environment(Grammar &G);             // new env

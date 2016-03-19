@@ -102,7 +102,11 @@ class AbstractProdDecl(SourceLoc loc, ProdDeclKind pkind, ASTList<RHSElt> rhs, L
   // production: rhs description, and code to execute upon recognition
   -> ProdDecl;
 
-  -> TreeProdDecl (LocString tag, ASTList<TreeProdDecl> treeValidations);
+  -> TreeProdDecl (LocString tag, ASTList<TreeProdDecl> treeValidations) {
+     public bool validation;
+
+     ctor validation = (_treeValidations);
+  }
 
 }
 

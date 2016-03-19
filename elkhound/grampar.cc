@@ -90,7 +90,9 @@ void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prod, int prodi, TermDecl const *eof, int & multiIndex, std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::stringstream * buf = 0, std::string indent = "   ");
+                        AbstractProdDecl const *prod, int prodi, TermDecl const *eof, int & multiIndex,
+                        std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::string indent = "   ",
+                        std::stringstream * _bufAct = NULL, std::stringstream * _buf = NULL );
 
 
 // really a static semantic error, more than a parse error..
@@ -927,7 +929,9 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prodDecl, int prodi,
-                        TermDecl const *eof, int & multiIndex, std::string tpref, std::string vpref, std::string fvpref, std::stringstream * _buf, std::string indent)
+                        TermDecl const *eof, int & multiIndex,
+                        std::string tpref, std::string vpref, std::string fvpref, std::string indent,
+                        std::stringstream * _bufAct, std::stringstream * _buf)
 {
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
@@ -938,12 +942,13 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           constcast(prodDecl)->traversed = true;
 
-          std::stringstream buf0;
+          std::stringstream bufAct0, buf0;
           if (!_buf) {
+              _bufAct = &bufAct0;
               _buf = &buf0;
           }
+          std::stringstream &bufAct=*_bufAct, &buf=*_buf;
           std::stringstream st0,sv0;
-          std::stringstream & buf = *_buf;
           std::string tp;
 
           if (v0) {
@@ -988,7 +993,18 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   sfv << fvpref << "->" << iter.data()->name << std::flush;
                   ind << indent << "   " << std::flush;
 
-                  astParseProduction(env, ast, nonterm, iter.data(), vi, eof, multiIndex, st.str(), sv.str(), sfv.str(), _buf, ind.str());
+                  if (iter.data()->tag && iter.data()->tag.isNonNull()) {
+                      bufAct << "   " << tpref << iter.data()->name << " "
+                             << iter.data()->tag << " = NULL;" << std::endl;
+                      buf << indent << "   " << iter.data()->tag << " = tag"
+                          << vpref << "_" << vi << ";" << std::endl;
+                  }
+
+                  astParseProduction(env, ast, nonterm, iter.data(), vi, eof, multiIndex, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
+
+                  if (iter.data()->actionCode && iter.data()->actionCode.isNonNull()) {
+                      buf << indent << "   " << iter.data()->actionCode << std::endl;
+                  }
 
                   buf << indent << "} else {" << std::endl;
                   buf << indent << "   tag = NULL; goto done;" << std::endl;
@@ -1072,13 +1088,15 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           }
 
           if (v0) {
-              buf << "done:" << std::endl;
-              buf << "return tag;" << std::endl;
+              std::stringstream sd;
+              sd << bufAct;
+              sd << buf;
+              sd << "done:" << std::endl;
+              sd << "return tag;" << std::endl;
+
+              constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone()->str;
+              orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
           }
-
-          constcast(prodDecl->actionCode).str = LIT_STR(buf.str().c_str()).clone()->str;
-
-          orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
 
       }
 

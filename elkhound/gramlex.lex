@@ -174,6 +174,7 @@ HWHITE    [ \t\f\v\r]
    * delimited embedded sequences */
 "[" {
   TOK_UPD_COL;
+  lasts = YYSTATE;
   BEGIN(LITCODE);
   beginEmbed(']', TOK_LIT_CODE);
 }
@@ -208,6 +209,7 @@ HWHITE    [ \t\f\v\r]
   /* "{" in a RHS begins embedded */
 <RHS,FUN>"{" {
   TOK_UPD_COL;
+  lasts = YYSTATE;
   BEGIN(LITCODE);
   beginEmbed('}', TOK_LIT_CODE);
 }
@@ -239,6 +241,7 @@ HWHITE    [ \t\f\v\r]
 <OPTIONAL_TYPE>"(" {
   TOK_UPD_COL;
   eqs++;
+  lasts = YYSTATE;
   BEGIN(LITCODE);
   beginEmbed(')', TOK_LIT_CODE);
 }
@@ -283,7 +286,12 @@ HWHITE    [ \t\f\v\r]
     UPD_COL;
     if (embedded->zeroNesting()) {
       // done
-      BEGIN(INITIAL);
+      //BEGIN(INITIAL)
+      if (lasts == RHS) {
+         BEGIN(lasts);
+      } else {
+         BEGIN(INITIAL);
+      }
 
       // check for balanced delimiter
       if (embedFinish != yytext[0]) {
@@ -305,6 +313,11 @@ HWHITE    [ \t\f\v\r]
     }
   }
 
+  ")" {
+    eqs--;
+  }
+
+
   <<EOF>> {
     err(stringc << "hit end of file while looking for final `"
                 << embedFinish << "'");
@@ -318,6 +331,7 @@ HWHITE    [ \t\f\v\r]
   /* caller will get text from yytext and yyleng */
   TOK_UPD_COL;
 
+  lasts = YYSTATE;
   /* drop into literal-code processing */
   BEGIN(LITCODE);
 

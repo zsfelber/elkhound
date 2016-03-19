@@ -94,6 +94,7 @@ private:     // data
   int prevToken;                   // last token code yielded (ugly hack)
 
   int eqs;// zsf
+  int lasts;// zsf
 
 public:      // data
   // todo: can eliminate commentStartLine in favor of tokenStartLoc?
