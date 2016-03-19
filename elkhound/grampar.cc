@@ -92,8 +92,6 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prod, int prodi, TermDecl const *eof, int & multiIndex,
                         std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::string indent = "   ",
-                        std::stringstream * _bufIncl = NULL, std::stringstream * _bufHead = NULL,
-                        std::stringstream * _bufCc = NULL,
                         std::stringstream * _bufAct = NULL, std::stringstream * _buf = NULL );
 
 
@@ -936,8 +934,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prodDecl, int prodi,
                         TermDecl const *eof, int & multiIndex,
                         std::string tpref, std::string vpref, std::string fvpref, std::string indent,
-                        std::stringstream * _bufIncl, std::stringstream * _bufHead,
-                        std::stringstream * _bufCc, std::stringstream * _bufAct, std::stringstream * _buf)
+                        std::stringstream * _bufAct, std::stringstream * _buf)
 {
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
@@ -948,15 +945,11 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           constcast(prodDecl)->traversed = true;
 
-          std::stringstream bufIncl0, bufHead0, bufCc0, bufAct0, buf0;
+          std::stringstream bufAct0, buf0;
           if (!_buf) {
-              _bufIncl = &bufIncl0;
-              _bufHead = &bufHead0;
-              _bufCc = &bufCc0;
               _bufAct = &bufAct0;
               _buf = &buf0;
           }
-          std::stringstream &bufIncl=*_bufIncl, &bufHead=*_bufHead, &bufCc=*_bufCc;
           std::stringstream &bufAct=*_bufAct, &buf=*_buf;
           std::stringstream st0;
           std::string tp;
@@ -1010,7 +1003,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                           << vpref << "_" << vi << ";" << std::endl;
                   }
 
-                  astParseProduction(env, ast, nonterm, iter.data(), prodi, eof, multiIndex, st.str(), sv.str(), sfv.str(), ind.str(), _bufIncl, _bufHead, _bufCc, _bufAct, _buf);
+                  astParseProduction(env, ast, nonterm, iter.data(), prodi, eof, multiIndex, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
 
                   if (iter.data()->actionCode && iter.data()->actionCode.isNonNull()) {
                       buf << indent << "   " << iter.data()->actionCode << std::endl;
@@ -1059,10 +1052,12 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               nms << nonterm->name << "_" << prodi << vpref;
 
-              bufIncl << "#include \""<< env.g.prefix0 << nms.str() <<".h\"" << std::endl;
-              bufHead << "   "<< nms.str() <<" _usr_" << nonterm->ntIndex << vpref << ";" << std::endl;
+              env.g.bufIncl << "#include \""<< env.g.prefix0 << nms.str() <<".h\"" << std::endl;
+              env.g.bufHead << "   "<< nms.str() <<" _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << ";" << std::endl;
+
               buf << indent << "// initialize the parser" << std::endl;
-              buf << indent << "GLR glrNode"<<vpref<<"(_usr_" << nonterm->ntIndex << vpref<<", _usr_" << nonterm->ntIndex << vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
+              buf << indent << "GLR glrNode"<<vpref<<"(_usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref<<", _usr_"
+                  << nonterm->ntIndex << "_" << prodi << "_" << vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
               buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)tag"<<vpref<<")) {" << std::endl;
@@ -1101,17 +1096,25 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           }
 
           if (v0) {
-              std::stringstream sd;
-              sd << bufAct.str();
-              sd << buf.str();
-              sd << "done:" << std::endl;
-              sd << "return tag;" << std::endl;
 
-              constcast(prodDecl->actionCode).str = LIT_STR(sd.str().c_str()).clone()->str;
+              env.g.bufHeadFun << "   " << type->str << " * parse_" << nonterm->ntIndex << "_" << prodi << "("
+                               << tp <<"* tag);" << std::endl;
+              env.g.bufCc << type->str << " * "<< env.g.prefix0 << "Parsers::parse_" << nonterm->ntIndex << "_" << prodi << "("
+                               << tp <<"* tag) {" << std::endl;
+              env.g.bufCc << bufAct.str();
+              env.g.bufCc << buf.str();
+              env.g.bufCc << "   done:" << std::endl;
+              env.g.bufCc << "   return tag;" << std::endl;
+              env.g.bufCc << "}" << std::endl;
+
+              std::stringstream s;
+              s << std::endl;
+              s << "   " << type->str << " * result = parsers->parse_" << nonterm->ntIndex << "_" << prodi << "(tag);" << std::endl;
+              s << "   return result;" << std::endl;
+
+              constcast(prodDecl->actionCode).str = LIT_STR(s.str().c_str()).clone()->str;
               orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
 
-              constcast(prodDecl)->bufIncl = bufIncl.str();
-              constcast(prodDecl)->bufHead = bufHead.str();
           }
 
       }
@@ -1128,9 +1131,6 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
       // build a production; use 'this' as the tag for LHS elements
       Production *prod = new Production(nonterm, "this");
-
-      prod->bufIncl = prodDecl->bufIncl;
-      prod->bufHead = prodDecl->bufHead;
 
       // put the code into it
       prod->action = prodDecl->actionCode;

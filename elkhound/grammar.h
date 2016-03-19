@@ -389,9 +389,6 @@ public:	    // data
   RHSElt* defaultSymbol = 0;          // default type determination (of 1-symbol-wide productions) :
                                       // analyzing its consistency
 
-  std::string bufIncl;
-  std::string bufHead;
-
 private:    // funcs
 
   void computeDerived();
@@ -548,7 +545,7 @@ public:	    // data
 
   string prefix0, pref;
 
-  std::stringstream bufIncl, bufHead, bufCc;
+  std::stringstream bufIncl, bufHead, bufHeadFun, bufCc;
 
 public:     // funcs
   Grammar();                            // set everything manually
