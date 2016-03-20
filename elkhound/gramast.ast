@@ -77,12 +77,13 @@ enum ProdDeclKind {
   PDK_NEW,        // new production (most productions are new)
   PDK_DELETE,     // means to delete the production from the base spec
   PDK_REPLACE,    // replace original production with this one
-  PDK_TRAVERSE_GR,// with '->'
+  PDK_TRAVERSE_GR,// with '~>'
   PDK_TRAVERSE_VAL, // with '='
+  PDK_TRAVERSE_NULL,// with '='  (null argument validation matching, in case argument should be null)
   PDK_TRAVERSE_TKNS,// with '>'
                   // Multilevel ast-tree-parsing
-                  // syntax : ~> terminal -> = > symbol1 symbol2 .... 
-                  // A single token is only included in parent grammar (on the right hand side). One of the '->' 
+                  // syntax : tree -> terminal ~> = > symbol1 symbol2 .... 
+                  // A single token is only included in parent grammar (on the right hand side). One of the '~>' 
                   //  '=' '>' symbols defines a child grammar starting point, of the three possible grammar types respectively. 
                   //  Hiding a branch of rules this way is used to eliminate  
                   // possible # conflicts and improving error recovery (because of this true-style top-to-bottom 

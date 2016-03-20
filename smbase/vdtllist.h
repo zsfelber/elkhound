@@ -27,6 +27,7 @@ private:
   VoidTailList(VoidTailList const &obj);    // not allowed
 
   void adjustTail();
+  void adjustTails();
 
 public:
   VoidTailList()                     { tail = NULL; }

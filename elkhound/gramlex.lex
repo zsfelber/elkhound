@@ -166,6 +166,7 @@ HWHITE    [ \t\f\v\r]
 "replace"          TOK_UPD_COL;  return TOK_REPLACE;
 "delete"           TOK_UPD_COL;  return TOK_DELETE;
 "tree"             TOK_UPD_COL;  return TOK_TREE;
+"null"             TOK_UPD_COL;  return TOK_NULL;
 "forbid_next"      TOK_UPD_COL;  return TOK_FORBID_NEXT;
 "#parse"           TOK_UPD_COL;  return TOK_PARSE_ERROR;
 
@@ -417,6 +418,7 @@ HWHITE    [ \t\f\v\r]
   stringLiteral = addString(yytext+1, yyleng-2);        // strip quotes
   return TOK_STRING;
 }
+
 
   /* --------- illegal ------------- */
 {ANY} {

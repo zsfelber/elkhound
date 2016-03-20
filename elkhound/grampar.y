@@ -55,6 +55,11 @@
 #define sameloc(otherLoc, str)                                        \
   new LocString(otherLoc->loc, PARAM->lexer.strtable.add(str))
 
+// return a locstring with same location info as something else
+// (passed as a pointer to a SourceLocation)
+#define strloc(otherLoc, str)                                        \
+  new LocString(otherLoc, PARAM->lexer.strtable.add(str))
+
 // interpret the word into an associativity kind specification
 AssocKind whichKind(LocString * /*owner*/ kind);
 
@@ -103,6 +108,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_DELETE "delete"
 %token TOK_REPLACE "replace"
 %token TOK_TREE "tree"
+%token <loc> TOK_NULL "null"
 %token TOK_FORBID_NEXT "forbid_next"
 %token TOK_PARSE_ERROR "#parse"
 
@@ -341,8 +347,12 @@ TreeValidations: /* empty */                                           { $$ = ne
           | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: TOK_NAME ";" ErrorActions                              { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $1, sameloc($1, ""), sameloc($1, NULL), NULL, $3); }
-          | TOK_NAME ":" TOK_NAME ";" ErrorActions                     { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $3, sameloc($1, ""), $1, NULL, $5); }
+TreeValidation: TOK_NAME ";" ErrorActions                              { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, 
+                                                                         sameloc($1, ""), $1, sameloc($1, ""), sameloc($1, NULL), NULL, $3); }
+          | TOK_NAME ":" TOK_NAME ";" ErrorActions                     { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, 
+                                                                         sameloc($1, ""), $3, sameloc($1, ""), $1, NULL, $5); }
+          | "null" ":" TOK_NAME ";" ErrorActions                       { $$ = new TreeProdDecl($1, PDK_TRAVERSE_NULL, new ASTList<RHSElt>,
+                                                                         strloc($1, ""), $3, strloc($1, ""), strloc($1, NULL), NULL, $5); }
           | TreeValidation0                                            { $$ = $1; }
           ;
 

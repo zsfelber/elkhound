@@ -997,7 +997,11 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   TreeProdDecl const * prod = iter.data();
                   buf << indent << tpref << prod->name << "_star tag" << vpref << "_" << vi
                     << " = tag" << vpref << "->" << prod->name << ";" << std::endl;
-                  buf << indent << "if (tag"<<vpref<< "_" << vi<<") {" << std::endl;
+                  if (prod->pkind == PDK_TRAVERSE_NULL) {
+                      buf << indent << "if (!tag"<<vpref<< "_" << vi<<") {" << std::endl;
+                  } else {
+                      buf << indent << "if (tag"<<vpref<< "_" << vi<<") {" << std::endl;
+                  }
                   std::stringstream st, sv, sfv, ind;
                   st << tpref << prod->name << std::flush;
                   sv << vpref << "_" << vi << std::flush;
@@ -1013,7 +1017,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
                   std::string ehnx = prod->errorActs.count() ? "err"+sv.str() : errorHandler ;
 
-                  astParseProduction(env, ast, nonterm, prod, prodi, eof, multiIndex, ehnx, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
+                  if (prod->pkind != PDK_TRAVERSE_NULL) {
+                      astParseProduction(env, ast, nonterm, prod, prodi, eof, multiIndex, ehnx, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
+                  }
 
                   if (prod->actionCode && prod->actionCode.isNonNull()) {
                       buf << indent << "   " << prod->actionCode << std::endl;
@@ -1044,6 +1050,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   vi++;
               }
 
+              break;
+
+          case PDK_TRAVERSE_NULL:
               break;
 
           case PDK_TRAVERSE_GR:

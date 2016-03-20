@@ -68,17 +68,14 @@ void VoidTailList::appendAll(VoidTailList const &src)
 void VoidTailList::appendAllNew(VoidTailList const &src, VoidEq eq)
 {
     VoidList::appendAllNew(src, eq);
-    if (!tail) {
-        tail = top;
-    }
-    if (tail) {
-        while (tail->next) tail = tail->next;
-    }
+    adjustTails();
 }
 
 void VoidTailList::reappendAll(VoidTailList const &src, VoidEq eq)
 {
   VoidList::removeItems(src, eq);
+  tail = top;
+  adjustTails();
   appendAll(src);
 }
 
@@ -103,14 +100,25 @@ void VoidTailList::concat(VoidTailList &srcList)
 
 void VoidTailList::adjustTail()
 {
-  if (!tail) {
-    tail = top;
+  if (tail) {
+      if (tail->next) tail = tail->next;
+      xassert(tail->next == NULL);
+  } else {
+      tail = top;
+      xassert(!tail || tail->next == NULL);
   }
-  else if (tail->next) {
-    tail = tail->next;
-  }
-  xassert(tail->next == NULL);
 }
+
+void VoidTailList::adjustTails()
+{
+    if (!tail) {
+        tail = top;
+    }
+    if (tail) {
+        while (tail->next) tail = tail->next;
+    }
+}
+
 
 void *VoidTailList::removeFirst()
 {

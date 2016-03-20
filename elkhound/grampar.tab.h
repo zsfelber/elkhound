@@ -74,8 +74,9 @@ extern int yydebug;
     TOK_DELETE = 284,
     TOK_REPLACE = 285,
     TOK_TREE = 286,
-    TOK_FORBID_NEXT = 287,
-    TOK_PARSE_ERROR = 288
+    TOK_NULL = 287,
+    TOK_FORBID_NEXT = 288,
+    TOK_PARSE_ERROR = 289
   };
 #endif
 
@@ -84,7 +85,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 116 "grampar.y" /* yacc.c:1909  */
+#line 122 "grampar.y" /* yacc.c:1909  */
 
   int num;
   LocString *str;
@@ -112,7 +113,7 @@ union YYSTYPE
   ErrorAct *errorAct;
   ASTList<ErrorAct> *errorActs;
 
-#line 116 "grampar.tab.h" /* yacc.c:1909  */
+#line 117 "grampar.tab.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
