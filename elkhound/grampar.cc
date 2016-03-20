@@ -1090,12 +1090,22 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.g.bufHead << "   "<< env.g.actionClassName << nms.str() <<" _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << ";" << std::endl;
               env.g.bufConsBase << ", _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << "(this)";
 
+              if (v0 && nonterm->type) {
+                  buf << indent << type << " result = NULL;" << std::endl;
+              }
+
               buf << indent << "// initialize the parser" << std::endl;
               buf << indent << "GLR glrNode"<<vpref<<"(_usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref<<", _usr_"
                   << nonterm->ntIndex << "_" << prodi << "_" << vpref<<"::parseTables, tag"<<vpref<<");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
-              buf << indent << "if (!glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)tag"<<vpref<<")) {" << std::endl;
+              buf << indent << "if (!glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)";
+              if (v0 && nonterm->type) {
+                  buf <<"result";
+              } else {
+                  buf <<"tag";
+              }
+              buf<<vpref<<")) {" << std::endl;
               if (errorHandler.length()) {
                   buf << indent << "   // jump to error handler" << std::endl;
                   buf << indent << "   goto "<<errorHandler<<";" << std::endl;
@@ -1142,7 +1152,14 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.g.bufCc << bufAct.str();
               env.g.bufCc << buf.str();
               env.g.bufCc << "   done:" << std::endl;
-              env.g.bufCc << "   return tag;" << std::endl;
+              if (prodDecl->pkind == PDK_TRAVERSE_NULL || prodDecl->pkind == PDK_TRAVERSE_VAL) {
+                  env.g.bufCc << "   // user action:" << std::endl;
+                  env.g.bufCc << "   " << origAction->str << std::endl;
+              } else if (v0 && nonterm->type) {
+                  env.g.bufCc << "   return result;" << std::endl;
+              } else {
+                  env.g.bufCc << "   return tag;" << std::endl;
+              }
 
               env.g.bufCc << "   err:" << std::endl;
 
