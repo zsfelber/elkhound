@@ -983,14 +983,14 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           std::stringstream nms;
 
           type = v0 && nonterm->type  ?
-                      LIT_STR(nonterm->type).clone() : LIT_STR(tp.c_str()).clone();
+                      LIT_STR(nonterm->type).clone() : LIT_STR((tp+"*").c_str()).clone();
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
 
               buf << indent << "" << std::endl;
               FOREACH_ASTLIST(TreeProdDecl, constcast(prodDecl)->asTreeProdDecl()->treeValidations, iter) {
-                  buf << indent << tpref << iter.data()->name << " *tag" << vpref << "_" << vi
+                  buf << indent << tpref << iter.data()->name << "_star tag" << vpref << "_" << vi
                     << " = tag" << vpref << "->" << iter.data()->name << ";" << std::endl;
                   buf << indent << "if (tag"<<vpref<< "_" << vi<<") {" << std::endl;
                   std::stringstream st, sv, sfv, ind;
@@ -1000,7 +1000,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   ind << indent << "   " << std::flush;
 
                   if (iter.data()->tag && iter.data()->tag.isNonNull()) {
-                      bufAct << "   " << tpref << iter.data()->name << " *"
+                      bufAct << "   " << tpref << iter.data()->name << "_star "
                              << iter.data()->tag << " = NULL;" << std::endl;
                       buf << indent << "   " << iter.data()->tag << " = tag"
                           << vpref << "_" << vi << ";" << std::endl;
@@ -1024,7 +1024,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           case PDK_TRAVERSE_GR:
           case PDK_TRAVERSE_TKNS:
 
-              buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<" = new AstTreeNodeLexer(tag"<<vpref<<", charLexer";
+              buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<"(tag"<<vpref<<", charLexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
                   FOREACH_ASTLIST(RHSElt, *rhs, iter) {
                        LocString symName;
@@ -1052,7 +1052,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               nms << nonterm->name << "_" << prodi << vpref;
 
-              env.g.bufIncl << "#include \""<< env.g.prefix0 << nms.str() <<".h\"" << std::endl;
+              env.g.bufIncl << "#include \""<< env.g.prefix0 << "_" << nms.str() <<".h\"" << std::endl;
               env.g.bufHead << "   "<< nms.str() <<" _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << ";" << std::endl;
               env.g.bufConsBase << ", _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << "(this)";
 

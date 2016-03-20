@@ -678,15 +678,19 @@ void HGen::innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::strin
     FOREACH_ASTLIST(CtorArg, args, arg) {
       std::string s(arg.data()->name.c_str());
 
+      char const *star = "";
+      if (isTreeNode(arg.data()->type)) {
+        // make it a pointer in the concrete representation
+        star = "*";
+      }
+
       if (!userMembers.count(s)) {
-          char const *star = "";
-          if (isTreeNode(arg.data()->type)) {
-            // make it a pointer in the concrete representation
-            star = "*";
-          }
 
           out << "  " << arg.data()->type << " " << star << arg.data()->name << ";\n";
       }
+
+      out << "  typedef " << arg.data()->type << " Type__" << arg.data()->name << ";\n";
+      out << "  typedef " << arg.data()->type  << star << " Type__" << arg.data()->name << "_star" << ";\n";
     }
   }
 }
@@ -918,9 +922,9 @@ void HGen::emitUserDecls(ASTList<Annotation> const &decls, std::set<std::string>
         }
         out << "\n";
 
-        if (!isf && std::string(decl.code.c_str()).find(" static ")==std::string::npos) {
-            out << "  typedef " << extractFieldType(decl.code) << " Type__" << extractFieldName(decl.code) << ";\n";
-        }
+        //if (!isf && std::string(decl.code.c_str()).find(" static ")==std::string::npos) {
+        //    out << "  typedef " << extractFieldType(decl.code) << " Type__" << extractFieldName(decl.code) << ";\n";
+        //}
       }
       if (decl.access() == AC_PUREVIRT) {
         // this is the parent class: declare it pure virtual
