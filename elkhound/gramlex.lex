@@ -165,6 +165,7 @@ HWHITE    [ \t\f\v\r]
 "subsets"          TOK_UPD_COL;  return TOK_SUBSETS;
 "replace"          TOK_UPD_COL;  return TOK_REPLACE;
 "delete"           TOK_UPD_COL;  return TOK_DELETE;
+"tree"             TOK_UPD_COL;  return TOK_TREE;
 "forbid_next"      TOK_UPD_COL;  return TOK_FORBID_NEXT;
 "#parse"           TOK_UPD_COL;  return TOK_PARSE_ERROR;
 
@@ -192,7 +193,7 @@ HWHITE    [ \t\f\v\r]
 "~>" {
   TOK_UPD_COL;
   BEGIN(RHS);
-  return TOK_TREE;
+  return TOK_TRAVERSE;
 }
 
 <INITIAL,RHS>">" {

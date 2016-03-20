@@ -81,7 +81,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_COLON ":"
 %token TOK_SEMICOLON ";"
 %token <loc> TOK_ARROW "->"
-%token <loc> TOK_TREE "~>"
+%token <loc> TOK_TRAVERSE "~>"
 %token <loc> TOK_VALIDATE "="
 %token <loc> TOK_TOKENS ">"
 %token TOK_LPAREN "("
@@ -102,6 +102,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_SUBSETS "subsets"
 %token TOK_DELETE "delete"
 %token TOK_REPLACE "replace"
+%token TOK_TREE "tree"
 %token TOK_FORBID_NEXT "forbid_next"
 %token TOK_PARSE_ERROR "#parse"
 
@@ -325,7 +326,7 @@ Productions: /* empty */                   { $$ = new ASTList<AbstractProdDecl>;
 Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3, nolocNULL(), nolocNULL()); }
           | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4, nolocNULL(), nolocNULL()); }
           | "delete"  "->" RHS ";"         { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL(), nolocNULL(), nolocNULL()); }
-          | TreeValidation0                { $$ = $1; }
+          | "tree" "->" TreeValidation0    { $$ = $3; }
           ;
 
 TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action ErrorActions          { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, sameloc($1, ""), sameloc($1, NULL), $4, $7); }
