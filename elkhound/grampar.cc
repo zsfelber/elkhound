@@ -1135,23 +1135,25 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.g.bufCc << buf.str();
               env.g.bufCc << "   done:" << std::endl;
               env.g.bufCc << "   return tag;" << std::endl;
+
               env.g.bufCc << "   err:" << std::endl;
-              if (prodDecl->pkind == PDK_TRAVERSE_VAL) {
-                  if (tprod->errorActs.count()) {
-                      env.g.bufCc << "   switch(errorKind) {" << std::endl;
-                      FOREACH_ASTLIST(ErrorAct, tprod->errorActs, ierr) {
-                          env.g.bufCc << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
-                          env.g.bufCc << "      " << ierr.data()->actionCode << std::endl;
-                          env.g.bufCc << "      break;" << std::endl;
-                      }
-                      env.g.bufCc << "   default:" << std::endl;
+
+              if (tprod->errorActs.count()) {
+                  env.g.bufCc << "   switch(errorKind) {" << std::endl;
+                  FOREACH_ASTLIST(ErrorAct, tprod->errorActs, ierr) {
+                      env.g.bufCc << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
+                      env.g.bufCc << "      " << ierr.data()->actionCode << std::endl;
                       env.g.bufCc << "      break;" << std::endl;
-                      env.g.bufCc << "   }" << std::endl;
-                  } else {
-                      env.g.bufCc << "   // TODO trace something" << std::endl;
                   }
+                  env.g.bufCc << "   default:" << std::endl;
+                  env.g.bufCc << "      break;" << std::endl;
+                  env.g.bufCc << "   }" << std::endl;
+              } else {
+                  env.g.bufCc << "   // TODO default error handler" << std::endl;
+                  env.g.bufCc << "   startLexer->parseError(\"Invalid '"<< nonterm->name << "' .\");" << std::endl;
               }
               env.g.bufCc << "   return NULL;" << std::endl;
+
               env.g.bufCc << "}" << std::endl;
 
               std::stringstream s;
