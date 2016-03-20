@@ -91,6 +91,7 @@ void astParseDDM(Environment &env, Symbol *sym,
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex, int & multiIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prod, int prodi, TermDecl const *eof, int & multiIndex,
+                        std::string errorHandler = "",
                         std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::string indent = "   ",
                         std::stringstream * _bufAct = NULL, std::stringstream * _buf = NULL );
 
@@ -933,11 +934,14 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prodDecl, int prodi,
                         TermDecl const *eof, int & multiIndex,
+                        std::string errorHandler,
                         std::string tpref, std::string vpref, std::string fvpref, std::string indent,
                         std::stringstream * _bufAct, std::stringstream * _buf)
 {
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
+
+      TreeProdDecl * tprod = constcast(prodDecl)->asTreeProdDecl();
 
       bool v0 = !vpref.length();
 
@@ -989,31 +993,52 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           case PDK_TRAVERSE_VAL:
 
               buf << indent << "" << std::endl;
-              FOREACH_ASTLIST(TreeProdDecl, constcast(prodDecl)->asTreeProdDecl()->treeValidations, iter) {
-                  buf << indent << tpref << iter.data()->name << "_star tag" << vpref << "_" << vi
-                    << " = tag" << vpref << "->" << iter.data()->name << ";" << std::endl;
+              FOREACH_ASTLIST(TreeProdDecl, tprod->treeValidations, iter) {
+                  TreeProdDecl const * prod = iter.data();
+                  buf << indent << tpref << prod->name << "_star tag" << vpref << "_" << vi
+                    << " = tag" << vpref << "->" << prod->name << ";" << std::endl;
                   buf << indent << "if (tag"<<vpref<< "_" << vi<<") {" << std::endl;
                   std::stringstream st, sv, sfv, ind;
-                  st << tpref << iter.data()->name << std::flush;
+                  st << tpref << prod->name << std::flush;
                   sv << vpref << "_" << vi << std::flush;
-                  sfv << fvpref << "->" << iter.data()->name << std::flush;
+                  sfv << fvpref << "->" << prod->name << std::flush;
                   ind << indent << "   " << std::flush;
 
-                  if (iter.data()->tag && iter.data()->tag.isNonNull()) {
-                      bufAct << "   " << tpref << iter.data()->name << "_star "
-                             << iter.data()->tag << " = NULL;" << std::endl;
-                      buf << indent << "   " << iter.data()->tag << " = tag"
+                  if (prod->tag && prod->tag.isNonNull()) {
+                      bufAct << "   " << tpref << prod->name << "_star "
+                             << prod->tag << " = NULL;" << std::endl;
+                      buf << indent << "   " << prod->tag << " = tag"
                           << vpref << "_" << vi << ";" << std::endl;
                   }
 
-                  astParseProduction(env, ast, nonterm, iter.data(), prodi, eof, multiIndex, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
+                  std::string ehnx = prod->errorActs.count() ? "err"+sv.str() : errorHandler ;
 
-                  if (iter.data()->actionCode && iter.data()->actionCode.isNonNull()) {
-                      buf << indent << "   " << iter.data()->actionCode << std::endl;
+                  astParseProduction(env, ast, nonterm, prod, prodi, eof, multiIndex, ehnx, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
+
+                  if (prod->actionCode && prod->actionCode.isNonNull()) {
+                      buf << indent << "   " << prod->actionCode << std::endl;
                   }
 
                   buf << indent << "} else {" << std::endl;
-                  buf << indent << "   tag = NULL; goto done;" << std::endl;
+                  if (prod->errorActs.count()) {
+                      buf << indent << "   err" << sv.str() << ":" << std::endl;
+                      buf << indent << "   switch(errorKind) {" << std::endl;
+                      FOREACH_ASTLIST(ErrorAct, prod->errorActs, ierr) {
+                          buf << indent << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
+                          buf << indent << "      " << ierr.data()->actionCode << std::endl;
+                          buf << indent << "      break;" << std::endl;
+                      }
+                      buf << indent << "   default:" << std::endl;
+                      buf << indent << "      break;" << std::endl;
+                      buf << indent << "   }" << std::endl;
+                  }
+
+                  if (errorHandler.length()) {
+                      buf << indent << "   // jump to upper level" << std::endl;
+                      buf << indent << "   goto "<<errorHandler<<";" << std::endl;
+                  } else {
+                      buf << indent << "   goto err;" << std::endl;
+                  }
                   buf << indent << "}" << std::endl;
 
                   vi++;
@@ -1053,7 +1078,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               nms << nonterm->name << "_" << prodi << vpref;
 
               env.g.bufIncl << "#include \""<< env.g.prefix0 << "_" << nms.str() <<".h\"" << std::endl;
-              env.g.bufHead << "   "<< nms.str() <<" _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << ";" << std::endl;
+              env.g.bufHead << "   "<< env.g.actionClassName << nms.str() <<" _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << ";" << std::endl;
               env.g.bufConsBase << ", _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << "(this)";
 
               buf << indent << "// initialize the parser" << std::endl;
@@ -1063,8 +1088,12 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "// parse the input" << std::endl;
               buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)tag"<<vpref<<")) {" << std::endl;
               buf << indent << "} else {" << std::endl;
-              buf << indent << "   // TODO trace something" << std::endl;
-              buf << indent << "   tag = NULL; goto done;" << std::endl;
+              if (errorHandler.length()) {
+                  buf << indent << "   // jump to error handler" << std::endl;
+                  buf << indent << "   goto "<<errorHandler<<";" << std::endl;
+              } else {
+                  buf << indent << "   goto err;" << std::endl;
+              }
               buf << indent << "}" << std::endl;
 
               // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
@@ -1106,6 +1135,23 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.g.bufCc << buf.str();
               env.g.bufCc << "   done:" << std::endl;
               env.g.bufCc << "   return tag;" << std::endl;
+              env.g.bufCc << "   err:" << std::endl;
+              if (prodDecl->pkind == PDK_TRAVERSE_VAL) {
+                  if (tprod->errorActs.count()) {
+                      env.g.bufCc << "   switch(errorKind) {" << std::endl;
+                      FOREACH_ASTLIST(ErrorAct, tprod->errorActs, ierr) {
+                          env.g.bufCc << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
+                          env.g.bufCc << "      " << ierr.data()->actionCode << std::endl;
+                          env.g.bufCc << "      break;" << std::endl;
+                      }
+                      env.g.bufCc << "   default:" << std::endl;
+                      env.g.bufCc << "      break;" << std::endl;
+                      env.g.bufCc << "   }" << std::endl;
+                  } else {
+                      env.g.bufCc << "   // TODO trace something" << std::endl;
+                  }
+              }
+              env.g.bufCc << "   return NULL;" << std::endl;
               env.g.bufCc << "}" << std::endl;
 
               std::stringstream s;
