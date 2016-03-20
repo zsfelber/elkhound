@@ -325,15 +325,15 @@ Productions: /* empty */                   { $$ = new ASTList<AbstractProdDecl>;
 Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, $3, nolocNULL(), nolocNULL()); }
           | "replace" "->" RHS Action      { $$ = new ProdDecl($2, PDK_REPLACE,$3, $4, nolocNULL(), nolocNULL()); }
           | "delete"  "->" RHS ";"         { $$ = new ProdDecl($2, PDK_DELETE, $3, nolocNULL(), nolocNULL(), nolocNULL()); }
-          | "~>" TreeValidation0           { $$ = $2; }
+          | TreeValidation0                { $$ = $1; }
           ;
 
 TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action ErrorActions          { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, sameloc($1, ""), sameloc($1, NULL), $4, $7); }
           | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action ErrorActions   { $$ = new TreeProdDecl($4, PDK_TRAVERSE_VAL, NULL, $8, $3, sameloc($1, ""), $1, $6, $9); }
           | TOK_NAME ">" RHS2 Action ErrorActions                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL, $5); }
           | TOK_NAME ":" TOK_NAME ">" RHS2  Action ErrorActions                     { $$ = new TreeProdDecl($4, PDK_TRAVERSE_TKNS, $5,  $6, $3, sameloc($1, ""), $1, NULL, $7); }
-          | TOK_NAME "->" RHS Action ErrorActions                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL, $5); }
-          | TOK_NAME ":" TOK_NAME "->" RHS Action ErrorActions                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5,    $6, $3, sameloc($1, ""), $1, NULL, $7); }
+          | TOK_NAME "~>" RHS Action ErrorActions                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL, $5); }
+          | TOK_NAME ":" TOK_NAME "~>" RHS Action ErrorActions                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5,    $6, $3, sameloc($1, ""), $1, NULL, $7); }
           ;
 
 TreeValidations: /* empty */                                           { $$ = new ASTList<TreeProdDecl>; }
