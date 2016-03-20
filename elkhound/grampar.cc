@@ -1091,7 +1091,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.g.bufConsBase << ", _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << "(this)";
 
               if (v0 && nonterm->type) {
-                  buf << indent << type << " result = NULL;" << std::endl;
+                  buf << indent << type->str << " result = NULL;" << std::endl;
               }
 
               buf << indent << "// initialize the parser" << std::endl;
@@ -1153,8 +1153,12 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.g.bufCc << buf.str();
               env.g.bufCc << "   done:" << std::endl;
               if (prodDecl->pkind == PDK_TRAVERSE_NULL || prodDecl->pkind == PDK_TRAVERSE_VAL) {
-                  env.g.bufCc << "   // user action:" << std::endl;
-                  env.g.bufCc << "   " << origAction->str << std::endl;
+                  if (origAction && origAction->isNonNull()) {
+                      env.g.bufCc << "   // user action:" << std::endl;
+                      env.g.bufCc << "   " << origAction->str << std::endl;
+                  } else {
+                      env.g.bufCc << "   return tag;" << std::endl;
+                  }
               } else if (v0 && nonterm->type) {
                   env.g.bufCc << "   return result;" << std::endl;
               } else {
