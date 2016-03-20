@@ -995,6 +995,11 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "" << std::endl;
               FOREACH_ASTLIST(TreeProdDecl, tprod->treeValidations, iter) {
                   TreeProdDecl const * prod = iter.data();
+
+                  if (prod->label && prod->label.isNonNull()) {
+                      buf << indent << prod->label.str << ":" << std::endl;
+                  }
+
                   buf << indent << tpref << prod->name << "_star tag" << vpref << "_" << vi
                     << " = tag" << vpref << "->" << prod->name << ";" << std::endl;
                   if (prod->pkind == PDK_TRAVERSE_NULL) {
@@ -1058,6 +1063,10 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           case PDK_TRAVERSE_GR:
           case PDK_TRAVERSE_TKNS:
 
+              if (v0 && tprod->label && tprod->label.isNonNull()) {
+                  buf << indent << tprod->label.str << ":" << std::endl;
+              }
+
               buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<"(tag"<<vpref<<", charLexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
                   FOREACH_ASTLIST(RHSElt, *rhs, iter) {
@@ -1099,13 +1108,19 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   << nonterm->ntIndex << "_" << prodi << "_" << vpref<<".parseTables, tag"<<vpref<<");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
-              buf << indent << "if (!glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)";
+              buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)";
               if (v0 && nonterm->type) {
                   buf <<"result";
               } else {
                   buf <<"tag";
               }
               buf<<vpref<<")) {" << std::endl;
+              if (tprod->label && tprod->label.isNonNull()) {
+                  buf << indent << "   goto done;" << std::endl;
+              } else {
+                  buf << indent << "   // Nothing to do" << std::endl;
+              }
+              buf << indent << "} else {" << std::endl;
               if (errorHandler.length()) {
                   buf << indent << "   // jump to error handler" << std::endl;
                   buf << indent << "   goto "<<errorHandler<<";" << std::endl;

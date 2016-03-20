@@ -146,7 +146,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
   RHSElt *rhsElt;
   ErrorAct *errorAct;
   ASTList<ErrorAct> *errorActs;
-  Name3 name3;
+  Name3 *name3;
 }
 
 %type <num> StartSymbol
@@ -173,7 +173,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %type <absProdDecl> Production
 %type <treeProdDecls> TreeValidations 
 %type <treeProdDecl> TreeValidation0 TreeValidation 
-%type <name3> Name3
+%type <name3> Name3 Name3N
 %type <rhsList> RHS
 %type <rhsElt> RHSElt
 %type <rhsList> RHS2
@@ -338,26 +338,30 @@ Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, 
           | "tree" "->" TreeValidation0    { $$ = $3; }
           ;
 
-TreeValidation0: Name3 "=" "(" TreeValidations ")" Action ErrorActions { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1->name, sameloc($1, ""), $1->label, $1->tag, $4, $7); }
-          | Name3 ">" RHS2  Action ErrorActions                        { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1->name, sameloc($1, ""), $1->label, $1->tag, NULL, $5); }
-          | Name3 "~>" RHS Action ErrorActions                         { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1->name, sameloc($1, ""), $1->label, $1->tag, NULL, $5); }
+TreeValidation0: Name3 "=" "(" TreeValidations ")" Action ErrorActions { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), $4, $7); }
+          | Name3 ">" RHS2  Action ErrorActions                        { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $5); }
+          | Name3 "~>" RHS Action ErrorActions                         { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $5); }
           ;
 
 TreeValidations: /* empty */                                           { $$ = new ASTList<TreeProdDecl>; }
           | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: Name3 ";" ErrorActions                                 { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, NULL, sameloc($1, NULL), $1->name, 
-                                                                         sameloc($1, ""), $1->label, $1->tag, NULL, $3); }
-          | "null" ":" TOK_NAME ";" ErrorActions                       { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_NULL, NULL, sameloc($1, NULL), $1->name, 
-                                                                         sameloc($1, ""), $1->label, $1->tag, NULL, $3); }
+TreeValidation: Name3 ";" ErrorActions                                 { $$ = new TreeProdDecl($1->name.loc, PDK_TRAVERSE_VAL,  NULL, nolocNULL(), $1->name.clone(),
+                                                                         sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $3); }
+          | Name3N ";" ErrorActions                                    { $$ = new TreeProdDecl($1->name.loc, PDK_TRAVERSE_NULL, NULL, nolocNULL(), $1->name.clone(),
+                                                                         sameloc(($1->name.clone()), ""), $1->label.clone(), $1->tag.clone(), NULL, $3); }
           | TreeValidation0                                            { $$ = $1; }
           ;
 
-Name3:    TOK_NAME                                                     { $$=new Name3(sameloc($1, NULL), sameloc($1, NULL), $3); }
-          | TOK_NAME ":" TOK_NAME                                      { $$=new Name3(sameloc($1, NULL), $2,                $3); }
+Name3:    TOK_NAME                                                     { $$=new Name3(sameloc($1, NULL), sameloc($1, NULL), $1); }
+          | TOK_NAME ":" TOK_NAME                                      { $$=new Name3(sameloc($1, NULL), $1,                $3); }
           | TOK_NAME "::" TOK_NAME                                     { $$=new Name3($1,                sameloc($1, NULL), $3); }
-          | TOK_NAME "::" TOK_NAME ":" TOK_NAME                        { $$=new Name3($1,                $2,                $3); }
+          | TOK_NAME "::" TOK_NAME ":" TOK_NAME                        { $$=new Name3($1,                $3,                $5); }
+          ;
+
+Name3N:   "null" ":" TOK_NAME                                          { $$=new Name3(strloc($1, NULL),  strloc($1, NULL),  $3); }
+          | TOK_NAME "::" "null" ":" TOK_NAME                          { $$=new Name3($1,                strloc($3, NULL),  $5); }
           ;
 
 /* yields: LocString */
