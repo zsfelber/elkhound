@@ -5266,11 +5266,11 @@ int inner_entry(int argc, char **argv)
           if (nt && nt->type) {
 
               bufIncl << "#include \""<< prefix <<".h\"" << std::endl;
-              bufHead << "   LexerInterface* charLexer;" << std::endl;
+              bufHead << "   AstCharLexer* charLexer;" << std::endl;
               bufHead << "   LexerInterface* startLexer;" << std::endl;
               bufHead << "   "<< nt->type << " result;" << std::endl;
               bufHead << "   "<< g.actionClassName <<" _usr_;" << std::endl;
-              bufConsBase<< "   "<< prefix0 <<"Parsers(LexerInterface* charLexer, LexerInterface* startLexer) : charLexer(charLexer), startLexer(startLexer), result(NULL), _usr_(this)";
+              bufConsBase<< "   "<< prefix0 <<"Parsers(AstCharLexer* charLexer, LexerInterface* startLexer) : charLexer(charLexer), startLexer(startLexer), result(NULL), _usr_(this)";
               bufHeadFun << "   {" << std::endl;
               bufHeadFun << "      // initialize the parser" << std::endl;
               bufHeadFun << "      GLR glr(_usr_, _usr_::parseTables);" << std::endl;

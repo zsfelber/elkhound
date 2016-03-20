@@ -73,7 +73,8 @@ extern int yydebug;
     TOK_SUBSETS = 283,
     TOK_DELETE = 284,
     TOK_REPLACE = 285,
-    TOK_FORBID_NEXT = 286
+    TOK_FORBID_NEXT = 286,
+    TOK_PARSE_ERROR = 287
   };
 #endif
 
@@ -82,7 +83,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 114 "grampar.y" /* yacc.c:1909  */
+#line 115 "grampar.y" /* yacc.c:1909  */
 
   int num;
   LocString *str;
@@ -107,8 +108,10 @@ union YYSTYPE
   TreeProdDecl *treeProdDecl;
   ASTList<RHSElt> *rhsList;
   RHSElt *rhsElt;
+  ErrorAct *errorAct;
+  ASTList<ErrorAct> *errorActs;
 
-#line 112 "grampar.tab.h" /* yacc.c:1909  */
+#line 115 "grampar.tab.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

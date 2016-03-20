@@ -30,6 +30,7 @@
     TOK_SUBSETS = 283,
     TOK_DELETE = 284,
     TOK_REPLACE = 285,
-    TOK_FORBID_NEXT = 286
+    TOK_FORBID_NEXT = 286,
+    TOK_PARSE_ERROR = 287
   };
 #endif

@@ -103,6 +103,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_DELETE "delete"
 %token TOK_REPLACE "replace"
 %token TOK_FORBID_NEXT "forbid_next"
+%token TOK_PARSE_ERROR "#parse"
 
 // left, right, nonassoc: they're not keywords, since "left" and "right"
 // are common names for RHS elements; instead, we parse them as names
@@ -135,10 +136,14 @@ AssocKind whichKind(LocString * /*owner*/ kind);
   TreeProdDecl *treeProdDecl;
   ASTList<RHSElt> *rhsList;
   RHSElt *rhsElt;
+  ErrorAct *errorAct;
+  ASTList<ErrorAct> *errorActs;
 }
 
 %type <num> StartSymbol
 %type <str> Type Action
+%type <errorAct> ErrorAction
+%type <errorActs> ErrorActions
 
 %type <topFormList> TopFormList
 %type <topForm> TopForm ContextClass Verbatim Option Terminals Nonterminal
@@ -323,26 +328,33 @@ Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, 
           | "~>" TreeValidation0           { $$ = $2; }
           ;
 
-TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action          { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, sameloc($1, ""), sameloc($1, NULL), $4); }
-          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action   { $$ = new TreeProdDecl($4, PDK_TRAVERSE_VAL, NULL, $8, $3, sameloc($1, ""), $1, $6); }
-          | TOK_NAME ">" RHS2 Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL); }
-          | TOK_NAME ":" TOK_NAME ">" RHS2  Action                     { $$ = new TreeProdDecl($4, PDK_TRAVERSE_TKNS, $5,  $6, $3, sameloc($1, ""), $1, NULL); }
-          | TOK_NAME "->" RHS Action                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL); }
-          | TOK_NAME ":" TOK_NAME "->" RHS Action                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5,    $6, $3, sameloc($1, ""), $1, NULL); }
+TreeValidation0: TOK_NAME "=" "(" TreeValidations ")"  Action ErrorActions          { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1, sameloc($1, ""), sameloc($1, NULL), $4, $7); }
+          | TOK_NAME ":" TOK_NAME "=" "(" TreeValidations ")" Action ErrorActions   { $$ = new TreeProdDecl($4, PDK_TRAVERSE_VAL, NULL, $8, $3, sameloc($1, ""), $1, $6, $9); }
+          | TOK_NAME ">" RHS2 Action ErrorActions                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL, $5); }
+          | TOK_NAME ":" TOK_NAME ">" RHS2  Action ErrorActions                     { $$ = new TreeProdDecl($4, PDK_TRAVERSE_TKNS, $5,  $6, $3, sameloc($1, ""), $1, NULL, $7); }
+          | TOK_NAME "->" RHS Action ErrorActions                                   { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1, sameloc($1, ""), sameloc($1, NULL), NULL, $5); }
+          | TOK_NAME ":" TOK_NAME "->" RHS Action ErrorActions                      { $$ = new TreeProdDecl($4, PDK_TRAVERSE_GR, $5,    $6, $3, sameloc($1, ""), $1, NULL, $7); }
           ;
 
 TreeValidations: /* empty */                                           { $$ = new ASTList<TreeProdDecl>; }
           | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: TOK_NAME ";"                                           { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $1, sameloc($1, ""), sameloc($1, NULL), NULL); }
-          | TOK_NAME ":" TOK_NAME ";"                                  { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $3, sameloc($1, ""), $1, NULL); }
+TreeValidation: TOK_NAME ";" ErrorActions                              { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $1, sameloc($1, ""), sameloc($1, NULL), NULL, $3); }
+          | TOK_NAME ":" TOK_NAME ";" ErrorActions                     { $$ = new TreeProdDecl($1->loc, PDK_TRAVERSE_VAL, new ASTList<RHSElt>, sameloc($1, ""), $3, sameloc($1, ""), $1, NULL, $5); }
           | TreeValidation0                                            { $$ = $1; }
           ;
 
 /* yields: LocString */
 Action: TOK_LIT_CODE                       { $$ = $1; }
       | ";"                                { $$ = nolocNULL(); }
+      ;
+
+ErrorActions: /*empty*/                    { $$ = new ASTList<ErrorAct>; }
+      | ErrorActions ErrorAction           { ($$=$1)->append($2); }
+      ;
+
+ErrorAction: "#parse" TOK_LIT_CODE         { $$ = new ErrorAct(ERR_PARSE, $2); }
       ;
 
 /* yields: ASTList<RHSElt> */
