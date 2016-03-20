@@ -1167,13 +1167,12 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.g.bufCc << bufAct.str();
               env.g.bufCc << buf.str();
               env.g.bufCc << "   done:" << std::endl;
-              if (prodDecl->pkind == PDK_TRAVERSE_NULL || prodDecl->pkind == PDK_TRAVERSE_VAL) {
-                  if (origAction && origAction->isNonNull()) {
-                      env.g.bufCc << "   // user action:" << std::endl;
-                      env.g.bufCc << "   " << origAction->str << std::endl;
-                  } else {
-                      env.g.bufCc << "   return tag;" << std::endl;
-                  }
+
+              if (origAction && origAction->isNonNull()) {
+                  env.g.bufCc << "   // user action:" << std::endl;
+                  env.g.bufCc << "   " << origAction->str << std::endl;
+              } else if (prodDecl->pkind == PDK_TRAVERSE_NULL || prodDecl->pkind == PDK_TRAVERSE_VAL) {
+                  env.g.bufCc << "   return tag;" << std::endl;
               } else if (v0 && nonterm->type) {
                   env.g.bufCc << "   return result;" << std::endl;
               } else {
