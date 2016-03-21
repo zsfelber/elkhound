@@ -5199,12 +5199,13 @@ void get_names(AbstractProdDecl const * pdecl, int multiIndex, string const & pr
 }
 
 void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML, string &pref, string &prefix0, string &prefix, int &multiIndex, bool debug) {
-    GrammarAnalysis &g = (GrammarAnalysis&)env.g;
+    Grammar &g = env.g;
+    GrammarAnalysis &G = (GrammarAnalysis&)env.g;
     if (useML) {
-      g.targetLang = "OCaml";
+      G.targetLang = "OCaml";
     }
-    g.pref = pref;
-    g.prefix0 = prefix0;
+    G.pref = pref;
+    G.prefix0 = prefix0;
 
     LocString * grType = NULL;
     std::string name, usr;
@@ -5234,13 +5235,13 @@ void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML
 
         if (tracingSys("treebuild")) {
           cout << "replacing given actions with treebuilding actions\n";
-          g.addTreebuildingActions();
+          G.addTreebuildingActions();
         }
         g.printProductions(trace("grammar") << endl);
     }
 
     string setsFname = stringc << prefix << ".out";
-    g.runAnalyses((debug && tracingSys("lrtable"))? setsFname.c_str() : NULL, debug ? ast->childrenNT && ast->childrenNT->productions.count() ? 1 : -1 : 0);
+    G.runAnalyses((debug && tracingSys("lrtable"))? setsFname.c_str() : NULL, debug ? ast->childrenNT && ast->childrenNT->productions.count() ? 1 : -1 : 0);
 }
 
 int inner_entry(int argc, char **argv)
@@ -5352,10 +5353,7 @@ int inner_entry(int argc, char **argv)
   std::string name0, usr0;
   int multiIndex = 0;
   int result = 0;
-  bool first = true;
   int maxSr=0,maxRr=0;
-
-  std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
 
   setAnnotations(ast);
   parseGrammarAST(env0, ast, eof);
@@ -5364,13 +5362,13 @@ int inner_entry(int argc, char **argv)
 
   if (grType0) {
 
-      bufHead << "   AstCharLexer* charLexer;" << std::endl;
-      bufHead << "   "<< grType0->str << " inputArg;" << std::endl;
-      bufHead << "   "<< grType0->str << " result;" << std::endl;
-      bufConsBase<< "   "<< prefix0 <<"Parsers(AstCharLexer* charLexer, "<< grType0->str << "* inputArg) : charLexer(charLexer), inputArg(inputArg), result(NULL)";
-      bufHeadFun << "   {" << std::endl;
-      bufHeadFun << "      result = _usr_" << usr0 << "->parse_" << name0 << "(inputArg);" << std::endl;
-      bufHeadFun << "   }" << std::endl;
+      env0.bufHead << "   AstCharLexer* charLexer;" << std::endl;
+      env0.bufHead << "   "<< grType0->str << " inputArg;" << std::endl;
+      env0.bufHead << "   "<< grType0->str << " result;" << std::endl;
+      env0.bufConsBase<< "   "<< prefix0 <<"Parsers(AstCharLexer* charLexer, "<< grType0->str << "* inputArg) : charLexer(charLexer), inputArg(inputArg), result(NULL)";
+      env0.bufHeadFun << "   {" << std::endl;
+      env0.bufHeadFun << "      result = _usr_" << usr0 << "->parse_" << name0 << "(inputArg);" << std::endl;
+      env0.bufHeadFun << "   }" << std::endl;
 
   }
 
@@ -5390,11 +5388,11 @@ int inner_entry(int argc, char **argv)
 
       string prefix, pref;
 
-      if (multiIndex>0) {
+      {
 
           std::stringstream s;
 
-          if (ast->childrenNT &&
+          if (multiIndex>0 && ast->childrenNT &&
                      multiIndex <= ast->childrenNT->productions.count() ) {
 
               AbstractProdDecl *prod = ast->childrenNT->productions.nth(multiIndex-1);
@@ -5407,14 +5405,6 @@ int inner_entry(int argc, char **argv)
               astParseError(s.str().c_str());
           }
 
-      } else {
-
-          std::stringstream s;
-
-          s << "multiIndex overflow : " << multiIndex << " of "
-            << (ast->childrenNT?ast->childrenNT->productions.count():0);
-          astParseError(s.str().c_str());
-
       }
 
       cout << endl << "Processing : " << prefix << endl;
@@ -5424,18 +5414,11 @@ int inner_entry(int argc, char **argv)
       // parse the AST into a Grammar
       //g0.itemSets
       GrammarAnalysis g(g0);
-      Environment env(g);
+      Environment env(env0, g);
 
       analyzse(env, ast, eof, useML, pref, prefix0, prefix, multiIndex, true);
       maxSr=max(maxSr, g.sr) ;
       maxRr=max(maxRr, g.rr);
-
-
-      if (g.bufIncl) bufIncl << g.bufIncl->str() << std::flush;
-      if (g.bufHead) bufHead<< g.bufHead->str() << std::flush;
-      if (g.bufConsBase) bufConsBase<< g.bufConsBase->str() << std::flush;
-      if (g.bufHeadFun) bufHeadFun<< g.bufHeadFun->str() << std::flush;
-      if (g.bufCc) bufCc<< g.bufCc->str() << std::flush;
 
       if (g.errors) {
         result |= 2;
@@ -5515,8 +5498,8 @@ int inner_entry(int argc, char **argv)
                   << " and " << hFname << " ...\n";
 
   emitCommon(prefix0,
-             bufIncl, bufHead, bufConsBase,
-             bufHeadFun, bufCc,
+             env0.bufIncl, env0.bufHead, env0.bufConsBase,
+             env0.bufHeadFun, env0.bufCc,
              hFname, ccFname, grammarFname);
 
   if (ast->childrenNT && ast->childrenNT->productions.count()) {

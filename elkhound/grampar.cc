@@ -13,6 +13,7 @@
 #include "grampar.tab.h"     // token constant codes, union YYSTYPE
 #include "mlsstr.h"          // MLSubstrate
 #include "util.h"
+#include "gramanl.h"
 
 #include <fstream>           // ifstream
 #include <ctype.h>           // isspace, isalnum
@@ -30,20 +31,53 @@ Environment::Environment(Grammar &G)
   : g(G),
     prevEnv(NULL),
     nontermDecls(),
-    errorCount(0),
-    errors(errorCount)
+    buffer(new EnvironmentBuffer),
+    errors(buffer->errors),
+    startSymbol(buffer->startSymbol),
+    singleProds(buffer->singleProds),
+    bufIncl(buffer->bufIncl),
+    bufHead(buffer->bufHead),
+    bufConsBase(buffer->bufConsBase),
+    bufHeadFun(buffer->bufHeadFun),
+    bufCc(buffer->bufCc)
 {}
 
 Environment::Environment(Environment &prev)
   : g(prev.g),
     prevEnv(&prev),
     nontermDecls(prev.nontermDecls),
-    errorCount(-1000),      // should never be used
-    errors(prev.errors)     // copy parent's 'errors' reference
+    buffer(0),
+    errors(prev.errors),
+    startSymbol(prev.startSymbol),     // copy parent's 'errors' reference
+    singleProds(prev.singleProds),
+    bufIncl(prev.bufIncl),
+    bufHead(prev.bufHead),
+    bufConsBase(prev.bufConsBase),
+    bufHeadFun(prev.bufHeadFun),
+    bufCc(prev.bufCc)
+{}
+
+Environment::Environment(Environment &prev, Grammar &g)
+  : g(g),
+    prevEnv(&prev),
+    nontermDecls(prev.nontermDecls),
+    buffer(0),
+    errors(prev.errors),
+    startSymbol(prev.startSymbol),     // copy parent's 'errors' reference
+    singleProds(prev.singleProds),
+    bufIncl(prev.bufIncl),
+    bufHead(prev.bufHead),
+    bufConsBase(prev.bufConsBase),
+    bufHeadFun(prev.bufHeadFun),
+    bufCc(prev.bufCc)
 {}
 
 Environment::~Environment()
-{}
+{
+    if (buffer) {
+        delete buffer;
+    }
+}
 
 
 // -------------------- XASTParse --------------------
@@ -314,6 +348,11 @@ void astParseGrammar(Environment &env, GrammarAST *ast, TermDecl const *eof)
   // looking at their bodies we can tell if one isn't declared
   {
     FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
+
+      if (iter.data()->isTF_StartSymbol()) {
+           env.startSymbol = iter.data()->asTF_StartSymbol()->name.clone();
+      }
+
       if (!iter.data()->isTF_nonterm()) continue;
       TF_nonterm *nt = iter.data()->asTF_nonterm();
 
@@ -812,20 +851,16 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   }*/
 }
 
-std::stringstream& b(std::stringstream*& buf) {
-    if (!buf) {
-        buf = new std::stringstream;
-    }
-    return *buf;
-}
-
 bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *& grType, std::string& name, std::string& usr) {
+    Grammar &g = env.g;
+    GrammarAnalysis &G = (GrammarAnalysis&)env.g;
+
     if (rhs->count()==2) { // 1 + reof
         Symbol *s = NULL;
         if (rhs->first()->isRH_name())
-           s = env.g.findSymbol(rhs->first()->asRH_name()->name);
+           s = g.findSymbol(rhs->first()->asRH_name()->name);
         else if (rhs->first()->isRH_string())
-           s = env.g.findSymbol(rhs->first()->asRH_string()->str);
+           s = g.findSymbol(rhs->first()->asRH_string()->str);
 
         if (s && s->type) {
 
@@ -835,22 +870,22 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
         }
     }
 
-    if (env.g.singleProds.find(name)==env.g.singleProds.end()) {
+    if (env.singleProds.find(name)==env.singleProds.end()) {
 
-        b(env.g.bufIncl) << "#include \""<< env.g.prefix0;
+        env.bufIncl << "#include \""<< G.prefix0;
         if (name.length()) {
-            b(env.g.bufIncl) << "_" << name;
+            env.bufIncl << "_" << name;
         }
-        b(env.g.bufIncl) <<".h\"" << std::endl;
+        env.bufIncl <<".h\"" << std::endl;
 
-        b(env.g.bufHead) << "   "<< env.g.actionClassName << name << " _usr_" << usr << ";" << std::endl;
-        b(env.g.bufConsBase) << ", _usr_" << usr << "(this)";
+        env.bufHead << "   "<< g.actionClassName << name << " _usr_" << usr << ";" << std::endl;
+        env.bufConsBase << ", _usr_" << usr << "(this)";
 
         // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
         ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, new LocString(SL_UNKNOWN, NULL),
                                  LIT_STR(name.c_str()).clone(), grType->clone());
 
-        env.g.singleProds[name] = newStart;
+        env.singleProds[name] = newStart;
 
         if (ast->childrenNT) {
             ast->childrenNT->productions.append(newStart);
@@ -921,7 +956,7 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
 
       // build a start production
       // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
-      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), ast->firstNT->name.clone());
+      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), env.startSymbol ? env.startSymbol->clone() : ast->firstNT->name.clone());
       RHSElt *rhs2 = new RH_name(LIT_STR("").clone(), eof->name.clone());
       ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
       rhs->append(rhs1);
@@ -983,6 +1018,8 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         std::string tpref, std::string vpref, std::string fvpref, std::string indent,
                         std::stringstream * _bufAct, std::stringstream * _buf)
 {
+  Grammar &g = env.g;
+  GrammarAnalysis &G = (GrammarAnalysis&)env.g;
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
 
@@ -1137,7 +1174,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                             }
                             ASTENDCASEC
                         }
-                        Terminal *term = env.g.findTerminal(symName);
+                        Terminal *term = g.findTerminal(symName);
                         if (!term) {
                             astParseError(symName, "Traverse mode '>' should all be followed by terminals.");
                         }
@@ -1199,44 +1236,44 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           if (v0) {
 
-              b(env.g.bufHeadFun) << "   " << type->str << " parse_" << usr << "("
+              env.bufHeadFun << "   " << type->str << " parse_" << usr << "("
                                << tp <<"* tag);" << std::endl;
-              b(env.g.bufCc) << type->str << " "<< env.g.prefix0 << "Parsers::parse_" << usr << "("
+              env.bufCc << type->str << " "<< G.prefix0 << "Parsers::parse_" << usr << "("
                                << tp <<"* tag) {" << std::endl;
-              b(env.g.bufCc) << bufAct.str();
-              b(env.g.bufCc) << buf.str();
-              b(env.g.bufCc) << "   done:" << std::endl;
+              env.bufCc << bufAct.str();
+              env.bufCc << buf.str();
+              env.bufCc << "   done:" << std::endl;
 
               if (origAction && origAction->isNonNull()) {
-                  b(env.g.bufCc) << "   // user action:" << std::endl;
-                  b(env.g.bufCc) << "   " << origAction->str << std::endl;
+                  env.bufCc << "   // user action:" << std::endl;
+                  env.bufCc << "   " << origAction->str << std::endl;
               } else if (prodDecl->pkind == PDK_TRAVERSE_NULL || prodDecl->pkind == PDK_TRAVERSE_VAL) {
-                  b(env.g.bufCc) << "   return tag;" << std::endl;
+                  env.bufCc << "   return tag;" << std::endl;
               } else if (v0 && nonterm->type) {
-                  b(env.g.bufCc) << "   return result;" << std::endl;
+                  env.bufCc << "   return result;" << std::endl;
               } else {
-                  b(env.g.bufCc) << "   return tag;" << std::endl;
+                  env.bufCc << "   return tag;" << std::endl;
               }
 
-              b(env.g.bufCc) << "   err:" << std::endl;
+              env.bufCc << "   err:" << std::endl;
 
               if (tprod->errorActs.count()) {
-                  b(env.g.bufCc) << "   switch(errorKind) {" << std::endl;
+                  env.bufCc << "   switch(errorKind) {" << std::endl;
                   FOREACH_ASTLIST(ErrorAct, tprod->errorActs, ierr) {
-                      b(env.g.bufCc) << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
-                      b(env.g.bufCc) << "      " << ierr.data()->actionCode << std::endl;
-                      b(env.g.bufCc) << "      break;" << std::endl;
+                      env.bufCc << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
+                      env.bufCc << "      " << ierr.data()->actionCode << std::endl;
+                      env.bufCc << "      break;" << std::endl;
                   }
-                  b(env.g.bufCc) << "   default:" << std::endl;
-                  b(env.g.bufCc) << "      break;" << std::endl;
-                  b(env.g.bufCc) << "   }" << std::endl;
+                  env.bufCc << "   default:" << std::endl;
+                  env.bufCc << "      break;" << std::endl;
+                  env.bufCc << "   }" << std::endl;
               } else {
-                  b(env.g.bufCc) << "   // TODO default error handler" << std::endl;
-                  b(env.g.bufCc) << "   startLexer->parseError(\"Invalid '"<< nonterm->name << "' .\");" << std::endl;
+                  env.bufCc << "   // TODO default error handler" << std::endl;
+                  env.bufCc << "   startLexer->parseError(\"Invalid '"<< nonterm->name << "' .\");" << std::endl;
               }
-              b(env.g.bufCc) << "   return NULL;" << std::endl;
+              env.bufCc << "   return NULL;" << std::endl;
 
-              b(env.g.bufCc) << "}" << std::endl;
+              env.bufCc << "}" << std::endl;
 
               std::stringstream s;
               s << std::endl;
@@ -1314,7 +1351,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               if (s.set) {
                  prod->addForbid(s.s);
               } else if (s.t) {
-                 prod->addForbid(s.t, env.g.numTerminals());
+                 prod->addForbid(s.t, g.numTerminals());
               }
             } catch (std::exception) {
                astParseError(f->tokName, "forbid_next : only single noneterminal allowed");
@@ -1335,8 +1372,8 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
         }
 
         // see which (if either) thing this name already is
-        Terminal *term = env.g.findTerminal(symName);
-        Nonterminal *nonterm = env.g.findNonterminal(symName);
+        Terminal *term = g.findTerminal(symName);
+        Nonterminal *nonterm = g.findNonterminal(symName);
         if (term && nonterm) {
           if (isString) {
             astParseError(symName, "token alias has same name as a nonterminal");
@@ -1356,7 +1393,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           astParseErrorCont(env, symName, "undeclared symbol");
 
           // synthesize one anyway so we can find more errors
-          nonterm = env.g.getOrMakeNonterminal(symName);
+          nonterm = g.getOrMakeNonterminal(symName);
         }
 
         if (term && term->termIndex==0 && !synthesizedStart) {
@@ -1416,7 +1453,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
       //prod->finished();
 
       // add production to grammar
-      env.g.addProduction(prod);
+      g.addProduction(prod);
   }
 }
 
@@ -1557,6 +1594,7 @@ void mergeTerminals(GrammarAST *base, TF_terminals * /*owner*/ ext)
       delete ext;
       return;
     }
+
   }
   
   // no TF_terminals in 'base'.. unusual, but easy to handle

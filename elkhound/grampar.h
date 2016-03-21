@@ -10,6 +10,7 @@
 #include "strsobjdict.h"  // StringSObjDict
 #include "locstr.h"       // LocString
 #include <sstream>
+#include <map>
 #include "gramast.ast.gen.h" // grammar AST nodes
 
 // linkdepend: grampar.tab.cc
@@ -68,10 +69,21 @@ void grampar_yyerror(char const *message, void *parseParam);
 // ---------------- grampar's parsing structures ---------------
 class Grammar;    // fwd
 
+
+// only the one in the topmost environment is used
+struct EnvironmentBuffer {
+    // count of recoverable errors
+    int errors = 0;
+    LocString * startSymbol = NULL;
+    std::map<std::string, void*> singleProds;
+    std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
+};
+
 // while walking the AST, we do a kind of recursive evaluation
 // to handle things like inherited actions and self-updating
 // (eval'd at grammar parse time) action expressions
 class Environment {
+
 public:      // data
   // grammar we're playing with (stored here because it's
   // more convenient than passing it to every fn separately)
@@ -84,16 +96,19 @@ public:      // data
   // nonterminal has in fact been declared already
   StringSObjDict<TF_nonterm> nontermDecls;
 
-  // count of recoverable errors; only the one in the
-  // topmost environment is used
-  int errorCount;
-  
+  // only the one in the topmost environment is used
+  EnvironmentBuffer * buffer;
+
   // reference to the one we're really using
-  int &errors;
+  int& errors;
+  LocString * startSymbol;
+  std::map<std::string, void*>& singleProds;
+  std::stringstream &bufIncl, &bufHead, &bufConsBase, &bufHeadFun, &bufCc;
 
 public:
-  Environment(Grammar &G);             // new env
+  Environment(Grammar &g);             // new env
   Environment(Environment &prevEnv);   // nested env
+  Environment(Environment &prevEnv, Grammar &g);   // nested env
   ~Environment();
 };
 

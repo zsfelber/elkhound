@@ -921,8 +921,7 @@ Grammar::Grammar()
     expectedUNRTerms(-1),
     terminalCodeMapped(0),
     codeHasTerm(0),
-    maxCode(0),
-    bufIncl(0), bufHead(0), bufConsBase(0), bufHeadFun(0), bufCc(0)
+    maxCode(0)
 {}
 
 

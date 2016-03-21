@@ -95,6 +95,8 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token TOK_COMMA ","
 
 /* keywords */
+
+%token TOK_START_SYMBOL "start_symbol"
 %token TOK_TERMINALS "terminals"
 %token TOK_TOKEN "token"
 %token TOK_NONTERM "nonterm"
@@ -202,6 +204,7 @@ TopFormList: /*empty*/              { $$ = new ASTList<TopForm>; }
 TopForm: ContextClass               { $$ = $1; }
        | Verbatim                   { $$ = $1; }
        | Option                     { $$ = $1; }
+       | "start_symbol" TOK_NAME ";"{ $$ = new TF_StartSymbol($2); }
        | Terminals                  { $$ = $1; }
        | Nonterminal                { $$ = $1; }
        ;

@@ -47,6 +47,9 @@ class TopForm {
     ASTList<AbstractProdDecl> productions,     // productions (right-hand side alternatives)
     ASTList<LocString> subsets         // preference subset nonterminals (for scannerless)
   );
+
+  -> TF_StartSymbol(LocString name);
+
 }
 
 
@@ -132,4 +135,5 @@ class RHSElt {
 class ErrorAct(ErrorKind ekind, LocString actionCode);
 
 class Name3(LocString label, LocString tag, LocString name);
+
 
