@@ -341,6 +341,38 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
 
 
 // map the grammar definition AST into a Grammar data structure
+Nonterminal * createNonterm(Environment &env, GrammarAST *ast, TF_nonterm *nt) {
+    // check for already declared
+    if (env.nontermDecls.isMapped(nt->name)) {
+      if (!ast->allowContinuedNonterminals) {
+        astParseError(nt->name, "nonterminal already declared");
+      }
+      else {
+        // check for consistent type
+        if (!nt->type.equals(env.nontermDecls.queryf(nt->name)->type)) {
+          astParseError(nt->name, "continued nonterminal with different type");
+        }
+
+        // just allow it; it seems the parser just iterates over
+        // all the TF_nonterms, and will do the right thing
+        //continue;
+        return NULL;
+      }
+    }
+
+    // make the Grammar object to represent the new nonterminal
+    Nonterminal *result = env.g.getOrMakeNonterminal(nt->name);
+
+    // add this decl to our running list (in the original environment)
+    //
+    // 12/09/04: As far as I can tell, 'nontermDecls' is in fact not
+    // used except for right here, to check whether a nonterminal
+    // declaration is duplicated.
+    env.nontermDecls.add(nt->name, nt);
+    return result;
+}
+
+// map the grammar definition AST into a Grammar data structure
 void astParseGrammar(Environment &env, GrammarAST *ast, TermDecl const *eof)
 {
 
@@ -360,32 +392,7 @@ void astParseGrammar(Environment &env, GrammarAST *ast, TermDecl const *eof)
       if (!iter.data()->isTF_nonterm()) continue;
       TF_nonterm *nt = iter.data()->asTF_nonterm();
 
-      // check for already declared
-      if (env.nontermDecls.isMapped(nt->name)) {
-        if (!ast->allowContinuedNonterminals) {
-          astParseError(nt->name, "nonterminal already declared");
-        }
-        else {
-          // check for consistent type
-          if (!nt->type.equals(env.nontermDecls.queryf(nt->name)->type)) {
-            astParseError(nt->name, "continued nonterminal with different type");
-          }
-          
-          // just allow it; it seems the parser just iterates over
-          // all the TF_nonterms, and will do the right thing
-          continue;
-        }
-      }
-
-      // make the Grammar object to represent the new nonterminal
-      env.g.getOrMakeNonterminal(nt->name);
-
-      // add this decl to our running list (in the original environment)
-      //
-      // 12/09/04: As far as I can tell, 'nontermDecls' is in fact not
-      // used except for right here, to check whether a nonterminal
-      // declaration is duplicated.
-      env.nontermDecls.add(nt->name, nt);
+      createNonterm(env, ast, nt);
     }
   }
 
@@ -752,107 +759,87 @@ void fillDefaultType(Nonterminal* nonterm) {
     }
 }
 
+void addDefaultTypesActions(Grammar &g, Nonterminal *nonterm)
+{
+    // language defaults
+    StringRef defaultType, defaultAction;
+    if (g.targetLang.equals("OCaml")) {
+      defaultType = grammarStringTable.add("unit");
+      defaultAction = grammarStringTable.add("()");
+    }
+    else /*C*/ {
+      defaultType = grammarStringTable.add("void");
+      defaultAction = grammarStringTable.add("return;");
+    }
+
+    fillDefaultType(nonterm);
+
+    // hook to allow me to force defaults everywhere (this is useful
+    // when I want to try a grammar written for one language using
+    // another language's core)
+    bool forceDefaults = tracingSys("forceDefaultActions");
+
+    // default type
+    if (forceDefaults || !nonterm->type) {
+      nonterm->type = defaultType;
+    }
+
+    // loop over all productions
+    for (SObjListIter<Production> prodIter(nonterm->productions);
+         !prodIter.isDone(); prodIter.adv()) {
+      // convenient alias
+      Production *prod = constcast(prodIter.data());
+
+      // default action
+      if (forceDefaults || prod->action.isNull()) {
+          if (prod->defaultSymbol) {
+              std::stringstream s;
+              s<<"return "<< prod->defaultSymbol ->tag.str <<";";
+              StringRef defaultTagAction = grammarStringTable.add(s.str().c_str());
+              prod->action.str = defaultTagAction;
+          } else {
+              prod->action.str = defaultAction;
+          }
+      }
+
+      if (forceDefaults) {
+        // TODO FIXME ??->ok this way? rhs->sym->name = "" ->
+        // clear RHSElt tags, since otherwise the lack of types
+        // will provoke errors; and default actions don't refer to
+        // the RHSElts anyway
+        StringRef empty = grammarStringTable.add("");
+        for (ObjListIter<Production::RHSElt> rhsIter(prod->right);
+             !rhsIter.isDone(); rhsIter.adv()) {
+            // convenient alias
+            Production::RHSElt *rhs = constcast(rhsIter.data());
+            //TODO constcast(rhs->sym->name) = "";
+        }
+      }
+    }
+}
+
 void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
 {
-  // language defaults
-  StringRef defaultType, defaultAction;
-  if (g.targetLang.equals("OCaml")) {
-    defaultType = grammarStringTable.add("unit");
-    defaultAction = grammarStringTable.add("()");
-  }
-  else /*C*/ {
-    defaultType = grammarStringTable.add("void");
-    defaultAction = grammarStringTable.add("return;");
-  }
-
-  // hook to allow me to force defaults everywhere (this is useful
-  // when I want to try a grammar written for one language using
-  // another language's core)
-  bool forceDefaults = tracingSys("forceDefaultActions");
-
   // iterate over nonterminals
   for (SObjListIter<Nonterminal> ntIter(g.nonterminals);
        !ntIter.isDone(); ntIter.adv()) {
       // convenient alias
       Nonterminal *nonterm = constcast(ntIter.data());
-      fillDefaultType(nonterm);
-
-      // default type
-      if (forceDefaults || !nonterm->type) {
-        nonterm->type = defaultType;
-      }
-
-      // loop over all productions
-      for (SObjListIter<Production> prodIter(nonterm->productions);
-           !prodIter.isDone(); prodIter.adv()) {
-        // convenient alias
-        Production *prod = constcast(prodIter.data());
-
-        // default action
-        if (forceDefaults || prod->action.isNull()) {
-            if (prod->defaultSymbol) {
-                std::stringstream s;
-                s<<"return "<< prod->defaultSymbol ->tag.str <<";";
-                StringRef defaultTagAction = grammarStringTable.add(s.str().c_str());
-                prod->action.str = defaultTagAction;
-            } else {
-                prod->action.str = defaultAction;
-            }
-        }
-
-        if (forceDefaults) {
-          // TODO FIXME ??->ok this way? rhs->sym->name = "" ->
-          // clear RHSElt tags, since otherwise the lack of types
-          // will provoke errors; and default actions don't refer to
-          // the RHSElts anyway
-          StringRef empty = grammarStringTable.add("");
-          for (ObjListIter<Production::RHSElt> rhsIter(prod->right);
-               !rhsIter.isDone(); rhsIter.adv()) {
-              // convenient alias
-              Production::RHSElt *rhs = constcast(rhsIter.data());
-              //TODO constcast(rhs->sym->name) = "";
-          }
-        }
-      }
+      addDefaultTypesActions(g, nonterm);
   }
-  /*FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
-    if (!iter.data()->isTF_nonterm()) { continue; }
-    TF_nonterm *nt = iter.data()->asTF_nonterm();
-    Nonterminal *nonterm = g.findNonterminal(nt->name);
+}
 
-    // default type
-    if (forceDefaults || !nonterm->type) {
-      nt->type.str = defaultType;
-    }
+Nonterminal * complementNonterm(Environment &env, GrammarAST *ast, TF_nonterm * nt, int ntIndex, TermDecl const *eof) {
+    Nonterminal * result = createNonterm(env, ast, nt);
 
-    // iterate over productions
-    FOREACH_ASTLIST_NC(ProdDecl, nt->productions, iter2) {
-      ProdDecl *pd = iter2.data();
+    xassert (result);
 
-      // default action
-      if (forceDefaults || prod.isNull()) {
-        pd->actionCode.str = isnull ? defaultAction : defaultTagAction;
-      }
-
-      if (forceDefaults) {
-        // clear RHSElt tags, since otherwise the lack of types
-        // will provoke errors; and default actions don't refer to
-        // the RHSElts anyway
-        StringRef empty = grammarStringTable.add("");
-        FOREACH_ASTLIST_NC(RHSElt, pd->rhs, iter3) {
-          ASTSWITCH(RHSElt, iter3.data()) {
-            ASTCASE(RH_name, n)
-              n->tag.str = empty;
-
-            ASTNEXT(RH_string, s)
-              s->tag.str = empty;
-            
-            ASTENDCASED
-          }
-        }
-      }
-    }
-  }*/
+    // new environment since it can contain a grouping construct
+    // (at this very moment it actually can't because there is no syntax..)
+    Environment newEnv(env);
+    astParseNonterm(newEnv, ast, nt, eof, ntIndex);
+    addDefaultTypesActions(env.g, result);
+    return result;
 }
 
 bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *& grType, std::string& name, std::string& usr) {
@@ -914,7 +901,7 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
     }
 }
 
-void createEarlyRule(GrammarAST *ast, AbstractProdDecl *prod, TermDecl const *eof) {
+void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, TermDecl const *eof) {
     RHSElt *poss_eof = prod->rhs.last();
     RH_name *rh_eof = 0;
     if (poss_eof && poss_eof->kind()==RH_name::RH_NAME) {
@@ -943,6 +930,8 @@ void createEarlyRule(GrammarAST *ast, AbstractProdDecl *prod, TermDecl const *eo
                     NULL                                     // subsets
                   );
         ast->forms.prepend(ast->earlyStartNT);
+
+        env.g.startSymbol = complementNonterm(env, ast, ast->earlyStartNT, -1, eof);
     }
 }
 
@@ -954,7 +943,7 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
                  multiIndex <= ast->childrenNT->productions.count() ) {
 
           AbstractProdDecl *prod = ast->childrenNT->productions.nth(multiIndex-1);
-          createEarlyRule(ast, prod, eof);
+          createEarlyRule(env, ast, prod, eof);
       }
   } else {
 
