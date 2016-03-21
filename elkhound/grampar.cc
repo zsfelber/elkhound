@@ -985,9 +985,8 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           LocString * type ;
           ProdDecl *newStart;
           std::stringstream nms;
-
-          type = v0 && nonterm->type  ?
-                      LIT_STR(nonterm->type).clone() : LIT_STR((tp+"*").c_str()).clone();
+          std::stringstream us;
+          bool single;
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
@@ -1093,19 +1092,39 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << ");" << std::endl;
               }
 
-              nms << nonterm->name << "_" << prodi << vpref;
+              single = false;
+              if (rhs->count()==2) { // 1 + reof
+                  Symbol *s;
+                  if (rhs->first()->isRH_name())
+                     s = env.g.findSymbol(rhs->first()->asRH_name()->name);
+                  else
+                     s = env.g.findSymbol(rhs->first()->asRH_string()->str);
 
-              env.g.bufIncl << "#include \""<< env.g.prefix0 << "_" << nms.str() <<".h\"" << std::endl;
-              env.g.bufHead << "   "<< env.g.actionClassName << nms.str() <<" _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << ";" << std::endl;
-              env.g.bufConsBase << ", _usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref << "(this)";
+                  if (s->type) {
+                      single = true;
+
+                      nms << s->name;
+
+                      type = LIT_STR(s->type).clone();
+
+                      us << "_usr_" << s->name;
+                  }
+              }
+
+              if (!single) {
+                  nms << nonterm->name << "_" << prodi << vpref;
+                  type = v0 && nonterm->type  ?
+                              LIT_STR(nonterm->type).clone() : LIT_STR((tp+"*").c_str()).clone();
+
+                  us << "_usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref;
+              }
 
               if (v0 && nonterm->type) {
-                  buf << indent << type->str << " result = NULL;" << std::endl;
+                  buf << indent << nonterm->type << " result = NULL;" << std::endl;
               }
 
               buf << indent << "// initialize the parser" << std::endl;
-              buf << indent << "GLR glrNode"<<vpref<<"(_usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref<<", _usr_"
-                  << nonterm->ntIndex << "_" << prodi << "_" << vpref<<".parseTables, tag"<<vpref<<");" << std::endl;
+              buf << indent << "GLR glrNode"<<vpref<<"("<<us.str()<<", "<<us.str()<<".parseTables, tag"<<vpref<<");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
               buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)";
@@ -1129,27 +1148,37 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               }
               buf << indent << "}" << std::endl;
 
-              // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-              newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, origAction,
-                                       LIT_STR(nms.str().c_str()).clone(), type->clone());
-              // newStart->traversed = true;
+              if (!single || env.g.singleProds.find(nms.str())==env.g.singleProds.end()) {
 
-              if (ast->childrenNT) {
-                  ast->childrenNT->productions.append(newStart);
-              } else {
-                  ast->childrenNT
-                          = new TF_nonterm(
-                              LIT_STR("__GeneratedChildren").clone(),   // name
-                              type->clone(),          // type
-                              NULL,                                     // empty list of functions
-                              new ASTList<AbstractProdDecl>(newStart),          // productions
-                              NULL                                      // subsets
-                            );
-              }
+                  env.g.bufIncl << "#include \""<< env.g.prefix0 << "_" << nms.str() <<".h\"" << std::endl;
 
-              if (multiIndex == -1) {
-                  // reset to this ast->childrenNT :
-                  multiIndex = ast->childrenNT->productions.count();
+                  env.g.bufHead << "   "<< env.g.actionClassName << nms.str() <<" "<<us.str() << ";" << std::endl;
+                  env.g.bufConsBase << ", "<<us.str() << "(this)";
+
+
+                  // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
+                  newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, new LocString(SL_UNKNOWN, NULL),
+                                           LIT_STR(nms.str().c_str()).clone(), type->clone());
+
+                  env.g.singleProds[nms.str()] = newStart;
+
+                  if (ast->childrenNT) {
+                      ast->childrenNT->productions.append(newStart);
+                  } else {
+                      ast->childrenNT
+                              = new TF_nonterm(
+                                  LIT_STR("__GeneratedChildren").clone(),   // name
+                                  type->clone(),          // type
+                                  NULL,                                     // empty list of functions
+                                  new ASTList<AbstractProdDecl>(newStart),          // productions
+                                  NULL                                      // subsets
+                                );
+                  }
+
+                  if (multiIndex == -1) {
+                      // reset to this ast->childrenNT :
+                      multiIndex = ast->childrenNT->productions.count();
+                  }
               }
 
               break;

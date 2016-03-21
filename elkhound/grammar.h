@@ -34,6 +34,7 @@
 #include "array.h"       // GrowArray
 #include <sstream>
 #include <string>
+#include <map>
 
 using std::ostream;
 using std::ofstream;
@@ -546,6 +547,7 @@ public:	    // data
   string prefix0, pref;
 
   std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
+  std::map<std::string, void*> singleProds;
 
 public:     // funcs
   Grammar();                            // set everything manually
