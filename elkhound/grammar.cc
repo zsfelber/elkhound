@@ -356,7 +356,6 @@ void TerminalSet::init(int numTerms)
   }
 }
 
-// TODO!!
 void TerminalSet::convert(Grammar& g) {
   ObjList<Terminal>& oldts = g.allTerminals;
   SObjList<Terminal>& newts = g.terminals;

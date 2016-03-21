@@ -814,6 +814,63 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   }*/
 }
 
+bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *& grType, std::string& name, std::string& usr) {
+    if (rhs->count()==2) { // 1 + reof
+        Symbol *s = NULL;
+        if (rhs->first()->isRH_name())
+           s = env.g.findSymbol(rhs->first()->asRH_name()->name);
+        else if (rhs->first()->isRH_string())
+           s = env.g.findSymbol(rhs->first()->asRH_string()->str);
+
+        if (s && s->type) {
+            single = true;
+
+            grType = LIT_STR(s->type).clone();
+
+            usr = name = s->name.str;
+        }
+    }
+
+    if (env.g.singleProds.find(name)==env.g.singleProds.end()) {
+
+        b(env.g.bufIncl) << "#include \""<< env.g.prefix0;
+        if (name.length()) {
+            b(env.g.bufIncl) << "_" << name;
+        }
+        b(env.g.bufIncl) <<".h\"" << std::endl;
+
+        b(env.g.bufHead) << "   "<< env.g.actionClassName << name << " _usr_" << usr << ";" << std::endl;
+        b(env.g.bufConsBase) << ", _usr_" << usr << "(this)";
+
+        // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
+        ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, new LocString(SL_UNKNOWN, NULL),
+                                 LIT_STR(name.c_str()).clone(), grType->clone());
+
+        env.g.singleProds[name] = newStart;
+
+        if (ast->childrenNT) {
+            ast->childrenNT->productions.append(newStart);
+        } else {
+            ast->childrenNT
+                    = new TF_nonterm(
+                        LIT_STR("__GeneratedChildren").clone(),   // name
+                        grType->clone(),          // type
+                        NULL,                                     // empty list of functions
+                        new ASTList<AbstractProdDecl>(newStart),          // productions
+                        NULL                                      // subsets
+                      );
+        }
+
+        //if (multiIndex == -1) {
+            // reset to this ast->childrenNT :
+            // multiIndex = ast->childrenNT->productions.count();
+        //}
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void createEarlyRule(GrammarAST *ast, AbstractProdDecl *prod, TermDecl const *eof) {
     RHSElt *poss_eof = prod->rhs.last();
     RH_name *rh_eof = 0;
@@ -880,6 +937,12 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
           );
       // put it into the AST
       ast->forms.prepend(ast->earlyStartNT);
+
+      LocString * grType = NULL;
+      std::string name, usr;
+
+      synthesizeChildRule(env, ast, rhs, grType, name, usr);
+
   }
 
   if (multiIndex >= 0) {
@@ -889,7 +952,6 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
       }
   }
 }
-
 
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex)
 {
@@ -988,10 +1050,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           int vi = 0;
           LocString * type, * grType;
-          ProdDecl *newStart;
           std::stringstream nms;
           std::stringstream us;
-          bool single;
+          std::string name, usr;
 
           type = v0 && nonterm->type  ?
                       LIT_STR(nonterm->type).clone() : LIT_STR((tp+"*").c_str()).clone();
@@ -1064,12 +1125,14 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               if (v0) {
                   us << nonterm->ntIndex << "_" << prodi;
+                  usr = us.str();
               }
               break;
 
           case PDK_TRAVERSE_NULL:
               if (v0) {
                   us << nonterm->ntIndex << "_" << prodi;
+                  usr = us.str();
               }
               break;
 
@@ -1106,43 +1169,27 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << ");" << std::endl;
               }
 
-              single = false;
+              grType = type;
 
-              if (rhs->count()==2) { // 1 + reof
-                  Symbol *s = NULL;
-                  if (rhs->first()->isRH_name())
-                     s = env.g.findSymbol(rhs->first()->asRH_name()->name);
-                  else if (rhs->first()->isRH_string())
-                     s = env.g.findSymbol(rhs->first()->asRH_string()->str);
+              nms << nonterm->name << "_" << prodi << "_" << vpref;
 
-                  if (s && s->type) {
-                      single = true;
-
-                      grType = LIT_STR(s->type).clone();
-
-                      nms << s->name;
-
-                      us << s->name;
-                  }
+              if (v0) {
+                  us << nonterm->ntIndex << "_" << prodi;
+              } else {
+                  us << nonterm->ntIndex << "_" << prodi << "_" << vpref;
               }
 
-              if (!single) {
-                  nms << nonterm->name << "_" << prodi << "_" << vpref;
-                  grType = type;
+              name = nms.str();
+              usr = us.str();
 
-                  if (v0) {
-                      us << nonterm->ntIndex << "_" << prodi;
-                  } else {
-                      us << nonterm->ntIndex << "_" << prodi << "_" << vpref;
-                  }
-              }
+              synthesizeChildRule(env, ast, rhs, grType, name, usr);
 
               if (v0 && nonterm->type) {
                   buf << indent << nonterm->type << " result = NULL;" << std::endl;
               }
 
               buf << indent << "// initialize the parser" << std::endl;
-              buf << indent << "GLR glrNode" << vpref << "(_usr_" << us.str() << ", _usr_" << us.str() << ".parseTables, tag" << vpref << ");" << std::endl;
+              buf << indent << "GLR glrNode" << vpref << "(_usr_" << usr << ", _usr_" << usr << ".parseTables, tag" << vpref << ");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
               buf << indent << "if (glrNode" << vpref << ".glrParse(treeLexer" << vpref << ", (SemanticValue&)";
@@ -1166,39 +1213,6 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               }
               buf << indent << "}" << std::endl;
 
-              if (!single || env.g.singleProds.find(nms.str())==env.g.singleProds.end()) {
-
-                  b(env.g.bufIncl) << "#include \""<< env.g.prefix0 << "_" << nms.str() <<".h\"" << std::endl;
-
-                  b(env.g.bufHead) << "   "<< env.g.actionClassName << nms.str() << " _usr_" << us.str() << ";" << std::endl;
-                  b(env.g.bufConsBase) << ", _usr_" << us.str() << "(this)";
-
-
-                  // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-                  newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, new LocString(SL_UNKNOWN, NULL),
-                                           LIT_STR(nms.str().c_str()).clone(), grType->clone());
-
-                  env.g.singleProds[nms.str()] = newStart;
-
-                  if (ast->childrenNT) {
-                      ast->childrenNT->productions.append(newStart);
-                  } else {
-                      ast->childrenNT
-                              = new TF_nonterm(
-                                  LIT_STR("__GeneratedChildren").clone(),   // name
-                                  grType->clone(),          // type
-                                  NULL,                                     // empty list of functions
-                                  new ASTList<AbstractProdDecl>(newStart),          // productions
-                                  NULL                                      // subsets
-                                );
-                  }
-
-                  //if (multiIndex == -1) {
-                      // reset to this ast->childrenNT :
-                      // multiIndex = ast->childrenNT->productions.count();
-                  //}
-              }
-
               break;
           default:
               astParseError("Invalid traverse mode production declaration.");
@@ -1207,9 +1221,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           if (v0) {
 
-              b(env.g.bufHeadFun) << "   " << type->str << " parse_" << us.str() << "("
+              b(env.g.bufHeadFun) << "   " << type->str << " parse_" << usr << "("
                                << tp <<"* tag);" << std::endl;
-              b(env.g.bufCc) << type->str << " "<< env.g.prefix0 << "Parsers::parse_" << us.str() << "("
+              b(env.g.bufCc) << type->str << " "<< env.g.prefix0 << "Parsers::parse_" << usr << "("
                                << tp <<"* tag) {" << std::endl;
               b(env.g.bufCc) << bufAct.str();
               b(env.g.bufCc) << buf.str();
@@ -1248,7 +1262,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               std::stringstream s;
               s << std::endl;
-              s << "   " << type->str << " result = parsers->parse_" << us.str() << "(tag);" << std::endl;
+              s << "   " << type->str << " result = parsers->parse_" << usr << "(tag);" << std::endl;
               s << "   return result;" << std::endl;
 
               constcast(prodDecl->actionCode).str = LIT_STR(s.str().c_str()).clone()->str;

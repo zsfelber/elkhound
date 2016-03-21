@@ -2734,9 +2734,12 @@ void GrammarAnalysis::computeReachable()
 {
   // start by clearing the reachability flags
   SMUTATE_EACH_NONTERMINAL(nonterminals, iter) {
-    iter.data()->reachable = false;
+     iter.data()->reachable = false;
   }
-  
+  SMUTATE_EACH_TERMINAL(terminals, iter) {
+     iter.data()->reachable = false;
+  }
+
   // do a DFS on the grammar, marking things reachable as
   // they're encountered
   computeReachableDFS(startSymbol);
@@ -5342,6 +5345,13 @@ int inner_entry(int argc, char **argv)
   setAnnotations(ast);
   parseGrammarAST(g0, ast, eof);
 
+  if (ast->earlyStartNT) {
+      ast->forms.removeItem(ast->earlyStartNT);
+      ast->earlyStartNT = NULL;
+  }
+  ast->forms.prepend(ast->childrenNT);
+  ast->firstNT = ast->childrenNT;
+
   g0.allTerminals.concat(g0.terminals);
   g0.allNonterminals.concat(g0.nonterminals);
   g0.allProductions.concat(g0.productions);
@@ -5408,6 +5418,7 @@ int inner_entry(int argc, char **argv)
       // parse the AST into a Grammar
       //g0.itemSets
       GrammarAnalysis g(g0);
+
       analyzse(g, ast, eof, useML, pref, prefix0, prefix, multiIndex, true);
       maxSr=max(maxSr, g.sr) ;
       maxRr=max(maxRr, g.rr);
