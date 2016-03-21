@@ -982,11 +982,14 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           rhs->append(reof);
 
           int vi = 0;
-          LocString * type ;
+          LocString * type, * grType;
           ProdDecl *newStart;
           std::stringstream nms;
           std::stringstream us;
           bool single;
+
+          type = v0 && nonterm->type  ?
+                      LIT_STR(nonterm->type).clone() : LIT_STR((tp+"*").c_str()).clone();
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
@@ -1002,9 +1005,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << indent << tpref << prod->name << "_star tag" << vpref << "_" << vi
                     << " = tag" << vpref << "->" << prod->name << ";" << std::endl;
                   if (prod->pkind == PDK_TRAVERSE_NULL) {
-                      buf << indent << "if (!tag"<<vpref<< "_" << vi<<") {" << std::endl;
+                      buf << indent << "if (!tag" << vpref <<  "_" << vi<<") {" << std::endl;
                   } else {
-                      buf << indent << "if (tag"<<vpref<< "_" << vi<<") {" << std::endl;
+                      buf << indent << "if (tag" << vpref <<  "_" << vi<<") {" << std::endl;
                   }
                   std::stringstream st, sv, sfv, ind;
                   st << tpref << prod->name << std::flush;
@@ -1054,9 +1057,15 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   vi++;
               }
 
+              if (v0) {
+                  us << nonterm->ntIndex << "_" << prodi;
+              }
               break;
 
           case PDK_TRAVERSE_NULL:
+              if (v0) {
+                  us << nonterm->ntIndex << "_" << prodi;
+              }
               break;
 
           case PDK_TRAVERSE_GR:
@@ -1066,7 +1075,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << indent << tprod->label.str << ":" << std::endl;
               }
 
-              buf << indent << "AstTreeNodeLexer treeLexer"<<vpref<<"(tag"<<vpref<<", charLexer";
+              buf << indent << "AstTreeNodeLexer treeLexer" << vpref << "(tag" << vpref << ", charLexer";
               if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
                   FOREACH_ASTLIST(RHSElt, *rhs, iter) {
                        LocString symName;
@@ -1093,30 +1102,34 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               }
 
               single = false;
+
               if (rhs->count()==2) { // 1 + reof
-                  Symbol *s;
+                  Symbol *s = NULL;
                   if (rhs->first()->isRH_name())
                      s = env.g.findSymbol(rhs->first()->asRH_name()->name);
-                  else
+                  else if (rhs->first()->isRH_string())
                      s = env.g.findSymbol(rhs->first()->asRH_string()->str);
 
-                  if (s->type) {
+                  if (s && s->type) {
                       single = true;
+
+                      grType = LIT_STR(s->type).clone();
 
                       nms << s->name;
 
-                      type = LIT_STR(s->type).clone();
-
-                      us << "_usr_" << s->name;
+                      us << s->name;
                   }
               }
 
               if (!single) {
-                  nms << nonterm->name << "_" << prodi << vpref;
-                  type = v0 && nonterm->type  ?
-                              LIT_STR(nonterm->type).clone() : LIT_STR((tp+"*").c_str()).clone();
+                  nms << nonterm->name << "_" << prodi << "_" << vpref;
+                  grType = type;
 
-                  us << "_usr_" << nonterm->ntIndex << "_" << prodi << "_" << vpref;
+                  if (v0) {
+                      us << nonterm->ntIndex << "_" << prodi;
+                  } else {
+                      us << nonterm->ntIndex << "_" << prodi << "_" << vpref;
+                  }
               }
 
               if (v0 && nonterm->type) {
@@ -1124,16 +1137,16 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               }
 
               buf << indent << "// initialize the parser" << std::endl;
-              buf << indent << "GLR glrNode"<<vpref<<"("<<us.str()<<", "<<us.str()<<".parseTables, tag"<<vpref<<");" << std::endl;
+              buf << indent << "GLR glrNode" << vpref << "(_usr_" << us.str() << ", _usr_" << us.str() << ".parseTables, tag" << vpref << ");" << std::endl;
               buf << indent << "" << std::endl;
               buf << indent << "// parse the input" << std::endl;
-              buf << indent << "if (glrNode"<<vpref<<".glrParse(treeLexer"<<vpref<<", (SemanticValue&)";
+              buf << indent << "if (glrNode" << vpref << ".glrParse(treeLexer" << vpref << ", (SemanticValue&)";
               if (v0 && nonterm->type) {
                   buf <<"result";
               } else {
                   buf <<"tag";
               }
-              buf<<vpref<<")) {" << std::endl;
+              buf << vpref << ")) {" << std::endl;
               if (tprod->label && tprod->label.isNonNull()) {
                   buf << indent << "   goto done;" << std::endl;
               } else {
@@ -1152,13 +1165,13 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
                   env.g.bufIncl << "#include \""<< env.g.prefix0 << "_" << nms.str() <<".h\"" << std::endl;
 
-                  env.g.bufHead << "   "<< env.g.actionClassName << nms.str() <<" "<<us.str() << ";" << std::endl;
-                  env.g.bufConsBase << ", "<<us.str() << "(this)";
+                  env.g.bufHead << "   "<< env.g.actionClassName << nms.str() << " _usr_" << us.str() << ";" << std::endl;
+                  env.g.bufConsBase << ", _usr_" << us.str() << "(this)";
 
 
                   // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
                   newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, new LocString(SL_UNKNOWN, NULL),
-                                           LIT_STR(nms.str().c_str()).clone(), type->clone());
+                                           LIT_STR(nms.str().c_str()).clone(), grType->clone());
 
                   env.g.singleProds[nms.str()] = newStart;
 
@@ -1168,7 +1181,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                       ast->childrenNT
                               = new TF_nonterm(
                                   LIT_STR("__GeneratedChildren").clone(),   // name
-                                  type->clone(),          // type
+                                  grType->clone(),          // type
                                   NULL,                                     // empty list of functions
                                   new ASTList<AbstractProdDecl>(newStart),          // productions
                                   NULL                                      // subsets
@@ -1189,9 +1202,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           if (v0) {
 
-              env.g.bufHeadFun << "   " << type->str << " parse_" << nonterm->ntIndex << "_" << prodi << "("
+              env.g.bufHeadFun << "   " << type->str << " parse_" << us.str() << "("
                                << tp <<"* tag);" << std::endl;
-              env.g.bufCc << type->str << " "<< env.g.prefix0 << "Parsers::parse_" << nonterm->ntIndex << "_" << prodi << "("
+              env.g.bufCc << type->str << " "<< env.g.prefix0 << "Parsers::parse_" << us.str() << "("
                                << tp <<"* tag) {" << std::endl;
               env.g.bufCc << bufAct.str();
               env.g.bufCc << buf.str();
@@ -1230,7 +1243,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               std::stringstream s;
               s << std::endl;
-              s << "   " << type->str << " result = parsers->parse_" << nonterm->ntIndex << "_" << prodi << "(tag);" << std::endl;
+              s << "   " << type->str << " result = parsers->parse_" << us.str() << "(tag);" << std::endl;
               s << "   return result;" << std::endl;
 
               constcast(prodDecl->actionCode).str = LIT_STR(s.str().c_str()).clone()->str;

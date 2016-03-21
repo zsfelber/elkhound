@@ -600,7 +600,7 @@ public:	    // funcs
   // when grammar is built, this runs all analyses and stores
   // the results in this object's data fields; write the LR item
   // sets to the given file (or don't, if NULL)
-  void runAnalyses(char const *setsFname);
+  void runAnalyses(char const *setsFname, bool reportReachable);
 
   // print the item sets to a stream (optionally include nonkernel items)
   void printItemSets(ostream &os, bool nonkernel) const;

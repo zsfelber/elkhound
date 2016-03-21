@@ -4038,7 +4038,7 @@ void GrammarAnalysis::exampleGrammar()
 
 
   // run analyses
-  runAnalyses(NULL);
+  runAnalyses(NULL, false);
 
 
   // do some test parses
@@ -4049,7 +4049,7 @@ void GrammarAnalysis::exampleGrammar()
 }
 
 
-void GrammarAnalysis::runAnalyses(char const *setsFname)
+void GrammarAnalysis::runAnalyses(char const *setsFname, bool reportReachable)
 {            
   // prepare for symbol of interest
   {
@@ -4163,31 +4163,55 @@ void GrammarAnalysis::runAnalyses(char const *setsFname)
     }
   }
 
-  // count the number of unreachable nonterminals & terminals
+  // count the number of (un)reachable nonterminals & terminals
   {                   
     if (setsOutput) {
-      *setsOutput << "unreachable nonterminals:\n";
+      if (reportReachable) {
+          *setsOutput << "reachable nonterminals:\n";
 
-        FOREACH_NONTERMINAL(urNonterminals, iter) {
-          *setsOutput << "  " << iter.data()->name << "\n";
-        }
+            FOREACH_NONTERMINAL(nonterminals, iter) {
+              *setsOutput << "  " << iter.data()->name << "\n";
+            }
+      } else {
+          *setsOutput << "unreachable nonterminals:\n";
+
+            FOREACH_NONTERMINAL(urNonterminals, iter) {
+              *setsOutput << "  " << iter.data()->name << "\n";
+            }
+      }
     }
 
-    reportUnexpected(urNonterminals.count(), expectedUNRNonterms, "unreachable nonterminals");
+    if (reportReachable) {
+        reportUnexpected(nonterminals.count(), -1, "reachable nonterminals");
+    } else {
+        reportUnexpected(urNonterminals.count(), expectedUNRNonterms, "unreachable nonterminals");
+    }
 
     // bison also reports the number of productions under all the
     // unreachable nonterminals, but that doesn't seem especially
     // useful to me
 
     if (setsOutput) {
-      *setsOutput << "unreachable terminals:\n";
+        if (reportReachable) {
+            *setsOutput << "reachable terminals:\n";
 
-        FOREACH_TERMINAL(urTerminals, jter) {
-          *setsOutput << "  " << jter.data()->name << "\n";
+              FOREACH_TERMINAL(terminals, jter) {
+                *setsOutput << "  " << jter.data()->name << "\n";
+              }
+        } else {
+          *setsOutput << "unreachable terminals:\n";
+
+            FOREACH_TERMINAL(urTerminals, jter) {
+              *setsOutput << "  " << jter.data()->name << "\n";
+            }
         }
     }
 
-    reportUnexpected(urTerminals.count(), expectedUNRTerms, "unreachable terminals");
+    if (reportReachable) {
+        reportUnexpected(terminals.count(), -1, "reachable terminals");
+    } else {
+        reportUnexpected(urTerminals.count(), expectedUNRTerms, "unreachable terminals");
+    }
   }
 
   // print the item sets
@@ -5109,6 +5133,46 @@ void get_names(AbstractProdDecl const * pdecl, int multiIndex, string const & pr
     }
 }
 
+void analyzse(GrammarAnalysis &g, GrammarAST *ast, bool useML, string &pref, string &prefix0, string &prefix, int &multiIndex, bool debug) {
+    if (useML) {
+      g.targetLang = "OCaml";
+    }
+    g.pref = pref;
+    g.prefix0 = prefix0;
+
+    parseGrammarAST(g, ast, multiIndex);
+    {
+        std::stringstream s;
+
+        g.actionClassName0 = g.actionClassName.str;
+        s << g.actionClassName << pref;
+        g.actionClassName.str = STR(s.str().c_str());
+        if (debug) {
+            cout << "actionClassName:" << g.actionClassName << endl;
+        }
+    }
+
+    if (debug) {
+        if (ast->earlyStartNT) {
+            ast->earlyStartNT->debugPrint(trace("prec"), 0, "Generated early start symbol:");
+        }
+        if (multiIndex<0) {
+            if (ast->childrenNT) {
+                ast->childrenNT->debugPrint(trace("prec"), 0, "Generated child start symbols:");
+            }
+        }
+
+        if (tracingSys("treebuild")) {
+          cout << "replacing given actions with treebuilding actions\n";
+          g.addTreebuildingActions();
+        }
+        g.printProductions(trace("grammar") << endl);
+    }
+
+    string setsFname = stringc << prefix << ".out";
+    g.runAnalyses((debug && tracingSys("lrtable"))? setsFname.c_str() : NULL, debug && ast->childrenNT && ast->childrenNT->productions.count());
+}
+
 int inner_entry(int argc, char **argv)
 {
   #define SHIFT argc--; argv++ /* user ; */
@@ -5251,13 +5315,7 @@ int inner_entry(int argc, char **argv)
 
       // parse the AST into a Grammar
       GrammarAnalysis g;
-      if (useML) {
-        g.targetLang = "OCaml";
-      }
-      g.pref = pref;
-      g.prefix0 = prefix0;
-
-      parseGrammarAST(g, ast, multiIndex);
+      analyzse(g, ast, useML, pref, prefix0, prefix, multiIndex, true);
 
       if (first && ast->firstNT) {
           first = false;
@@ -5284,34 +5342,6 @@ int inner_entry(int argc, char **argv)
 
           }
       }
-
-      if (ast->earlyStartNT) {
-          ast->earlyStartNT->debugPrint(trace("prec"), 0, "Generated early start symbol:");
-      }
-      if (multiIndex<0) {
-          if (ast->childrenNT) {
-              ast->childrenNT->debugPrint(trace("prec"), 0, "Generated child start symbols:");
-          }
-          ast.del();              // done with it
-      }
-
-      {
-          std::stringstream s;
-
-          g.actionClassName0 = g.actionClassName.str;
-          s << g.actionClassName << pref;
-          g.actionClassName.str = STR(s.str().c_str());
-          cout << "actionClassName:" << g.actionClassName << endl;
-      }
-
-      if (tracingSys("treebuild")) {
-        cout << "replacing given actions with treebuilding actions\n";
-        g.addTreebuildingActions();
-      }
-      g.printProductions(trace("grammar") << endl);
-
-      string setsFname = stringc << prefix << ".out";
-      g.runAnalyses(tracingSys("lrtable")? setsFname.c_str() : NULL);
 
       bufIncl << g.bufIncl.str() << std::flush;
       bufHead<< g.bufHead.str() << std::flush;
@@ -5401,6 +5431,20 @@ int inner_entry(int argc, char **argv)
              bufHeadFun, bufCc,
              hFname, ccFname, grammarFname);
 
+  if (ast->childrenNT && ast->childrenNT->productions.count()) {
+      string prefix, pref;
+      prefix = prefix0;
+
+      traceRemoveAll();
+
+      std::cout << std::endl << "Total : " << std::endl;
+
+      GrammarAnalysis tot_g;
+      multiIndex = -1;
+      analyzse(tot_g, ast, useML, pref, prefix0, prefix, multiIndex, false);
+  }
+
+  ast.del();              // done with it
 
   return result;
 }
