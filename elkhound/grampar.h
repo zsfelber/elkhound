@@ -101,7 +101,7 @@ public:
 // --------------- grampar's external interface -----------
 // parse grammar file 'fname' into grammar 'g', throwing exceptions
 // if there are problems
-void readGrammarFile(Grammar &g, rostring fname);
+void readGrammarFile(Environment &env, rostring fname);
 
 // just do the parsing stage
 GrammarAST *parseGrammarFile(rostring fname, bool useML);
@@ -113,8 +113,8 @@ void mergeGrammar(GrammarAST *base, GrammarAST *ext);
 void setAnnotations(GrammarAST *ast);
 
 // GrammarAST -> Grammar
-void parseGrammarAST(Grammar &g, GrammarAST *treeTop, TermDecl const *& eof);
-void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &multiIndex);
+void parseGrammarAST(Environment &g, GrammarAST *treeTop, TermDecl const *& eof);
+void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof, int &multiIndex, LocString *& grType, std::string &name, std::string &usr);
 
 void astParseError(rostring msg);
 

@@ -4070,9 +4070,10 @@ void pretendUsed(...)
 
 void GrammarAnalysis::exampleGrammar()
 {
+  Environment env(*this);
   // at one time I was using this to verify my LR item set
   // construction code; this function isn't even called anymore..
-  readGrammarFile(*this, "examples/asu419.gr");
+  readGrammarFile(env, "examples/asu419.gr");
 
   char const *input[] = {
     " id                 $",
@@ -5197,14 +5198,18 @@ void get_names(AbstractProdDecl const * pdecl, int multiIndex, string const & pr
     }
 }
 
-void analyzse(GrammarAnalysis &g, GrammarAST *ast, TermDecl const *eof, bool useML, string &pref, string &prefix0, string &prefix, int &multiIndex, bool debug) {
+void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML, string &pref, string &prefix0, string &prefix, int &multiIndex, bool debug) {
+    GrammarAnalysis &g = (GrammarAnalysis&)env.g;
     if (useML) {
       g.targetLang = "OCaml";
     }
     g.pref = pref;
     g.prefix0 = prefix0;
 
-    synthesizeStartRule(g, ast, eof, multiIndex);
+    LocString * grType = NULL;
+    std::string name, usr;
+
+    synthesizeStartRule(env, ast, eof, multiIndex, grType, name, usr);
 
     {
         std::stringstream s;
@@ -5340,10 +5345,34 @@ int inner_entry(int argc, char **argv)
   }
 
   Grammar g0;
+  // default, empty environment
+  Environment env0(g0);
   TermDecl const * eof;
+  LocString * grType0 = NULL;
+  std::string name0, usr0;
+  int multiIndex = 0;
+  int result = 0;
+  bool first = true;
+  int maxSr=0,maxRr=0;
+
+  std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
 
   setAnnotations(ast);
-  parseGrammarAST(g0, ast, eof);
+  parseGrammarAST(env0, ast, eof);
+
+  synthesizeStartRule(env0, ast, eof, multiIndex, grType0, name0, usr0);
+
+  if (grType0) {
+
+      bufHead << "   AstCharLexer* charLexer;" << std::endl;
+      bufHead << "   "<< grType0->str << " inputArg;" << std::endl;
+      bufHead << "   "<< grType0->str << " result;" << std::endl;
+      bufConsBase<< "   "<< prefix0 <<"Parsers(AstCharLexer* charLexer, "<< grType0->str << "* inputArg) : charLexer(charLexer), inputArg(inputArg), result(NULL)";
+      bufHeadFun << "   {" << std::endl;
+      bufHeadFun << "      result = _usr_" << usr0 << "->parse_" << name0 << "(inputArg);" << std::endl;
+      bufHeadFun << "   }" << std::endl;
+
+  }
 
   if (ast->earlyStartNT) {
       ast->forms.removeItem(ast->earlyStartNT);
@@ -5356,14 +5385,6 @@ int inner_entry(int argc, char **argv)
   g0.allNonterminals.concat(g0.nonterminals);
   g0.allProductions.concat(g0.productions);
 
-  int multiIndex = 0;
-  int result = 0;
-
-  std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
-
-
-  bool first = true;
-  int maxSr=0,maxRr=0;
 
   do {
 
@@ -5387,30 +5408,15 @@ int inner_entry(int argc, char **argv)
           }
 
       } else {
-/* TODO
-          if (rhs->count()==2) { // 1 + reof
-              Symbol *s = NULL;
-              if (rhs->first()->isRH_name())
-                 s = env.g.findSymbol(rhs->first()->asRH_name()->name);
-              else if (rhs->first()->isRH_string())
-                 s = env.g.findSymbol(rhs->first()->asRH_string()->str);
 
-              if (s && s->type) {
-                  single = true;
+          std::stringstream s;
 
-                  grType = LIT_STR(s->type).clone();
-
-                  nms << s->name;
-
-                  us << s->name;
-              }
-          }
-*/
-
-          prefix = prefix0;
-
+          s << "multiIndex overflow : " << multiIndex << " of "
+            << (ast->childrenNT?ast->childrenNT->productions.count():0);
+          astParseError(s.str().c_str());
 
       }
+
       cout << endl << "Processing : " << prefix << endl;
       //ast->forms.nth(0)->debugPrint(cout, 0);
 
@@ -5418,37 +5424,12 @@ int inner_entry(int argc, char **argv)
       // parse the AST into a Grammar
       //g0.itemSets
       GrammarAnalysis g(g0);
+      Environment env(g);
 
-      analyzse(g, ast, eof, useML, pref, prefix0, prefix, multiIndex, true);
+      analyzse(env, ast, eof, useML, pref, prefix0, prefix, multiIndex, true);
       maxSr=max(maxSr, g.sr) ;
       maxRr=max(maxRr, g.rr);
 
-
-      if (first && ast->firstNT) {
-          first = false;
-          Nonterminal *nt = g.findNonterminal(ast->firstNT->name);
-
-          if (nt && nt->type) {
-
-              bufIncl << "#include \""<< prefix <<".h\"" << std::endl;
-              bufHead << "   AstCharLexer* charLexer;" << std::endl;
-              bufHead << "   LexerInterface* startLexer;" << std::endl;
-              bufHead << "   "<< nt->type << " result;" << std::endl;
-              bufHead << "   "<< g.actionClassName <<" _usr_;" << std::endl;
-              bufConsBase<< "   "<< prefix0 <<"Parsers(AstCharLexer* charLexer, LexerInterface* startLexer) : charLexer(charLexer), startLexer(startLexer), result(NULL), _usr_(this)";
-              bufHeadFun << "   {" << std::endl;
-              bufHeadFun << "      // initialize the parser" << std::endl;
-              bufHeadFun << "      GLR glr(_usr_, _usr_::parseTables);" << std::endl;
-              bufHeadFun << "" << std::endl;
-              bufHeadFun << "      // parse the input" << std::endl;
-              bufHeadFun << "      if (glr.glrParse(*startLexer, (SemanticValue&)result)) {" << std::endl;
-              bufHeadFun << "      } else {" << std::endl;
-              bufHeadFun << "         // TODO trace something" << std::endl;
-              bufHeadFun << "      }" << std::endl;
-              bufHeadFun << "   }" << std::endl;
-
-          }
-      }
 
       if (g.bufIncl) bufIncl << g.bufIncl->str() << std::flush;
       if (g.bufHead) bufHead<< g.bufHead->str() << std::flush;
@@ -5562,7 +5543,8 @@ int inner_entry(int argc, char **argv)
       ast->forms.prepend(ast->childrenNT);
       ast->firstNT = ast->childrenNT;
 
-      analyzse(tot_g, ast, eof, useML, pref, prefix0, prefix, multiIndex, false);
+      Environment tot_env(tot_g);
+      analyzse(tot_env, ast, eof, useML, pref, prefix0, prefix, multiIndex, false);
 
       reportUnexpected(maxSr, tot_g.expectedSR, "max branch shift/reduce conflicts");
       reportUnexpected(maxRr, tot_g.expectedRR, "max branch reduce/reduce conflicts");

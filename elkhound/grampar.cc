@@ -83,7 +83,7 @@ XASTParse::~XASTParse()
 
 // -------------------- AST parser support ---------------------
 // fwd-decl of parsing fns
-void astParseGrammar(Grammar &g, GrammarAST *treeTop, TermDecl const *eof);
+void astParseGrammar(Environment &g, GrammarAST *treeTop, TermDecl const *eof);
 void astParseTerminals(Environment &env, TF_terminals const &terms);
 void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
@@ -304,10 +304,8 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
 
 
 // map the grammar definition AST into a Grammar data structure
-void astParseGrammar(Grammar &g, GrammarAST *ast, TermDecl const *eof)
+void astParseGrammar(Environment &env, GrammarAST *ast, TermDecl const *eof)
 {
-  // default, empty environment
-  Environment env(g);
 
   // handle TF_terminals
   astParseTerminals(env, *(ast->terms));
@@ -364,7 +362,7 @@ void astParseGrammar(Grammar &g, GrammarAST *ast, TermDecl const *eof)
     }
   }
 
-  if (!g.actionClassName.str) {
+  if (!env.g.actionClassName.str) {
     astParseError("you must specify a context class; for example:\n"
                   "  context_class Context : public UserActions {};\n");
   }
@@ -814,6 +812,13 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   }*/
 }
 
+std::stringstream& b(std::stringstream*& buf) {
+    if (!buf) {
+        buf = new std::stringstream;
+    }
+    return *buf;
+}
+
 bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *& grType, std::string& name, std::string& usr) {
     if (rhs->count()==2) { // 1 + reof
         Symbol *s = NULL;
@@ -823,7 +828,6 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
            s = env.g.findSymbol(rhs->first()->asRH_string()->str);
 
         if (s && s->type) {
-            single = true;
 
             grType = LIT_STR(s->type).clone();
 
@@ -903,7 +907,7 @@ void createEarlyRule(GrammarAST *ast, AbstractProdDecl *prod, TermDecl const *eo
     }
 }
 
-void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &multiIndex)
+void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof, int &multiIndex, LocString *& grType, std::string &name, std::string &usr)
 {
 
   if (multiIndex > 0) {
@@ -916,33 +920,14 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
   } else {
 
       // build a start production
+      // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
       RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), ast->firstNT->name.clone());
       RHSElt *rhs2 = new RH_name(LIT_STR("").clone(), eof->name.clone());
       ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
       rhs->append(rhs1);
       rhs->append(rhs2);
-      // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
-      //char const *action = g.targetLang.equals("OCaml")? " top " :
-      //                     ast->firstNT->type.equals("void")? " return; " :
-      //                                                   " return top; ";
-      ProdDecl *startProd = new ProdDecl(SL_INIT, PDK_NEW, rhs, new LocString(SL_UNKNOWN, NULL), new LocString(SL_UNKNOWN, NULL), new LocString(SL_UNKNOWN, NULL)/*LIT_STR(action).clone()*/);
-      // build an even earlier start symbol
-      ast->earlyStartNT
-        = new TF_nonterm(
-            LIT_STR("__EarlyStartSymbol").clone(),   // name
-            new LocString(SL_UNKNOWN, NULL)/*ast->firstNT->type.clone()*/,                   // type
-            NULL,                                    // empty list of functions
-            new ASTList<AbstractProdDecl>(startProd),        // productions
-            NULL                                     // subsets
-          );
-      // put it into the AST
-      ast->forms.prepend(ast->earlyStartNT);
-
-      LocString * grType = NULL;
-      std::string name, usr;
 
       synthesizeChildRule(env, ast, rhs, grType, name, usr);
-
   }
 
   if (multiIndex >= 0) {
@@ -989,13 +974,6 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
       nonterm->subsets.prepend(sub);
     }
   }
-}
-
-std::stringstream& b(std::stringstream*& buf) {
-    if (!buf) {
-        buf = new std::stringstream;
-    }
-    return *buf;
 }
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
@@ -1830,12 +1808,12 @@ GrammarAST *parseGrammarFile(rostring origFname, bool useML)
 }
 
 
-void parseGrammarAST(Grammar &g, GrammarAST *treeTop, TermDecl const *& eof)
+void parseGrammarAST(Environment &env, GrammarAST *treeTop, TermDecl const *& eof)
 {
 
   // look at TF_options before synthesizing start rule,
   // so we can know what language is the target
-  astParseOptions(g, treeTop);
+  astParseOptions(env.g, treeTop);
 
   if (!treeTop->firstNT) {
       astParseError("you have to define at least 1 nonterm symbol");
@@ -1862,19 +1840,19 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop, TermDecl const *& eof)
 
   // parse the AST into a Grammar
   traceProgress() << "parsing grammar AST..\n";
-  astParseGrammar(g, treeTop, eof);
+  astParseGrammar(env, treeTop, eof);
 
   // fill in default types and actions
-  addDefaultTypesActions(g, treeTop);
+  addDefaultTypesActions(env.g, treeTop);
 
   // then check grammar properties; throws exception
   // on failure
   traceProgress() << "beginning grammar analysis..\n";
-  g.checkWellFormed();
+  env.g.checkWellFormed();
 }
 
 
-void readGrammarFile(Grammar &g, rostring fname)
+void readGrammarFile(Environment &env, rostring fname)
 {
   // make sure the tree gets deleted
   Owner<GrammarAST> treeTop(parseGrammarFile(fname, false /*useML*/));
@@ -1882,7 +1860,7 @@ void readGrammarFile(Grammar &g, rostring fname)
   TermDecl const *eof = NULL;
 
   setAnnotations(treeTop);
-  parseGrammarAST(g, treeTop, eof);
+  parseGrammarAST(env, treeTop, eof);
 
   treeTop.del();
 
