@@ -367,7 +367,7 @@ void emitMLActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
       ;
 
   // iterate over productions, emitting action function closures
-  {FOREACH_OBJLIST(Production, g.productions, iter) {
+  {SFOREACH_OBJLIST(Production, g.productions, iter) {
     Production const &prod = *(iter.data());
 
     // there's no syntax for a typeless nonterminal, so this shouldn't
@@ -439,7 +439,7 @@ void emitMLDupDelMerge(GrammarAnalysis const &g, EmitCode &out, EmitCode &dcl)
       << "\n";
 
   // emit inlines for dup/del/merge of nonterminals
-  FOREACH_OBJLIST(Nonterminal, g.nonterminals, ntIter) {
+  SFOREACH_OBJLIST(Nonterminal, g.nonterminals, ntIter) {
     emitMLDDMInlines(g, out, dcl, *(ntIter.data()));
   }
 
@@ -485,7 +485,7 @@ void emitMLDupDelMerge(GrammarAnalysis const &g, EmitCode &out, EmitCode &dcl)
   out << "\n";
   out << "(* ---------------- dup/del/classify terminals --------------- *)";
   // emit inlines for dup/del of terminals
-  FOREACH_OBJLIST(Terminal, g.terminals, termIter) {
+  SFOREACH_OBJLIST(Terminal, g.terminals, termIter) {
     emitMLDDMInlines(g, out, dcl, *(termIter.data()));
   }
 

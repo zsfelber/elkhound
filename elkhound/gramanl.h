@@ -383,6 +383,14 @@ public:     // funcs
 
 // ---------------------- GrammarAnalysis -------------------
 class GrammarAnalysis : public Grammar {
+    friend class TerminalSet;
+
+public:
+
+    SObjList<Nonterminal> urNonterminals;
+    SObjList<Terminal> urTerminals;
+    SObjList<Production> urProductions;
+
 protected:  // data
   // if entry i,j is true, then nonterminal i can derive nonterminal j
   // (this is a graph, represented (for now) as an adjacency matrix)
@@ -587,7 +595,9 @@ public:	    // funcs
   int numTerminals() const { return numTerms; }
   int numNonterminals() const { return numNonterms; }
 
+
   // binary read/write
+  void xfer0(Flatten &flat);
   void xfer(Flatten &flat);
 
   // essentially, my 'main()' while experimenting

@@ -730,7 +730,7 @@ void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
   bool forceDefaults = tracingSys("forceDefaultActions");
 
   // iterate over nonterminals
-  for (ObjListIter<Nonterminal> ntIter(g.nonterminals);
+  for (SObjListIter<Nonterminal> ntIter(g.nonterminals);
        !ntIter.isDone(); ntIter.adv()) {
       // convenient alias
       Nonterminal *nonterm = constcast(ntIter.data());

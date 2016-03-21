@@ -2,13 +2,14 @@
 // code for grammar.h
 
 #include "grammar.h"   // this module
+#include "gramanl.h"   // this module
 #include "syserr.h"    // xsyserror
 #include "strtokp.h"   // StrtokParse
 #include "trace.h"     // trace
 #include "exc.h"       // xBase
 #include "strutil.h"   // quoted, parseQuotedString
 #include "flatten.h"   // Flatten
-#include "flatutil.h"  // various xfer helpers
+#include "flatutil.h"  // various 0 helpers
 #include "asthelp.h"
 
 #include <stdarg.h>    // variable-args stuff
@@ -355,9 +356,10 @@ void TerminalSet::init(int numTerms)
   }
 }
 
+// TODO!!
 void TerminalSet::convert(Grammar& g) {
-  SObjList<Terminal>& oldts = g.allTerminals;
-  ObjList<Terminal>& newts = g.terminals;
+  ObjList<Terminal>& oldts = g.allTerminals;
+  SObjList<Terminal>& newts = g.terminals;
   xassert(bitmapLen == ((oldts.count()+7)>>3));
 
 
@@ -367,7 +369,7 @@ void TerminalSet::convert(Grammar& g) {
   unsigned char const bits[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 
   int ind = 0;
-  SObjListIter<Terminal> iter(oldts);
+  ObjListIter<Terminal> iter(oldts);
   for (int i = 0; i < dup.bitmapLen; i++) {
     unsigned char byte = dup.bitmap[i];
     for (unsigned char bit = 0x01; bit && !iter.isDone(); iter.adv(), bit<<=1, ind++) {
@@ -541,7 +543,7 @@ bool TerminalSet::removeSet(TerminalSet const &obj)
 void TerminalSet::print(std::ostream &os, Grammar const &g, char const *lead) const
 {
     int ct=0;
-    FOREACH_TERMINAL(g.terminals, iter) {
+    SFOREACH_TERMINAL(g.terminals, iter) {
         print_terminal_adv(termIndex);
     }
 }
@@ -550,7 +552,7 @@ void TerminalSet::print(std::ostream &os, Grammar const &g, char const *lead) co
 void TerminalSet::print_ext(std::ostream &os, Grammar const &g, char const *lead) const
 {
     int ct=0;
-    SFOREACH_TERMINAL(g.allTerminals, iter) {
+    FOREACH_TERMINAL(g.allTerminals, iter) {
         print_terminal_adv(externalTermIndex);
     }
 }
@@ -622,7 +624,7 @@ void Production::xferSerfs(Flatten &flat, Grammar &g)
 {
   // must break constness in xfer
 
-  xferSerfPtrToList(flat, const_cast<Nonterminal*&>(left),
+  xferSerfPtrToSList(flat, const_cast<Nonterminal*&>(left),
                           g.nonterminals);
 
   // xfer right's 'sym' pointers
@@ -928,14 +930,13 @@ Grammar::Grammar()
 Grammar::~Grammar()
 {}
 
-
 void Grammar::xfer(Flatten &flat)
 {
   // owners
   flat.checkpoint(0xC7AB4D86);
-  xferObjList(flat, nonterminals);
-  xferObjList(flat, terminals);
-  xferObjList(flat, productions);
+  xferSObjList(flat, nonterminals);
+  xferSObjList(flat, terminals);
+  xferSObjList(flat, productions);
 
   // emptyString is const
 
@@ -958,18 +959,17 @@ void Grammar::xfer(Flatten &flat)
   // serfs
   flat.checkpoint(0x8580AAD2);
 
-  MUTATE_EACH_OBJLIST(Nonterminal, nonterminals, nt) {
+  SMUTATE_EACH_OBJLIST(Nonterminal, nonterminals, nt) {
     nt.data()->xferSerfs(flat, *this);
   }
-  MUTATE_EACH_OBJLIST(Production, productions, p) {
+  SMUTATE_EACH_OBJLIST(Production, productions, p) {
     p.data()->xferSerfs(flat, *this);
   }
 
-  xferSerfPtrToList(flat, startSymbol, nonterminals);
+  xferSerfPtrToSList(flat, startSymbol, nonterminals);
 
   flat.checkpoint(0x2874DB95);
 }
-
 
 int Grammar::numTerminals() const
 {
@@ -982,11 +982,10 @@ int Grammar::numNonterminals() const
   return nonterminals.count() + 1;
 }
 
-
 void Grammar::printSymbolTypes(ostream &os) const
 {
   os << "Grammar terminals with types or precedence:\n";
-  FOREACH_OBJLIST(Terminal, terminals, term) {
+  SFOREACH_OBJLIST(Terminal, terminals, term) {
     Terminal const &t = *(term.data());
     t.printDDM(os);
     if (t.precedence) {
@@ -996,7 +995,7 @@ void Grammar::printSymbolTypes(ostream &os) const
   }
 
   os << "Grammar nonterminals with types:\n";
-  FOREACH_OBJLIST(Nonterminal, nonterminals, nt) {
+  SFOREACH_OBJLIST(Nonterminal, nonterminals, nt) {
     nt.data()->printDDM(os);
   }
 }
@@ -1005,7 +1004,7 @@ void Grammar::printSymbolTypes(ostream &os) const
 void Grammar::printProductions(ostream &os, bool code) const
 {
   os << "Grammar productions:\n";
-  for (ObjListIter<Production> iter(productions);
+  for (SObjListIter<Production> iter(productions);
        !iter.isDone(); iter.adv()) {
     os << "  " << iter.data()->toStringMore(code);
   }
@@ -1099,7 +1098,7 @@ void Grammar::printAsBison(ostream &os) const
   os << "/* automatically generated grammar */\n\n";
 
   os << "/* -------- tokens -------- */\n";
-  FOREACH_TERMINAL(terminals, term) {
+  SFOREACH_TERMINAL(terminals, term) {
     // I'll surround all my tokens with quotes and see how Bison likes it
     // TODO: the latest bison does *not* like it!
     os << "%token " << bisonTokenName(term.data()) << " "
@@ -1112,7 +1111,7 @@ void Grammar::printAsBison(ostream &os) const
   {
     // first, compute the highest precedence used anywhere in the grammar
     int highMark=0;
-    FOREACH_TERMINAL(terminals, iter) {
+    SFOREACH_TERMINAL(terminals, iter) {
       highMark = max(iter.data()->precedence, highMark);
     }
             
@@ -1125,7 +1124,7 @@ void Grammar::printAsBison(ostream &os) const
     // because it means 'unspecified')
     for (int level=1; level <= highMark; level++) {
       AssocKind kind = NUM_ASSOC_KINDS;   // means we haven't seen any kind yet
-      FOREACH_TERMINAL(terminals, iter) {
+      SFOREACH_TERMINAL(terminals, iter) {
         Terminal const *t = iter.data();
 
         if (t->precedence == level) {
@@ -1153,10 +1152,10 @@ void Grammar::printAsBison(ostream &os) const
   os << "/* -------- productions ------ */\n"
         "%%\n\n";
   // print every nonterminal's rules
-  FOREACH_NONTERMINAL(nonterminals, nt) {
+  SFOREACH_NONTERMINAL(nonterminals, nt) {
     // look at every rule where this nonterminal is on LHS
     bool first = true;
-    FOREACH_PRODUCTION(productions, prod) {
+    SFOREACH_PRODUCTION(productions, prod) {
       if (prod.data()->left == nt.data()) {
 
         if (first) {
@@ -1192,7 +1191,7 @@ void Grammar::printAsBison(ostream &os) const
         if (prod.data()->precedence) {
           // search for a terminal with the required precedence level
           bool found=false;
-          FOREACH_TERMINAL(terminals, iter) {
+          SFOREACH_TERMINAL(terminals, iter) {
             if (iter.data()->precedence == prod.data()->precedence) {
               // found suitable token
               os << " %prec " << bisonTokenName(iter.data());
@@ -1242,7 +1241,7 @@ Nonterminal const *Grammar::findNonterminalC(char const *name) const
     return &emptyString;
   }
 
-  FOREACH_NONTERMINAL(nonterminals, iter) {
+  SFOREACH_NONTERMINAL(nonterminals, iter) {
     if (iter.data()->name.equals(name)) {
       return iter.data();
     }
@@ -1253,7 +1252,7 @@ Nonterminal const *Grammar::findNonterminalC(char const *name) const
 
 Terminal const *Grammar::findTerminalC(char const *name) const
 {
-  FOREACH_TERMINAL(terminals, iter) {
+  SFOREACH_TERMINAL(terminals, iter) {
     if (iter.data()->name.equals(name) ||
         iter.data()->alias.equals(name)) {
       return iter.data();

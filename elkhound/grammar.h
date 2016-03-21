@@ -224,6 +224,9 @@ typedef SObjListIter<Terminal> TerminalListIter;
 inline ObjList<Symbol> const &toObjList(ObjList<Terminal> const &list)
   { return reinterpret_cast< ObjList<Symbol>const& >(list); }
 
+inline SObjList<Symbol> const &toSObjList(SObjList<Terminal> const &list)
+  { return reinterpret_cast< SObjList<Symbol>const& >(list); }
+
 // format: "t1 t2 t3"
 string terminalSequenceToString(TerminalList const &list);
 
@@ -240,6 +243,7 @@ struct TerminalOrSet {
 // used for the lookahead sets of LR items, and for the First()
 // sets of production RHSs
 class TerminalSet {
+
 private:    // data
   unsigned char *bitmap;      // (owner) bitmap of terminals, indexed by
                               // terminal id; lsb of byte 0 is index 0
@@ -353,6 +357,8 @@ typedef SObjListIter<Nonterminal> NonterminalListIter;
 inline ObjList<Symbol> const &toObjList(ObjList<Nonterminal> const &list)
   { return reinterpret_cast< ObjList<Symbol>const& >(list); }
 
+inline SObjList<Symbol> const &toSObjList(SObjList<Nonterminal> const &list)
+  { return reinterpret_cast< SObjList<Symbol>const& >(list); }
 
 // ---------------- Production --------------------
 // a rewrite rule
@@ -487,13 +493,16 @@ typedef ObjListMutator<Production::RHSElt> RHSEltListMutator;
 class Grammar {
 // ------ representation ------
 public:	    // data
-  ObjList<Nonterminal> nonterminals;    // (owner list)
-  ObjList<Terminal> terminals;          // (owner list)
-  ObjList<Nonterminal> urNonterminals;  // (owner list)
-  ObjList<Terminal> urTerminals;        // (owner list)
-  SObjList<Terminal> allTerminals;      //  ----------
-  ObjList<Production> productions;      // (owner list)
-  ObjList<Production> urProductions;    // (owner list)
+  SObjList<Nonterminal> nonterminals;
+  SObjList<Terminal> terminals;
+  SObjList<Production> productions;
+
+
+  ObjList<Nonterminal> allNonterminals;      // (owner list)
+  ObjList<Terminal> allTerminals;            // (owner list)
+  ObjList<Production> allProductions;        // (owner list)
+
+
   bool terminalCodeMapped;
   GrowArray<Terminal*> codeHasTerm;
   int maxCode;

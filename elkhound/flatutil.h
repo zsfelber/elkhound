@@ -89,6 +89,34 @@ void xferObjList(Flatten &flat, ObjList <T> &list)
   }
 }
 
+template <class T>
+void xferSObjList(Flatten &flat, SObjList <T> &list)
+{
+  if (flat.writing()) {
+    flat.writeInt(list.count());
+
+    SMUTATE_EACH_OBJLIST(T, list, iter) {
+      iter.data()->xfer(flat);
+      flat.noteOwner(iter.data());
+    }
+  }
+  else {
+    int listLen = flat.readInt();
+
+    SObjListMutator<T> mut(list);
+    while (listLen--) {
+      // construct a new, empty object
+      T *obj = new T(flat);
+
+      // read it
+      obj->xfer(flat);
+      flat.noteOwner(obj);
+
+      // add it to the list
+      mut.append(obj);
+    }
+  }
+}
 
 // for things like AExprNode which have a readObj
 // static method .. it's possible to merge this with
@@ -185,6 +213,18 @@ void xferSObjList(Flatten &flat, SObjList<T> &list, ObjList<T> &masterList)
 // xfer a pointer which points to something in a master list
 template <class T>
 void xferSerfPtrToList(Flatten &flat, T *&ptr, ObjList<T> &masterList)
+{
+  if (flat.writing()) {
+    flat.writeInt(masterList.indexOfF(ptr));
+  }
+  else {
+    ptr = masterList.nth(flat.readInt());
+  }
+}
+
+// xfer a pointer which points to something in a master list
+template <class T>
+void xferSerfPtrToSList(Flatten &flat, T *&ptr, SObjList<T> &masterList)
 {
   if (flat.writing()) {
     flat.writeInt(masterList.indexOfF(ptr));

@@ -1114,6 +1114,14 @@ void printSymbols(ostream &os, ObjList<Symbol> const &list)
   }
 }
 
+void printSymbols(ostream &os, SObjList<Symbol> const &list)
+{
+  for (SObjListIter<Symbol> iter(list);
+       !iter.isDone(); iter.adv()) {
+    os << "  " << *(iter.data()) << endl;
+  }
+}
+
 
 bool GrammarAnalysis::addDerivable(Nonterminal const *left, Nonterminal const *right)
 {
@@ -1263,7 +1271,7 @@ void GrammarAnalysis::computeIndexedNonterms()
   int index = emptyStringIndex;
   emptyString.ntIndex = index++;
 
-  for (ObjListMutator<Nonterminal> sym(nonterminals);
+  for (SObjListMutator<Nonterminal> sym(nonterminals);
        !sym.isDone(); index++, sym.adv()) {
     indexedNonterms[index] = sym.data();    // map: index to symbol
     sym.data()->ntIndex = index;            // map: symbol to index
@@ -1283,7 +1291,7 @@ void GrammarAnalysis::computeIndexedTerms()
     indexedTerms[i] = NULL;      // used to track id duplication
   }
   int index = 0;// map: symbol to index
-  for (ObjListMutator<Terminal> sym(terminals);
+  for (SObjListMutator<Terminal> sym(terminals);
        !sym.isDone(); sym.adv(), index++) {
     if (indexedTerms[index] != NULL) {
       xfailure(stringc << "terminal index collision at index " << index);
@@ -1296,7 +1304,7 @@ void GrammarAnalysis::computeIndexedTerms()
 // set the first/follow of all nonterminals to the correct size
 void GrammarAnalysis::resetFirstFollow()
 {
-  MUTATE_EACH_NONTERMINAL(nonterminals, sym) {
+  SMUTATE_EACH_NONTERMINAL(nonterminals, sym) {
     sym.data()->first.reset(numTerminals());
     sym.data()->follow.reset(numTerminals());
   }
@@ -1317,7 +1325,7 @@ void GrammarAnalysis::computeProductionsByLHS()
   // fill in both maps
   {
     int pi = 0;
-    MUTATE_EACH_PRODUCTION(productions, prod) {        // (constness)
+    SMUTATE_EACH_PRODUCTION(productions, prod) {        // (constness)
       int LHSindex = prod.data()->left->ntIndex;
       xassert(LHSindex < numNonterms);
 
@@ -1341,7 +1349,7 @@ void GrammarAnalysis::createDottedProductions()
   dottedProds = new DottedProduction* [numProds];
   memset(dottedProds, 0, sizeof(*dottedProds) * numProds);
 
-  FOREACH_PRODUCTION(productions, iter) {
+  SFOREACH_PRODUCTION(productions, iter) {
     Production const *prod = iter.data();
     int rhsLen = prod->rhsLength();
     xassert(rhsLen >= 0);
@@ -1411,6 +1419,10 @@ void GrammarAnalysis::initializeAuxData()
   // at the moment, calling this twice leaks memory
   xassert(!initialized);
 
+  terminals.appendAll(allTerminals);
+  nonterminals.appendAll(allNonterminals);
+  productions.appendAll(allProductions);
+
   computeIndexedNonterms();
   computeIndexedTerms();
   resetFirstFollow();
@@ -1418,12 +1430,15 @@ void GrammarAnalysis::initializeAuxData()
   computeProductionsByLHS();
   computeReachable();
 
+  terminals.removeAll();
+  nonterminals.removeAll();
+  productions.removeAll();
+
   bool changed = false;
   int ti=0, eti=0;
-  MUTATE_EACH_TERMINAL(terminals, iter) {
+  MUTATE_EACH_TERMINAL(allTerminals, iter) {
     Terminal *t = iter.data();
 
-    allTerminals.append(t);
     t->externalTermIndex = eti;
     eti++;
 
@@ -1438,27 +1453,29 @@ void GrammarAnalysis::initializeAuxData()
           changed = true;
       }
       codeHasTerm[code] = t;
+      terminals.append(t);
       ti++;
     } else {
       terminalCodeMapped = true;
       t->termIndex = 0;
       urTerminals.append(t);
-      iter.removeAndStuck();
       changed = true;
     }
   }
 
-  MUTATE_EACH_NONTERMINAL(nonterminals, iter) {
+  MUTATE_EACH_NONTERMINAL(allNonterminals, iter) {
     Nonterminal *nt = iter.data();
     if (nt->reachable) {
-      // --
+      nonterminals.append(nt);
+      SFOREACH_OBJLIST(Production, nt->productions, pter) {
+          Production * prod = constcast(pter.data());
+          productions.append(prod);
+      }
     } else {
       urNonterminals.append(nt);
-      iter.removeAndStuck();
       SFOREACH_OBJLIST(Production, nt->productions, pter) {
           Production * prod = constcast(pter.data());
           urProductions.append(prod);
-          productions.removeItem(prod);
       }
       changed = true;
     }
@@ -1491,7 +1508,7 @@ void GrammarAnalysis::initializeAuxData()
       resetFirstFollow();
       computeProductionsByLHS();
 
-      MUTATE_EACH_PRODUCTION(productions, iter) {        // (constness)
+      SMUTATE_EACH_PRODUCTION(productions, iter) {        // (constness)
         Production * prod = iter.data();
         if (prod->forbid_owned) {
             prod->forbid->convert(*this);
@@ -1502,7 +1519,7 @@ void GrammarAnalysis::initializeAuxData()
 
   // finish the productions before we compute the
   // dotted productions
-  MUTATE_EACH_PRODUCTION(productions, prod) {
+  SMUTATE_EACH_PRODUCTION(productions, prod) {
     prod.data()->finished(numTerminals());
   }
 
@@ -1527,7 +1544,7 @@ void GrammarAnalysis::computeWhatCanDeriveWhat()
 
     // --------- first part: add new canDerive relations --------
     // loop over all productions
-    for (ObjListIter<Production> prodIter(productions);
+    for (SObjListIter<Production> prodIter(productions);
          !prodIter.isDone(); prodIter.adv()) {
       // convenient alias
       Production const *prod = prodIter.data();
@@ -1663,7 +1680,7 @@ void GrammarAnalysis::computeWhatCanDeriveWhat()
 // set Nonterminal::superset to correspond to Nonterminal::subsets
 void GrammarAnalysis::computeSupersets()
 {
-  FOREACH_OBJLIST_NC(Nonterminal, nonterminals, iter1) {
+  SFOREACH_OBJLIST_NC(Nonterminal, nonterminals, iter1) {
     Nonterminal *super = iter1.data();
 
     SFOREACH_OBJLIST_NC(Nonterminal, super->subsets, iter2) {
@@ -1702,7 +1719,7 @@ void GrammarAnalysis::computeFirst()
     changes = 0;
 
     // for each production
-    for (ObjListMutator<Production> prodIter(productions);
+    for (SObjListMutator<Production> prodIter(productions);
          !prodIter.isDone(); prodIter.adv()) {
       // convenient aliases
       Production *prod = prodIter.data();
@@ -1731,7 +1748,7 @@ void GrammarAnalysis::computeFirst()
   } // while (changes)
 
   if (tr) {
-    FOREACH_NONTERMINAL(nonterminals, iter) {
+    SFOREACH_NONTERMINAL(nonterminals, iter) {
       Nonterminal const &nt = *(iter.data());
 
       ostream &trs = trace("first") << " " << nt.name << ": ";
@@ -1787,7 +1804,7 @@ void GrammarAnalysis::firstOfIterSeq(TerminalSet &destList,
 void GrammarAnalysis::computeDProdFirsts()
 {
   // for each production..
-  FOREACH_PRODUCTION(productions, prodIter) {
+  SFOREACH_PRODUCTION(productions, prodIter) {
     // for each dotted production where the dot is not at the end..
     int rhsLen = prodIter.data()->rhsLength();
     for (int posn=0; posn <= rhsLen; posn++) {
@@ -1818,7 +1835,7 @@ void GrammarAnalysis::computeFollow()
     // needs a mutable 'term' and 'nt'
 
     // for each production
-    MUTATE_EACH_PRODUCTION(productions, prodIter) {
+    SMUTATE_EACH_PRODUCTION(productions, prodIter) {
       Production *prod = prodIter.data();
 
       // for each RHS nonterminal member
@@ -1897,7 +1914,7 @@ void GrammarAnalysis::computePredictiveParsingTable()
 
   // for each production 'prod' (non-const iter because adding them
   // to ProductionList, which doesn't promise to not change them)
-  MUTATE_EACH_PRODUCTION(productions, prodIter) {
+  SMUTATE_EACH_PRODUCTION(productions, prodIter) {
     Production *prod = prodIter.data();
 
     // for each terminal 'term' in First(RHS)
@@ -2695,14 +2712,14 @@ Symbol const *GrammarAnalysis::
   inverseTransitionC(ItemSet const *source, ItemSet const *target) const
 {
   // for each symbol..
-  FOREACH_TERMINAL(terminals, t) {
+  SFOREACH_TERMINAL(terminals, t) {
     // see if it is the one
     if (source->transitionC(t.data()) == target) {
       return t.data();
     }
   }
 
-  FOREACH_NONTERMINAL(nonterminals, nt) {
+  SFOREACH_NONTERMINAL(nonterminals, nt) {
     if (source->transitionC(nt.data()) == target) {
       return nt.data();
     }
@@ -2716,7 +2733,7 @@ Symbol const *GrammarAnalysis::
 void GrammarAnalysis::computeReachable()
 {
   // start by clearing the reachability flags
-  MUTATE_EACH_NONTERMINAL(nonterminals, iter) {
+  SMUTATE_EACH_NONTERMINAL(nonterminals, iter) {
     iter.data()->reachable = false;
   }
   
@@ -2863,10 +2880,10 @@ void GrammarAnalysis::computeBFSTree()
   // for iteration purposes
   SymbolList allSymbols;       	  // (const list)
   {
-    FOREACH_TERMINAL(terminals, t) {
+    SFOREACH_TERMINAL(terminals, t) {
       allSymbols.append(const_cast<Terminal*>(t.data()));
     }
-    FOREACH_NONTERMINAL(nonterminals, nt) {
+    SFOREACH_NONTERMINAL(nonterminals, nt) {
       allSymbols.append(const_cast<Nonterminal*>(nt.data()));
     }
   }
@@ -3268,7 +3285,7 @@ STATICDEF int GrammarAnalysis::renumberStatesDiff
   //cout << "using reductions to distinguish states\n";
 
   // finally, order by possible reductions
-  FOREACH_OBJLIST(Terminal, gramanl->terminals, termIter) {
+  SFOREACH_OBJLIST(Terminal, gramanl->terminals, termIter) {
     ProductionList lpl, rpl;
     left->getPossibleReductions(lpl, termIter.data(), false /*parsing*/);
     right->getPossibleReductions(rpl, termIter.data(), false /*parsing*/);
@@ -3770,7 +3787,7 @@ bool GrammarAnalysis::
 {
   // get all of 'nonterminal's productions that are not recursive
   ProductionList candidates;
-  FOREACH_PRODUCTION(productions, prodIter) {
+  SFOREACH_PRODUCTION(productions, prodIter) {
     Production const *prod = prodIter.data();
     if (prod->left != nonterminal) continue;
 
@@ -3991,7 +4008,7 @@ void GrammarAnalysis::addTreebuildingActions()
   LocString mergeCode = STR("L->addAlternative(R); return L;");
 
   // write dup/del/merge for nonterminals
-  MUTATE_EACH_OBJLIST(Nonterminal, nonterminals, ntIter) {
+  SMUTATE_EACH_OBJLIST(Nonterminal, nonterminals, ntIter) {
     Nonterminal *nt = ntIter.data();
 
     nt->dupParam = param;
@@ -4008,7 +4025,7 @@ void GrammarAnalysis::addTreebuildingActions()
   }
 
   // write treebuilding actions for productions
-  MUTATE_EACH_OBJLIST(Production, productions, prodIter) {
+  SMUTATE_EACH_OBJLIST(Production, productions, prodIter) {
     Production *p = prodIter.data();
 
     // build up the code
@@ -4120,12 +4137,12 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
   // print results
   {
     ostream &tracer = trace("terminals") << "Terminals:\n";
-    printSymbols(tracer, toObjList(terminals));
+    printSymbols(tracer, toSObjList(terminals));
   }
   {
     ostream &tracer = trace("nonterminals") << "Nonterminals:\n";
     tracer << "  " << emptyString << endl;
-    printSymbols(tracer, toObjList(nonterminals));
+    printSymbols(tracer, toSObjList(nonterminals));
   }
 
   if (tracingSys("derivable")) {
@@ -4201,13 +4218,13 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
       if (reportReachable==1) {
           *setsOutput << "reachable nonterminals:\n";
 
-            FOREACH_NONTERMINAL(nonterminals, iter) {
+            SFOREACH_NONTERMINAL(nonterminals, iter) {
               *setsOutput << "  " << iter.data()->name << "\n";
             }
       } else {
           *setsOutput << "unreachable nonterminals:\n";
 
-            FOREACH_NONTERMINAL(urNonterminals, iter) {
+            SFOREACH_NONTERMINAL(urNonterminals, iter) {
               *setsOutput << "  " << iter.data()->name << "\n";
             }
       }
@@ -4233,13 +4250,13 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
         if (reportReachable==1) {
             *setsOutput << "reachable terminals:\n";
 
-              FOREACH_TERMINAL(terminals, jter) {
+              SFOREACH_TERMINAL(terminals, jter) {
                 *setsOutput << "  " << jter.data()->name << "\n";
               }
         } else {
           *setsOutput << "unreachable terminals:\n";
 
-            FOREACH_TERMINAL(urTerminals, jter) {
+            SFOREACH_TERMINAL(urTerminals, jter) {
               *setsOutput << "  " << jter.data()->name << "\n";
             }
         }
@@ -4271,7 +4288,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
   // print information about all tokens
   if (setsOutput) {
     *setsOutput << "terminals:\n";
-    FOREACH_TERMINAL(terminals, iter) {
+    SFOREACH_TERMINAL(terminals, iter) {
       Terminal const *t = iter.data();
       *setsOutput << "  ";
       t->print(*setsOutput);
@@ -4280,7 +4297,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
 
     // and nonterminals
     *setsOutput << "nonterminals:\n";
-    FOREACH_NONTERMINAL(nonterminals, ntIter) {
+    SFOREACH_NONTERMINAL(nonterminals, ntIter) {
       Nonterminal const *nt = ntIter.data();
       *setsOutput << "  ";
       nt->print(*setsOutput);
@@ -4467,14 +4484,14 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
   if (g.terminalCodeMapped) {
 
       out << "enum _Int_TokenType {\n   ";
-      FOREACH_OBJLIST(Terminal, g.terminals, iter) {
+      SFOREACH_OBJLIST(Terminal, g.terminals, iter) {
         Terminal const * t = iter.data();
         out << "_INT_" << t->name << ", ";
       }
       out << "\n};\n"
           << "\n";
       out << "int _To_Ext_TokenType[] = {\n   ";
-      FOREACH_OBJLIST(Terminal, g.terminals, iter) {
+      SFOREACH_OBJLIST(Terminal, g.terminals, iter) {
           Terminal const * t = iter.data();
           out << t->name << ", ";
       }
@@ -4740,7 +4757,7 @@ void emitActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
   out << "// ------------------- actions ------------------\n";
 
   // iterate over productions, emitting inline action functions
-  {FOREACH_OBJLIST(Production, g.productions, iter) {
+  {SFOREACH_OBJLIST(Production, g.productions, iter) {
     Production const &prod = *(iter.data());
 
     // there's no syntax for a typeless nonterminal, so this shouldn't
@@ -4801,7 +4818,7 @@ void emitActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
   out << "  switch (productionId) {\n";
 
   // iterate over productions
-  FOREACH_OBJLIST(Production, g.productions, iter) {
+  SFOREACH_OBJLIST(Production, g.productions, iter) {
     Production const &prod = *(iter.data());
 
     out << "    case " << prod.prodIndex << ":\n";
@@ -4872,7 +4889,7 @@ void emitDupDelMerge(GrammarAnalysis const &g, EmitCode &out, EmitCode &dcl)
       << "\n";
 
   // emit inlines for dup/del/merge of nonterminals
-  FOREACH_OBJLIST(Nonterminal, g.nonterminals, ntIter) {
+  SFOREACH_OBJLIST(Nonterminal, g.nonterminals, ntIter) {
     emitDDMInlines(g, out, dcl, *(ntIter.data()));
   }
 
@@ -4920,7 +4937,7 @@ void emitDupDelMerge(GrammarAnalysis const &g, EmitCode &out, EmitCode &dcl)
   out << "\n";
   out << "// ---------------- dup/del/classify terminals ---------------\n";
   // emit inlines for dup/del of terminals
-  FOREACH_OBJLIST(Terminal, g.terminals, termIter) {
+  SFOREACH_OBJLIST(Terminal, g.terminals, termIter) {
     emitDDMInlines(g, out, dcl, *(termIter.data()));
   }
 
@@ -5324,6 +5341,10 @@ int inner_entry(int argc, char **argv)
 
   setAnnotations(ast);
   parseGrammarAST(g0, ast, eof);
+
+  g0.allTerminals.concat(g0.terminals);
+  g0.allNonterminals.concat(g0.nonterminals);
+  g0.allProductions.concat(g0.productions);
 
   int multiIndex = 0;
   int result = 0;

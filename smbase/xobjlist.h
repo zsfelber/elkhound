@@ -45,10 +45,12 @@ template <class T> class iterNameNC;
 outputCond([[[m4_dnl      // sobjlist
 // the list is considered to not own any of the items; it's ok to
 // insert items multiple times or into multiple lists
+template<typename T> class ObjList;
 ]]], [[[m4_dnl            // objlist
 // the list is considered to own all of the items; it is an error to insert
 // an item into more than one such list, or to insert an item more than once
 // into any such list
+template<typename T> class SObjList;
 ]]])m4_dnl
 template <class T>
 class className {
@@ -57,11 +59,18 @@ private:
   friend class mutatorName<T>;
   friend class iterNameNC<T>;
   friend class Grammar;
+outputCond([[[m4_dnl      // sobjlist
+  friend class ObjList<T>;
+]]], [[[m4_dnl            // objlist
+  friend class SObjList<T>;
+]]])m4_dnl
 
 protected:
   VoidList list;                        // list itself
 
 outputCond([[[m4_dnl    // sobjlist
+  #define OWN
+  #define NOWN
 public:
   // make shallow copies
   className[[[]]](className const &obj)         : list(obj.list) {}
@@ -70,6 +79,8 @@ public:
   public:
     className[[[]]]()                            : list() {}
 ]]], [[[m4_dnl          // objlist
+  #define OWN xassert(owning);
+  #define NOWN xassert(!owning);
 private:
   bool const owning;
   // this is an owner list; these are not allowed
@@ -105,11 +116,11 @@ private:
   T const *lastC() const                { return (T const*)list.last(); }
 
   // insertion
-  void prepend(T *newitem)              { list.prepend((void*)newitem); }
-  void append(T *newitem)               { list.append((void*)newitem); }
-  void insertAt(T *newitem, int index)  { list.insertAt((void*)newitem, index); }
+  void prepend(T *newitem)              { OWN list.prepend((void*)newitem); }
+  void append(T *newitem)               { OWN list.append((void*)newitem); }
+  void insertAt(T *newitem, int index)  { OWN list.insertAt((void*)newitem, index); }
   void insertSorted(T *newitem, Diff diff, void *extra=NULL)
-    { list.insertSorted((void*)newitem, (VoidDiff)diff, extra); }
+    { OWN list.insertSorted((void*)newitem, (VoidDiff)diff, extra); }
 
   // removal
   T *removeAt(int index)                { return (T*)list.removeAt(index); }
@@ -128,8 +139,8 @@ outputCond([[[m4_dnl     // sobjlist
   bool contains(T const *item) const    { return list.contains((void*)item); }
 
   // list-as-set: mutators
-  bool prependUnique(T *newitem)        { return list.prependUnique((void*)newitem); }
-  bool appendUnique(T *newitem)         { return list.appendUnique((void*)newitem); }
+  bool prependUnique(T *newitem)        { OWN return list.prependUnique((void*)newitem); }
+  bool appendUnique(T *newitem)         { OWN return list.appendUnique((void*)newitem); }
   void removeItem(T const *item)        { list.removeItem((void*)item); }    // whether the arg should be const is debatable..
   bool removeIfPresent(T const *item)   { return list.removeIfPresent((void*)item); }
 
@@ -142,13 +153,19 @@ outputCond([[[m4_dnl     // sobjlist
   bool isSorted(Diff diff, void *extra=NULL) const  { return list.isSorted((VoidDiff)diff, extra); }
 
   // multiple lists
-  void concat(className &tail)                       { list.concat(tail.list); }
-outputCond([[[m4_dnl    // sobjlist
-  void appendAll(className const &tail)              { list.appendAll(tail.list); }
-  void prependAll(className const &head)             { list.prependAll(head.list); }
-]]], [[[m4_dnl          // objlist
-  // (we do *not* have appendAll, since these are supposed to be owner lists)
-]]])m4_dnl
+  template <class XObjList>
+  void concat(XObjList &tail)                       { OWN list.concat(tail.list); }
+
+  //outputCond([[[m4_dnl    // sobjlist
+  //]]], [[[m4_dnl          // objlist
+    // (we do *not* have appendAll, since these are supposed to be owner lists)
+  //]]])m4_dnl
+
+  template <class XObjList>
+  void appendAll(XObjList const &tail)              { NOWN list.appendAll(tail.list); }
+
+  template <class XObjList>
+  void prependAll(XObjList const &head)             { NOWN list.prependAll(head.list); }
 
   // steal
   void stealTailAt(int index, className &tail)       { list.stealTailAt(index, tail.list); }
@@ -220,9 +237,11 @@ protected:
   VoidListMutator mut;       // underlying mutator
 
 outputCond([[[m4_dnl    // sobjlist
+  #define OWN
 public:
   mutatorName[[[]]](className<T> &lst)     : mut(lst.list) { reset(); }
 ]]], [[[m4_dnl          // objlist
+  #define OWN xassert(owning);
 private:
   bool const owning;
 
@@ -255,15 +274,15 @@ mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut), owning(obj
   T *&dataRef()                         { return (T*&)mut.dataRef(); }
 
   // insertion
-  void insertBefore(T *item)            { mut.insertBefore((void*)item); }
+  void insertBefore(T *item)            { OWN mut.insertBefore((void*)item); }
     // 'item' becomes the new 'current', and the current 'current' is
     // pushed forward (so the next adv() will make it current again)
 
-  void insertAfter(T *item)             { mut.insertAfter((void*)item); }
+  void insertAfter(T *item)             { OWN mut.insertAfter((void*)item); }
     // 'item' becomes what we reach with the next adv();
     // isDone() must be false
 
-  void append(T *item)                  { mut.append((void*)item); }
+  void append(T *item)                  { OWN mut.append((void*)item); }
     // only valid while isDone() is true, it inserts 'item' at the end of
     // the list, and advances such that isDone() remains true; equivalent
     // to { xassert(isDone()); insertBefore(item); adv(); }

@@ -19,6 +19,7 @@ template <class T> class SObjListIterNC;
 
 // the list is considered to not own any of the items; it's ok to
 // insert items multiple times or into multiple lists
+template<typename T> class ObjList;
 template <class T>
 class SObjList {
 private:
@@ -26,10 +27,13 @@ private:
   friend class SObjListMutator<T>;
   friend class SObjListIterNC<T>;
   friend class Grammar;
+  friend class ObjList<T>;
 
 protected:
   VoidList list;                        // list itself
 
+  #define OWN
+  #define NOWN
 public:
   // make shallow copies
   SObjList(SObjList const &obj)         : list(obj.list) {}
@@ -58,11 +62,11 @@ public:
   T const *lastC() const                { return (T const*)list.last(); }
 
   // insertion
-  void prepend(T *newitem)              { list.prepend((void*)newitem); }
-  void append(T *newitem)               { list.append((void*)newitem); }
-  void insertAt(T *newitem, int index)  { list.insertAt((void*)newitem, index); }
+  void prepend(T *newitem)              { OWN list.prepend((void*)newitem); }
+  void append(T *newitem)               { OWN list.append((void*)newitem); }
+  void insertAt(T *newitem, int index)  { OWN list.insertAt((void*)newitem, index); }
   void insertSorted(T *newitem, Diff diff, void *extra=NULL)
-    { list.insertSorted((void*)newitem, (VoidDiff)diff, extra); }
+    { OWN list.insertSorted((void*)newitem, (VoidDiff)diff, extra); }
 
   // removal
   T *removeAt(int index)                { return (T*)list.removeAt(index); }
@@ -76,8 +80,8 @@ public:
   bool contains(T const *item) const    { return list.contains((void*)item); }
 
   // list-as-set: mutators
-  bool prependUnique(T *newitem)        { return list.prependUnique((void*)newitem); }
-  bool appendUnique(T *newitem)         { return list.appendUnique((void*)newitem); }
+  bool prependUnique(T *newitem)        { OWN return list.prependUnique((void*)newitem); }
+  bool appendUnique(T *newitem)         { OWN return list.appendUnique((void*)newitem); }
   void removeItem(T const *item)        { list.removeItem((void*)item); }    // whether the arg should be const is debatable..
   bool removeIfPresent(T const *item)   { return list.removeIfPresent((void*)item); }
 
@@ -90,9 +94,15 @@ public:
   bool isSorted(Diff diff, void *extra=NULL) const  { return list.isSorted((VoidDiff)diff, extra); }
 
   // multiple lists
-  void concat(SObjList &tail)                       { list.concat(tail.list); }
-  void appendAll(SObjList const &tail)              { list.appendAll(tail.list); }
-  void prependAll(SObjList const &head)             { list.prependAll(head.list); }
+  template <class XObjList>
+  void concat(XObjList &tail)                       { OWN list.concat(tail.list); }
+
+  //  //
+  template <class XObjList>
+  void appendAll(XObjList const &tail)              { NOWN list.appendAll(tail.list); }
+
+  template <class XObjList>
+  void prependAll(XObjList const &head)             { NOWN list.prependAll(head.list); }
 
   // steal
   void stealTailAt(int index, SObjList &tail)       { list.stealTailAt(index, tail.list); }
@@ -143,6 +153,7 @@ class SObjListMutator {
 protected:
   VoidListMutator mut;       // underlying mutator
 
+  #define OWN
 public:
   SObjListMutator(SObjList<T> &lst)     : mut(lst.list) { reset(); }
 
@@ -165,15 +176,15 @@ SObjListMutator(SObjListMutator const &obj)             : mut(obj.mut) {}
   T *&dataRef()                         { return (T*&)mut.dataRef(); }
 
   // insertion
-  void insertBefore(T *item)            { mut.insertBefore((void*)item); }
+  void insertBefore(T *item)            { OWN mut.insertBefore((void*)item); }
     // 'item' becomes the new 'current', and the current 'current' is
     // pushed forward (so the next adv() will make it current again)
 
-  void insertAfter(T *item)             { mut.insertAfter((void*)item); }
+  void insertAfter(T *item)             { OWN mut.insertAfter((void*)item); }
     // 'item' becomes what we reach with the next adv();
     // isDone() must be false
 
-  void append(T *item)                  { mut.append((void*)item); }
+  void append(T *item)                  { OWN mut.append((void*)item); }
     // only valid while isDone() is true, it inserts 'item' at the end of
     // the list, and advances such that isDone() remains true; equivalent
     // to { xassert(isDone()); insertBefore(item); adv(); }
