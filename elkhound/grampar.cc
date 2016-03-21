@@ -6,7 +6,6 @@
 #include "grampar.h"         // this module
 #include "gramlex.h"         // GrammarLexer
 #include "trace.h"           // tracing debug functions
-#include "gramast.ast.gen.h" // grammar AST nodes
 #include "grammar.h"         // Grammar, Production, etc.
 #include "owner.h"           // Owner (redundant dependency; dot's layout is better with it though)
 #include "syserr.h"          // xsyserror
@@ -84,13 +83,13 @@ XASTParse::~XASTParse()
 
 // -------------------- AST parser support ---------------------
 // fwd-decl of parsing fns
-void astParseGrammar(Grammar &g, GrammarAST *treeTop, TermDecl const *eof, int & multiIndex);
+void astParseGrammar(Grammar &g, GrammarAST *treeTop, TermDecl const *eof);
 void astParseTerminals(Environment &env, TF_terminals const &terms);
 void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex, int & multiIndex);
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex);
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
-                        AbstractProdDecl const *prod, int prodi, TermDecl const *eof, int & multiIndex,
+                        AbstractProdDecl const *prod, int prodi, TermDecl const *eof,
                         std::string errorHandler = "",
                         std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::string indent = "   ",
                         std::stringstream * _bufAct = NULL, std::stringstream * _buf = NULL );
@@ -305,7 +304,7 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
 
 
 // map the grammar definition AST into a Grammar data structure
-void astParseGrammar(Grammar &g, GrammarAST *ast, TermDecl const *eof, int & multiIndex)
+void astParseGrammar(Grammar &g, GrammarAST *ast, TermDecl const *eof)
 {
   // default, empty environment
   Environment env(g);
@@ -361,7 +360,7 @@ void astParseGrammar(Grammar &g, GrammarAST *ast, TermDecl const *eof, int & mul
       Environment newEnv(env);
 
       // parse it
-      astParseNonterm(newEnv, ast, nt, eof, ni++, multiIndex);
+      astParseNonterm(newEnv, ast, nt, eof, ni++);
     }
   }
 
@@ -892,7 +891,7 @@ void synthesizeStartRule(Grammar &g, GrammarAST *ast, TermDecl const *eof, int &
 }
 
 
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex, int & multiIndex)
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex)
 {
   LocString const &name = nt->name;
 
@@ -907,7 +906,7 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
   // iterate over the productions
   int prodi = 0;
   FOREACH_ASTLIST(AbstractProdDecl, nt->productions, iter) {
-    astParseProduction(env, ast, nonterm, iter.data(), prodi++, eof, multiIndex);
+    astParseProduction(env, ast, nonterm, iter.data(), prodi++, eof);
   }
 
   // parse dup/del/merge
@@ -930,10 +929,16 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
   }
 }
 
+std::stringstream& b(std::stringstream*& buf) {
+    if (!buf) {
+        buf = new std::stringstream;
+    }
+    return *buf;
+}
 
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prodDecl, int prodi,
-                        TermDecl const *eof, int & multiIndex,
+                        TermDecl const *eof,
                         std::string errorHandler,
                         std::string tpref, std::string vpref, std::string fvpref, std::string indent,
                         std::stringstream * _bufAct, std::stringstream * _buf)
@@ -1025,7 +1030,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   std::string ehnx = prod->errorActs.count() ? "err"+sv.str() : errorHandler ;
 
                   if (prod->pkind != PDK_TRAVERSE_NULL) {
-                      astParseProduction(env, ast, nonterm, prod, prodi, eof, multiIndex, ehnx, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
+                      astParseProduction(env, ast, nonterm, prod, prodi, eof, ehnx, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
                   }
 
                   if (prod->actionCode && prod->actionCode.isNonNull()) {
@@ -1163,10 +1168,10 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               if (!single || env.g.singleProds.find(nms.str())==env.g.singleProds.end()) {
 
-                  env.g.bufIncl << "#include \""<< env.g.prefix0 << "_" << nms.str() <<".h\"" << std::endl;
+                  b(env.g.bufIncl) << "#include \""<< env.g.prefix0 << "_" << nms.str() <<".h\"" << std::endl;
 
-                  env.g.bufHead << "   "<< env.g.actionClassName << nms.str() << " _usr_" << us.str() << ";" << std::endl;
-                  env.g.bufConsBase << ", _usr_" << us.str() << "(this)";
+                  b(env.g.bufHead) << "   "<< env.g.actionClassName << nms.str() << " _usr_" << us.str() << ";" << std::endl;
+                  b(env.g.bufConsBase) << ", _usr_" << us.str() << "(this)";
 
 
                   // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
@@ -1188,10 +1193,10 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                                 );
                   }
 
-                  if (multiIndex == -1) {
+                  //if (multiIndex == -1) {
                       // reset to this ast->childrenNT :
-                      multiIndex = ast->childrenNT->productions.count();
-                  }
+                      // multiIndex = ast->childrenNT->productions.count();
+                  //}
               }
 
               break;
@@ -1202,44 +1207,44 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           if (v0) {
 
-              env.g.bufHeadFun << "   " << type->str << " parse_" << us.str() << "("
+              b(env.g.bufHeadFun) << "   " << type->str << " parse_" << us.str() << "("
                                << tp <<"* tag);" << std::endl;
-              env.g.bufCc << type->str << " "<< env.g.prefix0 << "Parsers::parse_" << us.str() << "("
+              b(env.g.bufCc) << type->str << " "<< env.g.prefix0 << "Parsers::parse_" << us.str() << "("
                                << tp <<"* tag) {" << std::endl;
-              env.g.bufCc << bufAct.str();
-              env.g.bufCc << buf.str();
-              env.g.bufCc << "   done:" << std::endl;
+              b(env.g.bufCc) << bufAct.str();
+              b(env.g.bufCc) << buf.str();
+              b(env.g.bufCc) << "   done:" << std::endl;
 
               if (origAction && origAction->isNonNull()) {
-                  env.g.bufCc << "   // user action:" << std::endl;
-                  env.g.bufCc << "   " << origAction->str << std::endl;
+                  b(env.g.bufCc) << "   // user action:" << std::endl;
+                  b(env.g.bufCc) << "   " << origAction->str << std::endl;
               } else if (prodDecl->pkind == PDK_TRAVERSE_NULL || prodDecl->pkind == PDK_TRAVERSE_VAL) {
-                  env.g.bufCc << "   return tag;" << std::endl;
+                  b(env.g.bufCc) << "   return tag;" << std::endl;
               } else if (v0 && nonterm->type) {
-                  env.g.bufCc << "   return result;" << std::endl;
+                  b(env.g.bufCc) << "   return result;" << std::endl;
               } else {
-                  env.g.bufCc << "   return tag;" << std::endl;
+                  b(env.g.bufCc) << "   return tag;" << std::endl;
               }
 
-              env.g.bufCc << "   err:" << std::endl;
+              b(env.g.bufCc) << "   err:" << std::endl;
 
               if (tprod->errorActs.count()) {
-                  env.g.bufCc << "   switch(errorKind) {" << std::endl;
+                  b(env.g.bufCc) << "   switch(errorKind) {" << std::endl;
                   FOREACH_ASTLIST(ErrorAct, tprod->errorActs, ierr) {
-                      env.g.bufCc << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
-                      env.g.bufCc << "      " << ierr.data()->actionCode << std::endl;
-                      env.g.bufCc << "      break;" << std::endl;
+                      b(env.g.bufCc) << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
+                      b(env.g.bufCc) << "      " << ierr.data()->actionCode << std::endl;
+                      b(env.g.bufCc) << "      break;" << std::endl;
                   }
-                  env.g.bufCc << "   default:" << std::endl;
-                  env.g.bufCc << "      break;" << std::endl;
-                  env.g.bufCc << "   }" << std::endl;
+                  b(env.g.bufCc) << "   default:" << std::endl;
+                  b(env.g.bufCc) << "      break;" << std::endl;
+                  b(env.g.bufCc) << "   }" << std::endl;
               } else {
-                  env.g.bufCc << "   // TODO default error handler" << std::endl;
-                  env.g.bufCc << "   startLexer->parseError(\"Invalid '"<< nonterm->name << "' .\");" << std::endl;
+                  b(env.g.bufCc) << "   // TODO default error handler" << std::endl;
+                  b(env.g.bufCc) << "   startLexer->parseError(\"Invalid '"<< nonterm->name << "' .\");" << std::endl;
               }
-              env.g.bufCc << "   return NULL;" << std::endl;
+              b(env.g.bufCc) << "   return NULL;" << std::endl;
 
-              env.g.bufCc << "}" << std::endl;
+              b(env.g.bufCc) << "}" << std::endl;
 
               std::stringstream s;
               s << std::endl;
@@ -1811,7 +1816,7 @@ GrammarAST *parseGrammarFile(rostring origFname, bool useML)
 }
 
 
-void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex)
+void parseGrammarAST(Grammar &g, GrammarAST *treeTop, TermDecl const *& eof)
 {
 
   // look at TF_options before synthesizing start rule,
@@ -1822,8 +1827,9 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex)
       astParseError("you have to define at least 1 nonterm symbol");
       return;
   }
+
   // find the name of the user's EOF token
-  TermDecl const *eof = NULL;
+  eof = NULL;
   FOREACH_ASTLIST(TermDecl, treeTop->terms->decls, iter) {
     if (iter.data()->code == 0) {
       eof = iter.data();
@@ -1832,18 +1838,17 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex)
   }
   if (!eof) {
     astParseError("you have to have an EOF token, with code 0");
-    return;
   }
 
   // moved to after parse
   //addDefaultTypesActions(g, treeTop);
 
   // synthesize a rule "TrueStart -> Start EOF"
-  synthesizeStartRule(g, treeTop, eof, multiIndex);
+  // synthesizeStartRule(g, treeTop, eof, multiIndex);
 
   // parse the AST into a Grammar
   traceProgress() << "parsing grammar AST..\n";
-  astParseGrammar(g, treeTop, eof, multiIndex);
+  astParseGrammar(g, treeTop, eof);
 
   // fill in default types and actions
   addDefaultTypesActions(g, treeTop);
@@ -1855,13 +1860,15 @@ void parseGrammarAST(Grammar &g, GrammarAST *treeTop, int &multiIndex)
 }
 
 
-void readGrammarFile(Grammar &g, rostring fname, int &multiIndex)
+void readGrammarFile(Grammar &g, rostring fname)
 {
   // make sure the tree gets deleted
   Owner<GrammarAST> treeTop(parseGrammarFile(fname, false /*useML*/));
 
+  TermDecl const *eof = NULL;
+
   setAnnotations(treeTop);
-  parseGrammarAST(g, treeTop, multiIndex);
+  parseGrammarAST(g, treeTop, eof);
 
   treeTop.del();
 
@@ -1899,7 +1906,7 @@ int main(int argc, char **argv)
   do {
       // read the file
       Grammar g1;
-      readGrammarFile(g1, argv[1], multiIndex);
+      readGrammarFile(g1, argv[1]);
 
       // and print the grammar
       char const g1Fname[] = "grammar.g1.tmp";

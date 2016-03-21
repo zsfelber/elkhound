@@ -56,6 +56,7 @@ private:
   friend class iterName<T>;
   friend class mutatorName<T>;
   friend class iterNameNC<T>;
+  friend class Grammar;
 
 protected:
   VoidList list;                        // list itself
@@ -65,15 +66,24 @@ public:
   // make shallow copies
   className[[[]]](className const &obj)         : list(obj.list) {}
   className& operator= (className const &src)         { list = src.list; return *this; }
+
+  public:
+    className[[[]]]()                            : list() {}
 ]]], [[[m4_dnl          // objlist
 private:
+  bool const owning;
   // this is an owner list; these are not allowed
-  className[[[]]](className const &obj);
+  className[[[]]](className const &obj) : list(obj.list), owning(false) {
+
+  }
   className& operator= (className const &src);
+
+  inline void del_itm(T* itm) { if (owning) delete itm; }
+
+  public:
+    className[[[]]]()                            : list(), owning(true) {}
 ]]])m4_dnl
 
-public:
-  className[[[]]]()                            : list() {}
   ~className[[[]]]()                      m4_dnl
      outputCond({}    /* all items removed */, { deleteAll(); })
 
@@ -108,7 +118,7 @@ public:
 outputCond([[[m4_dnl     // sobjlist
   void removeAll()                      { list.removeAll(); }
 ]]], [[[m4_dnl           // objlist
-  void deleteAt(int index)              { delete (T*)list.removeAt(index); }
+  void deleteAt(int index)              { del_itm((T*)list.removeAt(index)); }
   void deleteAll();
 ]]])m4_dnl
 
@@ -209,8 +219,19 @@ class mutatorName {
 protected:
   VoidListMutator mut;       // underlying mutator
 
+outputCond([[[m4_dnl    // sobjlist
 public:
   mutatorName[[[]]](className<T> &lst)     : mut(lst.list) { reset(); }
+]]], [[[m4_dnl          // objlist
+private:
+  bool const owning;
+
+  inline void del_itm(T* itm) { if (owning) delete itm; }
+
+public:
+  mutatorName[[[]]](className<T> &lst)     : mut(lst.list), owning(lst.owning) { reset(); }
+]]])m4_dnl
+
   ~mutatorName[[[]]]()                    {}
 
   void reset()                          { mut.reset(); }
@@ -218,7 +239,12 @@ public:
   // iterator copying; safe *only* until one of the mutators modifies
   // the list structure (by inserting or removing), at which time all
   // other iterators might be in limbo
-  mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut) {}
+outputCond([[[m4_dnl    // sobjlist
+mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut) {}
+]]], [[[m4_dnl          // objlist
+mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut), owning(obj.owning) {}
+]]])m4_dnl
+
   mutatorName& operator=(mutatorName const &obj)  { mut = obj.mut;  return *this; }
     // requires that 'this' and 'obj' already refer to the same 'list'
 
@@ -249,7 +275,7 @@ public:
     // next becomes the new 'current'
 
 outputCond(, [[[m4_dnl    // sobjlist
-  void deleteIt()                       { delete (T*)mut.remove(); }
+  void deleteIt()                       { del_itm((T*)mut.remove()); }
     // same as remove(), except item is deleted also
 
 ]]])m4_dnl

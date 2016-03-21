@@ -572,6 +572,7 @@ private:    // funcs
 
 public:	    // funcs
   GrammarAnalysis();
+  GrammarAnalysis(Grammar const &cpy);
   ~GrammarAnalysis();
 
   // access symbols by index

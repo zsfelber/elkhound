@@ -26,17 +26,24 @@ private:
   friend class ObjListIter<T>;
   friend class ObjListMutator<T>;
   friend class ObjListIterNC<T>;
+  friend class Grammar;
 
 protected:
   VoidList list;                        // list itself
 
 private:
+  bool const owning;
   // this is an owner list; these are not allowed
-  ObjList(ObjList const &obj);
+  ObjList(ObjList const &obj) : list(obj.list), owning(false) {
+
+  }
   ObjList& operator= (ObjList const &src);
 
-public:
-  ObjList()                            : list() {}
+  inline void del_itm(T* itm) { if (owning) delete itm; }
+
+  public:
+    ObjList()                            : list(), owning(true) {}
+
   ~ObjList()                           { deleteAll(); }
 
   // The difference function should return <0 if left should come before
@@ -67,7 +74,7 @@ public:
   T *removeAt(int index)                { return (T*)list.removeAt(index); }
   T *removeFirst()                      { return (T*)list.removeFirst(); }
   T *removeLast()                       { return (T*)list.removeLast(); }
-  void deleteAt(int index)              { delete (T*)list.removeAt(index); }
+  void deleteAt(int index)              { del_itm((T*)list.removeAt(index)); }
   void deleteAll();
 
   // list-as-set: selectors
@@ -145,8 +152,14 @@ class ObjListMutator {
 protected:
   VoidListMutator mut;       // underlying mutator
 
+private:
+  bool const owning;
+
+  inline void del_itm(T* itm) { if (owning) delete itm; }
+
 public:
-  ObjListMutator(ObjList<T> &lst)     : mut(lst.list) { reset(); }
+  ObjListMutator(ObjList<T> &lst)     : mut(lst.list), owning(lst.owning) { reset(); }
+
   ~ObjListMutator()                    {}
 
   void reset()                          { mut.reset(); }
@@ -154,7 +167,8 @@ public:
   // iterator copying; safe *only* until one of the mutators modifies
   // the list structure (by inserting or removing), at which time all
   // other iterators might be in limbo
-  ObjListMutator(ObjListMutator const &obj)             : mut(obj.mut) {}
+ObjListMutator(ObjListMutator const &obj)             : mut(obj.mut), owning(obj.owning) {}
+
   ObjListMutator& operator=(ObjListMutator const &obj)  { mut = obj.mut;  return *this; }
     // requires that 'this' and 'obj' already refer to the same 'list'
 
@@ -184,7 +198,7 @@ public:
     // 'current' is removed from the list and returned, and whatever was
     // next becomes the new 'current'
 
-  void deleteIt()                       { delete (T*)mut.remove(); }
+  void deleteIt()                       { del_itm((T*)mut.remove()); }
     // same as remove(), except item is deleted also
 
   // debugging

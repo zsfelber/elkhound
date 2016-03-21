@@ -962,6 +962,26 @@ GrammarAnalysis::GrammarAnalysis()
     tables(NULL),sr(0),rr(0)
 {}
 
+GrammarAnalysis::GrammarAnalysis(Grammar const &cpy) : Grammar(cpy),
+    derivable(NULL),
+    indexedNonterms(NULL),
+    indexedTerms(NULL),
+    numNonterms(0),
+    numTerms(0),
+    productionsByLHS(NULL),
+    dottedProds(NULL),
+    indexedProds(NULL),
+    numProds(0),
+    initialized(false),
+    nextItemSetId(0),    // [ASU] starts at 0 too
+    itemSets(),
+    startState(NULL),
+    cyclic(false),
+    symOfInterest(NULL),
+    errors(0),
+    tables(NULL),sr(0),rr(0)
+{}
+
 
 GrammarAnalysis::~GrammarAnalysis()
 {
@@ -4030,10 +4050,9 @@ void pretendUsed(...)
 
 void GrammarAnalysis::exampleGrammar()
 {
-  int multiIndex = 0;
   // at one time I was using this to verify my LR item set
   // construction code; this function isn't even called anymore..
-  readGrammarFile(*this, "examples/asu419.gr", multiIndex);
+  readGrammarFile(*this, "examples/asu419.gr");
 
   char const *input[] = {
     " id                 $",
@@ -5158,14 +5177,15 @@ void get_names(AbstractProdDecl const * pdecl, int multiIndex, string const & pr
     }
 }
 
-void analyzse(GrammarAnalysis &g, GrammarAST *ast, bool useML, string &pref, string &prefix0, string &prefix, int &multiIndex, bool debug) {
+void analyzse(GrammarAnalysis &g, GrammarAST *ast, TermDecl const *eof, bool useML, string &pref, string &prefix0, string &prefix, int &multiIndex, bool debug) {
     if (useML) {
       g.targetLang = "OCaml";
     }
     g.pref = pref;
     g.prefix0 = prefix0;
 
-    parseGrammarAST(g, ast, multiIndex);
+    synthesizeStartRule(g, ast, eof, multiIndex);
+
     {
         std::stringstream s;
 
@@ -5299,17 +5319,20 @@ int inner_entry(int argc, char **argv)
     SHIFT;
   }
 
+  Grammar g0;
+  TermDecl const * eof;
+
+  setAnnotations(ast);
+  parseGrammarAST(g0, ast, eof);
 
   int multiIndex = 0;
   int result = 0;
-
-  setAnnotations(ast);
 
   std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
 
 
   bool first = true;
-  int sr=0,rr=0;
+  int maxSr=0,maxRr=0;
 
   do {
 
@@ -5327,23 +5350,46 @@ int inner_entry(int argc, char **argv)
               s << prefix0 << "_" << pref;
               prefix = s.str().c_str();
           } else {
-              s << "multiIndex " << multiIndex << " of "
+              s << "multiIndex overflow : " << multiIndex << " of "
                 << (ast->childrenNT?ast->childrenNT->productions.count():0);
               astParseError(s.str().c_str());
           }
 
       } else {
+/* TODO
+          if (rhs->count()==2) { // 1 + reof
+              Symbol *s = NULL;
+              if (rhs->first()->isRH_name())
+                 s = env.g.findSymbol(rhs->first()->asRH_name()->name);
+              else if (rhs->first()->isRH_string())
+                 s = env.g.findSymbol(rhs->first()->asRH_string()->str);
+
+              if (s && s->type) {
+                  single = true;
+
+                  grType = LIT_STR(s->type).clone();
+
+                  nms << s->name;
+
+                  us << s->name;
+              }
+          }
+*/
+
           prefix = prefix0;
+
+
       }
       cout << endl << "Processing : " << prefix << endl;
       //ast->forms.nth(0)->debugPrint(cout, 0);
 
 
       // parse the AST into a Grammar
-      GrammarAnalysis g;
-      analyzse(g, ast, useML, pref, prefix0, prefix, multiIndex, true);
-      sr+=g.sr;
-      rr+=g.rr;
+      //g0.itemSets
+      GrammarAnalysis g(g0);
+      analyzse(g, ast, eof, useML, pref, prefix0, prefix, multiIndex, true);
+      maxSr=max(maxSr, g.sr) ;
+      maxRr=max(maxRr, g.rr);
 
 
       if (first && ast->firstNT) {
@@ -5372,11 +5418,11 @@ int inner_entry(int argc, char **argv)
           }
       }
 
-      bufIncl << g.bufIncl.str() << std::flush;
-      bufHead<< g.bufHead.str() << std::flush;
-      bufConsBase<< g.bufConsBase.str() << std::flush;
-      bufHeadFun<< g.bufHeadFun.str() << std::flush;
-      bufCc<< g.bufCc.str() << std::flush;
+      if (g.bufIncl) bufIncl << g.bufIncl->str() << std::flush;
+      if (g.bufHead) bufHead<< g.bufHead->str() << std::flush;
+      if (g.bufConsBase) bufConsBase<< g.bufConsBase->str() << std::flush;
+      if (g.bufHeadFun) bufHeadFun<< g.bufHeadFun->str() << std::flush;
+      if (g.bufCc) bufCc<< g.bufCc->str() << std::flush;
 
       if (g.errors) {
         result |= 2;
@@ -5468,7 +5514,7 @@ int inner_entry(int argc, char **argv)
 
       std::cout << std::endl << "Total : " << std::endl;
 
-      GrammarAnalysis tot_g;
+      GrammarAnalysis tot_g(g0);
       multiIndex = -1;
       if (ast->earlyStartNT) {
           ast->forms.removeItem(ast->earlyStartNT);
@@ -5484,10 +5530,10 @@ int inner_entry(int argc, char **argv)
       ast->forms.prepend(ast->childrenNT);
       ast->firstNT = ast->childrenNT;
 
-      analyzse(tot_g, ast, useML, pref, prefix0, prefix, multiIndex, false);
+      analyzse(tot_g, ast, eof, useML, pref, prefix0, prefix, multiIndex, false);
 
-      reportUnexpected(sr, tot_g.expectedSR, "sum(eliminated) shift/reduce conflicts");
-      reportUnexpected(rr, tot_g.expectedRR, "sum(eliminated) reduce/reduce conflicts");
+      reportUnexpected(maxSr, tot_g.expectedSR, "max branch shift/reduce conflicts");
+      reportUnexpected(maxRr, tot_g.expectedRR, "max branch reduce/reduce conflicts");
   }
 
   ast.del();              // done with it

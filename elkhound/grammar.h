@@ -546,7 +546,7 @@ public:	    // data
 
   string prefix0, pref;
 
-  std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
+  std::stringstream *bufIncl, *bufHead, *bufConsBase, *bufHeadFun, *bufCc;
   std::map<std::string, void*> singleProds;
 
 public:     // funcs

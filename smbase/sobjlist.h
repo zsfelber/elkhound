@@ -25,6 +25,7 @@ private:
   friend class SObjListIter<T>;
   friend class SObjListMutator<T>;
   friend class SObjListIterNC<T>;
+  friend class Grammar;
 
 protected:
   VoidList list;                        // list itself
@@ -34,8 +35,9 @@ public:
   SObjList(SObjList const &obj)         : list(obj.list) {}
   SObjList& operator= (SObjList const &src)         { list = src.list; return *this; }
 
-public:
-  SObjList()                            : list() {}
+  public:
+    SObjList()                            : list() {}
+
   ~SObjList()                           {}    /* all items removed */
 
   // The difference function should return <0 if left should come before
@@ -143,6 +145,7 @@ protected:
 
 public:
   SObjListMutator(SObjList<T> &lst)     : mut(lst.list) { reset(); }
+
   ~SObjListMutator()                    {}
 
   void reset()                          { mut.reset(); }
@@ -150,7 +153,8 @@ public:
   // iterator copying; safe *only* until one of the mutators modifies
   // the list structure (by inserting or removing), at which time all
   // other iterators might be in limbo
-  SObjListMutator(SObjListMutator const &obj)             : mut(obj.mut) {}
+SObjListMutator(SObjListMutator const &obj)             : mut(obj.mut) {}
+
   SObjListMutator& operator=(SObjListMutator const &obj)  { mut = obj.mut;  return *this; }
     // requires that 'this' and 'obj' already refer to the same 'list'
 
