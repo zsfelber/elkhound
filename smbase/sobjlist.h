@@ -65,6 +65,7 @@ public:
   // removal
   T *removeAt(int index)                { return (T*)list.removeAt(index); }
   T *removeFirst()                      { return (T*)list.removeFirst(); }
+  T *removeLast()                       { return (T*)list.removeLast(); }
   void removeAll()                      { list.removeAll(); }
 
   // list-as-set: selectors

@@ -446,6 +446,8 @@ public:	    // data
   // parse tables
   ParseTables *tables;                  // (owner)
 
+  int sr, rr;
+
 private:    // funcs
   // ---- analyis init ----
   // call this after grammar is completely built
@@ -523,7 +525,7 @@ private:    // funcs
     bool allowAmbig,             // if false, always return at most 1 action
     bool &printedConflictHeader, // (inout) true once we've printed the state header
     int &sr, int &rr);           // (inout) counts of S/R and R/R conflicts, resp.
-  void computeParseTables(bool allowAmbig);
+  void computeParseTables(bool allowAmbig, int reportReachable);
 
   int subsetDirectiveResolution(
     ItemSet const *state,        // parse state in which the actions are possible
@@ -600,7 +602,7 @@ public:	    // funcs
   // when grammar is built, this runs all analyses and stores
   // the results in this object's data fields; write the LR item
   // sets to the given file (or don't, if NULL)
-  void runAnalyses(char const *setsFname, bool reportReachable);
+  void runAnalyses(char const *setsFname, int reportReachable);
 
   // print the item sets to a stream (optionally include nonkernel items)
   void printItemSets(ostream &os, bool nonkernel) const;

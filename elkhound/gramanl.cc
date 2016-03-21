@@ -959,7 +959,7 @@ GrammarAnalysis::GrammarAnalysis()
     cyclic(false),
     symOfInterest(NULL),
     errors(0),
-    tables(NULL)
+    tables(NULL),sr(0),rr(0)
 {}
 
 
@@ -3298,7 +3298,7 @@ STATICDEF int GrammarAnalysis::arbitraryRHSEltOrder
 }
 
 
-void GrammarAnalysis::computeParseTables(bool allowAmbig)
+void GrammarAnalysis::computeParseTables(bool allowAmbig, int reportReachable)
 {
   tables = new ParseTables(numTerms, numNonterms, itemSets.count(), numProds,
                            startState->id,
@@ -3343,7 +3343,8 @@ void GrammarAnalysis::computeParseTables(bool allowAmbig)
   }
 
   // count total number of conflicts of each kind
-  int sr=0, rr=0;
+  sr=0;
+  rr=0;
 
   // for each state...
   FOREACH_OBJLIST(ItemSet, itemSets, stateIter) {
@@ -3459,8 +3460,20 @@ void GrammarAnalysis::computeParseTables(bool allowAmbig)
   }
 
   // report on conflict counts
-  reportUnexpected(sr, expectedSR, "shift/reduce conflicts");
-  reportUnexpected(rr, expectedRR, "reduce/reduce conflicts");
+  switch (reportReachable) {
+  case -1:
+      reportUnexpected(sr, expectedSR, "shift/reduce conflicts");
+      reportUnexpected(rr, expectedRR, "reduce/reduce conflicts");
+      break;
+  case 0:
+      reportUnexpected(sr, -1, "theoretical shift/reduce conflicts");
+      reportUnexpected(rr, -1, "theoretical reduce/reduce conflicts");
+      break;
+  case 1:
+      reportUnexpected(sr, -1, "shift/reduce conflicts");
+      reportUnexpected(rr, -1, "reduce/reduce conflicts");
+      break;
+  }
 
   // report on cyclicity
   for (int nontermId=0; nontermId<numNonterms; nontermId++) {
@@ -4038,7 +4051,7 @@ void GrammarAnalysis::exampleGrammar()
 
 
   // run analyses
-  runAnalyses(NULL, false);
+  runAnalyses(NULL, -1);
 
 
   // do some test parses
@@ -4049,7 +4062,7 @@ void GrammarAnalysis::exampleGrammar()
 }
 
 
-void GrammarAnalysis::runAnalyses(char const *setsFname, bool reportReachable)
+void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
 {            
   // prepare for symbol of interest
   {
@@ -4134,7 +4147,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, bool reportReachable)
   renumberStates();
 
   traceProgress(1) << "parse tables...\n";
-  computeParseTables(!tracingSys("deterministic"));
+  computeParseTables(!tracingSys("deterministic"), reportReachable);
 
   #if 0     // old code; need it for just a while longer
   {
@@ -4166,7 +4179,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, bool reportReachable)
   // count the number of (un)reachable nonterminals & terminals
   {                   
     if (setsOutput) {
-      if (reportReachable) {
+      if (reportReachable==1) {
           *setsOutput << "reachable nonterminals:\n";
 
             FOREACH_NONTERMINAL(nonterminals, iter) {
@@ -4181,10 +4194,16 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, bool reportReachable)
       }
     }
 
-    if (reportReachable) {
-        reportUnexpected(nonterminals.count(), -1, "reachable nonterminals");
-    } else {
+    switch (reportReachable) {
+    case -1:
         reportUnexpected(urNonterminals.count(), expectedUNRNonterms, "unreachable nonterminals");
+        break;
+    case 0:
+        reportUnexpected(urNonterminals.count(), expectedUNRNonterms, "unreachable nonterminals");
+        break;
+    case 1:
+        reportUnexpected(nonterminals.count(), -1, "reachable nonterminals");
+        break;
     }
 
     // bison also reports the number of productions under all the
@@ -4192,7 +4211,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, bool reportReachable)
     // useful to me
 
     if (setsOutput) {
-        if (reportReachable) {
+        if (reportReachable==1) {
             *setsOutput << "reachable terminals:\n";
 
               FOREACH_TERMINAL(terminals, jter) {
@@ -4207,10 +4226,16 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, bool reportReachable)
         }
     }
 
-    if (reportReachable) {
-        reportUnexpected(terminals.count(), -1, "reachable terminals");
-    } else {
+    switch (reportReachable) {
+    case -1:
         reportUnexpected(urTerminals.count(), expectedUNRTerms, "unreachable terminals");
+        break;
+    case 0:
+        reportUnexpected(urTerminals.count(), expectedUNRTerms, "unreachable terminals");
+        break;
+    case 1:
+        reportUnexpected(terminals.count(), -1, "reachable terminals");
+        break;
     }
   }
 
@@ -5170,7 +5195,7 @@ void analyzse(GrammarAnalysis &g, GrammarAST *ast, bool useML, string &pref, str
     }
 
     string setsFname = stringc << prefix << ".out";
-    g.runAnalyses((debug && tracingSys("lrtable"))? setsFname.c_str() : NULL, debug && ast->childrenNT && ast->childrenNT->productions.count());
+    g.runAnalyses((debug && tracingSys("lrtable"))? setsFname.c_str() : NULL, debug ? ast->childrenNT && ast->childrenNT->productions.count() ? 1 : -1 : 0);
 }
 
 int inner_entry(int argc, char **argv)
@@ -5284,6 +5309,7 @@ int inner_entry(int argc, char **argv)
 
 
   bool first = true;
+  int sr=0,rr=0;
 
   do {
 
@@ -5316,6 +5342,9 @@ int inner_entry(int argc, char **argv)
       // parse the AST into a Grammar
       GrammarAnalysis g;
       analyzse(g, ast, useML, pref, prefix0, prefix, multiIndex, true);
+      sr+=g.sr;
+      rr+=g.rr;
+
 
       if (first && ast->firstNT) {
           first = false;
@@ -5441,7 +5470,24 @@ int inner_entry(int argc, char **argv)
 
       GrammarAnalysis tot_g;
       multiIndex = -1;
+      if (ast->earlyStartNT) {
+          ast->forms.removeItem(ast->earlyStartNT);
+          ast->earlyStartNT = NULL;
+      }
+
+      FOREACH_ASTLIST(AbstractProdDecl, ast->childrenNT->productions, iter) {
+          AbstractProdDecl * prod = constcast(iter.data());
+          // EOF
+          prod->rhs.removeLast();
+      }
+
+      ast->forms.prepend(ast->childrenNT);
+      ast->firstNT = ast->childrenNT;
+
       analyzse(tot_g, ast, useML, pref, prefix0, prefix, multiIndex, false);
+
+      reportUnexpected(sr, tot_g.expectedSR, "sum(eliminated) shift/reduce conflicts");
+      reportUnexpected(rr, tot_g.expectedRR, "sum(eliminated) reduce/reduce conflicts");
   }
 
   ast.del();              // done with it

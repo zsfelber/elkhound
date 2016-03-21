@@ -74,6 +74,7 @@ public:
   // removal
   void *removeAt(int index);         // remove from list (must exist), and return removed item
   void *removeFirst()                { return removeAt(0); }
+  void *removeLast()                 { return removeAt(count()-1); }
   void removeAll();
 
   // list-as-set: selectors
