@@ -48,7 +48,7 @@ class TopForm {
     ASTList<LocString> subsets         // preference subset nonterminals (for scannerless)
   );
 
-  -> TF_StartSymbol(LocString name);
+  -> TF_start(LocString symbol, LocString lexer);
 
 }
 

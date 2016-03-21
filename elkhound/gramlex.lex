@@ -159,7 +159,9 @@ HWHITE    [ \t\f\v\r]
 ")"                TOK_UPD_COL;  eqs--;  return TOK_RPAREN;
 ","                TOK_UPD_COL;  return TOK_COMMA;
 
-"start_symbol"     TOK_UPD_COL;  return TOK_START_SYMBOL;
+"start"            TOK_UPD_COL;  return TOK_START;
+"symbol"           TOK_UPD_COL;  return TOK_SYMBOL;
+"lexer"            TOK_UPD_COL;  return TOK_LEXER;
 "terminals"        TOK_UPD_COL;  return TOK_TERMINALS;
 "precedence"       TOK_UPD_COL;  return TOK_PRECEDENCE;
 "option"           TOK_UPD_COL;  return TOK_OPTION;

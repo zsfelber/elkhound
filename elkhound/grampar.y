@@ -96,7 +96,9 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 
 /* keywords */
 
-%token TOK_START_SYMBOL "start_symbol"
+%token TOK_START "start"
+%token TOK_SYMBOL "symbol"
+%token TOK_LEXER "lexer"
 %token TOK_TERMINALS "terminals"
 %token TOK_TOKEN "token"
 %token TOK_NONTERM "nonterm"
@@ -129,6 +131,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 
   ASTList<TopForm> *topFormList;
   TopForm *topForm;
+  TF_start *start;
 
   ASTList<TermDecl> *termDecls;
   TermDecl *termDecl;
@@ -158,6 +161,9 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 
 %type <topFormList> TopFormList
 %type <topForm> TopForm ContextClass Verbatim Option Terminals Nonterminal
+%type <start> Start
+%type <str> StartS
+%type <str> StartL
 
 %type <termDecls> TermDecls
 %type <termDecl> TerminalDecl
@@ -204,11 +210,11 @@ TopFormList: /*empty*/              { $$ = new ASTList<TopForm>; }
 TopForm: ContextClass               { $$ = $1; }
        | Verbatim                   { $$ = $1; }
        | Option                     { $$ = $1; }
-       | "start_symbol" TOK_NAME ";"{ $$ = new TF_StartSymbol($2); }
+       | Start                      { $$ = $1; }
        | Terminals                  { $$ = $1; }
        | Nonterminal                { $$ = $1; }
        ;
-
+ 
 /* yields: TopForm (always TF_context) */
 ContextClass: "context_class" TOK_LIT_CODE ";"
                 { $$ = new TF_context($2); }
@@ -225,6 +231,17 @@ Option: "option" TOK_NAME ";"              { $$ = new TF_option($2, 1); }
       | "option" TOK_NAME TOK_INTEGER ";"  { $$ = new TF_option($2, $3); }
       ;
 
+Start:  "start" "{" StartS StartL "}"        { $$ = new TF_start($3, $4); }
+      | "start" "{" StartL StartS "}"        { $$ = new TF_start($4, $3); }
+      ;
+
+StartS : /* empty */                         { $$ = nolocNULL(); } 
+      | "symbol" TOK_NAME ";"                { $$ = $2; }
+      ;
+
+StartL : /* empty */                         { $$ = nolocNULL(); }
+      | "lexer" TOK_NAME  ";"                { $$ = $2; }
+      ;
 
 /* ------ terminals ------ */
 /*

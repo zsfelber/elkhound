@@ -34,6 +34,7 @@ Environment::Environment(Grammar &G)
     buffer(new EnvironmentBuffer),
     errors(buffer->errors),
     startSymbol(buffer->startSymbol),
+    startLexer(buffer->startLexer),
     singleProds(buffer->singleProds),
     bufIncl(buffer->bufIncl),
     bufHead(buffer->bufHead),
@@ -49,6 +50,7 @@ Environment::Environment(Environment &prev)
     buffer(0),
     errors(prev.errors),
     startSymbol(prev.startSymbol),     // copy parent's 'errors' reference
+    startLexer(prev.startLexer),
     singleProds(prev.singleProds),
     bufIncl(prev.bufIncl),
     bufHead(prev.bufHead),
@@ -64,6 +66,7 @@ Environment::Environment(Environment &prev, Grammar &g)
     buffer(0),
     errors(prev.errors),
     startSymbol(prev.startSymbol),     // copy parent's 'errors' reference
+    startLexer(prev.startLexer),
     singleProds(prev.singleProds),
     bufIncl(prev.bufIncl),
     bufHead(prev.bufHead),
@@ -349,8 +352,9 @@ void astParseGrammar(Environment &env, GrammarAST *ast, TermDecl const *eof)
   {
     FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
 
-      if (iter.data()->isTF_StartSymbol()) {
-           env.startSymbol = iter.data()->asTF_StartSymbol()->name.clone();
+      if (iter.data()->isTF_start()) {
+          constcast(env.startSymbol) = iter.data()->asTF_start()->symbol.clone();
+          constcast(env.startLexer) = iter.data()->asTF_start()->lexer.clone();
       }
 
       if (!iter.data()->isTF_nonterm()) continue;
@@ -870,7 +874,7 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
         }
     }
 
-    if (env.singleProds.find(name)==env.singleProds.end()) {
+    if (grType && env.singleProds.find(name)==env.singleProds.end()) {
 
         env.bufIncl << "#include \""<< G.prefix0;
         if (name.length()) {
@@ -956,7 +960,7 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
 
       // build a start production
       // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
-      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), env.startSymbol ? env.startSymbol->clone() : ast->firstNT->name.clone());
+      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), (env.startSymbol&&env.startSymbol->isNonNull()) ? env.startSymbol->clone() : ast->firstNT->name.clone());
       RHSElt *rhs2 = new RH_name(LIT_STR("").clone(), eof->name.clone());
       ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
       rhs->append(rhs1);

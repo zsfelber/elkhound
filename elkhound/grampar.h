@@ -75,6 +75,7 @@ struct EnvironmentBuffer {
     // count of recoverable errors
     int errors = 0;
     LocString * startSymbol = NULL;
+    LocString * startLexer = NULL;
     std::map<std::string, void*> singleProds;
     std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
 };
@@ -101,7 +102,8 @@ public:      // data
 
   // reference to the one we're really using
   int& errors;
-  LocString * startSymbol;
+  LocString * const startSymbol;
+  LocString * const startLexer;
   std::map<std::string, void*>& singleProds;
   std::stringstream &bufIncl, &bufHead, &bufConsBase, &bufHeadFun, &bufCc;
 

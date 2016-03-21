@@ -982,6 +982,26 @@ GrammarAnalysis::GrammarAnalysis(Grammar const &cpy) : Grammar(cpy),
     tables(NULL),sr(0),rr(0)
 {}
 
+GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(cpy),
+    derivable(NULL),
+    indexedNonterms(NULL),
+    indexedTerms(NULL),
+    numNonterms(0),
+    numTerms(0),
+    productionsByLHS(NULL),
+    dottedProds(NULL),
+    indexedProds(NULL),
+    numProds(0),
+    initialized(false),
+    nextItemSetId(0),    // [ASU] starts at 0 too
+    itemSets(),
+    startState(NULL),
+    cyclic(false),
+    symOfInterest(NULL),
+    errors(0),
+    tables(NULL),sr(0),rr(0)
+{}
+
 
 GrammarAnalysis::~GrammarAnalysis()
 {
@@ -4561,9 +4581,8 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       ;
 }
 
-void emitCommon(  string &prefix0,
-                  std::stringstream& bufIncl, std::stringstream& bufHead, std::stringstream& bufConsBase,
-                  std::stringstream& bufHeadFun, std::stringstream& bufCc,
+void emitCommon(  Environment &env, string &prefix0,
+                  std::stringstream &bufHead0, std::stringstream &bufConsBase0, std::stringstream &bufHeadFun0,
                   rostring hFname, rostring ccFname, rostring srcFname) {
 
     EmitCode dcl(hFname);
@@ -4591,13 +4610,16 @@ void emitCommon(  string &prefix0,
         << "#include \"useract.h\"     // UserActions\n"
         << "#include \"glr.h\"\n"
         << "\n" ;
-    dcl << bufIncl.str().c_str();
+    dcl << env.bufIncl.str().c_str();
     dcl << "\n";
     dcl << "class " << prefix0 << "Parsers {\n";
     dcl << "public:\n"
-        << bufHead.str().c_str() << "\n"
-        << bufConsBase.str().c_str() << "\n"
-        << bufHeadFun.str().c_str() << "\n";
+        << bufHead0.str().c_str() << "\n"
+        << env.bufHead.str().c_str() << "\n"
+        << bufConsBase0.str().c_str() << "\n"
+        << env.bufConsBase.str().c_str() << "\n"
+        << bufHeadFun0.str().c_str() << "\n"
+        << env.bufHeadFun.str().c_str() << "\n";
     dcl << "};\n\n";
     dcl << "#endif\n\n";
 
@@ -4607,7 +4629,7 @@ void emitCommon(  string &prefix0,
     out << "\n";
     out << "#include \""<<prefix0<<"_Parsers.h\"\n";
     out << "\n";
-    out << bufCc.str().c_str();
+    out << env.bufCc.str().c_str();
     out << "\n";
 }
 
@@ -5247,6 +5269,7 @@ void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML
 int inner_entry(int argc, char **argv)
 {
   #define SHIFT argc--; argv++ /* user ; */
+  #define LIT_STR(s) LocString(SL_INIT, grammarStringTable.add(s))
 
   char const *progName = argv[0];
   SHIFT;
@@ -5345,32 +5368,51 @@ int inner_entry(int argc, char **argv)
     SHIFT;
   }
 
-  Grammar g0;
-  // default, empty environment
-  Environment env0(g0);
   TermDecl const * eof;
   LocString * grType0 = NULL;
   std::string name0, usr0;
   int multiIndex = 0;
   int result = 0;
   int maxSr=0,maxRr=0;
+  string pref0;
+  std::stringstream bufHead0, bufConsBase0, bufHeadFun0;
+
+  GrammarAnalysis g0;
+  if (useML) {
+    g0.targetLang = "OCaml";
+  }
+  g0.pref = pref0;
+  g0.prefix0 = prefix0;
+
+  // default, empty environment
+  Environment env0(g0);
 
   setAnnotations(ast);
   parseGrammarAST(env0, ast, eof);
+  if (!env0.startLexer||env0.startLexer->isNull()) {
+      constcast(env0.startLexer) = LIT_STR("AstTreeNodeLexer").clone();
+  }
 
   synthesizeStartRule(env0, ast, eof, multiIndex, grType0, name0, usr0);
 
-  if (grType0) {
-
-      env0.bufHead << "   AstCharLexer* charLexer;" << std::endl;
-      env0.bufHead << "   "<< grType0->str << " inputArg;" << std::endl;
-      env0.bufHead << "   "<< grType0->str << " result;" << std::endl;
-      env0.bufConsBase<< "   "<< prefix0 <<"Parsers(AstCharLexer* charLexer, "<< grType0->str << "* inputArg) : charLexer(charLexer), inputArg(inputArg), result(NULL)";
-      env0.bufHeadFun << "   {" << std::endl;
-      env0.bufHeadFun << "      result = _usr_" << usr0 << "->parse_" << name0 << "(inputArg);" << std::endl;
-      env0.bufHeadFun << "   }" << std::endl;
-
+  if (!grType0) {
+      grType0 = LIT_STR("void*").clone();
   }
+
+  bufHead0 << "   AstCharLexer* charLexer;" << std::endl;
+  bufHead0 << "   " << env0.startLexer->str << "* startLexer;" << std::endl;
+  bufHead0 << "   "<< grType0->str << " result;" << std::endl;
+  bufConsBase0<< "   "<< prefix0 <<"Parsers(AstCharLexer* charLexer, " << env0.startLexer->str << "* startLexer) : charLexer(charLexer), startLexer(startLexer), result(NULL)";
+  bufHeadFun0 << "   {" << std::endl;
+  bufHeadFun0 << "      // initialize the parser" << std::endl;
+  bufHeadFun0 << "      GLR glr(_usr_" << usr0 << ", _usr_" << usr0 << ".parseTables);" << std::endl;
+  bufHeadFun0 << "" << std::endl;
+  bufHeadFun0 << "      // parse the input" << std::endl;
+  bufHeadFun0 << "      if (!glr.glrParse(*startLexer, (SemanticValue&)result)) {" << std::endl;
+  bufHeadFun0 << "         // TODO default error handler" << std::endl;
+  bufHeadFun0 << "         startLexer->parseError(\"Invalid '"<< name0 << "' .\");" << std::endl;
+  bufHeadFun0 << "      }" << std::endl;
+  bufHeadFun0 << "   }" << std::endl;
 
   if (ast->earlyStartNT) {
       ast->forms.removeItem(ast->earlyStartNT);
@@ -5497,10 +5539,7 @@ int inner_entry(int argc, char **argv)
   traceProgress() << "emitting C++ code to " << ccFname
                   << " and " << hFname << " ...\n";
 
-  emitCommon(prefix0,
-             env0.bufIncl, env0.bufHead, env0.bufConsBase,
-             env0.bufHeadFun, env0.bufCc,
-             hFname, ccFname, grammarFname);
+  emitCommon(env0, prefix0, bufHead0, bufConsBase0, bufHeadFun0, hFname, ccFname, grammarFname);
 
   if (ast->childrenNT && ast->childrenNT->productions.count()) {
       string prefix, pref;
@@ -5526,7 +5565,7 @@ int inner_entry(int argc, char **argv)
       ast->forms.prepend(ast->childrenNT);
       ast->firstNT = ast->childrenNT;
 
-      Environment tot_env(tot_g);
+      Environment tot_env(env0, tot_g);
       analyzse(tot_env, ast, eof, useML, pref, prefix0, prefix, multiIndex, false);
 
       reportUnexpected(maxSr, tot_g.expectedSR, "max branch shift/reduce conflicts");

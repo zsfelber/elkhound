@@ -61,24 +61,26 @@ extern int yydebug;
     TOK_LPAREN = 271,
     TOK_RPAREN = 272,
     TOK_COMMA = 273,
-    TOK_START_SYMBOL = 274,
-    TOK_TERMINALS = 275,
-    TOK_TOKEN = 276,
-    TOK_NONTERM = 277,
-    TOK_FUN = 278,
-    TOK_VERBATIM = 279,
-    TOK_IMPL_VERBATIM = 280,
-    TOK_PRECEDENCE = 281,
-    TOK_OPTION = 282,
-    TOK_EXPECT = 283,
-    TOK_CONTEXT_CLASS = 284,
-    TOK_SUBSETS = 285,
-    TOK_DELETE = 286,
-    TOK_REPLACE = 287,
-    TOK_TREE = 288,
-    TOK_NULL = 289,
-    TOK_FORBID_NEXT = 290,
-    TOK_PARSE_ERROR = 291
+    TOK_START = 274,
+    TOK_SYMBOL = 275,
+    TOK_LEXER = 276,
+    TOK_TERMINALS = 277,
+    TOK_TOKEN = 278,
+    TOK_NONTERM = 279,
+    TOK_FUN = 280,
+    TOK_VERBATIM = 281,
+    TOK_IMPL_VERBATIM = 282,
+    TOK_PRECEDENCE = 283,
+    TOK_OPTION = 284,
+    TOK_EXPECT = 285,
+    TOK_CONTEXT_CLASS = 286,
+    TOK_SUBSETS = 287,
+    TOK_DELETE = 288,
+    TOK_REPLACE = 289,
+    TOK_TREE = 290,
+    TOK_NULL = 291,
+    TOK_FORBID_NEXT = 292,
+    TOK_PARSE_ERROR = 293
   };
 #endif
 
@@ -87,7 +89,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 125 "grampar.y" /* yacc.c:1909  */
+#line 127 "grampar.y" /* yacc.c:1909  */
 
   int num;
   LocString *str;
@@ -95,6 +97,7 @@ union YYSTYPE
 
   ASTList<TopForm> *topFormList;
   TopForm *topForm;
+  TF_start *start;
 
   ASTList<TermDecl> *termDecls;
   TermDecl *termDecl;
@@ -116,7 +119,7 @@ union YYSTYPE
   ASTList<ErrorAct> *errorActs;
   Name3 *name3;
 
-#line 120 "grampar.tab.h" /* yacc.c:1909  */
+#line 123 "grampar.tab.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
