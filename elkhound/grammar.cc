@@ -1043,9 +1043,10 @@ void Grammar::addProduction(Production *prod)
   // if the start symbol isn't defined yet, we can here
   // implement the convention that the LHS of the first
   // production is the start symbol
-  if (startSymbol == NULL) {
-    startSymbol = prod->left;
-  }
+  // -> createEarlyRule
+  //if (startSymbol == NULL) {
+  //  startSymbol = prod->left;
+  //}
 }
 
 

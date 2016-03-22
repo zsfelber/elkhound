@@ -35,7 +35,7 @@ Environment::Environment(Grammar &G)
     errors(buffer->errors),
     startSymbol(buffer->startSymbol),
     startLexer(buffer->startLexer),
-    singleProds(buffer->singleProds),
+    parserFuncs(buffer->parserFuncs),
     bufIncl(buffer->bufIncl),
     bufHead(buffer->bufHead),
     bufConsBase(buffer->bufConsBase),
@@ -51,7 +51,7 @@ Environment::Environment(Environment &prev)
     errors(prev.errors),
     startSymbol(prev.startSymbol),     // copy parent's 'errors' reference
     startLexer(prev.startLexer),
-    singleProds(prev.singleProds),
+    parserFuncs(prev.parserFuncs),
     bufIncl(prev.bufIncl),
     bufHead(prev.bufHead),
     bufConsBase(prev.bufConsBase),
@@ -67,7 +67,7 @@ Environment::Environment(Environment &prev, Grammar &g)
     errors(prev.errors),
     startSymbol(prev.startSymbol),     // copy parent's 'errors' reference
     startLexer(prev.startLexer),
-    singleProds(prev.singleProds),
+    parserFuncs(prev.parserFuncs),
     bufIncl(prev.bufIncl),
     bufHead(prev.bufHead),
     bufConsBase(prev.bufConsBase),
@@ -398,7 +398,7 @@ void astParseGrammar(Environment &env, GrammarAST *ast, TermDecl const *eof)
 
   // process nonterminal bodies
   {
-    int ni = 0;
+    int ni = 1;
     FOREACH_ASTLIST(TopForm, ast->forms, iter) {
       if (!iter.data()->isTF_nonterm()) continue;
       TF_nonterm const *nt = iter.data()->asTF_nontermC();
@@ -861,7 +861,8 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
         }
     }
 
-    if (grType && env.singleProds.find(name)==env.singleProds.end()) {
+    if (grType && env.parserFuncs.find(name)==env.parserFuncs.end()) {
+        trace("prec") << "Creating child grammar start rule " << name << " : " << (grType->isNull()?"":grType->str) << " : _usr_" << usr << std::endl;
 
         env.bufIncl << "#include \""<< G.prefix0;
         if (name.length()) {
@@ -876,7 +877,7 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
         ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, new LocString(SL_UNKNOWN, NULL),
                                  LIT_STR(name.c_str()).clone(), grType->clone());
 
-        env.singleProds[name] = newStart;
+        env.parserFuncs[name] = newStart;
 
         if (ast->childrenNT) {
             ast->childrenNT->productions.append(newStart);
@@ -897,11 +898,17 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
         //}
         return true;
     } else {
+        trace("prec") << "Failed creating child grammar start rule:";
+        rhs->debugPrint(trace("prec"));
+
         return false;
     }
 }
 
 void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, TermDecl const *eof) {
+    xassert(prod);
+    xassert(prod->rhs.count());
+
     RHSElt *poss_eof = prod->rhs.last();
     RH_name *rh_eof = 0;
     if (poss_eof && poss_eof->kind()==RH_name::RH_NAME) {
@@ -915,12 +922,22 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
         prod->rhs.append(rh_eof);
     }
     if (ast->earlyStartNT) {
-        ast->earlyStartNT->productions.removeFirst();
+        trace("prec") << "Replace "
+                      << ast->earlyStartNT->productions.count() << " early start rules to "
+                      << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name:
+                         prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str: "?")
+                                                        << std::endl;
+
+        ast->earlyStartNT->productions.removeAll_dontDelete();
         ast->earlyStartNT->productions.prepend(prod);
         ast->earlyStartNT->type.str = prod->type.str;
-    } else {
-        ast->forms.removeItem(ast->firstNT);
 
+        env.g.startSymbol = env.g.findNonterminal("__EarlyStartSymbol");
+    } else {
+        trace("prec") << "Create first early start rule : "
+                      << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name:
+                         prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str: "?")
+                                                        << std::endl;
         ast->earlyStartNT
                 = new TF_nonterm(
                     LIT_STR("__EarlyStartSymbol").clone(),   // name
@@ -931,8 +948,9 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
                   );
         ast->forms.prepend(ast->earlyStartNT);
 
-        env.g.startSymbol = complementNonterm(env, ast, ast->earlyStartNT, -1, eof);
+        env.g.startSymbol = complementNonterm(env, ast, ast->earlyStartNT, 0, eof);
     }
+    xassert(env.g.startSymbol);
 }
 
 void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof, int &multiIndex, LocString *& grType, std::string &name, std::string &usr)
@@ -946,10 +964,12 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
           createEarlyRule(env, ast, prod, eof);
       }
   } else {
+      bool starts = env.startSymbol&&env.startSymbol->isNonNull();
+      xassert(starts || ast->firstNT);
 
       // build a start production
       // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
-      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), (env.startSymbol&&env.startSymbol->isNonNull()) ? env.startSymbol->clone() : ast->firstNT->name.clone());
+      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), starts ? env.startSymbol->clone() : ast->firstNT->name.clone());
       RHSElt *rhs2 = new RH_name(LIT_STR("").clone(), eof->name.clone());
       ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
       rhs->append(rhs1);

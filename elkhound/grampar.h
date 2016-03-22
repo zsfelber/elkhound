@@ -76,7 +76,7 @@ struct EnvironmentBuffer {
     int errors = 0;
     LocString * startSymbol = NULL;
     LocString * startLexer = NULL;
-    std::map<std::string, void*> singleProds;
+    std::map<std::string, ProdDecl*> parserFuncs;
     std::stringstream bufIncl, bufHead, bufConsBase, bufHeadFun, bufCc;
 };
 
@@ -104,7 +104,7 @@ public:      // data
   int& errors;
   LocString * const startSymbol;
   LocString * const startLexer;
-  std::map<std::string, void*>& singleProds;
+  std::map<std::string, ProdDecl*>& parserFuncs;
   std::stringstream &bufIncl, &bufHead, &bufConsBase, &bufHeadFun, &bufCc;
 
 public:

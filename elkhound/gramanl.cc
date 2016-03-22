@@ -5263,7 +5263,7 @@ void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML
     }
 
     string setsFname = stringc << prefix << ".out";
-    G.runAnalyses((debug && tracingSys("lrtable"))? setsFname.c_str() : NULL, debug ? ast->childrenNT && ast->childrenNT->productions.count() ? 1 : -1 : 0);
+    G.runAnalyses((debug && tracingSys("lrtable"))? setsFname.c_str() : NULL, debug ? ast->childrenNT->productions.count()>1 ? 1 : -1 : 0);
 }
 
 int inner_entry(int argc, char **argv)
@@ -5394,6 +5394,13 @@ int inner_entry(int argc, char **argv)
   }
 
   synthesizeStartRule(env0, ast, eof, multiIndex, grType0, name0, usr0);
+  xassert (multiIndex == 1);
+  xassert (!ast->earlyStartNT);
+  xassert (ast->childrenNT);
+
+  if (!ast->childrenNT->productions.count()) {
+      astParseError("No start symbol.");
+  }
 
   if (!grType0) {
       grType0 = LIT_STR("void*").clone();
@@ -5414,12 +5421,10 @@ int inner_entry(int argc, char **argv)
   bufHeadFun0 << "      }" << std::endl;
   bufHeadFun0 << "   }" << std::endl;
 
-  if (ast->earlyStartNT) {
-      ast->forms.removeItem(ast->earlyStartNT);
-      ast->earlyStartNT = NULL;
-  }
-  ast->forms.prepend(ast->childrenNT);
-  ast->firstNT = ast->childrenNT;
+  // {
+  //    ast->forms.removeItem(ast->earlyStartNT);
+  //    ast->earlyStartNT = NULL;
+  //}
 
   g0.allTerminals.concat(g0.terminals);
   g0.allNonterminals.concat(g0.nonterminals);
@@ -5434,7 +5439,7 @@ int inner_entry(int argc, char **argv)
 
           std::stringstream s;
 
-          if (multiIndex>0 && ast->childrenNT &&
+          if (multiIndex>0 &&
                      multiIndex <= ast->childrenNT->productions.count() ) {
 
               AbstractProdDecl *prod = ast->childrenNT->productions.nth(multiIndex-1);
@@ -5443,7 +5448,7 @@ int inner_entry(int argc, char **argv)
               prefix = s.str().c_str();
           } else {
               s << "multiIndex overflow : " << multiIndex << " of "
-                << (ast->childrenNT?ast->childrenNT->productions.count():0);
+                << ast->childrenNT->productions.count();
               astParseError(s.str().c_str());
           }
 
@@ -5541,7 +5546,7 @@ int inner_entry(int argc, char **argv)
 
   emitCommon(env0, prefix0, bufHead0, bufConsBase0, bufHeadFun0, hFname, ccFname, grammarFname);
 
-  if (ast->childrenNT && ast->childrenNT->productions.count()) {
+  if (ast->childrenNT->productions.count() > 1) {
       string prefix, pref;
       prefix = prefix0;
 
@@ -5563,7 +5568,6 @@ int inner_entry(int argc, char **argv)
       }
 
       ast->forms.prepend(ast->childrenNT);
-      ast->firstNT = ast->childrenNT;
 
       Environment tot_env(env0, tot_g);
       analyzse(tot_env, ast, eof, useML, pref, prefix0, prefix, multiIndex, false);

@@ -70,7 +70,7 @@ public:
   
   // this one is awkwardly named to remind the user that it's
   // contrary to the usual intent of this class
-  void removeAll_dontDelete()           { return list.removeAll(); }
+  void removeAll_dontDelete()           { list.removeAll(); }
 
   // deletion
   void deleteFirst()                    { delete (T*)list.removeFirst(); }
