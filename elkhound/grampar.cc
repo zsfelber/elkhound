@@ -926,7 +926,7 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
                       << ast->earlyStartNT->productions.count() << " rules to  __EarlyStartSymbol -> "
                       << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name:
                          prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str: "?")
-                                                        << std::endl;
+                      << (prod->rhs.count()>1?" ...":"")       << std::endl;
 
         ast->earlyStartNT->productions.removeAll_dontDelete();
         ast->earlyStartNT->productions.prepend(prod);
@@ -1023,6 +1023,27 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
   }
 }
 
+void generateErrorHandlers(std::stringstream &buf, TreeProdDecl const *prod, std::string &indent) {
+    buf << indent << "switch(errorKind) {" << std::endl;
+    FOREACH_ASTLIST(ErrorAct, prod->errorActs, ierr) {
+        buf << indent << "case " << toString(ierr.data()->ekind) << ":" << std::endl;
+        buf << indent << ierr.data()->actionCode << std::endl;
+        buf << indent << "   break;" << std::endl;
+    }
+    buf << indent << "default:" << std::endl;
+    buf << indent << "   break;" << std::endl;
+    buf << indent << "}" << std::endl;
+}
+
+inline void generateJumpToErrorHandler(std::stringstream &buf, std::string &errorHandler, std::string &indent) {
+    if (errorHandler.length()) {
+        buf << indent << "// jump to error handler" << std::endl;
+        buf << indent << "goto "<<errorHandler<<";" << std::endl;
+    } else {
+        buf << indent << "goto err;" << std::endl;
+    }
+}
+
 void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prodDecl, int prodi,
                         TermDecl const *eof,
@@ -1056,7 +1077,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               st0 << "Ast_" << prodDecl->name;
               vpref = "";
               fvpref = "tag";
-              bufAct << indent << "" << std::endl;
+              bufAct << std::endl;
           } else {
               st0 << tpref;
           }
@@ -1080,6 +1101,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           std::stringstream nms;
           std::stringstream us;
           std::string name, usr;
+          std::string indp = indent + "   ";
 
           type = v0 && nonterm->type  ?
                       LIT_STR(nonterm->type).clone() : LIT_STR((tp+"*").c_str()).clone();
@@ -1106,12 +1128,12 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   st << tpref << prod->name << std::flush;
                   sv << vpref << "_" << vi << std::flush;
                   sfv << fvpref << "->" << prod->name << std::flush;
-                  ind << indent << "   " << std::flush;
+                  ind << indp << std::flush;
 
                   if (prod->tag && prod->tag.isNonNull()) {
                       bufAct << "   " << tpref << prod->name << "_star "
                              << prod->tag << " = NULL;" << std::endl;
-                      buf << indent << "   " << prod->tag << " = tag"
+                      buf << indp << prod->tag << " = tag"
                           << vpref << "_" << vi << ";" << std::endl;
                   }
 
@@ -1122,29 +1144,17 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   }
 
                   if (prod->actionCode && prod->actionCode.isNonNull()) {
-                      buf << indent << "   " << prod->actionCode << std::endl;
+                      buf << indp << prod->actionCode << std::endl;
                   }
 
                   buf << indent << "} else {" << std::endl;
+
                   if (prod->errorActs.count()) {
                       buf << indent << "   err" << sv.str() << ":" << std::endl;
-                      buf << indent << "   switch(errorKind) {" << std::endl;
-                      FOREACH_ASTLIST(ErrorAct, prod->errorActs, ierr) {
-                          buf << indent << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
-                          buf << indent << "      " << ierr.data()->actionCode << std::endl;
-                          buf << indent << "      break;" << std::endl;
-                      }
-                      buf << indent << "   default:" << std::endl;
-                      buf << indent << "      break;" << std::endl;
-                      buf << indent << "   }" << std::endl;
+                      generateErrorHandlers(buf, prod, indp);
                   }
+                  generateJumpToErrorHandler(buf, errorHandler, indent);
 
-                  if (errorHandler.length()) {
-                      buf << indent << "   // jump to upper level" << std::endl;
-                      buf << indent << "   goto "<<errorHandler<<";" << std::endl;
-                  } else {
-                      buf << indent << "   goto err;" << std::endl;
-                  }
                   buf << indent << "}" << std::endl;
 
                   vi++;
@@ -1163,38 +1173,56 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               }
               break;
 
-          case PDK_TRAVERSE_GR:
           case PDK_TRAVERSE_TKNS:
+              buf << indent << "AstTreeNodeLexer treeLexer" << vpref << "(tag" << vpref << ", charLexer, false);" << std::endl;
+              buf << std::endl;
+              FOREACH_ASTLIST(RHSElt, *rhs, iter) {
+                    LocString symTag, symName;
+                    ASTSWITCHC(RHSElt, iter.data()) {
+                        ASTCASEC(RH_name, tname) {
+                            symTag = tname->tag;
+                            symName = tname->name;
+                        }
+                        ASTNEXTC(RH_string, ts) {
+                            symTag = ts->tag;
+                            symName = ts->str;
+                        }
+                        ASTDEFAULTC {
+                            astParseError(symName, "Traverse mode '>' must be followed by terminals only.");
+                        }
+                        ASTENDCASEC
+                    }
+                    Terminal *term = g.findTerminal(symName);
+                    if (!term) {
+                        astParseError(symName, "It is nonterminal. Traverse mode '>' should be followed by terminals.");
+                    }
+                    // NOTE We don't skip EOF !
+                    buf << indent << "treeLexer" << vpref << ".adv();" << std::endl;
+                    if (symTag && symTag.isNonNull() && symTag.length()) {
+                        bufAct << "   " << tp << "_star "
+                               << symTag.str << " = NULL;" << std::endl;
+
+                        buf << indent << "if (treeLexer" << vpref << ".type == " << term->name << ") {" << std::endl;
+                        buf << indp << symTag.str << " = (" << tp << "_star) treeLexer" << vpref << ".sval;" << std::endl;
+                        buf << indent << "} else {" << std::endl;
+                        generateJumpToErrorHandler(buf, errorHandler, indp);
+                        buf << indent << "}" << std::endl;
+                    } else {
+                        buf << indent << "if (treeLexer" << vpref << ".type != " << term->name << ") {" << std::endl;
+                        generateJumpToErrorHandler(buf, errorHandler, indp);
+                        buf << indent << "}" << std::endl;
+                    }
+              }
+
+              break;
+
+          case PDK_TRAVERSE_GR:
 
               if (v0 && tprod->label && tprod->label.isNonNull()) {
                   buf << indent << tprod->label.str << ":" << std::endl;
               }
 
-              buf << indent << "AstTreeNodeLexer treeLexer" << vpref << "(tag" << vpref << ", charLexer";
-              if (prodDecl->pkind == PDK_TRAVERSE_TKNS) {
-                  FOREACH_ASTLIST(RHSElt, *rhs, iter) {
-                       LocString symName;
-                        ASTSWITCHC(RHSElt, iter.data()) {
-                            ASTCASEC(RH_name, tname) {
-                                symName = tname->name;
-                            }
-                            ASTNEXTC(RH_string, ts) {
-                                symName = ts->str;
-                            }
-                            ASTDEFAULTC {
-                              xfailure("bad RHSElt kind");
-                            }
-                            ASTENDCASEC
-                        }
-                        Terminal *term = g.findTerminal(symName);
-                        if (!term) {
-                            astParseError(symName, "Traverse mode '>' should all be followed by terminals.");
-                        }
-                  }
-                  buf << ", false);" << std::endl;
-              } else {
-                  buf << ");" << std::endl;
-              }
+              buf << indent << "AstTreeNodeLexer treeLexer" << vpref << "(tag" << vpref << ", charLexer);" << std::endl;
 
               grType = type;
 
@@ -1232,12 +1260,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << indent << "   // Nothing to do" << std::endl;
               }
               buf << indent << "} else {" << std::endl;
-              if (errorHandler.length()) {
-                  buf << indent << "   // jump to error handler" << std::endl;
-                  buf << indent << "   goto "<<errorHandler<<";" << std::endl;
-              } else {
-                  buf << indent << "   goto err;" << std::endl;
-              }
+
+              generateJumpToErrorHandler(buf, errorHandler, indp);
+
               buf << indent << "}" << std::endl;
 
               break;
@@ -1270,15 +1295,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.bufCc << "   err:" << std::endl;
 
               if (tprod->errorActs.count()) {
-                  env.bufCc << "   switch(errorKind) {" << std::endl;
-                  FOREACH_ASTLIST(ErrorAct, tprod->errorActs, ierr) {
-                      env.bufCc << "   case " << toString(ierr.data()->ekind) << ":" << std::endl;
-                      env.bufCc << "      " << ierr.data()->actionCode << std::endl;
-                      env.bufCc << "      break;" << std::endl;
-                  }
-                  env.bufCc << "   default:" << std::endl;
-                  env.bufCc << "      break;" << std::endl;
-                  env.bufCc << "   }" << std::endl;
+                  generateErrorHandlers(env.bufCc, tprod, indp);
               } else {
                   env.bufCc << "   // TODO default error handler" << std::endl;
                   env.bufCc << "   startLexer->parseError(\"Invalid '"<< nonterm->name << "' .\");" << std::endl;
