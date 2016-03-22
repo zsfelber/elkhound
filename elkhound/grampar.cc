@@ -125,7 +125,9 @@ void astParseTerminals(Environment &env, TF_terminals const &terms);
 void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
 void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex);
-void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
+void astParseProduction(Environment &env, Nonterminal *nonterm, AbstractProdDecl const *prodDecl);
+
+void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prod, int prodi, TermDecl const *eof,
                         std::string errorHandler = "",
                         std::string tpref = "", std::string vpref = "", std::string fvpref = "", std::string indent = "   ",
@@ -660,10 +662,11 @@ void astParseDDM(Environment &env, Symbol *sym,
   }
 }
 
+
 void fillDefaultType(Nonterminal* nonterm) {
 
     traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << std::endl;
-    // also ignore circles:
+    // fix circles:
     if (!nonterm->deftravd) {
 
         nonterm->deftravd = true;
@@ -759,8 +762,9 @@ void fillDefaultType(Nonterminal* nonterm) {
     }
 }
 
-void addDefaultTypesActions(Grammar &g, Nonterminal *nonterm)
+void addDefaultTypesActions(Environment &env, GrammarAST *ast, Nonterminal *nonterm, TermDecl const * eof)
 {
+    Grammar &g = env.g;
     // language defaults
     StringRef defaultType, defaultAction;
     if (g.targetLang.equals("OCaml")) {
@@ -784,11 +788,18 @@ void addDefaultTypesActions(Grammar &g, Nonterminal *nonterm)
       nonterm->type = defaultType;
     }
 
+    int prodi = 0;
     // loop over all productions
     for (SObjListIter<Production> prodIter(nonterm->productions);
          !prodIter.isDone(); prodIter.adv()) {
       // convenient alias
       Production *prod = constcast(prodIter.data());
+      AbstractProdDecl * prodDecl = (AbstractProdDecl*)prod->prodDecl;
+
+      traverseProduction(env, ast, nonterm, prodDecl, prodi++, eof);
+
+      // put the code into it
+      prod->action = prodDecl->actionCode;
 
       // default action
       if (forceDefaults || prod->action.isNull()) {
@@ -818,14 +829,15 @@ void addDefaultTypesActions(Grammar &g, Nonterminal *nonterm)
     }
 }
 
-void addDefaultTypesActions(Grammar &g, GrammarAST *ast)
+void addDefaultTypesActions(Environment &env, GrammarAST *ast, TermDecl const * eof)
 {
+    Grammar &g = env.g;
   // iterate over nonterminals
   for (SObjListIter<Nonterminal> ntIter(g.nonterminals);
        !ntIter.isDone(); ntIter.adv()) {
       // convenient alias
       Nonterminal *nonterm = constcast(ntIter.data());
-      addDefaultTypesActions(g, nonterm);
+      addDefaultTypesActions(env, ast, nonterm, eof);
   }
 }
 
@@ -838,9 +850,33 @@ Nonterminal * complementNonterm(Environment &env, GrammarAST *ast, TF_nonterm * 
     // (at this very moment it actually can't because there is no syntax..)
     Environment newEnv(env);
     astParseNonterm(newEnv, ast, nt, eof, ntIndex);
-    addDefaultTypesActions(env.g, result);
+    addDefaultTypesActions(env, ast, result, eof);
     return result;
 }
+
+void generateErrorHandlers(std::stringstream &buf, TreeProdDecl const *prod, std::string &indent) {
+    buf << indent << "switch(errorKind) {" << std::endl;
+    FOREACH_ASTLIST(MarkedAction, prod->markedActs, ierr) {
+        if (ierr.data()->ekind <= ERR_PARSE) {
+            buf << indent << "case " << toString(ierr.data()->ekind) << ":" << std::endl;
+            buf << indent << "   " << ierr.data()->actionCode << std::endl;
+            buf << indent << "   break;" << std::endl;
+        }
+    }
+    buf << indent << "default:" << std::endl;
+    buf << indent << "   break;" << std::endl;
+    buf << indent << "}" << std::endl;
+}
+
+inline void generateJumpToErrorHandler(std::stringstream &buf, std::string &errorHandler, std::string &indent) {
+    if (errorHandler.length()) {
+        buf << indent << "// jump to error handler" << std::endl;
+        buf << indent << "goto "<<errorHandler<<";" << std::endl;
+    } else {
+        buf << indent << "goto err;" << std::endl;
+    }
+}
+
 
 ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *startRuleAction, LocString *& grType, std::string& name, std::string& usr) {
     Grammar &g = env.g;
@@ -939,7 +975,7 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
             s << "  ";
         }
 
-        trace("prec") << "Failed creating child grammar start rule (no type):" << s.str() << std::endl;
+        trace("prec") << "Failed creating __GeneratedChildren start rule (no type):" << s.str() << std::endl;
 
         return NULL;
     }
@@ -1026,68 +1062,7 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
   }
 }
 
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex)
-{
-  LocString const &name = nt->name;
-
-  // get the Grammar object that represents the nonterminal
-  Nonterminal *nonterm = env.g.findNonterminal(name);
-  xassert(nonterm);
-
-  nonterm->type = nt->type;
-  nonterm->ntIndex = ntIndex;
-
-
-  // iterate over the productions
-  int prodi = 0;
-  FOREACH_ASTLIST(AbstractProdDecl, nt->productions, iter) {
-    astParseProduction(env, ast, nonterm, iter.data(), prodi++, eof);
-  }
-
-  // parse dup/del/merge
-  astParseDDM(env, nonterm, nt->funcs);
-  
-  // record subsets                       
-  {
-    FOREACH_ASTLIST(LocString, nt->subsets, iter) {
-      LocString const *ls = iter.data();
-      Nonterminal *sub = env.g.findNonterminal(*ls);
-      if (!sub) {
-        astParseError(*ls, "nonexistent nonterminal");
-      }
-
-      // note that, since context-free language inclusion is
-      // undecidable (Hopcroft/Ullman), we can't actually check that
-      // the given nonterminals really are in the subset relation
-      nonterm->subsets.prepend(sub);
-    }
-  }
-}
-
-void generateErrorHandlers(std::stringstream &buf, TreeProdDecl const *prod, std::string &indent) {
-    buf << indent << "switch(errorKind) {" << std::endl;
-    FOREACH_ASTLIST(MarkedAction, prod->markedActs, ierr) {
-        if (ierr.data()->ekind <= ERR_PARSE) {
-            buf << indent << "case " << toString(ierr.data()->ekind) << ":" << std::endl;
-            buf << indent << "   " << ierr.data()->actionCode << std::endl;
-            buf << indent << "   break;" << std::endl;
-        }
-    }
-    buf << indent << "default:" << std::endl;
-    buf << indent << "   break;" << std::endl;
-    buf << indent << "}" << std::endl;
-}
-
-inline void generateJumpToErrorHandler(std::stringstream &buf, std::string &errorHandler, std::string &indent) {
-    if (errorHandler.length()) {
-        buf << indent << "// jump to error handler" << std::endl;
-        buf << indent << "goto "<<errorHandler<<";" << std::endl;
-    } else {
-        buf << indent << "goto err;" << std::endl;
-    }
-}
-
-void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
+void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         AbstractProdDecl const *prodDecl, int prodi,
                         TermDecl const *eof,
                         std::string errorHandler,
@@ -1191,7 +1166,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   std::string ehnx = err ? "err"+sv.str() : errorHandler ;
 
                   if (prod->pkind != PDK_TRAVERSE_NULL) {
-                      astParseProduction(env, ast, nonterm, prod, prodi, eof, ehnx, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
+                      traverseProduction(env, ast, nonterm, prod, prodi, eof, ehnx, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
                   }
 
                   buf << indent << "} else {" << std::endl;
@@ -1377,21 +1352,63 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
       }
 
-      if (v0) {
-          goto produce;
+      //if (v0) {
+      //    goto produce;
+      //}
+  }
+}
+
+void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex)
+{
+  LocString const &name = nt->name;
+
+  // get the Grammar object that represents the nonterminal
+  Nonterminal *nonterm = env.g.findNonterminal(name);
+  xassert(nonterm);
+
+  nonterm->type = nt->type;
+  nonterm->ntIndex = ntIndex;
+
+
+  // iterate over the productions
+  //int prodi = 0;
+  FOREACH_ASTLIST(AbstractProdDecl, nt->productions, iter) {
+    //traverseProduction(env, ast, nonterm, iter.data(), prodi++, eof);
+    astParseProduction(env, nonterm, iter.data());
+  }
+
+  // parse dup/del/merge
+  astParseDDM(env, nonterm, nt->funcs);
+  
+  // record subsets                       
+  {
+    FOREACH_ASTLIST(LocString, nt->subsets, iter) {
+      LocString const *ls = iter.data();
+      Nonterminal *sub = env.g.findNonterminal(*ls);
+      if (!sub) {
+        astParseError(*ls, "nonexistent nonterminal");
       }
 
-  } else {
-      produce:
+      // note that, since context-free language inclusion is
+      // undecidable (Hopcroft/Ullman), we can't actually check that
+      // the given nonterminals really are in the subset relation
+      nonterm->subsets.prepend(sub);
+    }
+  }
+}
+
+
+void astParseProduction(Environment &env, Nonterminal *nonterm,
+                      AbstractProdDecl const *prodDecl)
+{
+      Grammar &g = env.g;
 
       // is this the special start symbol I inserted?
       bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
 
       // build a production; use 'this' as the tag for LHS elements
       Production *prod = new Production(nonterm, "this");
-
-      // put the code into it
-      prod->action = prodDecl->actionCode;
+      prod->prodDecl = prodDecl;
 
       int tags = 0;
       Production::RHSElt *first = 0;
@@ -1401,7 +1418,6 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
         RHSElt const *n = iter.data();
         LocString symName;
         LocString symTag;
-        LocString attrName;
         bool isString = false;
         bool isAnnotation = false;
 
@@ -1411,13 +1427,6 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               symName = tname->name;
               symTag = tname->tag;
             }
-
-            /*ASTNEXTC(RH_attr, tattr) {
-              symTag = tattr->tag;
-              attrName = tattr->attrName;
-              symName = tattr->attrValue;
-              isString = tattr->akind & RHA_STRING;
-            }*/
 
           ASTNEXTC(RH_string, ts) {
             symName = ts->str;
@@ -1544,7 +1553,6 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
       // add production to grammar
       g.addProduction(prod);
-  }
 }
 
 
@@ -1971,7 +1979,7 @@ void parseGrammarAST(Environment &env, GrammarAST *treeTop, TermDecl const *& eo
   astParseGrammar(env, treeTop, eof);
 
   // fill in default types and actions
-  addDefaultTypesActions(env.g, treeTop);
+  addDefaultTypesActions(env, treeTop, eof);
 
   // then check grammar properties; throws exception
   // on failure

@@ -396,6 +396,8 @@ public:	    // data
   RHSElt* defaultSymbol = 0;          // default type determination (of 1-symbol-wide productions) :
                                       // analyzing its consistency
 
+  void const * prodDecl = 0;
+
 private:    // funcs
 
   void computeDerived();
