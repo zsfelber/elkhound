@@ -1283,6 +1283,12 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf <<"tag";
               }
               buf << vpref << ")) {" << std::endl;
+
+              if (origAction && origAction->isNonNull()) {
+                  buf << indp << "// user action:" << std::endl;
+                  buf << indp << origAction->str << std::endl;
+              }
+
               if (tprod->label && tprod->label.isNonNull()) {
                   buf << indp << "goto done;" << std::endl;
               } else {
@@ -1311,8 +1317,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               env.bufCc << "   done:" << std::endl;
 
               if (origAction && origAction->isNonNull()) {
-                  env.bufCc << "   // user action:" << std::endl;
-                  env.bufCc << "   " << origAction->str << std::endl;
+                  // Nothing to do
               } else if (prodDecl->pkind == PDK_TRAVERSE_NULL || prodDecl->pkind == PDK_TRAVERSE_VAL) {
                   env.bufCc << "   return tag;" << std::endl;
               } else if (v0 && nonterm->type) {
