@@ -1439,10 +1439,6 @@ void GrammarAnalysis::initializeAuxData()
   // at the moment, calling this twice leaks memory
   xassert(!initialized);
 
-  terminals.appendAll(allTerminals);
-  nonterminals.appendAll(allNonterminals);
-  productions.appendAll(allProductions);
-
   computeIndexedNonterms();
   computeIndexedTerms();
   resetFirstFollow();
@@ -5229,6 +5225,10 @@ void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML
     G.pref = pref;
     G.prefix0 = prefix0;
 
+    g.terminals.appendAll(g.allTerminals);
+    g.nonterminals.appendAll(g.allNonterminals);
+    g.productions.appendAll(g.allProductions);
+
     LocString * grType = NULL;
     std::string name, usr;
 
@@ -5554,22 +5554,35 @@ int inner_entry(int argc, char **argv)
 
       std::cout << std::endl << "Total : " << std::endl;
 
-      GrammarAnalysis tot_g(g0);
-      multiIndex = -1;
-      if (ast->earlyStartNT) {
-          ast->forms.removeItem(ast->earlyStartNT);
-          ast->earlyStartNT = NULL;
-      }
-
       FOREACH_ASTLIST(AbstractProdDecl, ast->childrenNT->productions, iter) {
           AbstractProdDecl * prod = constcast(iter.data());
           // EOF
           prod->rhs.removeLast();
       }
 
-      ast->forms.prepend(ast->childrenNT);
+      if (ast->earlyStartNT) {
+          ast->forms.removeItem(ast->earlyStartNT);
+          ast->earlyStartNT = NULL;
+      }
 
+      ast->forms.prepend(ast->childrenNT);
+      ast->firstNT = ast->childrenNT;
+      ast->childrenNT = NULL;
+      ast->firstNT->name = LIT_STR("__GeneratedStartOverall");
+
+      LocString * grType = NULL;
+      std::string name, usr;
+      GrammarAnalysis tot_g(g0);
       Environment tot_env(env0, tot_g);
+      constcast(tot_env.startSymbol) = NULL;
+      tot_env.g.startSymbol = NULL;
+
+      multiIndex = 0;
+      synthesizeStartRule(tot_env, ast, eof, multiIndex, grType, name, usr);
+      xassert (multiIndex == 1);
+      xassert (!ast->earlyStartNT);
+      xassert (ast->childrenNT);
+
       analyzse(tot_env, ast, eof, useML, pref, prefix0, prefix, multiIndex, false);
 
       reportUnexpected(maxSr, tot_g.expectedSR, "max branch shift/reduce conflicts");

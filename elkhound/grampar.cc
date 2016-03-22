@@ -862,7 +862,7 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
     }
 
     if (grType && env.parserFuncs.find(name)==env.parserFuncs.end()) {
-        trace("prec") << "Creating child grammar start rule " << name << " : " << (grType->isNull()?"":grType->str) << " : _usr_" << usr << std::endl;
+        trace("prec") << "Creating  __GeneratedChildren -> " << name << "    type : " << (grType->isNull()?"":grType->str) << "   parser class field : _usr_" << usr << std::endl;
 
         env.bufIncl << "#include \""<< G.prefix0;
         if (name.length()) {
@@ -923,7 +923,7 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
     }
     if (ast->earlyStartNT) {
         trace("prec") << "Replace "
-                      << ast->earlyStartNT->productions.count() << " early start rules to "
+                      << ast->earlyStartNT->productions.count() << " rules to  __EarlyStartSymbol -> "
                       << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name:
                          prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str: "?")
                                                         << std::endl;
@@ -932,9 +932,8 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
         ast->earlyStartNT->productions.prepend(prod);
         ast->earlyStartNT->type.str = prod->type.str;
 
-        env.g.startSymbol = env.g.findNonterminal("__EarlyStartSymbol");
     } else {
-        trace("prec") << "Create first early start rule : "
+        trace("prec") << "Create first  __EarlyStartSymbol -> "
                       << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name:
                          prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str: "?")
                                                         << std::endl;
@@ -948,8 +947,8 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
                   );
         ast->forms.prepend(ast->earlyStartNT);
 
-        env.g.startSymbol = complementNonterm(env, ast, ast->earlyStartNT, 0, eof);
     }
+    env.g.startSymbol = complementNonterm(env, ast, ast->earlyStartNT, 0, eof);
     xassert(env.g.startSymbol);
 }
 
