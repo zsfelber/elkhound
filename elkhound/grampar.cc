@@ -842,11 +842,11 @@ Nonterminal * complementNonterm(Environment &env, GrammarAST *ast, TF_nonterm * 
     return result;
 }
 
-bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *& grType, std::string& name, std::string& usr) {
+ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *startRuleAction, LocString *& grType, std::string& name, std::string& usr) {
     Grammar &g = env.g;
     GrammarAnalysis &G = (GrammarAnalysis&)env.g;
 
-    if (rhs->count()==2) { // 1 + reof
+    if (rhs->count()==2 && !startRuleAction) { // 1 + reof
         Symbol *s = NULL;
         if (rhs->first()->isRH_name())
            s = g.findSymbol(rhs->first()->asRH_name()->name);
@@ -858,10 +858,14 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
             grType = LIT_STR(s->type).clone();
 
             usr = name = s->name.str;
+
         }
+    } else {
+        trace("prec") << "Child rule rhs count : " << rhs->count() << " startRuleAction:" << (startRuleAction?"yes":"no") << std::endl;
     }
 
-    if (grType && env.parserFuncs.find(name)==env.parserFuncs.end()) {
+    std::map<std::string, ProdDecl*>::iterator it;
+    if (grType && (it=env.parserFuncs.find(name))==env.parserFuncs.end()) {
         trace("prec") << "Creating  __GeneratedChildren -> " << name << "    type : " << (grType->isNull()?"":grType->str) << "   parser class field : _usr_" << usr << std::endl;
 
         env.bufIncl << "#include \""<< G.prefix0;
@@ -874,9 +878,17 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
         env.bufConsBase << ", _usr_" << usr << "(this)";
 
         // append to multiple start symbol (will process later at last step, see 'int &multiIndex')
-        ProdDecl *newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs, new LocString(SL_UNKNOWN, NULL),
-                                 LIT_STR(name.c_str()).clone(), grType->clone());
+        ProdDecl *newStart;
 
+        if (startRuleAction) {
+            newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
+                                    startRuleAction->clone(),
+                                    LIT_STR(name.c_str()).clone(), grType->clone());
+        } else {
+            newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
+                                    new LocString(SL_UNKNOWN, NULL),
+                                    LIT_STR(name.c_str()).clone(), grType->clone());
+        }
         env.parserFuncs[name] = newStart;
 
         if (ast->childrenNT) {
@@ -896,12 +908,40 @@ bool synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs
             // reset to this ast->childrenNT :
             // multiIndex = ast->childrenNT->productions.count();
         //}
-        return true;
+        return newStart;
+    } else if (grType) {
+        xassert(!startRuleAction);
+        return it->second;
     } else {
-        trace("prec") << "Failed creating child grammar start rule:";
-        rhs->debugPrint(trace("prec"));
+        std::stringstream s;
+        FOREACH_ASTLIST(RHSElt, *rhs, iter) {
+            LocString symTag, symName;
+            ASTSWITCHC(RHSElt, iter.data()) {
+                ASTCASEC(RH_name, tname) {
+                    symTag = tname->tag;
+                    symName = tname->name;
+                }
+                ASTNEXTC(RH_string, ts) {
+                    symTag = ts->tag;
+                    symName = ts->str;
+                }
+                ASTDEFAULTC {
+                    astParseError(symName, "Traverse mode '>' must be followed by terminals only.");
+                }
+                ASTENDCASEC
+            }
 
-        return false;
+            if (symTag && symTag.isNonNull() && symTag.length()) {
+                s << symTag.str << ":" << symName.str;
+            } else {
+                s << symName.str;
+            }
+            s << "  ";
+        }
+
+        trace("prec") << "Failed creating child grammar start rule (no type):" << s.str() << std::endl;
+
+        return NULL;
     }
 }
 
@@ -974,7 +1014,8 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
       rhs->append(rhs1);
       rhs->append(rhs2);
 
-      synthesizeChildRule(env, ast, rhs, grType, name, usr);
+      LocString * start = NULL;
+      synthesizeChildRule(env, ast, rhs, start, grType, name, usr);
   }
 
   if (multiIndex >= 0) {
@@ -1025,10 +1066,12 @@ void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, Te
 
 void generateErrorHandlers(std::stringstream &buf, TreeProdDecl const *prod, std::string &indent) {
     buf << indent << "switch(errorKind) {" << std::endl;
-    FOREACH_ASTLIST(ErrorAct, prod->errorActs, ierr) {
-        buf << indent << "case " << toString(ierr.data()->ekind) << ":" << std::endl;
-        buf << indent << ierr.data()->actionCode << std::endl;
-        buf << indent << "   break;" << std::endl;
+    FOREACH_ASTLIST(MarkedAction, prod->markedActs, ierr) {
+        if (ierr.data()->ekind <= ERR_PARSE) {
+            buf << indent << "case " << toString(ierr.data()->ekind) << ":" << std::endl;
+            buf << indent << "   " << ierr.data()->actionCode << std::endl;
+            buf << indent << "   break;" << std::endl;
+        }
     }
     buf << indent << "default:" << std::endl;
     buf << indent << "   break;" << std::endl;
@@ -1088,6 +1131,7 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
           LocString *origAction = prodDecl->actionCode.clone();
+          LocString *startAction = NULL;
 
           ASTList<RHSElt> *rhs;
 
@@ -1137,39 +1181,42 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                           << vpref << "_" << vi << ";" << std::endl;
                   }
 
-                  std::string ehnx = prod->errorActs.count() ? "err"+sv.str() : errorHandler ;
+                  bool err = false;
+                  FOREACH_ASTLIST(MarkedAction, prod->markedActs, ierr) {
+                      if (ierr.data()->ekind <= ERR_PARSE) {
+                          err = true;
+                          break;
+                      }
+                  }
+                  std::string ehnx = err ? "err"+sv.str() : errorHandler ;
 
                   if (prod->pkind != PDK_TRAVERSE_NULL) {
                       astParseProduction(env, ast, nonterm, prod, prodi, eof, ehnx, st.str(), sv.str(), sfv.str(), ind.str(), _bufAct, _buf);
                   }
 
-                  if (prod->actionCode && prod->actionCode.isNonNull()) {
-                      buf << indp << prod->actionCode << std::endl;
-                  }
-
                   buf << indent << "} else {" << std::endl;
 
-                  if (prod->errorActs.count()) {
-                      buf << indent << "   err" << sv.str() << ":" << std::endl;
+                  if (err) {
+                      buf << indp << "err" << sv.str() << ":" << std::endl;
                       generateErrorHandlers(buf, prod, indp);
                   }
-                  generateJumpToErrorHandler(buf, errorHandler, indent);
+                  generateJumpToErrorHandler(buf, errorHandler, indp);
 
                   buf << indent << "}" << std::endl;
 
                   vi++;
               }
 
-              if (v0) {
-                  us << nonterm->ntIndex << "_" << prodi;
-                  usr = us.str();
-              }
-              break;
+              // fall through intended ...
 
           case PDK_TRAVERSE_NULL:
+
               if (v0) {
                   us << nonterm->ntIndex << "_" << prodi;
                   usr = us.str();
+              } else if (origAction && origAction->isNonNull()) {
+                  buf << indent << "// user action:" << std::endl;
+                  buf << indent << origAction->str << std::endl;
               }
               break;
 
@@ -1199,11 +1246,11 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                     // NOTE We don't skip EOF !
                     buf << indent << "treeLexer" << vpref << ".adv();" << std::endl;
                     if (symTag && symTag.isNonNull() && symTag.length()) {
-                        bufAct << "   " << tp << "_star "
+                        bufAct << "   " << term->type << " "
                                << symTag.str << " = NULL;" << std::endl;
 
                         buf << indent << "if (treeLexer" << vpref << ".type == " << term->name << ") {" << std::endl;
-                        buf << indp << symTag.str << " = (" << tp << "_star) treeLexer" << vpref << ".sval;" << std::endl;
+                        buf << indp << symTag.str << " = (" << term->type << ") treeLexer" << vpref << ".sval;" << std::endl;
                         buf << indent << "} else {" << std::endl;
                         generateJumpToErrorHandler(buf, errorHandler, indp);
                         buf << indent << "}" << std::endl;
@@ -1237,7 +1284,14 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               name = nms.str();
               usr = us.str();
 
-              synthesizeChildRule(env, ast, rhs, grType, name, usr);
+              FOREACH_ASTLIST(MarkedAction, tprod->markedActs, ierr) {
+                  if (ierr.data()->ekind == START_RULE) {
+                      startAction = ierr.data()->actionCode.clone();
+                      break;
+                  }
+              }
+
+              synthesizeChildRule(env, ast, rhs, startAction, grType, name, usr);
 
               if (v0 && nonterm->type) {
                   buf << indent << nonterm->type << " result = NULL;" << std::endl;
@@ -1255,9 +1309,9 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               }
               buf << vpref << ")) {" << std::endl;
               if (tprod->label && tprod->label.isNonNull()) {
-                  buf << indent << "   goto done;" << std::endl;
+                  buf << indp << "goto done;" << std::endl;
               } else {
-                  buf << indent << "   // Nothing to do" << std::endl;
+                  buf << indp << "// Nothing to do" << std::endl;
               }
               buf << indent << "} else {" << std::endl;
 
@@ -1294,7 +1348,14 @@ void astParseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               env.bufCc << "   err:" << std::endl;
 
-              if (tprod->errorActs.count()) {
+              bool err = false;
+              FOREACH_ASTLIST(MarkedAction, tprod->markedActs, ierr) {
+                  if (ierr.data()->ekind <= ERR_PARSE) {
+                      err = true;
+                      break;
+                  }
+              }
+              if (err) {
                   generateErrorHandlers(env.bufCc, tprod, indp);
               } else {
                   env.bufCc << "   // TODO default error handler" << std::endl;

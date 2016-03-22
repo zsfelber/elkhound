@@ -173,6 +173,7 @@ HWHITE    [ \t\f\v\r]
 "null"             TOK_UPD_COL;  return TOK_NULL;
 "forbid_next"      TOK_UPD_COL;  return TOK_FORBID_NEXT;
 "#parse"           TOK_UPD_COL;  return TOK_PARSE_ERROR;
+"$start"           TOK_UPD_COL;  return TOK_START_RULE;
 
 
   /* ----------- sequences that begin literal code ------------ */

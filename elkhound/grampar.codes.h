@@ -37,6 +37,7 @@
     TOK_TREE = 290,
     TOK_NULL = 291,
     TOK_FORBID_NEXT = 292,
-    TOK_PARSE_ERROR = 293
+    TOK_PARSE_ERROR = 293,
+    TOK_START_RULE = 294
   };
 #endif

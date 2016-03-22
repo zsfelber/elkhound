@@ -100,8 +100,9 @@ enum RHAttrKind {
   RHA_TOKENS,     // 2
   RHA_STRTOKENS,  // 3
 };
-enum ErrorKind {
-  ERR_PARSE
+enum MarkedActionKind {
+  ERR_PARSE,
+  START_RULE
 };
 
 class AbstractProdDecl(SourceLoc loc, ProdDeclKind pkind, ASTList<RHSElt> rhs, LocString actionCode, LocString name, LocString type) {
@@ -110,7 +111,7 @@ class AbstractProdDecl(SourceLoc loc, ProdDeclKind pkind, ASTList<RHSElt> rhs, L
   // production: rhs description, and code to execute upon recognition
   -> ProdDecl;
 
-  -> TreeProdDecl (LocString label, LocString tag, ASTList<TreeProdDecl> treeValidations, ASTList<ErrorAct> errorActs) {
+  -> TreeProdDecl (LocString label, LocString tag, ASTList<TreeProdDecl> treeValidations, ASTList<MarkedAction> markedActs) {
      public bool validation;
 
      ctor validation = (_treeValidations);
@@ -132,7 +133,7 @@ class RHSElt {
   -> RH_forbid(LocString tokName);
 }
 
-class ErrorAct(ErrorKind ekind, LocString actionCode);
+class MarkedAction(MarkedActionKind ekind, LocString name, LocString actionCode);
 
 class Name3(LocString label, LocString tag, LocString name);
 

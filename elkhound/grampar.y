@@ -116,6 +116,7 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 %token <loc> TOK_NULL "null"
 %token TOK_FORBID_NEXT "forbid_next"
 %token TOK_PARSE_ERROR "#parse"
+%token TOK_START_RULE "$start"
 
 // left, right, nonassoc: they're not keywords, since "left" and "right"
 // are common names for RHS elements; instead, we parse them as names
@@ -149,15 +150,15 @@ AssocKind whichKind(LocString * /*owner*/ kind);
   TreeProdDecl *treeProdDecl;
   ASTList<RHSElt> *rhsList;
   RHSElt *rhsElt;
-  ErrorAct *errorAct;
-  ASTList<ErrorAct> *errorActs;
+  MarkedAction *markedAct;
+  ASTList<MarkedAction> *markedActs;
   Name3 *name3;
 }
 
 %type <num> StartSymbol
 %type <str> Type Action
-%type <errorAct> ErrorAction
-%type <errorActs> ErrorActions
+%type <markedAct> MarkedAction
+%type <markedActs> MarkedActions
 
 %type <topFormList> TopFormList
 %type <topForm> TopForm ContextClass Verbatim Option Terminals Nonterminal
@@ -358,18 +359,18 @@ Production: "->" RHS Action                { $$ = new ProdDecl($1, PDK_NEW, $2, 
           | "tree" "->" TreeValidation0    { $$ = $3; }
           ;
 
-TreeValidation0: Name3 "=" "(" TreeValidations ")" Action ErrorActions { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), $4, $7); }
-          | Name3 ">" RHS2  Action ErrorActions                        { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $5); }
-          | Name3 "~>" RHS Action ErrorActions                         { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $5); }
+TreeValidation0: Name3 "=" "(" TreeValidations ")" Action MarkedActions { $$ = new TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), $4, $7); }
+          | Name3 ">" RHS2  Action MarkedActions                        { $$ = new TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $5); }
+          | Name3 "~>" RHS Action MarkedActions                         { $$ = new TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $5); }
           ;
 
 TreeValidations: /* empty */                                           { $$ = new ASTList<TreeProdDecl>; }
           | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: Name3 ";" ErrorActions                                 { $$ = new TreeProdDecl($1->name.loc, PDK_TRAVERSE_VAL,  NULL, nolocNULL(), $1->name.clone(),
+TreeValidation: Name3 ";" MarkedActions                                 { $$ = new TreeProdDecl($1->name.loc, PDK_TRAVERSE_VAL,  NULL, nolocNULL(), $1->name.clone(),
                                                                          sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $3); }
-          | Name3N ";" ErrorActions                                    { $$ = new TreeProdDecl($1->name.loc, PDK_TRAVERSE_NULL, NULL, nolocNULL(), $1->name.clone(),
+          | Name3N ";" MarkedActions                                    { $$ = new TreeProdDecl($1->name.loc, PDK_TRAVERSE_NULL, NULL, nolocNULL(), $1->name.clone(),
                                                                          sameloc(($1->name.clone()), ""), $1->label.clone(), $1->tag.clone(), NULL, $3); }
           | TreeValidation0                                            { $$ = $1; }
           ;
@@ -389,11 +390,12 @@ Action: TOK_LIT_CODE                       { $$ = $1; }
       | ";"                                { $$ = nolocNULL(); }
       ;
 
-ErrorActions: /*empty*/                    { $$ = new ASTList<ErrorAct>; }
-      | ErrorActions ErrorAction           { ($$=$1)->append($2); }
+MarkedActions: /*empty*/                   { $$ = new ASTList<MarkedAction>; }
+      | MarkedActions MarkedAction         { ($$=$1)->append($2); }
       ;
 
-ErrorAction: "#parse" TOK_LIT_CODE         { $$ = new ErrorAct(ERR_PARSE, $2); }
+MarkedAction: "#parse" TOK_LIT_CODE        { $$ = new MarkedAction(ERR_PARSE, nolocNULL(), $2); }
+      | "$start" TOK_LIT_CODE              { $$ = new MarkedAction(START_RULE, nolocNULL(), $2); }
       ;
 
 /* yields: ASTList<RHSElt> */
