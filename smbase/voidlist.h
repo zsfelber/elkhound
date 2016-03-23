@@ -65,7 +65,7 @@ public:
 
   // insertion
   void prepend(void *newitem);       // insert at front
-  void append(void *newitem);        // insert at rear
+  VoidNode* append(void *newitem);        // insert at rear
   void insertAt(void *newitem, int index);
     // new item is inserted such that its index becomdes 'index'
   void insertSorted(void *newitem, VoidDiff diff, void *extra=NULL);

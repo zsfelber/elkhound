@@ -33,6 +33,7 @@ m4_changequote([[[, ]]])m4_dnl        // reduce likelihood of confusion
 #define includeLatch
 
 #include "voidlist.h"    // VoidList
+#include "storage.h"    // VoidList
 
 
 // forward declarations of template classes, so we can befriend them in className
@@ -68,13 +69,25 @@ outputCond([[[m4_dnl      // sobjlist
 protected:
   VoidList list;                        // list itself
 
+  void chgStorage(StoragePool & pool) {
+      for(mutatorName< T > iter(*this); !iter.isDone(); iter.adv()) {
+         T*& d = iter.dataRef();
+         if (d->__new_ptr) {
+             d = (T*)d->__new_ptr;
+         }
+      }
+  }
+
 outputCond([[[m4_dnl    // sobjlist
   #define OWN
   #define NOWN
 public:
   // make shallow copies
-  className[[[]]](className const &obj)         : list(obj.list) {}
+  className[[[]]](className const &obj)         : list(obj.list) {     }
   className& operator= (className const &src)         { list = src.list; return *this; }
+
+  className[[[]]](StoragePool & pool, className const &obj)         : list(obj.list) {     chgStorage(pool);  }
+  className& operator= (StoragePool & pool, className const &src)         { list = src.list; chgStorage(pool); return *this; }
 
   public:
     className[[[]]]()                            : list() {}
@@ -83,11 +96,12 @@ public:
   #define NOWN xassert(!owning);
 private:
   bool const owning;
-  // this is an owner list; these are not allowed
-  className[[[]]](className const &obj) : list(obj.list), owning(false) {
+  // make shallow copies and non-owning list
+  className[[[]]](className const &obj) : list(obj.list), owning(false) { }
+  className& operator= (className const &src) { NOWN list = src.list; return *this;  }
 
-  }
-  className& operator= (className const &src);
+  className[[[]]](StoragePool & pool, className const &obj) : list(obj.list), owning(false) { chgStorage(pool);  }
+  className& operator= (StoragePool & pool, className const &src) { NOWN list = src.list; chgStorage(pool); return *this;  }
 
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
@@ -117,7 +131,7 @@ private:
 
   // insertion
   void prepend(T *newitem)              { OWN list.prepend((void*)newitem); }
-  void append(T *newitem)               { OWN list.append((void*)newitem); }
+  VoidNode* append(T *newitem)          { OWN return list.append((void*)newitem); }
   void insertAt(T *newitem, int index)  { OWN list.insertAt((void*)newitem, index); }
   void insertSorted(T *newitem, Diff diff, void *extra=NULL)
     { OWN list.insertSorted((void*)newitem, (VoidDiff)diff, extra); }

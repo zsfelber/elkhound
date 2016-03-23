@@ -9,8 +9,9 @@
 
 #include "strtable.h"    // StringRef
 #include "srcloc.h"      // SourceLoc
+#include "storage.h"      // SourceLoc
 
-class LocString {
+class LocString : public Storeable {
 public:    // data
   SourceLoc loc;
   StringRef str;

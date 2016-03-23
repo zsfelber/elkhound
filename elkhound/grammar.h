@@ -26,6 +26,7 @@
 #include "str.h"         // string
 #include "objlist.h"     // ObjList
 #include "sobjlist.h"    // SObjList
+#include "storage.h"
 #include "util.h"        // OSTREAM_OPERATOR, INTLOOP
 #include "locstr.h"      // LocString, StringRef
 #include "strobjdict.h"  // StringObjDict
@@ -34,6 +35,7 @@
 #include "array.h"       // GrowArray
 #include <sstream>
 #include <string>
+#include <vector>
 #include <map>
 
 using std::ostream;
@@ -63,9 +65,11 @@ typedef LocString LiteralCode;
 extern StringTable grammarStringTable;
 
 
+
+
 // ---------------- Symbol --------------------
 // either a nonterminal or terminal symbol
-class Symbol {
+class Symbol : public Storeable {
 // ------ representation ------
 public:
   LocString const name;     // symbol's name in grammar
@@ -239,10 +243,12 @@ struct TerminalOrSet {
     };
 };
 
+class GrammarAnalysis;
+
 // ----------------- TerminalSet -------------------
 // used for the lookahead sets of LR items, and for the First()
 // sets of production RHSs
-class TerminalSet {
+class TerminalSet : public Storeable {
 
 private:    // data
   unsigned char *bitmap;      // (owner) bitmap of terminals, indexed by
@@ -268,7 +274,7 @@ public:     // funcs
   TerminalSet& operator= (TerminalSet const &obj)
     { copy(obj); return *this; }
 
-  void convert(Grammar& g);
+  void convert(GrammarAnalysis& g);
 
   TerminalSet(Flatten&);
   void xfer(Flatten &flat);
@@ -294,7 +300,7 @@ public:     // funcs
   bool removeSet(TerminalSet const &obj); // intersect with complement; returns true if this changed set
 
   void print(std::ostream &os, Grammar const &g, char const *lead = ", ") const;
-  void print_ext(std::ostream &os, Grammar const &g, char const *lead = ", ") const;
+  void print_ext(std::ostream &os, GrammarAnalysis const &g, char const *lead = ", ") const;
 };
 
 
@@ -315,7 +321,9 @@ public:
   
   SObjList<Nonterminal> subsets;      // preferred subsets (for scannerless)
   SObjList<Production> productions;   //it is a copy of pointers and not an item owner list (in contrast of ObjList)
+
   bool deftravd = false;
+  bool type_is_default = false;
 
 protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
@@ -342,7 +350,6 @@ public:     // data
   TerminalSet first;     // set of terminals that can be start of a string derived from 'this'
   TerminalSet follow;    // set of terminals that can follow a string derived from 'this'
   Nonterminal *superset; // inverse of 'subsets'
-  bool type_is_default = false;
 };
 
 typedef SObjList<Nonterminal> NonterminalList;
@@ -362,10 +369,10 @@ inline SObjList<Symbol> const &toSObjList(SObjList<Nonterminal> const &list)
 
 // ---------------- Production --------------------
 // a rewrite rule
-class Production {
+class Production : public Storeable {
 // ------ representation ------
 public:     // types
-  class RHSElt {
+  class RHSElt : public Storeable {
   public:
     Symbol *sym;                // (serf) rhs element symbol
 
@@ -424,7 +431,7 @@ public:	    // funcs
   void getRHSSymbols(SymbolList &output) const;
 
   // append a RHS symbol
-  RHSElt* append(Symbol *sym, LocString const &tag);
+  RHSElt* append(Grammar &g, Symbol *sym, LocString const &tag);
 
   // call this when production is built, so it can compute annotations
   // (this is called by GrammarAnalysis::initializeAuxData, from
@@ -452,8 +459,8 @@ public:	    // funcs
   #endif // 0
 
   // add a terminal to the 'forbid' set
-  void addForbid(Terminal *t, int totalNumTerminals);
-  void addForbid(TerminalSet *s);
+  void addForbid(Grammar &g, Terminal *t, int totalNumTerminals);
+  void addForbid(Grammar &g, TerminalSet *s);
 
   // print 'A -> B c D' (no newline)
   string toString(bool printType = true, bool printIndex = true) const;
@@ -489,20 +496,23 @@ typedef ObjList<Production::RHSElt> RHSEltList;
 typedef ObjListIter<Production::RHSElt> RHSEltListIter;
 typedef ObjListMutator<Production::RHSElt> RHSEltListMutator;
 
+class Environment;
+class AbstractProdDecl;
 
 // ---------------- Grammar --------------------
 // represent a grammar: nonterminals, terminals, productions, and start-symbol
 class Grammar {
+friend class Production;
+friend void astParseProduction(Environment &env, Nonterminal *nonterm,
+                               AbstractProdDecl const *prodDecl);
+
+  StoragePool pool;
+
 // ------ representation ------
 public:	    // data
   SObjList<Nonterminal> nonterminals;
   SObjList<Terminal> terminals;
   SObjList<Production> productions;
-
-
-  ObjList<Nonterminal> allNonterminals;      // (owner list)
-  ObjList<Terminal> allTerminals;            // (owner list)
-  ObjList<Production> allProductions;        // (owner list)
 
 
   bool terminalCodeMapped;

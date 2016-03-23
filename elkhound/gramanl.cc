@@ -960,7 +960,8 @@ GrammarAnalysis::GrammarAnalysis()
     symOfInterest(NULL),
     errors(0),
     tables(NULL),sr(0),rr(0)
-{}
+{
+}
 
 GrammarAnalysis::GrammarAnalysis(Grammar const &cpy) : Grammar(cpy),
     derivable(NULL),
@@ -980,7 +981,8 @@ GrammarAnalysis::GrammarAnalysis(Grammar const &cpy) : Grammar(cpy),
     symOfInterest(NULL),
     errors(0),
     tables(NULL),sr(0),rr(0)
-{}
+{
+}
 
 GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(cpy),
     derivable(NULL),
@@ -1000,7 +1002,8 @@ GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(cpy),
     symOfInterest(NULL),
     errors(0),
     tables(NULL),sr(0),rr(0)
-{}
+{
+}
 
 
 GrammarAnalysis::~GrammarAnalysis()
@@ -1452,7 +1455,7 @@ void GrammarAnalysis::initializeAuxData()
 
   bool changed = false;
   int ti=0, eti=0;
-  MUTATE_EACH_TERMINAL(allTerminals, iter) {
+  SMUTATE_EACH_TERMINAL(allTerminals, iter) {
     Terminal *t = iter.data();
 
     t->externalTermIndex = eti;
@@ -1479,7 +1482,7 @@ void GrammarAnalysis::initializeAuxData()
     }
   }
 
-  MUTATE_EACH_NONTERMINAL(allNonterminals, iter) {
+  SMUTATE_EACH_NONTERMINAL(allNonterminals, iter) {
     Nonterminal *nt = iter.data();
     if (nt->reachable) {
       nonterminals.append(nt);
@@ -5216,6 +5219,11 @@ void get_names(AbstractProdDecl const * pdecl, int multiIndex, string const & pr
     }
 }
 
+void reset(Grammar &g) {
+
+
+}
+
 void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML, string &pref, string &prefix0, string &prefix, int &multiIndex, bool debug) {
     Grammar &g = env.g;
     GrammarAnalysis &G = (GrammarAnalysis&)env.g;
@@ -5459,10 +5467,7 @@ int inner_entry(int argc, char **argv)
       GrammarAnalysis g(g0);
       Environment env(env0, g);
 
-      g.terminals.appendAll(g.allTerminals);
-      g.nonterminals.appendAll(g.allNonterminals);
-      g.productions.appendAll(g.allProductions);
-
+      reset(g);
       analyzse(env, ast, eof, useML, pref, prefix0, prefix, multiIndex, true);
       maxSr=max(maxSr, g.sr) ;
       maxRr=max(maxRr, g.rr);
@@ -5578,9 +5583,7 @@ int inner_entry(int argc, char **argv)
       constcast(tot_env.startSymbol) = NULL;
       tot_env.g.startSymbol = NULL;
 
-      tot_g.terminals.appendAll(tot_g.allTerminals);
-      tot_g.nonterminals.appendAll(tot_g.allNonterminals);
-      tot_g.productions.appendAll(tot_g.allProductions);
+      reset(tot_g);
 
       //Nonterminal * theStart =
       complementNonterm(tot_env, ast, ast->firstNT, 0, eof);

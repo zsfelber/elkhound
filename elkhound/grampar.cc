@@ -1412,7 +1412,8 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
 
       // build a production; use 'this' as the tag for LHS elements
-      Production *prod = new Production(nonterm, "this");
+      Production *prod = g.pool.alloc<Production>();
+      prod = new (prod) Production(nonterm, "this");
       prod->prodDecl = prodDecl;
 
       int tags = 0;
@@ -1453,9 +1454,9 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
 
             try {
               if (s.set) {
-                 prod->addForbid(s.s);
+                 prod->addForbid(g, s.s);
               } else if (s.t) {
-                 prod->addForbid(s.t, g.numTerminals());
+                 prod->addForbid(g, s.t, g.numTerminals());
               }
             } catch (std::exception) {
                astParseError(f->tokName, "forbid_next : only single noneterminal allowed");
@@ -1532,7 +1533,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
         }
         else {
           // add it to the production
-          Production::RHSElt * r = prod->append(s, symTag);
+          Production::RHSElt * r = prod->append(g, s, symTag);
 
           if (!first) first = r;
           tags++;
@@ -1976,6 +1977,7 @@ void parseGrammarAST(Environment &env, GrammarAST *treeTop, TermDecl const *& eo
   // moved to after parse
   //addDefaultTypesActions(g, treeTop);
 
+  // moved to after outside cycle - grammanl.cc
   // synthesize a rule "TrueStart -> Start EOF"
   // synthesizeStartRule(g, treeTop, eof, multiIndex);
 

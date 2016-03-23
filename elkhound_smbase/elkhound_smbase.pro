@@ -222,5 +222,6 @@ HEADERS += \
     ../smbase/vptrmap.h \
     ../smbase/warn.h \
     ../smbase/xassert.h \
-    ../smbase/xobjlist.h
+    ../smbase/xobjlist.h \
+    ../smbase/storage.h
 

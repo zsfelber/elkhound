@@ -387,6 +387,10 @@ class GrammarAnalysis : public Grammar {
 
 public:
 
+    SObjList<Nonterminal> allNonterminals;
+    SObjList<Terminal> allTerminals;
+    SObjList<Production> allProductions;
+
     SObjList<Nonterminal> urNonterminals;
     SObjList<Terminal> urTerminals;
     SObjList<Production> urProductions;

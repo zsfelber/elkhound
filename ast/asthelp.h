@@ -11,15 +11,7 @@
 
 #include <iostream>    // std::ostream
 #include <climits>
-
-
-template <typename P> inline P* constcast(P const * p) {
-    return const_cast<P*>(p);
-}
-
-template <typename P> inline P& constcast(P const & p) {
-    return const_cast<P&>(p);
-}
+#include "storage.h"
 
 // ----------------- downcasts --------------------
 // the 'if' variants return NULL if the type isn't what's expected;

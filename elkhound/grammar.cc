@@ -356,8 +356,8 @@ void TerminalSet::init(int numTerms)
   }
 }
 
-void TerminalSet::convert(Grammar& g) {
-  ObjList<Terminal>& oldts = g.allTerminals;
+void TerminalSet::convert(GrammarAnalysis& g) {
+  SObjList<Terminal>& oldts = g.allTerminals;
   SObjList<Terminal>& newts = g.terminals;
   xassert(bitmapLen == ((oldts.count()+7)>>3));
 
@@ -368,7 +368,7 @@ void TerminalSet::convert(Grammar& g) {
   unsigned char const bits[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 
   int ind = 0;
-  ObjListIter<Terminal> iter(oldts);
+  SObjListIter<Terminal> iter(oldts);
   for (int i = 0; i < dup.bitmapLen; i++) {
     unsigned char byte = dup.bitmap[i];
     for (unsigned char bit = 0x01; bit && !iter.isDone(); iter.adv(), bit<<=1, ind++) {
@@ -548,10 +548,10 @@ void TerminalSet::print(std::ostream &os, Grammar const &g, char const *lead) co
 }
 
 
-void TerminalSet::print_ext(std::ostream &os, Grammar const &g, char const *lead) const
+void TerminalSet::print_ext(std::ostream &os, GrammarAnalysis const &g, char const *lead) const
 {
     int ct=0;
-    FOREACH_TERMINAL(g.allTerminals, iter) {
+    SFOREACH_TERMINAL(g.allTerminals, iter) {
         print_terminal_adv(externalTermIndex);
     }
 }
@@ -594,7 +594,7 @@ Production::Production(Nonterminal *L, char const *Ltag)
 Production::~Production()
 {
   if (forbid_owned) {
-    delete forbid;
+      delete forbid;
   }
 }
 
@@ -692,14 +692,15 @@ void Production::getRHSSymbols(SymbolList &output) const
 }
 
 
-Production::RHSElt* Production::append(Symbol *sym, LocString const &tag)
+Production::RHSElt* Production::append(Grammar &g, Symbol *sym, LocString const &tag)
 {
   // my new design decision (6/26/00 14:24) is to disallow the
   // emptyString nonterminal from explicitly appearing in the
   // productions
   xassert(!sym->isEmptyString);
 
-  RHSElt *r = new RHSElt(sym, tag);
+  RHSElt *r = g.pool.alloc<RHSElt>();
+  r = new (r) RHSElt(sym, tag);
   right.append(r);
   return r;
 }
@@ -793,21 +794,24 @@ DottedProduction const *Production::getDProdC(int dotPlace) const
 
 // it's somewhat unfortunate that I have to be told the
 // total number of terminals, but oh well
-void Production::addForbid(Terminal *t, int numTerminals)
+void Production::addForbid(Grammar &g, Terminal *t, int numTerminals)
 {
   if (forbid) {
      if (!forbid_owned) {
         throw std::exception();
      }
   } else {
-     forbid = new TerminalSet(numTerminals);
+     forbid = g.pool.alloc<TerminalSet>();
+     forbid = new (forbid) TerminalSet(numTerminals);
+     g.pool.add(forbid);
+
      forbid_owned = true;
   }
 
   forbid->add(t->termIndex);
 }
 
-void Production::addForbid(TerminalSet *s)
+void Production::addForbid(Grammar &g, TerminalSet *s)
 {
   if (forbid) {
     if (forbid_owned) {
@@ -817,6 +821,7 @@ void Production::addForbid(TerminalSet *s)
     }
   } else {
       forbid = s;
+      g.pool.add(forbid);
       forbid_owned = false;
   }
 }
@@ -1039,7 +1044,7 @@ void Grammar::addProduction(Production *prod)
 
   prod->prodIndex = productions.count();
   productions.append(prod);
-  
+
   // if the start symbol isn't defined yet, we can here
   // implement the convention that the LHS of the first
   // production is the start symbol
@@ -1282,7 +1287,8 @@ Nonterminal *Grammar::getOrMakeNonterminal(LocString const &name)
     return nt;
   }
 
-  nt = new Nonterminal(name);
+  nt = pool.alloc<Nonterminal>();
+  nt = new (nt) Nonterminal(name);
   nonterminals.append(nt);
   return nt;
 }
@@ -1294,7 +1300,8 @@ Terminal *Grammar::getOrMakeTerminal(LocString const &name)
     return term;
   }
 
-  term = new Terminal(name);
+  term = pool.alloc<Terminal>();
+  term = new (term) Terminal(name);
   terminals.append(term);
   return term;
 }

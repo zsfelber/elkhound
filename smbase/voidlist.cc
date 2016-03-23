@@ -112,16 +112,18 @@ void VoidList::prepend(void *newitem)
 
 
 // insert at rear
-void VoidList::append(void *newitem)
+VoidNode* VoidList::append(void *newitem)
 {
   if (!top) {
     prepend(newitem);
+    return top;
   }
   else {
     VoidNode *p;
     for (p = top; p->next; p = p->next)
       {}
     p->next = new VoidNode(newitem);
+    return p->next;
   }
 }
 

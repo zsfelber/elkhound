@@ -8,6 +8,7 @@
 #define OBJLIST_H
 
 #include "voidlist.h"    // VoidList
+#include "storage.h"    // VoidList
 
 
 // forward declarations of template classes, so we can befriend them in ObjList
@@ -33,15 +34,22 @@ private:
 protected:
   VoidList list;                        // list itself
 
+  void chgStorage() {
+      for(ObjListMutator< T > iter(*this); !iter.isDone(); iter.adv()) {
+         T*& d = iter.dataRef();
+         if (d->__new_ptr) {
+             d = (T*)d->__new_ptr;
+         }
+      }
+  }
+
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
 private:
   bool const owning;
-  // this is an owner list; these are not allowed
-  ObjList(ObjList const &obj) : list(obj.list), owning(false) {
-
-  }
-  ObjList& operator= (ObjList const &src);
+  // make shallow copies and non-owning list
+  ObjList(ObjList const &obj) : list(obj.list), owning(false) { chgStorage();  }
+  ObjList& operator= (ObjList const &src) { NOWN list = src.list; chgStorage(); return *this;  }
 
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
@@ -69,7 +77,7 @@ private:
 
   // insertion
   void prepend(T *newitem)              { OWN list.prepend((void*)newitem); }
-  void append(T *newitem)               { OWN list.append((void*)newitem); }
+  VoidNode* append(T *newitem)          { OWN return list.append((void*)newitem); }
   void insertAt(T *newitem, int index)  { OWN list.insertAt((void*)newitem, index); }
   void insertSorted(T *newitem, Diff diff, void *extra=NULL)
     { OWN list.insertSorted((void*)newitem, (VoidDiff)diff, extra); }

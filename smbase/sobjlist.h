@@ -8,6 +8,7 @@
 #define SOBJLIST_H
 
 #include "voidlist.h"    // VoidList
+#include "storage.h"    // VoidList
 
 
 // forward declarations of template classes, so we can befriend them in SObjList
@@ -32,12 +33,21 @@ private:
 protected:
   VoidList list;                        // list itself
 
+  void chgStorage() {
+      for(SObjListMutator< T > iter(*this); !iter.isDone(); iter.adv()) {
+         T*& d = iter.dataRef();
+         if (d->__new_ptr) {
+             d = (T*)d->__new_ptr;
+         }
+      }
+  }
+
   #define OWN
   #define NOWN
 public:
   // make shallow copies
-  SObjList(SObjList const &obj)         : list(obj.list) {}
-  SObjList& operator= (SObjList const &src)         { list = src.list; return *this; }
+  SObjList(SObjList const &obj)         : list(obj.list) {     chgStorage();  }
+  SObjList& operator= (SObjList const &src)         { list = src.list; chgStorage(); return *this; }
 
   public:
     SObjList()                            : list() {}
@@ -63,7 +73,7 @@ public:
 
   // insertion
   void prepend(T *newitem)              { OWN list.prepend((void*)newitem); }
-  void append(T *newitem)               { OWN list.append((void*)newitem); }
+  VoidNode* append(T *newitem)          { OWN return list.append((void*)newitem); }
   void insertAt(T *newitem, int index)  { OWN list.insertAt((void*)newitem, index); }
   void insertSorted(T *newitem, Diff diff, void *extra=NULL)
     { OWN list.insertSorted((void*)newitem, (VoidDiff)diff, extra); }
