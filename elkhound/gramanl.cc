@@ -5225,10 +5225,6 @@ void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML
     G.pref = pref;
     G.prefix0 = prefix0;
 
-    g.terminals.appendAll(g.allTerminals);
-    g.nonterminals.appendAll(g.allNonterminals);
-    g.productions.appendAll(g.allProductions);
-
     LocString * grType = NULL;
     std::string name, usr;
 
@@ -5463,6 +5459,10 @@ int inner_entry(int argc, char **argv)
       GrammarAnalysis g(g0);
       Environment env(env0, g);
 
+      g.terminals.appendAll(g.allTerminals);
+      g.nonterminals.appendAll(g.allNonterminals);
+      g.productions.appendAll(g.allProductions);
+
       analyzse(env, ast, eof, useML, pref, prefix0, prefix, multiIndex, true);
       maxSr=max(maxSr, g.sr) ;
       maxRr=max(maxRr, g.rr);
@@ -5562,13 +5562,14 @@ int inner_entry(int argc, char **argv)
 
       if (ast->earlyStartNT) {
           ast->forms.removeItem(ast->earlyStartNT);
-          ast->earlyStartNT = NULL;
       }
 
       ast->forms.prepend(ast->childrenNT);
       ast->firstNT = ast->childrenNT;
-      ast->childrenNT = NULL;
       ast->firstNT->name = LIT_STR("__GeneratedStartOverall");
+      ast->firstNT->type = LIT_STR("void*");
+      ast->childrenNT = NULL;
+      ast->earlyStartNT = NULL;
 
       LocString * grType = NULL;
       std::string name, usr;
@@ -5576,6 +5577,13 @@ int inner_entry(int argc, char **argv)
       Environment tot_env(env0, tot_g);
       constcast(tot_env.startSymbol) = NULL;
       tot_env.g.startSymbol = NULL;
+
+      tot_g.terminals.appendAll(tot_g.allTerminals);
+      tot_g.nonterminals.appendAll(tot_g.allNonterminals);
+      tot_g.productions.appendAll(tot_g.allProductions);
+
+      //Nonterminal * theStart =
+      complementNonterm(tot_env, ast, ast->firstNT, 0, eof);
 
       multiIndex = 0;
       synthesizeStartRule(tot_env, ast, eof, multiIndex, grType, name, usr);

@@ -133,6 +133,9 @@ void setAnnotations(GrammarAST *ast);
 void parseGrammarAST(Environment &g, GrammarAST *treeTop, TermDecl const *& eof);
 void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof, int &multiIndex, LocString *& grType, std::string &name, std::string &usr);
 
+class Nonterminal;
+Nonterminal * complementNonterm(Environment &env, GrammarAST *ast, TF_nonterm * nt, int ntIndex, TermDecl const *eof);
+
 void astParseError(rostring msg);
 
 // thrown when there is an error parsing the AST

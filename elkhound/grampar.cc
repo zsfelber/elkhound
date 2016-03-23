@@ -120,11 +120,11 @@ XASTParse::~XASTParse()
 
 // -------------------- AST parser support ---------------------
 // fwd-decl of parsing fns
-void astParseGrammar(Environment &g, GrammarAST *treeTop, TermDecl const *eof);
+void astParseGrammar(Environment &g, GrammarAST *treeTop);
 void astParseTerminals(Environment &env, TF_terminals const &terms);
 void astParseDDM(Environment &env, Symbol *sym,
                  ASTList<SpecFunc> const &funcs);
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex);
+void astParseNonterm(Environment &env, TF_nonterm const *nt, int ntIndex);
 void astParseProduction(Environment &env, Nonterminal *nonterm, AbstractProdDecl const *prodDecl);
 
 void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
@@ -375,7 +375,7 @@ Nonterminal * createNonterm(Environment &env, GrammarAST *ast, TF_nonterm *nt) {
 }
 
 // map the grammar definition AST into a Grammar data structure
-void astParseGrammar(Environment &env, GrammarAST *ast, TermDecl const *eof)
+void astParseGrammar(Environment &env, GrammarAST *ast)
 {
 
   // handle TF_terminals
@@ -410,7 +410,7 @@ void astParseGrammar(Environment &env, GrammarAST *ast, TermDecl const *eof)
       Environment newEnv(env);
 
       // parse it
-      astParseNonterm(newEnv, ast, nt, eof, ni++);
+      astParseNonterm(newEnv, nt, ni++);
     }
   }
 
@@ -849,7 +849,7 @@ Nonterminal * complementNonterm(Environment &env, GrammarAST *ast, TF_nonterm * 
     // new environment since it can contain a grouping construct
     // (at this very moment it actually can't because there is no syntax..)
     Environment newEnv(env);
-    astParseNonterm(newEnv, ast, nt, eof, ntIndex);
+    astParseNonterm(newEnv, nt, ntIndex);
     addDefaultTypesActions(env, ast, result, eof);
     return result;
 }
@@ -1363,7 +1363,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
   }
 }
 
-void astParseNonterm(Environment &env, GrammarAST *ast, TF_nonterm const *nt, TermDecl const *eof, int ntIndex)
+void astParseNonterm(Environment &env, TF_nonterm const *nt, int ntIndex)
 {
   LocString const &name = nt->name;
 
@@ -1981,7 +1981,7 @@ void parseGrammarAST(Environment &env, GrammarAST *treeTop, TermDecl const *& eo
 
   // parse the AST into a Grammar
   traceProgress() << "parsing grammar AST..\n";
-  astParseGrammar(env, treeTop, eof);
+  astParseGrammar(env, treeTop);
 
   // fill in default types and actions
   addDefaultTypesActions(env, treeTop, eof);
