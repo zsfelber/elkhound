@@ -7,7 +7,8 @@
 # main targets: elkhound, and some examples
 all: elkhound libelkhound.a forbid.gr.gen.out arith c cc2/cc2.exe
 	@echo BUILD FINISHED
-
+debug: elkhound libelkhound.a forbid.gr.gen.out arith c cc2/cc2.exe
+	@echo BUILD FINISHED
 
 # directories of other software
 BOOST     := ../../boost_1_60_0
@@ -44,9 +45,14 @@ TRGRAMANL := ,lrtable
 # C++ compiler, etc.
 CXX := @CXX@
 
+#all: <- not working
+#OPT_DEBUG := -O2 -DNDEBUG
+#debug:
+OPT_DEBUG := -O0 -DDEBUG
+
 # flags for the C and C++ compilers (and preprocessor)
 # "-Ic" is needed for binaries that use $(support-set)
-CCFLAGS := @CCFLAGS@ -I$(BOOST) -I$(SMBASE) -I$(AST) -Ic
+CCFLAGS := @CCFLAGS@ $(OPT_DEBUG) -I$(BOOST) -I$(SMBASE) -I$(AST) -Ic
 
 # flags for the linker
 libraries := $(BOOST_LIBS) $(LIBAST) $(LIBSMBASE)

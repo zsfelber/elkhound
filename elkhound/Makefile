@@ -42,7 +42,7 @@ config.status: configure.pl $(SMBASE)/sm_config.pm
 # line.  It becomes part of the -tr argument to 'elkhound'.  By default,
 # it's set to the flag to generate a debug dump of the LR parse tables.
 TRGRAMANL := ,lrtable
-		
+
 
 # -------------------- compiler configuration -------------------
 # C++ compiler, etc.
@@ -53,10 +53,9 @@ CXX := g++
 #debug:
 OPT_DEBUG := -O0 -DDEBUG
 
-
 # flags for the C and C++ compilers (and preprocessor)
 # "-Ic" is needed for binaries that use $(support-set)
-CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ $(OPT_DEBUG) -D__LINUX__ -I. -I$(BOOST) -I$(SMBASE) -I$(AST) -Ic
+CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -O2 -DNDEBUG -D__LINUX__ -I. $(OPT_DEBUG) -I$(BOOST) -I$(SMBASE) -I$(AST) -Ic
 
 # flags for the linker
 libraries := $(BOOST_LIBS) $(LIBAST) $(LIBSMBASE)
@@ -168,7 +167,7 @@ support-set := \
 	    -e 's/__attribute__ ((__unused__))//' \
 	  <$*.tab.c.orig >$*.tab.c
 	rm $*.tab.c.orig
-	g++ -c -g -o $*.tab.o $(OPT_DEBUG) -Wall $(YYDEBUG) $*.tab.c
+	g++ -c -g -o $*.tab.o -O2 -DNDEBUG -Wall $(YYDEBUG) $*.tab.c
 
 # run the trivial-grammar helper
 .PRECIOUS: %.gr %.tree.gr
@@ -214,17 +213,14 @@ gramast.ast.gen.cc gramast.ast.gen.h: gramast.ast $(AST)/astgen
 grampar.tab.cc grampar.tab.h grampar.codes.h: grampar.y
 	bison -d -v grampar.y
 	mv -f grampar.tab.c tmp
-	sed -ie 's/grampar.tab.c/grampar.tab.cc/' tmp
 	sed -e 's/typedef union {/typedef union YYSTYPE {/' \
 	    -e 's/__attribute__ ((__unused__))//' \
 	  <tmp >grampar.tab.cc
 	mv -f grampar.tab.h tmp
 	sed -e 's/typedef union {/typedef union YYSTYPE {/' <tmp >grampar.tab.h
 	rm tmp
-	perl -ne "print if (\$$ok); \$$ok = (\$$ok || /\/\* Token type.*/) && !(/\#endif/)" grampar.tab.h >grampar.codes.h
-	#bison 2 ->
-	#grep '# *define' grampar.tab.h >grampar.codes.h
-	#bison 3 ->
+	grep '# *define' grampar.tab.h >grampar.codes.h
+
 
 # new C++ grammar with treebuilding actions
 cc2/cc2t.gr.gen.cc cc2/cc2t.gr.gen.h cc2/cc2t.gr.gen.y: cc2/cc2.gr c/c.tok elkhound

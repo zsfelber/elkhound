@@ -15,9 +15,14 @@ CC := @CC@
 # C++ compiler, etc.
 CXX := @CXX@
 
+#all: <- not working
+#OPT_DEBUG := -O2 -DNDEBUG
+#debug:
+OPT_DEBUG := -O0 -DDEBUG
+
 # flags for the C and C++ compilers (and preprocessor)
 CFLAGS  := @CFLAGS@
-CCFLAGS := @CCFLAGS@ -I$(BOOST)
+CCFLAGS := @CCFLAGS@ $(OPT_DEBUG) -I$(BOOST)
 
 # cross-compile info
 CROSSTARGET   := @CROSSTARGET@
