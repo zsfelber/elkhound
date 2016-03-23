@@ -34,12 +34,9 @@ private:
 protected:
   VoidList list;                        // list itself
 
-  void chgStorage() {
+  void chgStorage(StoragePool & pool) {
       for(ObjListMutator< T > iter(*this); !iter.isDone(); iter.adv()) {
-         T*& d = iter.dataRef();
-         if (d->__new_ptr) {
-             d = (T*)d->__new_ptr;
-         }
+         pool.copyFrom(iter.dataRef());
       }
   }
 
@@ -48,8 +45,10 @@ protected:
 private:
   bool const owning;
   // make shallow copies and non-owning list
-  ObjList(ObjList const &obj) : list(obj.list), owning(false) { chgStorage();  }
-  ObjList& operator= (ObjList const &src) { NOWN list = src.list; chgStorage(); return *this;  }
+  ObjList(ObjList const &obj) : list(obj.list), owning(false) { }
+  ObjList& operator= (ObjList const &src) { NOWN list = src.list; return *this;  }
+
+  ObjList(StoragePool & pool, ObjList const &obj) : list(obj.list), owning(false) { chgStorage(pool);  }
 
   inline void del_itm(T* itm) { if (owning) delete itm; }
 

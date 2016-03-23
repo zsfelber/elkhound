@@ -71,10 +71,7 @@ protected:
 
   void chgStorage(StoragePool & pool) {
       for(mutatorName< T > iter(*this); !iter.isDone(); iter.adv()) {
-         T*& d = iter.dataRef();
-         if (d->__new_ptr) {
-             d = (T*)d->__new_ptr;
-         }
+         pool.copyFrom(iter.dataRef());
       }
   }
 
@@ -87,7 +84,6 @@ public:
   className& operator= (className const &src)         { list = src.list; return *this; }
 
   className[[[]]](StoragePool & pool, className const &obj)         : list(obj.list) {     chgStorage(pool);  }
-  className& operator= (StoragePool & pool, className const &src)         { list = src.list; chgStorage(pool); return *this; }
 
   public:
     className[[[]]]()                            : list() {}
@@ -101,7 +97,6 @@ private:
   className& operator= (className const &src) { NOWN list = src.list; return *this;  }
 
   className[[[]]](StoragePool & pool, className const &obj) : list(obj.list), owning(false) { chgStorage(pool);  }
-  className& operator= (StoragePool & pool, className const &src) { NOWN list = src.list; chgStorage(pool); return *this;  }
 
   inline void del_itm(T* itm) { if (owning) delete itm; }
 

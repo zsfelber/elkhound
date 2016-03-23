@@ -506,6 +506,7 @@ friend class Production;
 friend void astParseProduction(Environment &env, Nonterminal *nonterm,
                                AbstractProdDecl const *prodDecl);
 
+protected:
   StoragePool pool;
 
 // ------ representation ------
@@ -514,6 +515,7 @@ public:	    // data
   SObjList<Terminal> terminals;
   SObjList<Production> productions;
 
+  string prefix0, pref;
 
   bool terminalCodeMapped;
   GrowArray<Terminal*> codeHasTerm;

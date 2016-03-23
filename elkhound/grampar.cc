@@ -880,7 +880,6 @@ inline void generateJumpToErrorHandler(std::stringstream &buf, std::string &erro
 
 ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *startRuleAction, LocString *& grType, std::string& name, std::string& usr) {
     Grammar &g = env.g;
-    GrammarAnalysis &G = (GrammarAnalysis&)env.g;
 
     if (rhs->count()==2 && !startRuleAction) { // 1 + reof
         Symbol *s = NULL;
@@ -904,7 +903,7 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
     if (grType && (it=env.parserFuncs.find(name))==env.parserFuncs.end()) {
         trace("prec") << "Creating  __GeneratedChildren -> " << name << "    type : " << (grType->isNull()?"":grType->str) << "   parser class field : _usr_" << usr << std::endl;
 
-        env.bufIncl << "#include \""<< G.prefix0;
+        env.bufIncl << "#include \""<< g.prefix0;
         if (name.length()) {
             env.bufIncl << "_" << name;
         }
@@ -1070,7 +1069,6 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         std::stringstream * _bufAct, std::stringstream * _buf)
 {
   Grammar &g = env.g;
-  GrammarAnalysis &G = (GrammarAnalysis&)env.g;
 
   if (prodDecl->pkind >= PDK_TRAVERSE_GR) {
 
@@ -1310,7 +1308,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               env.bufHeadFun << "   " << type->str << " parse_" << usr << "("
                                << tp <<"* tag);" << std::endl;
-              env.bufCc << type->str << " "<< G.prefix0 << "Parsers::parse_" << usr << "("
+              env.bufCc << type->str << " "<< g.prefix0 << "Parsers::parse_" << usr << "("
                                << tp <<"* tag) {" << std::endl;
               env.bufCc << bufAct.str();
               env.bufCc << buf.str();

@@ -460,8 +460,6 @@ public:	    // data
 
   int sr, rr;
 
-  string prefix0, pref;
-
 private:    // funcs
   // ---- analyis init ----
   // call this after grammar is completely built
@@ -586,7 +584,6 @@ private:    // funcs
 
 public:	    // funcs
   GrammarAnalysis();
-  GrammarAnalysis(Grammar const &cpy);
   GrammarAnalysis(GrammarAnalysis const &cpy);
   ~GrammarAnalysis();
 

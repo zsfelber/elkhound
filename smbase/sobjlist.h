@@ -33,12 +33,9 @@ private:
 protected:
   VoidList list;                        // list itself
 
-  void chgStorage() {
+  void chgStorage(StoragePool & pool) {
       for(SObjListMutator< T > iter(*this); !iter.isDone(); iter.adv()) {
-         T*& d = iter.dataRef();
-         if (d->__new_ptr) {
-             d = (T*)d->__new_ptr;
-         }
+         pool.copyFrom(iter.dataRef());
       }
   }
 
@@ -46,8 +43,10 @@ protected:
   #define NOWN
 public:
   // make shallow copies
-  SObjList(SObjList const &obj)         : list(obj.list) {     chgStorage();  }
-  SObjList& operator= (SObjList const &src)         { list = src.list; chgStorage(); return *this; }
+  SObjList(SObjList const &obj)         : list(obj.list) {     }
+  SObjList& operator= (SObjList const &src)         { list = src.list; return *this; }
+
+  SObjList(StoragePool & pool, SObjList const &obj)         : list(obj.list) {     chgStorage(pool);  }
 
   public:
     SObjList()                            : list() {}

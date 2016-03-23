@@ -963,28 +963,13 @@ GrammarAnalysis::GrammarAnalysis()
 {
 }
 
-GrammarAnalysis::GrammarAnalysis(Grammar const &cpy) : Grammar(cpy),
-    derivable(NULL),
-    indexedNonterms(NULL),
-    indexedTerms(NULL),
-    numNonterms(0),
-    numTerms(0),
-    productionsByLHS(NULL),
-    dottedProds(NULL),
-    indexedProds(NULL),
-    numProds(0),
-    initialized(false),
-    nextItemSetId(0),    // [ASU] starts at 0 too
-    itemSets(),
-    startState(NULL),
-    cyclic(false),
-    symOfInterest(NULL),
-    errors(0),
-    tables(NULL),sr(0),rr(0)
-{
-}
-
 GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(cpy),
+    allNonterminals(pool,cpy.allNonterminals),
+    allTerminals(pool,cpy.allTerminals),
+    allProductions(pool,cpy.allProductions),
+    urNonterminals(pool,cpy.urNonterminals),
+    urTerminals(pool,cpy.urTerminals),
+    urProductions(pool,cpy.urProductions),
     derivable(NULL),
     indexedNonterms(NULL),
     indexedTerms(NULL),
