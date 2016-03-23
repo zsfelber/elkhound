@@ -2,6 +2,7 @@
 #define STORAGE_H
 
 #include <vector>
+#include <memory.h>
 
 template <typename P> inline P* constcast(P const * p) {
     return const_cast<P*>(p);
@@ -34,65 +35,90 @@ class StoragePool {
 private:
 
    StoragePool const * const parent;
-   std::vector<unsigned char> memory;
-   std::vector<Storeable**> pointers;
+   void* memory;
+   size_t memlength, memcapacity;
+   Storeable*** pointers;
+   size_t pointerslength, pointerscapacity;
 
-#define CPY(oldPoolPtrs,op,oldmem,oldmemed) \
-   long long d = ((long long)&memory[0])-oldmem; \
-   for (std::vector<Storeable**>::iterator it = constcast(oldPoolPtrs).begin(); it!=constcast(oldPoolPtrs).end(); it++) { \
-       Storeable** ptr = *it; \
-       convert(oldmem, oldmemed, ptr, d); \
-       const_cast<StoragePool*&>((*ptr)->__pool) = this; \
-       op; \
-   } \
+   inline void convertAll(Storeable*** oldPoolFrom, Storeable*** oldPoolTo, void* oldmem, void* oldmemed) {
+       long long d = ((long long)memory)-oldmem;
+       for (; oldPoolFrom<oldPoolTo; oldPoolFrom++) {
+           Storeable**& ptr = *oldPoolFrom;
+           convert(oldmem, oldmemed, ptr, d);
+           const_cast<StoragePool*&>((*ptr)->__pool) = this;
+       }
+   }
 
    template<class ST>
-   inline void convert(long long oldmem, long long oldmemed, ST**& pointer, long long d) {
+   inline void convert(void* oldmem, void* oldmemed, ST**& pointer, long long d) {
        long long ptr_addr = (long long)pointer;
-       if (oldmem<=ptr_addr && ptr_addr<oldmemed) {
+       if (((long long)oldmem)<=ptr_addr && ptr_addr<(long long)oldmemed) {
            pointer = (ST**)(ptr_addr + d);
        }
        convert(oldmem, oldmemed, *pointer, d); \
    }
 
    template<class ST>
-   inline void convert(long long oldmem, long long oldmemed, ST*& pointer, long long d) {
+   inline void convert(void* oldmem, void* oldmemed, ST*& pointer, long long d) {
        long long ptr_addr = (long long)pointer;
-       xassert (oldmem<=ptr_addr && ptr_addr<oldmemed);
+       xassert (((long long)oldmem)<=ptr_addr && ptr_addr<(long long)oldmemed);
 
        pointer = (ST*)(ptr_addr + d);
    }
 
    template<class ST>
    inline void alloc0(ST*& pointer) {
-      size_t size0 = memory.size();
-      size_t size = size0+sizeof(ST);
+      size_t size0 = memlength;
+      size_t size = size0+sizeof(void*);
       size_t bufsz = ((size+STORE_BUF_SZ-1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
-      if (bufsz > memory.capacity()) {
-          long long oldmem = (long long)&memory[0];
-          memory.reserve(bufsz);
-          memory[size-1];
-          CPY(pointers, *it = ptr, oldmem, oldmem+size0)
+      long long oldmem = (long long)memory;
+      if (memcapacity < bufsz) {
+          extendBuffer(memory, memlength, memcapacity, bufsz, 1);
+          if (size0) {
+              convertAll(pointers, pointers+pointerslength, oldmem, oldmem+size0);
+          }
       }
       pointer = (ST*) &memory[size0];
       const_cast<StoragePool*&>(pointer->__pool) = this;
    }
 
+   inline void copyBuffer(void* src, size_t srclen, size_t srccap,
+                          void*& dest, size_t &dstlen, size_t &dstcap, size_t size_of) {
+       dest = new void[srccap];
+       dstlen = srclen;
+       dstcap = srccap;
+       memcpy(dest, src, srclen*size_of);
+   }
+
+   inline void extendBuffer(void* buf, size_t size, size_t& capacity, size_t newcap, size_t size_of) {
+       void* old = buf;
+       buf = new void[newcap];
+       memcpy(buf, old, size*size_of);
+       capacity = newcap;
+       delete old;
+   }
+
 public:
 
-   StoragePool() : parent(0) {
+   StoragePool() : parent(0), memory(0), memlength(0), memcapacity(0), pointers(0), pointerslength(0), pointerscapacity(0) {
 
    }
 
-   StoragePool(StoragePool const & oldPool) : parent(&oldPool) {
-       size_t size = oldPool.memory.size();
+   StoragePool(StoragePool const & oldPool) : parent(&oldPool), memory(0), memlength(0), memcapacity(0), pointers(0), pointerslength(0), pointerscapacity(0) {
+       size_t size = oldPool.memlength;
        size_t bufsz = ((size+STORE_BUF_SZ-1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
-       xassert(bufsz==oldPool.memory.capacity());
+       xassert(bufsz==oldPool.memcapacity);
 
-       memory = oldPool.memory;
-       pointers.reserve(oldPool.pointers.capacity());
-       long long oldmem = (long long)&oldPool.memory[0];
-       CPY(oldPool.pointers, pointers.push_back(ptr), oldmem, oldmem+size)
+       copyBuffer(oldPool.memory, oldPool.memlength, oldPool.memcapacity, memory, memlength, memcapacity, 1);
+       copyBuffer(oldPool.pointers, oldPool.pointerslength, oldPool.pointerscapacity, pointers, pointerslength, pointerscapacity, sizeof(void*));
+
+       long long oldmem = (long long)oldPool.memory;
+       convertAll(oldPool.pointers, oldPool.pointers+oldPool.pointerslength, oldmem, oldmem+size);
+   }
+
+   ~StoragePool() {
+       if (memory) delete[] memory;
+       if (pointers) delete[] pointers;
    }
 
    bool isParentOf(StoragePool const & pool) const {
@@ -114,18 +140,22 @@ public:
    template<class ST>
    inline void alloc(ST*& pointer) {
       alloc0(pointer);
-      size_t pbufsz = ((pointers.size()+STORE_BUF_PTR_SZ-1)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
-      pointers.reserve(pbufsz);
-      pointers.push_back(&pointer);
+      size_t pbufsz = ((pointerslength+STORE_BUF_PTR_SZ-1)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
+      if (pointerscapacity < pbufsz) {
+          extendBuffer(pointers, pointerslength, pointerscapacity, pbufsz, sizeof(void*));
+      }
+      pointers[pointerslength++] = (Storeable**)&pointer;
    }
 
    template<class ST>
    inline void add(ST*& pointer) {
        xassert(pointer->__pool == this);
 
-       size_t pbufsz = ((pointers.size()+STORE_BUF_PTR_SZ-1)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
-       pointers.reserve(pbufsz);
-       pointers.push_back((Storeable**)&pointer);
+       size_t pbufsz = ((pointerslength+STORE_BUF_PTR_SZ-1)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
+       if (pointerscapacity < pbufsz) {
+           extendBuffer(pointers, pointerslength, pointerscapacity, pbufsz, sizeof(void*));
+       }
+       pointers[pointerslength++] = (Storeable**)&pointer;
    }
 
    template<class ST>
@@ -134,9 +164,9 @@ public:
        StoragePool const & oldPool = *pointer->__pool;
        xassert(oldPool.isParentOf(*this));
 
-       size_t size = oldPool.memory.size();
-       long long oldmem = (long long)&oldPool.memory[0];
-       long long d = ((long long)&memory[0])-oldmem;
+       size_t size = oldPool.memlength;
+       long long oldmem = (long long)oldPool.memory;
+       long long d = ((long long)memory)-oldmem;
 
        convert(oldmem, oldmem+size, pointer, d);
        xassert(pointer->__pool == this);
