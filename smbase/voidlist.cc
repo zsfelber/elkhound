@@ -11,8 +11,8 @@
 #include <ios>
 
 
-VoidList::VoidList(VoidList const &obj)
-  : top(NULL)
+VoidList::VoidList(StoragePool &pool, VoidList const &obj)
+  : Storeable(pool), top(NULL)
 {
   *this = obj;
 }
@@ -107,7 +107,7 @@ void VoidList::checkUniqueDataPtrs() const
 // insert at front
 void VoidList::prepend(void *newitem)
 {
-  top = new VoidNode(newitem, top);
+  top = new (*__pool) VoidNode(*__pool, newitem, top);
 }
 
 
@@ -122,7 +122,7 @@ VoidNode* VoidList::append(void *newitem)
     VoidNode *p;
     for (p = top; p->next; p = p->next)
       {}
-    p->next = new VoidNode(newitem);
+    p->next = new (*__pool) VoidNode(*__pool, newitem);
     return p->next;
   }
 }
@@ -153,7 +153,7 @@ void VoidList::insertAt(void *newitem, int index)
       // if index isn't 0, then index was greater than count()
 
     // put a node after p
-    VoidNode *n = new VoidNode(newitem);
+    VoidNode *n = new (*__pool) VoidNode(*__pool, newitem);
     n->next = p->next;
     p->next = n;
   }
@@ -177,7 +177,7 @@ void VoidList::insertSorted(void *newitem, VoidDiff diff, void *extra)
   }
   
   // insert 'newitem' after 'cursor'
-  VoidNode *newNode = new VoidNode(newitem);
+  VoidNode *newNode = new (*__pool) VoidNode(*__pool, newitem);
   newNode->next = cursor->next;
   cursor->next = newNode;
 }
@@ -247,7 +247,7 @@ bool VoidList::appendUnique(void *newitem)
     return false;
   }
 
-  p->next = new VoidNode(newitem);
+  p->next = new (*__pool) VoidNode(*__pool, newitem);
   return true;
 }
 
@@ -406,8 +406,8 @@ void VoidList::mergeSort(VoidDiff diff, void *extra)
   }
 
   // half-lists
-  VoidList leftHalf;
-  VoidList rightHalf;
+  VoidList leftHalf(*__pool);
+  VoidList rightHalf(*__pool);
 
   // divide the list
   {
@@ -577,7 +577,7 @@ void VoidList::appendAll(VoidList const &tail)
 
 void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 {
-  VoidList dest;
+  VoidList dest(*__pool);
   VoidListIter srcIter(tail);
   for (; !srcIter.isDone(); srcIter.adv()) {
     void *item = srcIter.data();
@@ -744,7 +744,7 @@ void VoidListMutator::insertBefore(void *item)
     reset();
   }
   else {
-    current = prev->next = new VoidNode(item, current);
+    current = prev->next = new (*list.__pool) VoidNode(*list.__pool, item, current);
   }
 }
 
@@ -752,7 +752,7 @@ void VoidListMutator::insertBefore(void *item)
 void VoidListMutator::insertAfter(void *item)
 {
   xassert(!isDone());
-  current->next = new VoidNode(item, current->next);
+  current->next = new (*list.__pool) VoidNode(*list.__pool, item, current->next);
 }
 
 

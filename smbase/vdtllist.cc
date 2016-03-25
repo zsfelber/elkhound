@@ -49,7 +49,7 @@ void VoidTailList::append(void *newitem)
   }
   else {
     // payoff: constant-time append
-    tail->next = new VoidNode(newitem, NULL);
+    tail->next = new (*__pool) VoidNode(*__pool, newitem, NULL);
     tail = tail->next;
   }
 }

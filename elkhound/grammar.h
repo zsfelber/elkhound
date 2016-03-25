@@ -97,7 +97,7 @@ public:      // funcs
   virtual ~Symbol();
 
   Symbol(Flatten&);
-  void xfer(Flatten &flat);
+  void xfer(StoragePool &pool, Flatten &flat);
 
   // symmetric selectors
   bool isTerminal() const { return isTerm; }
@@ -205,7 +205,7 @@ public:     // funcs
   {}
 
   Terminal(Flatten &flat);
-  void xfer(Flatten &flat);
+  void xfer(StoragePool &pool, Flatten &flat);
 
   virtual void print(ostream &os) const;
   OSTREAM_OPERATOR(Terminal)
@@ -278,7 +278,7 @@ public:     // funcs
   void convert(GrammarAnalysis& g);
 
   TerminalSet(Flatten&);
-  void xfer(Flatten &flat);
+  void xfer(StoragePool &pool, Flatten &flat);
 
   // call this to re-allocate at a new size; set is emptied
   void reset(int numTerms);
@@ -336,8 +336,8 @@ public:     // funcs
   virtual ~Nonterminal();
 
   Nonterminal(Flatten &flat);
-  void xfer(Flatten &flat);
-  void xferSerfs(Flatten &flat, Grammar &g);
+  void xfer(StoragePool &pool, Flatten &flat);
+  void xferSerfs(StoragePool &pool, Flatten &flat, Grammar &g);
 
   virtual void print(ostream &os, Grammar const *grammer = NULL) const;
   OSTREAM_OPERATOR(Nonterminal)
@@ -389,7 +389,7 @@ public:     // types
     ~RHSElt();
 
     RHSElt(Flatten&);
-    void xfer(Flatten &flat);
+    void xfer(StoragePool &pool, Flatten &flat);
     void xferSerfs(Flatten &flat, Grammar &g);
 
   };
@@ -418,7 +418,7 @@ public:	    // funcs
   ~Production();
 
   Production(Flatten &flat);
-  void xfer(Flatten &flat);
+  void xfer(StoragePool &pool, Flatten &flat);
   void xferSerfs(Flatten &flat, Grammar &g);
 
   // length *not* including emptySymbol, if present
@@ -503,21 +503,19 @@ typedef ObjListMutator<Production::RHSElt> RHSEltListMutator;
 
 class Environment;
 class AbstractProdDecl;
+class GrammarAST;
 
 // ---------------- Grammar --------------------
 // represent a grammar: nonterminals, terminals, productions, and start-symbol
 class Grammar {
-friend class Production;
-friend void astParseProduction(Environment &env, Nonterminal *nonterm,
-                               AbstractProdDecl const *prodDecl);
-
-protected:
-  // ! the first !
-  StoragePool pool;
 
 // ------ representation ------
 public:	    // data
+
   virtual void thisIsAbstract() = 0;
+
+  // ! the first !
+  StoragePool pool;
 
   SObjList<Nonterminal> nonterminals;
   SObjList<Terminal> terminals;

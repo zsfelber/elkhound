@@ -51,20 +51,20 @@ Symbol::Symbol(Flatten &flat)
     delParam(NULL)
 {}
 
-void Symbol::xfer(Flatten &flat)
+void Symbol::xfer(StoragePool &pool, Flatten &flat)
 {
   // have to break constness to unflatten
-  const_cast<LocString&>(name).xfer(flat);
+  const_cast<LocString&>(name).xfer(pool, flat);
   flat.xferBool(const_cast<bool&>(isTerm));
   flat.xferBool(const_cast<bool&>(isEmptyString));
 
   flattenStrTable->xfer(flat, type);
 
   flattenStrTable->xfer(flat, dupParam);
-  dupCode.xfer(flat);
+  dupCode.xfer(pool, flat);
 
   flattenStrTable->xfer(flat, delParam);
-  delCode.xfer(flat);
+  delCode.xfer(pool, flat);
   
   flat.xferBool(reachable);
 }
@@ -161,11 +161,11 @@ Terminal::Terminal(Flatten &flat)
     classifyParam(NULL)
 {}
 
-void Terminal::xfer(Flatten &flat)
+void Terminal::xfer(StoragePool &pool, Flatten &flat)
 {
-  Symbol::xfer(flat);
+  Symbol::xfer(pool, flat);
 
-  alias.xfer(flat);
+  alias.xfer(pool, flat);
 
   flat.xferInt(precedence);
   flat.xferInt((int&)associativity);
@@ -173,7 +173,7 @@ void Terminal::xfer(Flatten &flat)
   flat.xferInt(termIndex);
 
   flattenStrTable->xfer(flat, classifyParam);
-  classifyCode.xfer(flat);
+  classifyCode.xfer(pool, flat);
 }
 
 
@@ -252,25 +252,25 @@ Nonterminal::Nonterminal(Flatten &flat)
     superset(NULL)
 {}
 
-void Nonterminal::xfer(Flatten &flat)
+void Nonterminal::xfer(StoragePool &pool, Flatten &flat)
 {
-  Symbol::xfer(flat);
+  Symbol::xfer(pool, flat);
 
   flattenStrTable->xfer(flat, mergeParam1);
   flattenStrTable->xfer(flat, mergeParam2);
-  mergeCode.xfer(flat);
+  mergeCode.xfer(pool, flat);
 
   flattenStrTable->xfer(flat, keepParam);
-  keepCode.xfer(flat);
+  keepCode.xfer(pool, flat);
 }
 
-void Nonterminal::xferSerfs(Flatten &flat, Grammar &g)
+void Nonterminal::xferSerfs(StoragePool &pool, Flatten &flat, Grammar &g)
 {
   // annotation
   flat.xferInt(ntIndex);
   flat.xferBool(cyclic);
-  first.xfer(flat);
-  follow.xfer(flat);
+  first.xfer(pool, flat);
+  follow.xfer(pool, flat);
 }
 
 
@@ -418,7 +418,7 @@ TerminalSet::TerminalSet(Flatten&)
   : bitmap(NULL)
 {}
 
-void TerminalSet::xfer(Flatten &flat)
+void TerminalSet::xfer(StoragePool &pool, Flatten &flat)
 {
   flat.xferInt(bitmapLen);
 
@@ -567,9 +567,9 @@ Production::RHSElt::RHSElt(Flatten &flat)
     tag(flat)
 {}
 
-void Production::RHSElt::xfer(Flatten &flat)
+void Production::RHSElt::xfer(StoragePool &pool, Flatten &flat)
 {
-  tag.xfer(flat);
+  tag.xfer(pool, flat);
 }
 
 void Production::RHSElt::xferSerfs(Flatten &flat, Grammar &g)
@@ -607,16 +607,16 @@ Production::Production(Flatten &flat)
     firstSet(flat)
 {}
 
-void Production::xfer(Flatten &flat)
+void Production::xfer(StoragePool &pool, Flatten &flat)
 {
-  xferObjList(flat, right);
-  action.xfer(flat);
+  xferObjList(pool, flat, right);
+  action.xfer(pool, flat);
   flat.xferInt(precedence);
-  xferNullableOwnerPtr(flat, forbid);
+  xferNullableOwnerPtr(pool, flat, forbid);
 
   flat.xferInt(rhsLen);
   flat.xferInt(prodIndex);
-  firstSet.xfer(flat);
+  firstSet.xfer(pool, flat);
 }
 
 void Production::xferSerfs(Flatten &flat, Grammar &g)
@@ -937,18 +937,18 @@ void Grammar::xfer(Flatten &flat)
 {
   // owners
   flat.checkpoint(0xC7AB4D86);
-  xferSObjList(flat, nonterminals);
-  xferSObjList(flat, terminals);
-  xferSObjList(flat, productions);
+  xferSObjList(pool, flat, nonterminals);
+  xferSObjList(pool, flat, terminals);
+  xferSObjList(pool, flat, productions);
 
   // emptyString is const
 
-  xferObjList(flat, verbatim);
+  xferObjList(pool, flat, verbatim);
 
-  actionClassName.xfer(flat);
-  xferObjList(flat, actionClasses);
+  actionClassName.xfer(pool, flat);
+  xferObjList(pool, flat, actionClasses);
 
-  xferObjList(flat, implVerbatim);
+  xferObjList(pool, flat, implVerbatim);
                                
   targetLang.xfer(flat);
   flat.xferBool(useGCDefaults);
@@ -963,7 +963,7 @@ void Grammar::xfer(Flatten &flat)
   flat.checkpoint(0x8580AAD2);
 
   SMUTATE_EACH_OBJLIST(Nonterminal, nonterminals, nt) {
-    nt.data()->xferSerfs(flat, *this);
+    nt.data()->xferSerfs(pool, flat, *this);
   }
   SMUTATE_EACH_OBJLIST(Production, productions, p) {
     p.data()->xferSerfs(flat, *this);

@@ -54,7 +54,7 @@ template<typename T> class ObjList;
 template<typename T> class SObjList;
 ]]])m4_dnl
 template <class T>
-class className {
+class className : public Storeable {
 private:
   friend class iterName<T>;
   friend class mutatorName<T>;
@@ -86,7 +86,7 @@ public:
   className[[[]]](StoragePool & pool, className const &obj)         : list(obj.list) {     chgStorage(pool);  }
 
   public:
-    className[[[]]]()                            : list() {}
+    className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool) {}
 ]]], [[[m4_dnl          // objlist
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
@@ -101,7 +101,7 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-    className[[[]]]()                            : list(), owning(true) {}
+    className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
 ]]])m4_dnl
 
   ~className[[[]]]()                      m4_dnl

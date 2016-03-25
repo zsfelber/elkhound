@@ -22,7 +22,7 @@ template <class T> class SObjListIterNC;
 // insert items multiple times or into multiple lists
 template<typename T> class ObjList;
 template <class T>
-class SObjList {
+class SObjList : public Storeable {
 private:
   friend class SObjListIter<T>;
   friend class SObjListMutator<T>;
@@ -49,7 +49,7 @@ public:
   SObjList(StoragePool & pool, SObjList const &obj)         : list(obj.list) {     chgStorage(pool);  }
 
   public:
-    SObjList()                            : list() {}
+    SObjList(StoragePool &pool)                            : Storeable(pool), list(pool) {}
 
   ~SObjList()                           {}    /* all items removed */
 

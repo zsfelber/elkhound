@@ -24,7 +24,7 @@ LocString::LocString(Flatten&)
   : loc(SL_UNKNOWN), str(NULL)
 {}
 
-void LocString::xfer(Flatten &flat)
+void LocString::xfer(StoragePool &pool, Flatten &flat)
 {
   // doh.. flattening locs is hard.  I wasn't even doing
   // it before.  issues:
@@ -45,14 +45,14 @@ void LocString::copyAndDel(LocString *obj)
   delete obj;
 }
 
-LocString *LocString::clone() const
+LocString *LocString::clone(StoragePool &pool) const
 {
-  return new LocString(*this);
+  return new (pool) LocString(*this);
 }
 
-LocString *LocString::clone(int deepness, int listDeepness) const
+LocString *LocString::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
-  return new LocString(*this);
+  return new (pool) LocString(*this);
 }
 
 

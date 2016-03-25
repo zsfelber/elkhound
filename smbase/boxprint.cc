@@ -78,8 +78,8 @@ BPElement::~BPElement()
 
 
 // ------------------------- BPText ----------------------
-BPText::BPText(rostring t)
-  : text(t)
+BPText::BPText(StoragePool &pool, rostring t)
+  : BPElement(pool), text(t)
 {}
 
 BPText::~BPText()
@@ -105,8 +105,8 @@ void BPText::debugPrint(std::ostream &os, int /*ind*/) const
 
 
 // ------------------------ BPBreak ---------------------
-BPBreak::BPBreak(BreakType e, int i)
-  : enabled(e),
+BPBreak::BPBreak(StoragePool &pool, BreakType e, int i)
+  : BPElement(pool), enabled(e),
     indent(i)
 {}
 
@@ -150,8 +150,8 @@ void BPBreak::debugPrint(std::ostream &os, int /*ind*/) const
 
 
 // ------------------------- BPBox ------------------------
-BPBox::BPBox(BPKind k)
-  : elts(),      // initially empty
+BPBox::BPBox(StoragePool &pool, BPKind k)
+  : BPElement(pool), elts(pool),      // initially empty
     kind(k)
 {
   xassert((unsigned)k < NUM_BPKINDS);
@@ -320,12 +320,12 @@ BPKind const BoxPrint::hv   = BP_correlated;
 BPKind const BoxPrint::end  = NUM_BPKINDS;
 
 
-BoxPrint::BoxPrint()
-  : boxStack(),
+BoxPrint::BoxPrint(StoragePool &pool)
+  : Storeable(pool), boxStack(),
     levelIndent(2)
 {         
   // initial vert box
-  boxStack.push(new BPBox(BP_vertical));
+  boxStack.push(new BPBox(pool, BP_vertical));
 }
 
 BoxPrint::~BoxPrint()
@@ -340,13 +340,13 @@ void BoxPrint::append(BPElement *elt)
 
 BoxPrint& BoxPrint::operator<< (rostring s)
 {
-  append(new BPText(s));
+  append(new BPText(*__pool, s));
   return *this;
 }
 
 BoxPrint& BoxPrint::operator<< (char const *s)
 {
-  append(new BPText(s));
+  append(new BPText(*__pool, s));
   return *this;
 }
 
@@ -364,7 +364,7 @@ BoxPrint& BoxPrint::operator<< (BPKind k)
   }
   else {
     // open new box
-    boxStack.push(new BPBox(k));
+    boxStack.push(new BPBox(*__pool, k));
   }
   return *this;
 }
@@ -374,12 +374,12 @@ BoxPrint& BoxPrint::operator<< (Cmd c)
 {
   switch (c) {
     default: xfailure("bad cmd");
-    case sp:        append(new BPBreak(BT_DISABLED, 0 /*indent*/)); break;
-    case br:        append(new BPBreak(BT_ENABLED, 0 /*indent*/)); break;
-    case fbr:       append(new BPBreak(BT_FORCED, 0 /*indent*/)); break;
-    case lineStart: append(new BPBreak(BT_LINE_START, 0 /*indent*/)); break;
-    case ind:       append(new BPBreak(BT_ENABLED, levelIndent)); break;
-    case und:       append(new BPBreak(BT_ENABLED, -levelIndent)); break;
+    case sp:        append(new BPBreak(*__pool, BT_DISABLED, 0 /*indent*/)); break;
+    case br:        append(new BPBreak(*__pool, BT_ENABLED, 0 /*indent*/)); break;
+    case fbr:       append(new BPBreak(*__pool, BT_FORCED, 0 /*indent*/)); break;
+    case lineStart: append(new BPBreak(*__pool, BT_LINE_START, 0 /*indent*/)); break;
+    case ind:       append(new BPBreak(*__pool, BT_ENABLED, levelIndent)); break;
+    case und:       append(new BPBreak(*__pool, BT_ENABLED, -levelIndent)); break;
   }
   return *this;
 }
@@ -387,7 +387,7 @@ BoxPrint& BoxPrint::operator<< (Cmd c)
 
 BoxPrint& BoxPrint::operator<< (IBreak b)
 {
-  append(new BPBreak(BT_ENABLED, b.indent /*indent*/));
+  append(new BPBreak(*__pool, BT_ENABLED, b.indent /*indent*/));
   return *this;
 }
 
@@ -407,7 +407,7 @@ BPBox* /*owner*/ BoxPrint::takeTree()
 
   // initialize the box stack again, in case the user wants
   // to build another tree
-  boxStack.push(new BPBox(BP_vertical));
+  boxStack.push(new BPBox(*__pool, BP_vertical));
 
   return ret;
 }

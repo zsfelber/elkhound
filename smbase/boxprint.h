@@ -67,8 +67,10 @@ public:
 
 
 // interface for elements in a boxprint tree
-class BPElement {
+class BPElement : public Storeable {
 public:
+  BPElement(StoragePool &pool) : Storeable(pool) {}
+
   // if no breaks are taken, compute the # of columns;
   // return with 'forcedBreak' true if we stopped because of
   // a forced break
@@ -102,7 +104,7 @@ public:
   string text;
 
 public:
-  BPText(rostring t);
+  BPText(StoragePool &pool, rostring t);
   ~BPText();
 
   // BPElement funcs
@@ -137,7 +139,7 @@ public:
   int indent;
 
 public:
-  BPBreak(BreakType e, int i);
+  BPBreak(StoragePool &pool, BreakType e, int i);
   ~BPBreak();
 
   // BPElement funcs
@@ -176,7 +178,7 @@ public:
   BPKind kind;
 
 public:
-  BPBox(BPKind k);
+  BPBox(StoragePool &pool, BPKind k);
   ~BPBox();
 
   // BPElement funcs
@@ -188,7 +190,7 @@ public:
 
 // assists in the process of building a box tree by providing
 // a number of syntactic shortcuts
-class BoxPrint {
+class BoxPrint : public Storeable {
 public:      // types
   // additional command besides BPKind
   enum Cmd {
@@ -233,7 +235,7 @@ private:     // funcs
   BPBox *box() { return boxStack.top(); }
 
 public:      // funcs
-  BoxPrint();
+  BoxPrint(StoragePool &pool);
   ~BoxPrint();
 
   // append another element to the current innermost box

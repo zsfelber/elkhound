@@ -365,7 +365,7 @@ void xmlPrintPointer(std::ostream &os, char const *label, void const *p);
 // returns a new'd list because the AST node ctors want
 // to accept an owner ptr to a list
 template <class T>
-ASTList<T> * /*owner*/ cloneASTList(ASTList<T> const &src, int deepness=1, int listDeepness=1)
+ASTList<T> * /*owner*/ cloneASTList(StoragePool &pool, ASTList<T> const &src, int deepness=1, int listDeepness=1)
 {
   deepness--;listDeepness--;
 
@@ -373,7 +373,7 @@ ASTList<T> * /*owner*/ cloneASTList(ASTList<T> const &src, int deepness=1, int l
   ASTList<T> *ret = new ASTList<T>(d);
   if (d) {
       FOREACH_ASTLIST(T, src, iter) {
-        ret->append(iter.data()->clone(deepness, listDeepness));
+        ret->append(iter.data()->clone(pool, deepness, listDeepness));
       }
   } else {
       FOREACH_ASTLIST(T, src, iter) {
@@ -389,7 +389,7 @@ ASTList<T> * /*owner*/ cloneASTList(ASTList<T> const &src, int deepness=1, int l
 // because ASTList normally is owning, and probably deletes its
 // elements in its destructor..
 template <class T>
-ASTList<T> * /*owner*/ shallowCloneASTList(ASTList<T> const &src)
+ASTList<T> * /*owner*/ shallowCloneASTList(StoragePool &pool, ASTList<T> const &src)
 {
   ASTList<T> *ret = new ASTList<T>(false);
 
@@ -404,7 +404,7 @@ ASTList<T> * /*owner*/ shallowCloneASTList(ASTList<T> const &src)
 
 // deep copy of a FakeList
 template <class T>
-FakeList<T> * /*owner*/ cloneFakeList(FakeList<T> const *src, int deepness=1, int listDeepness=1)
+FakeList<T> * /*owner*/ cloneFakeList(StoragePool &pool, FakeList<T> const *src, int deepness=1, int listDeepness=1)
 {
   if (!src) {
     return FakeList<T>::emptyList();     // base case of recursion
@@ -413,11 +413,11 @@ FakeList<T> * /*owner*/ cloneFakeList(FakeList<T> const *src, int deepness=1, in
   T *head = constcast(src->firstC());
   if (deepness > 0) {
       // clone first element
-      head = head->clone(deepness-1, listDeepness-1);
+      head = head->clone(pool, deepness-1, listDeepness-1);
       xassert(head->next == NULL);     // it had better not copy the list tail itself!
   }
   // attach to result of cloning the tail
-  FakeList<T> *tail = cloneFakeList(src->butFirstC(), deepness, listDeepness);
+  FakeList<T> *tail = cloneFakeList(pool, src->butFirstC(), deepness, listDeepness);
   return tail->prepend(head);
 }
 

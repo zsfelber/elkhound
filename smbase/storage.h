@@ -6,6 +6,18 @@
 #include <malloc.h>
 #include <stdint.h>
 
+#include "exc.h"
+
+template <typename P>
+P* NN(P* a) {
+    if (a) {
+        return a;
+    } else {
+        x_assert_fail("Non-nullable pointer is null.", __FILE__, __LINE__);
+        return NULL;
+    }
+}
+
 template <typename P> inline P* constcast(P const * p) {
     return const_cast<P*>(p);
 }
@@ -32,8 +44,7 @@ class Storeable {
 friend class StoragePool;
 
 public:
-   // left uninitialized (so default constructor doesn't clean it up before operator new)
-   StoragePool const * const __pool;
+   StoragePool * const __pool;
 
    void* operator new (std::size_t size);
    void* operator new (std::size_t size, void* ptr);
@@ -42,8 +53,8 @@ public:
    void* operator new[] (std::size_t size, void* ptr);
    void* operator new[] (std::size_t size, const std::nothrow_t& nothrow_value);
 
-   void* operator new (std::size_t size, StoragePool& pool);
-   void* operator new[] (std::size_t size, StoragePool& pool);
+   void* operator new (std::size_t size, StoragePool & pool);
+   void* operator new[] (std::size_t size, StoragePool & pool);
 
    void operator delete (void* ptr);
    void operator delete (void* ptr, const std::nothrow_t& nothrow_constant);
@@ -53,8 +64,18 @@ public:
    void operator delete[] (void* ptr, void* voidptr2);
 
 protected:
-   // fake init just to remove compilation error (using constcast and assigning previously or later in Pool)
-   Storeable() : __pool(__pool) {}
+
+   Storeable(StoragePool & pool) : /*!fake init:*/__pool(__pool){
+       xassert(__pool == &pool);
+   }
+
+   Storeable(StoragePool * pool) : /*!fake init:*/__pool(__pool){
+       xassert(__pool == pool);
+   }
+
+   Storeable(Storeable const & master) : /*!fake init:*/__pool(__pool){
+       xassert(__pool == master.__pool);
+   }
 
 };
 
@@ -174,7 +195,7 @@ private:
        if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
        memcpy(buf, old, size*size_of);
        capacity = newcap;
-       if (old) delete[] old;
+       if (old) delete[] (int8_t*)old;
    }
 
 public:
@@ -191,6 +212,9 @@ public:
        variables(0), varslength(0), varscapacity(0),
        pointers(0), ptrslength(0), ptrscapacity(0) {
 
+       xassert(!oldPool.parent);
+       xassert(oldPool.isParentOf(*this));
+
        size_t oldmemlength = oldPool.memlength;
        size_t bufsz = ((oldmemlength+STORE_BUF_SZ-1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
        xassert(bufsz==oldPool.memcapacity);
@@ -204,7 +228,7 @@ public:
    }
 
    ~StoragePool() {
-       if (memory) delete[] memory;
+       if (memory) delete[] (int8_t*)memory;
        if (variables) delete[] variables;
        if (pointers) delete[] pointers;
    }

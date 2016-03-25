@@ -209,9 +209,9 @@ LRItem::LRItem(Flatten &flat)
     lookahead(flat)
 {}
 
-void LRItem::xfer(Flatten &flat)
+void LRItem::xfer(StoragePool &pool, Flatten &flat)
 {
-  lookahead.xfer(flat);
+  lookahead.xfer(pool, flat);
 }
 
 void LRItem::xferSerfs(Flatten &flat, GrammarAnalysis &g)
@@ -365,10 +365,10 @@ DottedProduction *getNthDottedProduction(Production *p, int n)
 #endif // 0
 
 
-void ItemSet::xfer(Flatten &flat)
+void ItemSet::xfer(StoragePool &pool, Flatten &flat)
 {
-  xferObjList(flat, kernelItems);
-  xferObjList(flat, nonkernelItems);
+  xferObjList(pool, flat, kernelItems);
+  xferObjList(pool, flat, nonkernelItems);
 
   flat.xferInt(terms);
   flat.xferInt(nonterms);
@@ -1058,14 +1058,14 @@ void GrammarAnalysis::xfer(Flatten &flat)
 {
   Grammar::xfer(flat);
 
-  xferOwnerPtr(flat, derivable);
+  xferOwnerPtr(pool, flat, derivable);
 
   // delay indexed[Non]Terms, productionsByLHS,
   // and initialized
 
   flat.xferInt(nextItemSetId);
 
-  xferObjList(flat, itemSets);
+  xferObjList(pool, flat, itemSets);
   xferSerfPtrToList(flat, startState, itemSets);
 
   flat.xferBool(cyclic);
@@ -4002,7 +4002,7 @@ void GrammarAnalysis::addTreebuildingActions()
   {
     StringRef extra = grammarStringTable.add(
       "\n#include \"ptreenode.h\"     // PTreeNode\n");
-    verbatim.prepend(new LITERAL_LOCSTRING(extra));
+    verbatim.prepend(new (pool) LITERAL_LOCSTRING(extra));
   }
 
   // get handles to the strings we want to emit

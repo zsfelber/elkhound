@@ -30,11 +30,11 @@ private:
   void adjustTails();
 
 public:
-  VoidTailList()                     { tail = NULL; }
+  VoidTailList(StoragePool &pool) : VoidList(pool)                     { tail = NULL; }
   ~VoidTailList()                    {}
   
   // special ctor which steals the list and then deallocates the header
-  VoidTailList(VoidTailList *src)    { tail = NULL; steal(src); }
+  VoidTailList(StoragePool &pool, VoidTailList *src) : VoidList(pool)    { tail = NULL; steal(src); }
   void steal(VoidTailList *src);     // deletes 'src'
   void steal(VoidTailList *src,bool deleteOrig);
 

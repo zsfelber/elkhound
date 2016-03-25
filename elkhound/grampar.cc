@@ -387,8 +387,8 @@ void astParseGrammar(Environment &env, GrammarAST *ast)
     FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
 
       if (iter.data()->isTF_start()) {
-          constcast(env.startSymbol) = iter.data()->asTF_start()->symbol.clone();
-          constcast(env.startLexer) = iter.data()->asTF_start()->lexer.clone();
+          constcast(env.startSymbol) = iter.data()->asTF_start()->symbol.clone(env.g.pool);
+          constcast(env.startLexer) = iter.data()->asTF_start()->lexer.clone(env.g.pool);
       }
 
       if (!iter.data()->isTF_nonterm()) continue;
@@ -890,7 +890,7 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
 
         if (s && s->type) {
 
-            grType = LIT_STR(s->type).clone();
+            grType = LIT_STR(s->type).clone(env.g.pool);
 
             usr = name = s->name.str;
 
@@ -917,12 +917,12 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
 
         if (startRuleAction) {
             newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
-                                    startRuleAction->clone(),
-                                    LIT_STR(name.c_str()).clone(), grType->clone());
+                                    startRuleAction->clone(env.g.pool),
+                                    LIT_STR(name.c_str()).clone(env.g.pool), grType->clone(env.g.pool));
         } else {
             newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
                                     new LocString(SL_UNKNOWN, NULL),
-                                    LIT_STR(name.c_str()).clone(), grType->clone());
+                                    LIT_STR(name.c_str()).clone(env.g.pool), grType->clone(env.g.pool));
         }
         env.parserFuncs[name] = newStart;
 
@@ -931,8 +931,8 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
         } else {
             ast->childrenNT
                     = new TF_nonterm(
-                        LIT_STR("__GeneratedChildren").clone(),   // name
-                        grType->clone(),          // type
+                        LIT_STR("__GeneratedChildren").clone(env.g.pool),   // name
+                        grType->clone(env.g.pool),          // type
                         NULL,                                     // empty list of functions
                         new ASTList<AbstractProdDecl>(newStart),          // productions
                         NULL                                      // subsets
@@ -993,7 +993,7 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
         }
     }
     if (!rh_eof) {
-        rh_eof = new RH_name(LIT_STR("").clone(), eof->name.clone());
+        rh_eof = new RH_name(LIT_STR("").clone(env.g.pool), eof->name.clone(env.g.pool));
         prod->rhs.append(rh_eof);
     }
     if (ast->earlyStartNT) {
@@ -1014,8 +1014,8 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
                                                         << std::endl;
         ast->earlyStartNT
                 = new TF_nonterm(
-                    LIT_STR("__EarlyStartSymbol").clone(),   // name
-                    prod->type.clone()/*ast->firstNT->type.clone()*/,                   // type
+                    LIT_STR("__EarlyStartSymbol").clone(env.g.pool),   // name
+                    prod->type.clone(env.g.pool)/*ast->firstNT->type.clone()*/,                   // type
                     NULL,                                    // empty list of functions
                     new ASTList<AbstractProdDecl>(prod, false),      // productions  TODO memleak?
                     NULL                                     // subsets
@@ -1043,8 +1043,8 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
 
       // build a start production
       // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
-      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(), starts ? env.startSymbol->clone() : ast->firstNT->name.clone());
-      RHSElt *rhs2 = new RH_name(LIT_STR("").clone(), eof->name.clone());
+      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(env.g.pool), starts ? env.startSymbol->clone(env.g.pool) : ast->firstNT->name.clone(env.g.pool));
+      RHSElt *rhs2 = new RH_name(LIT_STR("").clone(env.g.pool), eof->name.clone(env.g.pool));
       ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
       rhs->append(rhs1);
       rhs->append(rhs2);
@@ -1103,13 +1103,13 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           trace("prec") << "Traversing " << nonterm->name << " : " << tp << " : " << fvpref << std::endl;
 
           ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
-          LocString *origAction = prodDecl->actionCode.clone();
+          LocString *origAction = prodDecl->actionCode.clone(env.g.pool);
           LocString *startAction = NULL;
 
           ASTList<RHSElt> *rhs;
 
           rhs = new ASTList<RHSElt>();
-          RHSElt *reof = new RH_name(LIT_STR("").clone(), eof->name.clone());
+          RHSElt *reof = new RH_name(LIT_STR("").clone(env.g.pool), eof->name.clone(env.g.pool));
           rhs->steal(&orhs, false);
           rhs->append(reof);
 
@@ -1121,7 +1121,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           std::string indp = indent + "   ";
 
           type = v0 && nonterm->type  ?
-                      LIT_STR(nonterm->type).clone() : LIT_STR((tp+"*").c_str()).clone();
+                      LIT_STR(nonterm->type).clone(env.g.pool) : LIT_STR((tp+"*").c_str()).clone(env.g.pool);
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
@@ -1259,7 +1259,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               FOREACH_ASTLIST(MarkedAction, tprod->markedActs, ierr) {
                   if (ierr.data()->ekind == START_RULE) {
-                      startAction = ierr.data()->actionCode.clone();
+                      startAction = ierr.data()->actionCode.clone(env.g.pool);
                       break;
                   }
               }
@@ -1348,8 +1348,8 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               s << "   " << type->str << " result = parsers->parse_" << usr << "(tag);" << std::endl;
               s << "   return result;" << std::endl;
 
-              constcast(prodDecl->actionCode).str = LIT_STR(s.str().c_str()).clone()->str;
-              orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone()));
+              constcast(prodDecl->actionCode).str = LIT_STR(s.str().c_str()).clone(env.g.pool)->str;
+              orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone(env.g.pool)));
 
           }
 

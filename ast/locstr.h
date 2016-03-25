@@ -22,15 +22,15 @@ public:    // funcs
   LocString(SourceLoc loc, StringRef str);
 
   LocString(Flatten&);
-  void xfer(Flatten &flat);
+  void xfer(StoragePool &pool, Flatten &flat);
 
   // deallocates its argument; intended for convenient use in bison grammar files
-  EXPLICIT LocString(LocString *obj) { copyAndDel(obj); }
+  EXPLICIT LocString(LocString *obj) : Storeable(*obj->__pool) { copyAndDel(obj); }
   void copyAndDel(LocString *obj);
 
   // sometimes useful for generating arguments to the above ctor
-  LocString *clone() const;
-  LocString *clone(int deepness, int listDeepness) const;
+  LocString *clone(StoragePool &pool) const;
+  LocString *clone(StoragePool &pool, int deepness, int listDeepness) const;
 
   LocString& operator= (LocString const &obj)
     { loc = obj.loc; str = obj.str; return *this; }

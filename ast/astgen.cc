@@ -96,10 +96,10 @@ bool wantGDB = false;
 // support for covariant return types in MSVC; see
 //   http://support.microsoft.com/kb/240862/EN-US/
 // The approach is to use
-//   virtual Super *nocvr_clone(int deepness=0,int listDeepness=1) const;
-//   Sub *clone(int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(deepness,listDeepness)); }
+//   virtual Super *nocvr_clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;
+//   Sub *clone(StoragePool &pool, int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(pool, deepness,listDeepness)); }
 // in place of
-//   virtual Sub *clone(int deepness=0,int listDeepness=1) const;
+//   virtual Sub *clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;
 bool nocvr = false;
 
 
@@ -613,17 +613,17 @@ void HGen::emitTFClass(TF_class const &cls)
   if (cls.hasChildren()) {
     if (!nocvr) {
       // normal case
-      out << "  virtual " << cls.super->name << "* clone(int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  virtual " << cls.super->name << "* clone(StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
     }
     else {
       // msvc hack case
-      out << "  virtual " << cls.super->name << "* nocvr_clone(int deepness=0,int listDeepness=1) const=0;\n";
-      out << "  " << cls.super->name << "* clone(int deepness=0,int listDeepness=1) const { return nocvr_clone(deepness,listDeepness); }\n";
+      out << "  virtual " << cls.super->name << "* nocvr_clone(StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  " << cls.super->name << "* clone(StoragePool &pool, int deepness=0,int listDeepness=1) const { return nocvr_clone(pool, deepness,listDeepness); }\n";
     }
   }
   else {
     // not pure or virtual
-    out << "  " << cls.super->name << " *clone(int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << cls.super->name << " *clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
   }
   out << "\n";
 
@@ -966,13 +966,13 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   // clone function (take advantage of covariant return types)
   if (!nocvr) {
     // normal case
-    out << "  virtual " << ctor.name << " *clone(int deepness=0,int listDeepness=1) const;\n";
+    out << "  virtual " << ctor.name << " *clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
   }
   else {
     // msvc hack case
-    out << "  virtual " << parent.name << "* nocvr_clone(int deepness=0,int listDeepness=1) const;\n";
-    out << "  " << ctor.name << "* clone(int deepness=0,int listDeepness=1) const\n"
-        << "    { return static_cast<" << ctor.name << "*>(nocvr_clone(deepness,listDeepness)); }\n";
+    out << "  virtual " << parent.name << "* nocvr_clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << ctor.name << "* clone(StoragePool &pool, int deepness=0,int listDeepness=1) const\n"
+        << "    { return static_cast<" << ctor.name << "*>(nocvr_clone(pool, deepness,listDeepness)); }\n";
   }
 
   out << "\n";
@@ -1527,32 +1527,32 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
   if (isTreeListType(arg->type)) {
     // clone an ASTList of tree nodes
     out << "(listDeepness>=0||" << argName << ".owning) ? ";
-    out << "cloneASTList(" << argName << ", deepness, listDeepness) : constcast(&" << argName << ")" ;
+    out << "cloneASTList(pool, " << argName << ", deepness, listDeepness) : constcast(&" << argName << ")" ;
   }
   else if (isListType(arg->type)) {
     if (streq(extractListType(arg->type), "LocString")) {
       // these are owned, so clone deeply
       out << "(listDeepness>=0||" << argName << ".owning) ? ";
-      out << "cloneASTList(" << argName << ", deepness, listDeepness) : constcast(&" << argName << ")" ;
+      out << "cloneASTList(pool, " << argName << ", deepness, listDeepness) : constcast(&" << argName << ")" ;
     }
     else {
       // clone an ASTList of non-tree nodes
       out << "(listDeepness>=0||" << argName << ".owning) ? ";
-      out << "shallowCloneASTList(" << argName << ") : constcast(&" << argName << ")" ;
+      out << "shallowCloneASTList(pool, " << argName << ") : constcast(&" << argName << ")" ;
     }
   }
   else if (isFakeListType(arg->type)) {
     // clone a FakeList (of tree nodes, we assume..)
     out << "(listDeepness>=0) ? ";
-    out << "cloneFakeList(" << argName << ", deepness, listDeepness) : " << argName ;
+    out << "cloneFakeList(pool, " << argName << ", deepness, listDeepness) : " << argName ;
   }
   else if (isTreeNode(arg->type)) {
     // clone a tree node
-    out << "((deepness>=0)&&"<<argName << ")? " << argName << "->clone(deepness, listDeepness) : " << argName ;
+    out << "((deepness>=0)&&"<<argName << ")? " << argName << "->clone(pool, deepness, listDeepness) : " << argName ;
   }
   else if (streq(arg->type, "LocString")) {
     // clone a LocString; we store objects, but pass pointers
-    out << "(deepness>=0)? " << argName << ".clone() : constcast(&" << argName<<")" ;
+    out << "(deepness>=0)? " << argName << ".clone(pool) : constcast(&" << argName<<")" ;
   }
   else {
     // pass the non-tree node's value directly
@@ -1575,11 +1575,11 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
   if (!nocvr || !sub) {
     // normal case, or childless superclass case
-    out << name << " *" << name << "::clone(int deepness,int listDeepness) const\n";
+    out << name << " *" << name << "::clone(StoragePool &pool, int deepness,int listDeepness) const\n";
   }
   else {
     // msvc hack case
-    out << super->name << " *" << name << "::nocvr_clone(int deepness,int listDeepness) const\n";
+    out << super->name << " *" << name << "::nocvr_clone(StoragePool &pool, int deepness,int listDeepness) const\n";
   }
   out << "{\n";
 
@@ -3263,6 +3263,8 @@ void mergeItself(ASTSpecFile *base)
               o<<std::endl;
               o << "freeform result:" << std::endl;
               c->super->debugPrint(o, 0);
+          } else {
+              c->super->bases.prepend(new BaseClass(AC_PUBLIC, "Storeable"));
           }
       }
     }

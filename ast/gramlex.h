@@ -16,6 +16,7 @@
 // update: This approach was too problematic.  I've taken to distributing
 // FlexLexer.h myself.
 #include "sm_flexlexer.h"     // yyFlexLexer
+#include "storage.h"
 
 #include <iostream>         // std::istream
 
@@ -35,6 +36,9 @@
 // this class just holds the lexer state so it is properly encapsulated
 // (and therefore, among other things, re-entrant)
 class GrammarLexer : public yyFlexLexer, public ReportError {
+
+  StoragePool pool;
+
 public:      // types
   enum Constants {
     lexBufferSize = 4096,          // size of new lex buffers

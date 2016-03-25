@@ -105,9 +105,10 @@ x_assert::~x_assert()
 
 
 // failure function, declared in xassert.h
-void x_assert_fail(char const *cond, char const *file, int line)
+int x_assert_fail(char const *cond, char const *file, int line)
 {
   THROW(x_assert(cond, file, line));
+  return 0;
 }
 
 

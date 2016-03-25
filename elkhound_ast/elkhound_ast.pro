@@ -20,7 +20,8 @@ SOURCES += main.cpp \
     ../ast/strtable.cc \
     ../ast/towner.cc \
     ../ast/xmlhelp.cc \
-    ../ast/example.cc
+    ../ast/example.cc \
+    ../ast/ext1.cc
 
 DISTFILES += \
     ../ast/configure.pl \
@@ -33,7 +34,9 @@ DISTFILES += \
     ../ast/license.txt \
     ../ast/readme.txt \
     ../ast/tiny.ast \
-    ../ast/Makefile.in
+    ../ast/Makefile.in \
+    ../ast/ext1.o \
+    ../ast/ext1.d
 
 HEADERS += \
     ../ast/agramlex.lex \
@@ -54,6 +57,7 @@ HEADERS += \
     ../ast/reporterr.h \
     ../ast/strtable.h \
     ../ast/xmlhelp.h \
-    ../ast/example.h
+    ../ast/example.h \
+    ../ast/ext1.h
 
 INCLUDEPATH += ../smbase

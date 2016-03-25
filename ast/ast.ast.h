@@ -45,7 +45,7 @@ public:      // funcs
 
   char const *kindName() const { return "ASTSpecFile"; }
 
-  ASTSpecFile *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  ASTSpecFile *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
@@ -75,7 +75,7 @@ public:      // funcs
   DECL_AST_DOWNCASTS(TF_custom, TF_CUSTOM)
   DECL_AST_DOWNCASTS(TF_enum, TF_ENUM)
 
-  virtual ToplevelForm* clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const=0;
+  virtual ToplevelForm* clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const=0;
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
@@ -95,7 +95,7 @@ public:      // funcs
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_verbatim *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_verbatim *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -113,7 +113,7 @@ public:      // funcs
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_impl_verbatim *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_impl_verbatim *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -132,7 +132,7 @@ public:      // funcs
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_class *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_class *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   public:  bool hasChildren() const { return ctors.isNotEmpty(); };
 };
@@ -152,7 +152,7 @@ public:      // funcs
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_option *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_option *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -170,7 +170,7 @@ public:      // funcs
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_custom *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_custom *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -189,7 +189,7 @@ public:      // funcs
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_enum *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_enum *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -218,7 +218,7 @@ public:      // funcs
 
   char const *kindName() const { return "ASTClass"; }
 
-  ASTClass *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  ASTClass *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
@@ -263,7 +263,7 @@ public:      // funcs
 
   char const *kindName() const { return "AccessMod"; }
 
-  AccessMod *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  AccessMod *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
@@ -292,7 +292,7 @@ public:      // funcs
   DECL_AST_DOWNCASTS(UserDecl, USERDECL)
   DECL_AST_DOWNCASTS(CustomCode, CUSTOMCODE)
 
-  virtual Annotation* clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const=0;
+  virtual Annotation* clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const=0;
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
@@ -314,7 +314,7 @@ public:      // funcs
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual UserDecl *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual UserDecl *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   public:  AccessCtl access() const { return amod->acc; };
 };
@@ -335,7 +335,7 @@ public:      // funcs
 
   virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual CustomCode *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual CustomCode *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   public:  bool used;
 };
@@ -357,7 +357,7 @@ public:      // funcs
 
   char const *kindName() const { return "CtorArg"; }
 
-  CtorArg *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  CtorArg *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
@@ -378,7 +378,7 @@ public:      // funcs
 
   char const *kindName() const { return "BaseClass"; }
 
-  BaseClass *clone(int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  BaseClass *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
 

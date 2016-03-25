@@ -390,9 +390,9 @@ SourceLocManager *sourceLocManager = NULL;
 
 
 SourceLocManager::SourceLocManager()
-  : files(),
+  : files(pool),
     recent(NULL),
-    statics(),
+    statics(pool),
     nextLoc(toLoc(1)),
     nextStaticLoc(toLoc(0)),
     maxStaticLocs(100),

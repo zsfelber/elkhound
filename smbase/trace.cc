@@ -10,12 +10,13 @@
 #include <fstream>   // std::ofstream
 #include <stdlib.h>    // getenv
 
+static StoragePool pool;
 
 // auto-init
 static bool inited = false;
 
 // list of active tracers, initially empty
-static ObjList<string> tracers;
+static ObjList<string> tracers(pool);
 
 // stream connected to /dev/null
 std::ofstream devNullObj("/dev/null");

@@ -9,7 +9,7 @@ verbatim {
   #define GENERATED_AST_PRESENT
 }
 
-// the entire specification
+//  the entire specification
 class ASTSpecFile (ASTList<ToplevelForm> forms);
 
 class ToplevelForm {

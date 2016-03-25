@@ -24,7 +24,7 @@ CXX := g++
 OPT_DEBUG := -O0 -DDEBUG
 
 # flags for the C and C++ compilers (and preprocessor)
-CFLAGS  := -g -Wall -D__UNIX__ -O2 -DNDEBUG -D__LINUX__
+CFLAGS  := -g -Wall -D__UNIX__ $(OPT_DEBUG) -D__LINUX__
 CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ $(OPT_DEBUG) -D__LINUX__ -I$(BOOST)
 
 # cross-compile info

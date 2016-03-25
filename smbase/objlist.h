@@ -23,7 +23,7 @@ template <class T> class ObjListIterNC;
 // into any such list
 template<typename T> class SObjList;
 template <class T>
-class ObjList {
+class ObjList : public Storeable {
 private:
   friend class ObjListIter<T>;
   friend class ObjListMutator<T>;
@@ -53,7 +53,7 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-    ObjList()                            : list(), owning(true) {}
+    ObjList(StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
 
   ~ObjList()                           { deleteAll(); }
 

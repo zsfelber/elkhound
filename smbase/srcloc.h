@@ -29,6 +29,7 @@
 
 #include "str.h"      // string
 #include "objlist.h"  // ObjList
+#include "storage.h"  // ObjList
 
 class HashLineMap;    // hashline.h
 
@@ -59,6 +60,10 @@ enum SourceLoc {
 // the 'toString' function at the end.
 class SourceLocManager {
 private:     // types
+
+  // ! first !
+  StoragePool pool;
+
   // a triple which identifies a line boundary in a file (it's
   // implicit which file it is) with respect to all of the relevant
   // spaces

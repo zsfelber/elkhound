@@ -6,6 +6,7 @@
 #define ASTLIST_H
 
 #include "vdtllist.h"     // VoidTailList
+#include "storage.h"
 
 template <class T> class ASTListIter;
 template <class T> class ASTListIterNC;
@@ -13,7 +14,7 @@ template <class T> class ASTListIterNC;
 // a list which owns the items in it (will deallocate them), and
 // has constant-time access to the last element
 template <class T>
-class ASTList {
+class ASTList : public Storeable {
 private:
   friend class ASTListIter<T>;        
   friend class ASTListIterNC<T>;
@@ -27,18 +28,18 @@ private:
 public:
   bool const owning;
 
-  ASTList(bool owning=true)             : list(), owning(owning) {}
+  ASTList(StoragePool &pool, bool owning=true) : Storeable(pool), list(pool), owning(owning) {}
   ~ASTList()                            { if (owning) deleteAll(); }
 
   // ctor to make singleton list; often quite useful
-  ASTList(T *elt)                       : list(), owning(true) { prepend(elt); }
-  ASTList(T *elt, bool owning)          : list(), owning(owning) { prepend(elt); }
+  ASTList(T *elt)                       : Storeable(NN(src)->__pool), list(src->__pool), owning(true) { prepend(elt); }
+  ASTList(T *elt, bool owning)          : Storeable(NN(src)->__pool), list(src->__pool), owning(owning) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(ASTList<T> *src)              : list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning&&src) list.appendAll(src->list);}
-  ASTList(ASTList<T> *src,bool owning)  : list((src&&owning)?&src->list:0), owning(owning) { if (!owning&&src) list.appendAll(src->list);}
+  ASTList(ASTList<T> *src) : Storeable(src->__pool), list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning&&src) list.appendAll(src->list);}
+  ASTList(ASTList<T> *src,bool owning) : Storeable(src->__pool),   : list((src&&owning)?&src->list:0), owning(owning) { if (!owning&&src) list.appendAll(src->list);}
   void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
   void steal(ASTList<T> *src,bool deleteOrig)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list, deleteOrig); }
 
@@ -168,9 +169,9 @@ public:
 // this function is somewhat at odds with the nominal purpose
 // of ASTLists, but I need it in a weird situation so ...
 template <class T>
-ASTList<T> *shallowCopy(ASTList<T> *src)
+ASTList<T> *shallowCopy(StoragePool &pool, ASTList<T> *src)
 {
-  ASTList<T> *ret = new ASTList<T>;
+  ASTList<T> *ret = new (pool) ASTList<T>;
   FOREACH_ASTLIST_NC(T, *src, iter) {
     ret->append(iter.data());
   }

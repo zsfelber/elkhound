@@ -26,8 +26,13 @@ MYFLEX := $(PERL) $(SMBASE)/run-flex.pl
 # C++ compiler, etc.
 CXX := $(CXX)
 
+#all: <- not working
+#OPT_DEBUG := -O2 -DNDEBUG
+#debug:
+OPT_DEBUG := -O0 -DDEBUG
+
 # flags for the C and C++ compilers (and preprocessor)
-CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -O2 -DNDEBUG -D__LINUX__ -I$(BOOST) -I$(SMBASE)
+CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ $(OPT_DEBUG) -D__LINUX__ -I$(BOOST) -I$(SMBASE)
 
 # flags for the linker
 LDFLAGS := -g -Wall $(BOOST_LIBS) $(LIBSMBASE)

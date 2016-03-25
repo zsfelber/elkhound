@@ -10,17 +10,18 @@
 #include "typ.h"         // bool
 #include "trdelete.h"    // TRASHINGDELETE
 #include <iostream>      //
+#include "storage.h"
 
 // -------------------------- non-typesafe core -----------------------------
 // non-typesafe list node
-class VoidNode {
+class VoidNode : public Storeable {
 public:
   TRASHINGDELETE
 
   VoidNode *next;           // (owner) next item in list, or NULL if last item
   void *data;               // whatever it is the list is holding
 
-  VoidNode(void *aData=NULL, VoidNode *aNext=NULL) { data=aData; next=aNext; }
+  VoidNode(StoragePool &pool, void *aData=NULL, VoidNode *aNext=NULL) : Storeable(pool) { data=aData; next=aNext; }
 };
 
 
@@ -41,7 +42,7 @@ typedef bool (*VoidEq)(void *left, void *right);
 // list of void*; at this level, the void* are completely opaque;
 // the list won't attempt to delete(), compare them, or anything else
 // (well, some comparison has creeped in now... but only via VoidDiff)
-class VoidList {
+class VoidList : public Storeable {
 private:
   friend class VoidListIter;
   friend class VoidListMutator;
@@ -51,8 +52,8 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
-  VoidList()                         { top=NULL; }
-  VoidList(VoidList const &obj);     // makes a (shallow) copy of the contents
+  VoidList(StoragePool &pool)  : Storeable(pool)                        { top=NULL; }
+  VoidList(StoragePool &pool, VoidList const &obj);     // makes a (shallow) copy of the contents
   ~VoidList()                        { removeAll(); }
 
   // selectors

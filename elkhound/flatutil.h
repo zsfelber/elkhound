@@ -11,7 +11,7 @@
 
 // ------------- xfer of owners -----------------
 template <class T>
-void xferOwnerPtr(Flatten &flat, T *&ptr)
+void xferOwnerPtr(StoragePool &pool, Flatten &flat, T *&ptr)
 {
   if (flat.reading()) {
     // construct a new, empty object
@@ -19,7 +19,7 @@ void xferOwnerPtr(Flatten &flat, T *&ptr)
   }
 
   // read/write it
-  ptr->xfer(flat);
+  ptr->xfer(pool, flat);
 
   // note it so we can have serfs to it
   flat.noteOwner(ptr);
@@ -27,7 +27,7 @@ void xferOwnerPtr(Flatten &flat, T *&ptr)
 
 
 template <class T>
-void xferNullableOwnerPtr(Flatten &flat, T *&ptr)
+void xferNullableOwnerPtr(StoragePool &pool, Flatten &flat, T *&ptr)
 {
   bool present = false;     // initial value not used
   if (flat.reading()) {
@@ -38,7 +38,7 @@ void xferNullableOwnerPtr(Flatten &flat, T *&ptr)
   }
 
   if (present) {
-    xferOwnerPtr(flat, ptr);
+    xferOwnerPtr(pool, flat, ptr);
   }
 }
 
@@ -61,13 +61,13 @@ void xferOwnerPtr_readObj(Flatten &flat, T *&ptr)
 
 
 template <class T>
-void xferObjList(Flatten &flat, ObjList <T> &list)
+void xferObjList(StoragePool& pool, Flatten &flat, ObjList <T> &list)
 {
   if (flat.writing()) {
     flat.writeInt(list.count());
 
     MUTATE_EACH_OBJLIST(T, list, iter) {
-      iter.data()->xfer(flat);
+      iter.data()->xfer(pool, flat);
       flat.noteOwner(iter.data());
     }
   }
@@ -77,10 +77,10 @@ void xferObjList(Flatten &flat, ObjList <T> &list)
     ObjListMutator<T> mut(list);
     while (listLen--) {
       // construct a new, empty object
-      T *obj = new T(flat);
+      T *obj = new (pool) T(flat);
 
       // read it
-      obj->xfer(flat);
+      obj->xfer(pool, flat);
       flat.noteOwner(obj);
 
       // add it to the list
@@ -90,13 +90,13 @@ void xferObjList(Flatten &flat, ObjList <T> &list)
 }
 
 template <class T>
-void xferSObjList(Flatten &flat, SObjList <T> &list)
+void xferSObjList(StoragePool& pool, Flatten &flat, SObjList <T> &list)
 {
   if (flat.writing()) {
     flat.writeInt(list.count());
 
     SMUTATE_EACH_OBJLIST(T, list, iter) {
-      iter.data()->xfer(flat);
+      iter.data()->xfer(pool, flat);
       flat.noteOwner(iter.data());
     }
   }
@@ -106,10 +106,10 @@ void xferSObjList(Flatten &flat, SObjList <T> &list)
     SObjListMutator<T> mut(list);
     while (listLen--) {
       // construct a new, empty object
-      T *obj = new T(flat);
+      T *obj = new (pool) T(flat);
 
       // read it
-      obj->xfer(flat);
+      obj->xfer(pool, flat);
       flat.noteOwner(obj);
 
       // add it to the list
