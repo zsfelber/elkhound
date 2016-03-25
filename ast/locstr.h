@@ -17,11 +17,12 @@ public:    // data
   StringRef str;
 
 public:    // funcs
-  LocString();
+  LocString(StoragePool &pool);
+  LocString(Storeable *master);
   LocString(LocString const &obj);
-  LocString(SourceLoc loc, StringRef str);
+  LocString(StoragePool &pool, SourceLoc loc, StringRef str);
 
-  LocString(Flatten&);
+  LocString(StoragePool &pool, Flatten&);
   void xfer(StoragePool &pool, Flatten &flat);
 
   // deallocates its argument; intended for convenient use in bison grammar files

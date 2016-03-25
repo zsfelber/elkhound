@@ -11,8 +11,8 @@
 #include <ios>
 
 
-VoidList::VoidList(StoragePool &pool, VoidList const &obj)
-  : Storeable(pool), top(NULL)
+VoidList::VoidList(VoidList const &obj)
+  : Storeable(obj), top(NULL)
 {
   *this = obj;
 }
@@ -603,6 +603,7 @@ void VoidList::prependAll(VoidList const &tail)
 
 VoidList& VoidList::operator= (VoidList const &src)
 {
+  xassert(__pool == src.__pool);
   if (this != &src) {
     removeAll();
     appendAll(src);

@@ -4,24 +4,29 @@
 #include "locstr.h"     // this module
 #include "exc.h"        // LocString
 
-LocString::LocString()
-  : loc(SL_UNKNOWN),
+LocString::LocString(StoragePool &pool)
+  : Storeable(pool), loc(SL_UNKNOWN),
+    str(NULL)           // problem with "" is we don't have the string table here..
+{}
+
+LocString::LocString(Storeable *master)
+  : Storeable(master), loc(SL_UNKNOWN),
     str(NULL)           // problem with "" is we don't have the string table here..
 {}
 
 LocString::LocString(LocString const &obj)
-  : loc(obj.loc),
+  : Storeable(obj), loc(obj.loc),
     str(obj.str)
 {}
 
-LocString::LocString(SourceLoc L, StringRef s)
-  : loc(L),
+LocString::LocString(StoragePool &pool, SourceLoc L, StringRef s)
+  : Storeable(pool), loc(L),
     str(s)
 {}
 
 
-LocString::LocString(Flatten&)
-  : loc(SL_UNKNOWN), str(NULL)
+LocString::LocString(StoragePool &pool, Flatten&)
+  : Storeable(pool), loc(SL_UNKNOWN), str(NULL)
 {}
 
 void LocString::xfer(StoragePool &pool, Flatten &flat)

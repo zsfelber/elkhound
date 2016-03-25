@@ -55,7 +55,7 @@ OPT_DEBUG := -O0 -DDEBUG
 
 # flags for the C and C++ compilers (and preprocessor)
 # "-Ic" is needed for binaries that use $(support-set)
-CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -O2 -DNDEBUG -D__LINUX__ -I. $(OPT_DEBUG) -I$(BOOST) -I$(SMBASE) -I$(AST) -Ic
+CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -D__LINUX__ -I. $(OPT_DEBUG) -I$(BOOST) -I$(SMBASE) -I$(AST) -Ic
 
 # flags for the linker
 libraries := $(BOOST_LIBS) $(LIBAST) $(LIBSMBASE)
@@ -219,8 +219,10 @@ grampar.tab.cc grampar.tab.h grampar.codes.h: grampar.y
 	mv -f grampar.tab.h tmp
 	sed -e 's/typedef union {/typedef union YYSTYPE {/' <tmp >grampar.tab.h
 	rm tmp
-	grep '# *define' grampar.tab.h >grampar.codes.h
-
+	perl -ne "print if (\$$ok); \$$ok = (\$$ok || /\/\* Token type.*/) && !(/\#endif/)" grampar.tab.h >grampar.codes.h
+	#bison 2 ->
+	#grep '# *define' grampar.tab.h >grampar.codes.h
+	#bison 3 ->
 
 # new C++ grammar with treebuilding actions
 cc2/cc2t.gr.gen.cc cc2/cc2t.gr.gen.h cc2/cc2t.gr.gen.y: cc2/cc2.gr c/c.tok elkhound

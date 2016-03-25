@@ -32,14 +32,14 @@ public:
   ~ASTList()                            { if (owning) deleteAll(); }
 
   // ctor to make singleton list; often quite useful
-  ASTList(T *elt)                       : Storeable(NN(src)->__pool), list(src->__pool), owning(true) { prepend(elt); }
-  ASTList(T *elt, bool owning)          : Storeable(NN(src)->__pool), list(src->__pool), owning(owning) { prepend(elt); }
+  ASTList(StoragePool &pool, T *elt)                       : Storeable(pool), list(pool), owning(true) { prepend(elt); }
+  ASTList(StoragePool &pool, T *elt, bool owning)          : Storeable(pool), list(pool), owning(owning) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(ASTList<T> *src) : Storeable(src->__pool), list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning&&src) list.appendAll(src->list);}
-  ASTList(ASTList<T> *src,bool owning) : Storeable(src->__pool),   : list((src&&owning)?&src->list:0), owning(owning) { if (!owning&&src) list.appendAll(src->list);}
+  ASTList(ASTList<T> *src) : Storeable(src), list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning&&src) list.appendAll(src->list);}
+  ASTList(ASTList<T> *src,bool owning) : Storeable(src), list((src&&owning)?&src->list:0), owning(owning) { if (!owning&&src) list.appendAll(src->list);}
   void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
   void steal(ASTList<T> *src,bool deleteOrig)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list, deleteOrig); }
 

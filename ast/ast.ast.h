@@ -34,12 +34,12 @@ class BaseClass;
   #define GENERATED_AST_PRESENT
 
 // *** DO NOT EDIT ***
-class ASTSpecFile {
+class ASTSpecFile : public Storeable {
 public:      // data
   ASTList <ToplevelForm > forms;
 
 public:      // funcs
-  ASTSpecFile(ASTList <ToplevelForm > *_forms) : forms(_forms) {
+  ASTSpecFile(StoragePool &pool, ASTList <ToplevelForm > *_forms) : Storeable(pool), forms(_forms) {
   }
   ~ASTSpecFile();
 
@@ -54,11 +54,11 @@ public:      // funcs
 
 
 // *** DO NOT EDIT ***
-class ToplevelForm {
+class ToplevelForm : public Storeable {
 public:      // data
 
 public:      // funcs
-  ToplevelForm() {
+  ToplevelForm(StoragePool &pool) : Storeable(pool) {
   }
   virtual ~ToplevelForm();
 
@@ -86,7 +86,7 @@ public:      // data
   string code;
 
 public:      // funcs
-  TF_verbatim(string _code) : ToplevelForm(), code(_code) {
+  TF_verbatim(StoragePool &pool, string _code) : ToplevelForm(pool), code(_code) {
   }
   virtual ~TF_verbatim();
 
@@ -104,7 +104,7 @@ public:      // data
   string code;
 
 public:      // funcs
-  TF_impl_verbatim(string _code) : ToplevelForm(), code(_code) {
+  TF_impl_verbatim(StoragePool &pool, string _code) : ToplevelForm(pool), code(_code) {
   }
   virtual ~TF_impl_verbatim();
 
@@ -123,7 +123,7 @@ public:      // data
   ASTList <ASTClass > ctors;
 
 public:      // funcs
-  TF_class(ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(), super(_super), ctors(_ctors) {
+  TF_class(StoragePool &pool, ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(pool), super(_super), ctors(_ctors) {
   }
   virtual ~TF_class();
 
@@ -143,7 +143,7 @@ public:      // data
   ASTList <string > args;
 
 public:      // funcs
-  TF_option(string _name, ASTList <string > *_args) : ToplevelForm(), name(_name), args(_args) {
+  TF_option(StoragePool &pool, string _name, ASTList <string > *_args) : ToplevelForm(pool), name(_name), args(_args) {
   }
   virtual ~TF_option();
 
@@ -161,7 +161,7 @@ public:      // data
   CustomCode *cust;
 
 public:      // funcs
-  TF_custom(CustomCode *_cust) : ToplevelForm(), cust(_cust) {
+  TF_custom(StoragePool &pool, CustomCode *_cust) : ToplevelForm(pool), cust(_cust) {
   }
   virtual ~TF_custom();
 
@@ -180,7 +180,7 @@ public:      // data
   ASTList <string > enumerators;
 
 public:      // funcs
-  TF_enum(string _name, ASTList <string > *_enumerators) : ToplevelForm(), name(_name), enumerators(_enumerators) {
+  TF_enum(StoragePool &pool, string _name, ASTList <string > *_enumerators) : ToplevelForm(pool), name(_name), enumerators(_enumerators) {
   }
   virtual ~TF_enum();
 
@@ -196,7 +196,7 @@ public:      // funcs
 
 
 // *** DO NOT EDIT ***
-class ASTClass {
+class ASTClass : public Storeable {
 public:      // data
   string name;
   ASTList <CtorArg > args;
@@ -211,7 +211,7 @@ public:      // data
   ASTList <CtorArg > totLastArgs;
 
 public:      // funcs
-  ASTClass(string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : name(_name), args(_args), lastArgs(_lastArgs), bases(_bases), decls(_decls),
+  ASTClass(StoragePool &pool, string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : Storeable(pool), name(_name), args(_args), lastArgs(_lastArgs), bases(_bases), decls(_decls),
     level(0), consumed(0), parent(0), totArgs(false), totLastArgs(false){
   }
   ~ASTClass();
@@ -251,13 +251,13 @@ public:      // funcs
   string toString(AccessCtl acc);      // defined in ast.cc
 
 // *** DO NOT EDIT ***
-class AccessMod {
+class AccessMod : public Storeable {
 public:      // data
   AccessCtl acc;
   ASTList <string > mods;
 
 public:      // funcs
-  AccessMod(AccessCtl _acc, ASTList <string > *_mods) : acc(_acc), mods(_mods) {
+  AccessMod(StoragePool &pool, AccessCtl _acc, ASTList <string > *_mods) : Storeable(pool), acc(_acc), mods(_mods) {
   }
   ~AccessMod();
 
@@ -275,11 +275,11 @@ public:      // funcs
 
 
 // *** DO NOT EDIT ***
-class Annotation {
+class Annotation : public Storeable {
 public:      // data
 
 public:      // funcs
-  Annotation() {
+  Annotation(StoragePool &pool) : Storeable(pool) {
   }
   virtual ~Annotation();
 
@@ -305,7 +305,7 @@ public:      // data
   string init;
 
 public:      // funcs
-  UserDecl(AccessMod *_amod, string _code, string _init) : Annotation(), amod(_amod), code(_code), init(_init) {
+  UserDecl(StoragePool &pool, AccessMod *_amod, string _code, string _init) : Annotation(pool), amod(_amod), code(_code), init(_init) {
   }
   virtual ~UserDecl();
 
@@ -325,7 +325,7 @@ public:      // data
   string code;
 
 public:      // funcs
-  CustomCode(string _qualifier, string _code) : Annotation(), qualifier(_qualifier), code(_code) {
+  CustomCode(StoragePool &pool, string _qualifier, string _code) : Annotation(pool), qualifier(_qualifier), code(_code) {
      used=false;
   }
   virtual ~CustomCode();
@@ -343,7 +343,7 @@ public:      // funcs
 
 
 // *** DO NOT EDIT ***
-class CtorArg {
+class CtorArg : public Storeable {
 public:      // data
   bool isOwner;
   string type;
@@ -351,7 +351,7 @@ public:      // data
   string defaultValue;
 
 public:      // funcs
-  CtorArg(bool _isOwner, string _type, string _name, string _defaultValue) : isOwner(_isOwner), type(_type), name(_name), defaultValue(_defaultValue) {
+  CtorArg(StoragePool &pool, bool _isOwner, string _type, string _name, string _defaultValue) : Storeable(pool), isOwner(_isOwner), type(_type), name(_name), defaultValue(_defaultValue) {
   }
   ~CtorArg();
 
@@ -366,13 +366,13 @@ public:      // funcs
 
 
 // *** DO NOT EDIT ***
-class BaseClass {
+class BaseClass : public Storeable {
 public:      // data
   AccessCtl access;
   string name;
 
 public:      // funcs
-  BaseClass(AccessCtl _access, string _name) : access(_access), name(_name) {
+  BaseClass(StoragePool &pool, AccessCtl _access, string _name) : Storeable(pool), access(_access), name(_name) {
   }
   ~BaseClass();
 

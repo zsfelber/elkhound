@@ -102,7 +102,7 @@ endif
 CXX := g++
 
 # flags for the C++ compiler (and preprocessor)
-CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -O2 -DNDEBUG -D__LINUX__ -DXML -Woverloaded-virtual -I$(BOOST) -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
+CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -D__LINUX__ -DXML -Woverloaded-virtual -I$(BOOST) -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
 
 # how to enable coverage
 GCOV_OPTS := -fprofile-arcs -ftest-coverage

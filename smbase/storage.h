@@ -6,7 +6,7 @@
 #include <malloc.h>
 #include <stdint.h>
 
-#include "exc.h"
+#include "xassert.h"
 
 template <typename P>
 P* NN(P* a) {
@@ -38,10 +38,13 @@ static const int STORE_BUF_VAR_SZ = 1 << STORE_BUF_VAR_BITS;
 static const int STORE_BUF_BITS = 24;
 static const int STORE_BUF_SZ = 1 << STORE_BUF_BITS;
 
+static const uint32_t STORE_NEW_ID = 0x9a48fa11;
+
 class StoragePool;
 
 class Storeable {
 friend class StoragePool;
+   bool is_dynamic;
 
 public:
    StoragePool * const __pool;
@@ -65,17 +68,15 @@ public:
 
 protected:
 
-   Storeable(StoragePool & pool) : /*!fake init:*/__pool(__pool){
+   Storeable(StoragePool & pool) : is_dynamic(true), /*!fake init:*/__pool(__pool){
        xassert(__pool == &pool);
    }
 
-   Storeable(StoragePool * pool) : /*!fake init:*/__pool(__pool){
-       xassert(__pool == pool);
-   }
+   Storeable(StoragePool * pool);
 
-   Storeable(Storeable const & master) : /*!fake init:*/__pool(__pool){
-       xassert(__pool == master.__pool);
-   }
+   Storeable(Storeable const & master);
+
+   Storeable(Storeable const * master);
 
 };
 
@@ -178,6 +179,17 @@ private:
       add(externalUninitializedPointer);
    }
 
+   inline void reg(DataPtr data) {
+       xassert(contains(data));
+       xassert(!data->is_dynamic);
+
+       size_t vbufsz = ((varslength+STORE_BUF_VAR_SZ/*+1-1*/)>>STORE_BUF_VAR_BITS)<<STORE_BUF_VAR_BITS;
+       if (varscapacity < vbufsz) {
+           extendBuffer((void*&)variables, varslength, varscapacity, vbufsz, sizeof(DataPtr));
+       }
+       variables[varslength++] = data;
+   }
+
    inline void copyBuffer(void* src, size_t srclen, size_t srccap,
                           void*& dest, size_t &dstlen, size_t &dstcap, size_t size_of) {
        xassert(srccap);
@@ -250,6 +262,7 @@ public:
    template<class ST>
    inline void add(ST*& externalPointerToConstructedData) {
        xassert(contains(externalPointerToConstructedData));
+       xassert(externalPointerToConstructedData->is_dynamic);
 
        size_t pbufsz = ((ptrslength+STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
        if (ptrscapacity < pbufsz) {
@@ -274,6 +287,19 @@ public:
    }
 
 };
+
+inline Storeable::Storeable(StoragePool * pool) : is_dynamic(false),__pool(pool){
+    xassert(pool);
+    pool->reg(this);
+}
+
+inline Storeable::Storeable(Storeable const & master) : is_dynamic(false),__pool(master.__pool){
+    __pool->reg(this);
+}
+
+inline Storeable::Storeable(Storeable const * master) : is_dynamic(false),__pool(NN(master)->__pool){
+    __pool->reg(this);
+}
 
 /* undefined
 inline void* Storeable::operator new (std::size_t size) {

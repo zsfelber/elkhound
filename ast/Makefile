@@ -32,7 +32,7 @@ CXX := $(CXX)
 OPT_DEBUG := -O0 -DDEBUG
 
 # flags for the C and C++ compilers (and preprocessor)
-CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ $(OPT_DEBUG) -D__LINUX__ -I$(BOOST) -I$(SMBASE)
+CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -D__LINUX__ $(OPT_DEBUG) -I$(BOOST) -I$(SMBASE)
 
 # flags for the linker
 LDFLAGS := -g -Wall $(BOOST_LIBS) $(LIBSMBASE)
@@ -75,7 +75,10 @@ agrampar.tab.cc agrampar.tab.h agrampar.codes.h: agrampar.y
 	mv -f agrampar.tab.h tmp
 	sed -e 's/typedef union {/typedef union YYSTYPE {/' < tmp > agrampar.tab.h
 	rm tmp
-	grep '# *define' agrampar.tab.h > agrampar.codes.h
+	perl -ne "print if (\$$ok); \$$ok = (\$$ok || /\/\* Token type.*/) && !(/\#endif/)" agrampar.tab.h >agrampar.codes.h
+	#bison 2 ->
+	#grep '# *define' agrampar.tab.h >agrampar.codes.h
+	#bison 3 ->
 
 agrampar.tab.o: ast.hand.h ast.ast.h agrampar.h
 

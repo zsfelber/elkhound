@@ -78,13 +78,15 @@ inline bool wantMVisitor() { return mvisitorName.length() != 0; }
 // entire input
 ASTSpecFile *wholeAST = NULL;
 
+StoragePool astgen_pool;
+
 // list of all TF_classes in the input, useful for certain
 // applications which don't care about other forms
-SObjList<TF_class> allClasses;
+SObjList<TF_class> allClasses(astgen_pool);
 
 // list of all ASTList "list classes"
 StringSet listClassesSet;
-ASTList<ListClass> listClasses;
+ASTList<ListClass> listClasses(astgen_pool);
 
 // true if the user wants the xmlPrint stuff
 bool wantXMLPrint = false;
@@ -764,10 +766,10 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
   if (parent) {
       da = true;
 
-      args = new ASTList<CtorArg>(constcast(&parent->getArgs()), false);
+      args = new (astgen_pool) ASTList<CtorArg>(constcast(&parent->getArgs()), false);
       args->reappendAll(cls.args, (VoidEq)&cmpCtorArgs);
 
-      lastArgs = new ASTList<CtorArg>(constcast(&cls.lastArgs), false);
+      lastArgs = new (astgen_pool) ASTList<CtorArg>(constcast(&cls.lastArgs), false);
       lastArgs->appendAllNew(parent->getLastArgs(), (VoidEq)&cmpCtorArgs);
   }
   // declare the constructor
@@ -3233,7 +3235,7 @@ void mergeItself(ASTSpecFile *base)
                   }
               }
               if (!mergedChild) {
-                  mergedChild = new ASTClass(c->super->name, 0,0,0,0);
+                  mergedChild = new (astgen_pool) ASTClass(astgen_pool, c->super->name, 0,0,0,0);
                   s->ctors.append(mergedChild);
                   o << "Merged child not found, created an empty one." << std::endl;
               }
@@ -3264,8 +3266,10 @@ void mergeItself(ASTSpecFile *base)
               o << "freeform result:" << std::endl;
               c->super->debugPrint(o, 0);
           } else {
-              c->super->bases.prepend(new BaseClass(AC_PUBLIC, "Storeable"));
+              c->super->bases.prepend(new (astgen_pool) BaseClass(astgen_pool, AC_PUBLIC, "Storeable"));
           }
+
+          c->super->args.prepend(parseCtorArg("public StoragePool &pool"));
       }
     }
 }
@@ -3488,7 +3492,7 @@ void entry(int argc, char **argv)
   wholeAST = ast;
 
   // parse and merge extension modules
-  ObjList<string> modules;
+  ObjList<string> modules(astgen_pool);
   while (*argv) {
     char const *fname = *argv;
     argv++;

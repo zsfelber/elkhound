@@ -14,6 +14,8 @@
 #include <ctype.h>           // isalnum
 #include <fstream>         // std::ifstream
 
+//extern
+StoragePool y_pool;
 
 string unbox(string *s)
 {
@@ -38,7 +40,7 @@ string *appendStr(string *left, string *right)
 
 CtorArg *parseCtorArg(rostring origStr)
 {
-  CtorArg *ret = new CtorArg(false, "", "", "");
+  CtorArg *ret = new (y_pool) CtorArg(y_pool, false, "", "", "");
 
   // strip leading and trailing whitespace
   string str = trimWhitespace(origStr);

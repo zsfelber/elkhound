@@ -8,7 +8,7 @@
 all: cparse
 
 # directories of other software
-BOOST    := ../../../boost_1_60_0
+BOOST    := ../../boost_1_60_0
 SMBASE   := ../../smbase
 AST      := ../../ast
 ELKHOUND := ..
@@ -30,7 +30,7 @@ Makefile: Makefile.in
 CXX := g++
 
 # flags for the C++ compiler (and preprocessor)
-CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -O2 -DNDEBUG -D__LINUX__ -I$(BOOST) -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
+CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -D__LINUX__ -I$(BOOST) -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
 
 # flags for the linker
 libraries := $(BOOST_LIBS) $(LIBELKHOUND) $(LIBAST) $(LIBSMBASE)

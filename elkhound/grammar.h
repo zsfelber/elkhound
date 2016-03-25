@@ -93,10 +93,10 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:      // funcs
-  Symbol(LocString const &n, bool t, bool e = false);
+  Symbol(StoragePool &pool, LocString const &n, bool t, bool e = false);
   virtual ~Symbol();
 
-  Symbol(Flatten&);
+  Symbol(StoragePool &pool, Flatten&);
   void xfer(StoragePool &pool, Flatten &flat);
 
   // symmetric selectors
@@ -194,17 +194,18 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:     // funcs
-  Terminal(LocString const &name)        // canonical name for terminal class
-    : Symbol(name, true /*terminal*/),
-      alias(),
+  Terminal(StoragePool &pool, LocString const &name)        // canonical name for terminal class
+    : Symbol(pool, name, true /*terminal*/),
+      alias(this),
       precedence(0),
       associativity(AK_NONASSOC),
       classifyParam(NULL),
+      classifyCode(this),
       termCode(-1),
       termIndex(-1)
   {}
 
-  Terminal(Flatten &flat);
+  Terminal(StoragePool &pool, Flatten &flat);
   void xfer(StoragePool &pool, Flatten &flat);
 
   virtual void print(ostream &os) const;
@@ -268,7 +269,7 @@ private:    // funcs
     { return ((unsigned)terminalIndex & 7); }
 
 public:     // funcs
-  TerminalSet(int numTerms=0);                   // allocate new set, initially empty
+  TerminalSet(StoragePool &pool, int numTerms=0);                   // allocate new set, initially empty
   TerminalSet(TerminalSet const &obj);
   ~TerminalSet();
 
@@ -277,7 +278,7 @@ public:     // funcs
 
   void convert(GrammarAnalysis& g);
 
-  TerminalSet(Flatten&);
+  TerminalSet(StoragePool &pool, Flatten&);
   void xfer(StoragePool &pool, Flatten &flat);
 
   // call this to re-allocate at a new size; set is emptied
@@ -332,10 +333,10 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:     // funcs
-  Nonterminal(LocString const &name, bool isEmptyString=false);
+  Nonterminal(StoragePool &pool, LocString const &name, bool isEmptyString=false);
   virtual ~Nonterminal();
 
-  Nonterminal(Flatten &flat);
+  Nonterminal(StoragePool &pool, Flatten &flat);
   void xfer(StoragePool &pool, Flatten &flat);
   void xferSerfs(StoragePool &pool, Flatten &flat, Grammar &g);
 
@@ -385,7 +386,7 @@ public:     // types
     LocString tag;             // tag for this symbol; can be ""
 
   public:
-    RHSElt(Symbol *s, LocString const &t) : sym(s), tag(t) {}
+    RHSElt(StoragePool &pool, Symbol *s, LocString const &t) : Storeable(pool), sym(s), tag(t) {}
     ~RHSElt();
 
     RHSElt(Flatten&);
@@ -414,7 +415,7 @@ private:    // funcs
   void computeDerived();
 
 public:	    // funcs
-  Production(Nonterminal *left, char const *leftTag);
+  Production(StoragePool &pool, Nonterminal *left, char const *leftTag);
   ~Production();
 
   Production(Flatten &flat);

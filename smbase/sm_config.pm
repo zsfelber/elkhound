@@ -14,10 +14,10 @@ sub get_sm_config_version {
   $main::CC = getEnvOrDefault("CC", "gcc");
   $main::CXX = getEnvOrDefault("CXX", "g++");
   @main::CCFLAGS = ("-g", "-Wall", "-Wno-deprecated", "-D__UNIX__");
-  $main::debug = 0;
+  $main::debug = 1; # 0 zs
   $main::target = 0;
-  $main::no_dash_g = 0;
-  $main::no_dash_O2 = 0;
+  $main::no_dash_g = 0; 
+  $main::no_dash_O2 = 1; # 0 zs
   $main::exe = "";
 
   return 1.04;

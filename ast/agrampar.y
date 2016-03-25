@@ -23,7 +23,10 @@
 
 /* ================== bison declarations =================== */
 // don't use globals
-%pure_parser
+//bison2 : %pure_parser -> bison3
+%define api.pure full
+%parse-param {void* parseParam}
+%lex-param {void* parseParam}
 
 
 /* ===================== tokens ============================ */
@@ -113,17 +116,17 @@
 /* start symbol */
 /* yields ASTSpecFile, though really $$ isn't used.. */
 StartSymbol: Input
-               { $$ = *((ASTSpecFile**)parseParam) = new ASTSpecFile($1); }
+               { $$ = *((ASTSpecFile**)parseParam) = new (y_pool) ASTSpecFile(y_pool,$1); }
            ;
 
 /* sequence of toplevel forms */
 /* yields ASTList<ToplevelForm> */
-Input: /* empty */           { $$ = new ASTList<ToplevelForm>; }
+Input: /* empty */           { $$ = new (y_pool) ASTList<ToplevelForm>(y_pool); }
      | Input Class           { ($$=$1)->append($2); }
      | Input Verbatim        { ($$=$1)->append($2); }
      | Input Option          { ($$=$1)->append($2); }
      | Input Enum            { ($$=$1)->append($2); }
-     | Input CustomCode      { ($$=$1)->append(new TF_custom($2)); }
+     | Input CustomCode      { ($$=$1)->append(new (y_pool) TF_custom(y_pool,$2)); }
      | Input ";"             { $$=$1; }     /* ignore extraneous semis */
      ;
 
@@ -157,18 +160,18 @@ NewOpt: /* empty */          {}
 ClassBody: "{" ClassMembersOpt "}" /* no ";", see above */
              { $$=$2; }
          | ";"
-             { $$ = new TF_class(new ASTClass("(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+             { $$ = new (y_pool) TF_class(y_pool,new (y_pool) ASTClass(y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
          ;
 
 /* yields TF_class */
 /* does this by making an empty one initially, and then adding to it */
 ClassMembersOpt
   : /* empty */
-      { $$ = new TF_class(new ASTClass("(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+      { $$ = new (y_pool) TF_class(y_pool,new (y_pool) ASTClass(y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
   | ClassMembersOpt "->" TOK_NAME CtorArgsOpt BaseClassesOpt ";"
-      { ($$=$1)->ctors.append(new ASTClass(unbox($3), $4, NULL, $5, NULL)); }
+      { ($$=$1)->ctors.append(new (y_pool) ASTClass(y_pool,unbox($3), $4, NULL, $5, NULL)); }
   | ClassMembersOpt "->" TOK_NAME CtorArgsOpt BaseClassesOpt "{" CtorMembersOpt "}"
-      { ($$=$1)->ctors.append(new ASTClass(unbox($3), $4, NULL, $5, $7)); }
+      { ($$=$1)->ctors.append(new (y_pool) ASTClass(y_pool,unbox($3), $4, NULL, $5, $7)); }
   | ClassMembersOpt Annotation
       { ($$=$1)->super->decls.append($2); }
   ;
@@ -177,7 +180,7 @@ ClassMembersOpt
 /* yields ASTList<CtorArg> */
 CtorArgsOpt
   : /* empty */
-      { $$ = new ASTList<CtorArg>; }
+      { $$ = new (y_pool) ASTList<CtorArg>(y_pool); }
   | CtorArgs
       { $$ = $1; }
   ;
@@ -185,14 +188,14 @@ CtorArgsOpt
 /* yields ASTList<CtorArg> */
 CtorArgs
   : "(" ")"
-      { $$ = new ASTList<CtorArg>; }
+      { $$ = new (y_pool) ASTList<CtorArg>(y_pool); }
   | "(" CtorArgList ")"
       { $$ = $2; }
   ;
 
 /* yields ASTList<CtorArg> */
 CtorArgList: Arg
-               { $$ = new ASTList<CtorArg>;
+               { $$ = new (y_pool) ASTList<CtorArg>(y_pool);
                  {
                    string tmp = unbox($1);
                    $$->append(parseCtorArg(tmp));
@@ -230,7 +233,7 @@ ArgList: Arg
 /* yields ASTList<Annotation> */
 CtorMembersOpt
   : /* empty */
-      { $$ = new ASTList<Annotation>; }
+      { $$ = new (y_pool) ASTList<Annotation>(y_pool); }
   | CtorMembersOpt Annotation
       { ($$=$1)->append($2); }
   ;
@@ -238,9 +241,9 @@ CtorMembersOpt
 /* yields Annotation */
 Annotation
   : AccessMod Embedded
-      { $$ = new UserDecl($1, unbox($2), ""); }
+      { $$ = new (y_pool) UserDecl(y_pool,$1, unbox($2), ""); }
   | AccessMod TOK_EMBEDDED_CODE "=" TOK_EMBEDDED_CODE ";"
-      { $$ = new UserDecl($1, unbox($2), unbox($4)); }
+      { $$ = new (y_pool) UserDecl(y_pool,$1, unbox($2), unbox($4)); }
   | CustomCode
       { $$ = $1; }
   ;
@@ -248,7 +251,7 @@ Annotation
 /* yields CustomCode */
 CustomCode
   : "custom" TOK_NAME Embedded
-      { $$ = new CustomCode(unbox($2), unbox($3)); }
+      { $$ = new (y_pool) CustomCode(y_pool,unbox($2), unbox($3)); }
   ;
 
 /* yields string */
@@ -271,47 +274,47 @@ Public
 
 /* yield AccessMod */
 AccessMod: Public
-             { $$ = new AccessMod($1, NULL); }
+             { $$ = new (y_pool) AccessMod(y_pool,$1, NULL); }
          | Public "(" StringList ")"
-             { $$ = new AccessMod($1, $3); }
+             { $$ = new (y_pool) AccessMod(y_pool,$1, $3); }
          ;
 
 /* yield ASTList<string> */
 StringList: TOK_NAME
-              { $$ = new ASTList<string>($1); }
+              { $$ = new (y_pool) ASTList<string>(y_pool,$1); }
           | StringList "," TOK_NAME
               { ($$=$1)->append($3); }
           ;
 
 /* yields TF_verbatim */
 Verbatim: "verbatim" Embedded
-            { $$ = new TF_verbatim(unbox($2)); }
+            { $$ = new (y_pool) TF_verbatim(y_pool,unbox($2)); }
         | "impl_verbatim" Embedded
-            { $$ = new TF_impl_verbatim(unbox($2)); }
+            { $$ = new (y_pool) TF_impl_verbatim(y_pool,unbox($2)); }
         ;
 
 /* yields TF_option */
 Option: "option" TOK_NAME OptionArgs ";"
-	  { $$ = new TF_option(unbox($2), $3); }
+      { $$ = new (y_pool) TF_option(y_pool,unbox($2), $3); }
       ;
       
 /* yields ASTList<string> */
 OptionArgs: /*empty*/
-              { $$ = new ASTList<string>; }
+              { $$ = new (y_pool) ASTList<string>(y_pool); }
           | OptionArgs TOK_NAME
               { ($$=$1)->append($2); }
           ;
 
 /* yields TF_enum */
 Enum: "enum" TOK_NAME "{" EnumeratorSeq "}"
-        { $$ = new TF_enum(unbox($2), $4); }
+        { $$ = new (y_pool) TF_enum(y_pool,unbox($2), $4); }
     | "enum" TOK_NAME "{" EnumeratorSeq "," "}"
-        { $$ = new TF_enum(unbox($2), $4); }
+        { $$ = new (y_pool) TF_enum(y_pool,unbox($2), $4); }
     ;
 
 /* yields ASTList<string> */
 EnumeratorSeq: Enumerator
-                 { $$ = new ASTList<string>($1); }
+                 { $$ = new (y_pool) ASTList<string>(y_pool,$1); }
              | EnumeratorSeq "," Enumerator
                  { ($$=$1)->append($3); }
              ;
@@ -323,14 +326,14 @@ Enumerator: TOK_NAME
 
 /* yields ASTList<BaseClass> */
 BaseClassesOpt: /* empty */
-                  { $$ = new ASTList<BaseClass>; }
+                  { $$ = new (y_pool) ASTList<BaseClass>(y_pool); }
               | ":" BaseClassSeq
                   { $$ = $2; }
               ;
 
 /* yields ASTList<BaseClass> */
 BaseClassSeq: BaseClass
-                { $$ = new ASTList<BaseClass>($1); }
+                { $$ = new (y_pool) ASTList<BaseClass>(y_pool,$1); }
             | BaseClassSeq "," BaseClass
                 { ($$=$1)->append($3); }
             ;
@@ -344,7 +347,7 @@ BaseAccess
 
 /* yields BaseClass */
 BaseClass: BaseAccess TOK_NAME
-             { $$ = new BaseClass($1, unbox($2)); }
+             { $$ = new (y_pool) BaseClass(y_pool,$1, unbox($2)); }
          ;
 
 %%

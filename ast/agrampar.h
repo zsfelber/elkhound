@@ -6,8 +6,11 @@
 
 #include "ast.hand.h"       // AST node class declarations
 #include "str.h"            // string
+#include "storage.h"
 
 class GrammarLexer;
+
+extern StoragePool y_pool;
 
 // ---------------- agrampar's view of the parser --------------------
 // name of extra parameter to yyparse (i.e. the context in
@@ -53,7 +56,8 @@ CtorArg *parseCtorArg(rostring str);
 
 // error routine
 void agrampar_yyerror(char const *msg, void *parseParam);
-#define yyerror(m) agrampar_yyerror(m, YYPARSE_PARAM)
+//#define yyerror(m) agrampar_yyerror(m, YYPARSE_PARAM)
+#define yyerror(pp, msg) agrampar_yyerror(msg, pp)
 
 // parser's view of the lexer
 int agrampar_yylex(union YYSTYPE *lvalp, void *parseParam);

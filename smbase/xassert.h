@@ -14,7 +14,7 @@
 // because I do not want this interface to depend on str.h, and also
 // because I do not want the many call sites to have the overhead
 // of constructing and destructing temporary objects
-void x_assert_fail(char const *cond, char const *file, int line) NORETURN;
+int x_assert_fail(char const *cond, char const *file, int line) NORETURN;
 
 // Ordinary 'xassert' *can* be turned off, but the nominal intent
 // is that it be left on, under the "ship what you test" theory.
@@ -22,7 +22,7 @@ void x_assert_fail(char const *cond, char const *file, int line) NORETURN;
 // performance impact of the existing assertions.
 #if !defined(NDEBUG_NO_ASSERTIONS)
   #define xassert(cond) \
-    ((cond)? (void)0 : x_assert_fail(#cond, __FILE__, __LINE__))
+    ((cond)? 0 : x_assert_fail(#cond, __FILE__, __LINE__))
 #else
   #define xassert(cond) ((void)0)
 #endif

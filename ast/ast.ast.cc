@@ -22,8 +22,8 @@ void ASTSpecFile::debugPrint(std::ostream &os, int indent, char const *subtreeNa
 ASTSpecFile *ASTSpecFile::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
   deepness--; listDeepness--;
-  ASTSpecFile *ret = new ASTSpecFile(
-    cloneASTList(pool, forms, deepness, listDeepness)
+  ASTSpecFile *ret = new (pool) ASTSpecFile(
+    pool, cloneASTList(pool, forms, deepness, listDeepness)
   );
   return ret;
 }
@@ -66,8 +66,8 @@ void TF_verbatim::debugPrint(std::ostream &os, int indent, char const *subtreeNa
 TF_verbatim *TF_verbatim::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
-  TF_verbatim *ret = new TF_verbatim(
-    code
+  TF_verbatim *ret = new (pool) TF_verbatim(
+    pool, code
   );
   return ret;
 }
@@ -90,8 +90,8 @@ void TF_impl_verbatim::debugPrint(std::ostream &os, int indent, char const *subt
 TF_impl_verbatim *TF_impl_verbatim::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
-  TF_impl_verbatim *ret = new TF_impl_verbatim(
-    code
+  TF_impl_verbatim *ret = new (pool) TF_impl_verbatim(
+    pool, code
   );
   return ret;
 }
@@ -117,7 +117,8 @@ void TF_class::debugPrint(std::ostream &os, int indent, char const *subtreeName)
 TF_class *TF_class::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
-  TF_class *ret = new TF_class(
+  TF_class *ret = new (pool) TF_class(
+              pool,
     ((deepness>=0)&&super)? super->clone(pool, deepness, listDeepness) : super,
     cloneASTList(pool, ctors, deepness, listDeepness)
   );
@@ -146,8 +147,8 @@ void TF_option::debugPrint(std::ostream &os, int indent, char const *subtreeName
 TF_option *TF_option::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
-  TF_option *ret = new TF_option(
-    name,
+  TF_option *ret = new (pool) TF_option(
+    pool, name,
     shallowCloneASTList(pool, args)
   );
   return ret;
@@ -172,8 +173,8 @@ void TF_custom::debugPrint(std::ostream &os, int indent, char const *subtreeName
 TF_custom *TF_custom::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
-  TF_custom *ret = new TF_custom(
-    ((deepness>=0)&&cust)? cust->clone(pool, deepness, listDeepness) : cust
+  TF_custom *ret = new (pool) TF_custom(
+    pool, ((deepness>=0)&&cust)? cust->clone(pool, deepness, listDeepness) : cust
   );
   return ret;
 }
@@ -199,8 +200,8 @@ void TF_enum::debugPrint(std::ostream &os, int indent, char const *subtreeName) 
 
 TF_enum *TF_enum::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
-  TF_enum *ret = new TF_enum(
-    name,
+  TF_enum *ret = new (pool) TF_enum(
+    pool, name,
     shallowCloneASTList(pool, enumerators)
   );
   return ret;
@@ -230,8 +231,8 @@ void ASTClass::debugPrint(std::ostream &os, int indent, char const *subtreeName)
 
 ASTClass *ASTClass::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
-  ASTClass *ret = new ASTClass(
-    name,
+  ASTClass *ret = new (pool) ASTClass(
+    pool, name,
     cloneASTList(pool, args, deepness, listDeepness),
     cloneASTList(pool, lastArgs, deepness, listDeepness),
     cloneASTList(pool, bases, deepness, listDeepness),
@@ -260,8 +261,8 @@ void AccessMod::debugPrint(std::ostream &os, int indent, char const *subtreeName
 
 AccessMod *AccessMod::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
-  AccessMod *ret = new AccessMod(
-    acc,
+  AccessMod *ret = new (pool) AccessMod(
+    pool, acc,
     shallowCloneASTList(pool, mods)
   );
   return ret;
@@ -303,8 +304,8 @@ void UserDecl::debugPrint(std::ostream &os, int indent, char const *subtreeName)
 
 UserDecl *UserDecl::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
-  UserDecl *ret = new UserDecl(
-    ((deepness>=0)&&amod)? amod->clone(pool, deepness, listDeepness) : amod,
+  UserDecl *ret = new (pool) UserDecl(
+    pool, ((deepness>=0)&&amod)? amod->clone(pool, deepness, listDeepness) : amod,
     code,
     init
   );
@@ -329,8 +330,8 @@ void CustomCode::debugPrint(std::ostream &os, int indent, char const *subtreeNam
 
 CustomCode *CustomCode::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
-  CustomCode *ret = new CustomCode(
-    qualifier,
+  CustomCode *ret = new (pool) CustomCode(
+    pool, qualifier,
     code
   );
   return ret;
@@ -355,8 +356,8 @@ void CtorArg::debugPrint(std::ostream &os, int indent, char const *subtreeName) 
 
 CtorArg *CtorArg::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
-  CtorArg *ret = new CtorArg(
-    isOwner,
+  CtorArg *ret = new (pool) CtorArg(
+    pool, isOwner,
     type,
     name,
     defaultValue
@@ -381,8 +382,8 @@ void BaseClass::debugPrint(std::ostream &os, int indent, char const *subtreeName
 
 BaseClass *BaseClass::clone(StoragePool &pool, int deepness, int listDeepness) const
 {
-  BaseClass *ret = new BaseClass(
-    access,
+  BaseClass *ret = new (pool) BaseClass(
+    pool, access,
     name
   );
   return ret;

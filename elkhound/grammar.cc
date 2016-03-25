@@ -26,15 +26,15 @@ StringTable grammarStringTable;
 
 
 // ---------------------- Symbol --------------------
-Symbol::Symbol(LocString const &n, bool t, bool e)
-  : name(n),
+Symbol::Symbol(StoragePool &pool, LocString const &n, bool t, bool e)
+  : Storeable(pool), name(n),
     isTerm(t),
     isEmptyString(e),
     type(NULL),
     dupParam(NULL),
-    dupCode(),
+    dupCode(pool),
     delParam(NULL),
-    delCode(),
+    delCode(pool),
     reachable(false)
 {}
 
@@ -42,13 +42,15 @@ Symbol::~Symbol()
 {}
 
 
-Symbol::Symbol(Flatten &flat)
-  : name(flat),
+Symbol::Symbol(StoragePool &pool, Flatten &flat)
+  : Storeable(pool), name(pool, flat),
     isTerm(false),
     isEmptyString(false),
     type(NULL),
     dupParam(NULL),
-    delParam(NULL)
+    dupCode(pool),
+    delParam(NULL),
+    delCode(pool)
 {}
 
 void Symbol::xfer(StoragePool &pool, Flatten &flat)
@@ -155,10 +157,11 @@ Nonterminal const *Symbol::ifNonterminalC() const
 
 
 // -------------------- Terminal ------------------------
-Terminal::Terminal(Flatten &flat)
-  : Symbol(flat),
-    alias(flat),
-    classifyParam(NULL)
+Terminal::Terminal(StoragePool &pool, Flatten &flat)
+  : Symbol(pool, flat),
+    alias(pool, flat),
+    classifyParam(NULL),
+    classifyCode(pool)
 {}
 
 void Terminal::xfer(StoragePool &pool, Flatten &flat)
@@ -222,19 +225,20 @@ string Terminal::toString(bool quoteAliases) const
 
 
 // ----------------- Nonterminal ------------------------
-Nonterminal::Nonterminal(LocString const &name, bool isEmpty)
-  : Symbol(name, false /*terminal*/, isEmpty),
+Nonterminal::Nonterminal(StoragePool &pool, LocString const &name, bool isEmpty)
+  : Symbol(pool, name, false /*terminal*/, isEmpty),
     mergeParam1(NULL),
     mergeParam2(NULL),
-    mergeCode(),
+    mergeCode(pool),
     keepParam(NULL),
-    keepCode(),
+    keepCode(pool),
     maximal(false),
-    subsets(),
+    subsets(pool),
     ntIndex(-1),
     cyclic(false),
-    first(0),
-    follow(0),
+    first(pool,0),
+    follow(pool,0),
+    productions(pool),
     superset(NULL)
 {}
 
@@ -242,13 +246,17 @@ Nonterminal::~Nonterminal()
 {}
 
 
-Nonterminal::Nonterminal(Flatten &flat)
-  : Symbol(flat),
+Nonterminal::Nonterminal(StoragePool &pool, Flatten &flat)
+  : Symbol(pool, flat),
     mergeParam1(NULL),
     mergeParam2(NULL),
+    mergeCode(pool),
     keepParam(NULL),
-    first(flat),
-    follow(flat),
+    keepCode(pool),
+    first(pool,flat),
+    follow(pool,flat),
+    subsets(pool),
+    productions(pool),
     superset(NULL)
 {}
 
@@ -324,12 +332,12 @@ bool Nonterminal::anyDDM() const
 // -------------------- TerminalSet ------------------------
 STATICDEF Terminal const *TerminalSet::suppressExcept = NULL;
 
-TerminalSet::TerminalSet(int numTerms)
+TerminalSet::TerminalSet(StoragePool &pool, int numTerms) : Storeable(pool)
 {
   init(numTerms);
 }
 
-TerminalSet::TerminalSet(TerminalSet const &obj)
+TerminalSet::TerminalSet(TerminalSet const &obj) : Storeable(obj)
 {
   init(obj.bitmapLen * 8);    // close enough; same # of bytes at least
   if (bitmapLen) {
@@ -414,8 +422,8 @@ TerminalSet::~TerminalSet()
 }
 
 
-TerminalSet::TerminalSet(Flatten&)
-  : bitmap(NULL)
+TerminalSet::TerminalSet(StoragePool &pool, Flatten&) : Storeable(pool)
+  , bitmap(NULL)
 {}
 
 void TerminalSet::xfer(StoragePool &pool, Flatten &flat)
@@ -562,8 +570,8 @@ Production::RHSElt::~RHSElt()
 {}
 
 
-Production::RHSElt::RHSElt(Flatten &flat)
-  : sym(NULL),
+Production::RHSElt::RHSElt(StoragePool &pool, Flatten &flat)
+  : Storeable(pool), sym(NULL),
     tag(flat)
 {}
 
@@ -580,8 +588,8 @@ void Production::RHSElt::xferSerfs(Flatten &flat, Grammar &g)
 
 
 // -------------------- Production -------------------------
-Production::Production(Nonterminal *L, char const *Ltag)
-  : left(L),
+Production::Production(StoragePool &pool, Nonterminal *L, char const *Ltag)
+  : Storeable(pool), left(L),
     right(),
     precedence(0),
     forbid(NULL),
@@ -599,8 +607,8 @@ Production::~Production()
 }
 
 
-Production::Production(Flatten &flat)
-  : left(NULL),
+Production::Production(StoragePool &pool, Flatten &flat)
+  : Storeable(pool), left(NULL),
     forbid(NULL),
     forbid_owned(false),
     action(flat),
@@ -699,7 +707,7 @@ Production::RHSElt* Production::append(Grammar &g, Symbol *sym, LocString const 
   // productions
   xassert(!sym->isEmptyString);
 
-  RHSElt *r = new (g.pool) RHSElt(sym, tag);
+  RHSElt *r = new (g.pool) RHSElt(g.pool, sym, tag);
   right.append(r);
   return r;
 }
@@ -924,7 +932,7 @@ Grammar::Grammar()
     maxCode(0)
 {
     emptyString = new (pool)
-      Nonterminal(LocString(HERE_SOURCELOC, "empty"),
+      Nonterminal(pool, LocString(HERE_SOURCELOC, "empty"),
                 true /*isEmptyString*/);
     pool.add(emptyString);
 }
