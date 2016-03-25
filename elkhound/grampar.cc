@@ -1410,8 +1410,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
 
       // build a production; use 'this' as the tag for LHS elements
-      Production *prod = g.pool.alloc<Production>();
-      prod = new (prod) Production(nonterm, "this");
+      Production *prod = new (g.pool) Production(nonterm, "this");
       prod->prodDecl = prodDecl;
 
       int tags = 0;

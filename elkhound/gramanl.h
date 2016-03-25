@@ -395,6 +395,12 @@ public:
     SObjList<Terminal> urTerminals;
     SObjList<Production> urProductions;
 
+    GrowArray<Terminal*> codeHasTerm;
+
+    void thisIsAbstract() {
+        // not
+    }
+
 protected:  // data
   // if entry i,j is true, then nonterminal i can derive nonterminal j
   // (this is a graph, represented (for now) as an adjacency matrix)

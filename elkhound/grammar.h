@@ -214,6 +214,7 @@ public:     // funcs
 
   // return alias if defined, name otherwise
   virtual string toString(bool quoteAliases = false) const;
+
 };
 
 typedef SObjList<Terminal> TerminalList;
@@ -301,6 +302,8 @@ public:     // funcs
 
   void print(std::ostream &os, Grammar const &g, char const *lead = ", ") const;
   void print_ext(std::ostream &os, GrammarAnalysis const &g, char const *lead = ", ") const;
+
+
 };
 
 
@@ -388,6 +391,7 @@ public:     // types
     RHSElt(Flatten&);
     void xfer(Flatten &flat);
     void xferSerfs(Flatten &flat, Grammar &g);
+
   };
 
 public:	    // data
@@ -475,6 +479,7 @@ public:	    // funcs
   //   A -> B c D { return foo; }
   string toStringMore(bool printCode) const;
 
+
 // ------ annotation ------
 private:    // data
   int rhsLen;                   // right.count()
@@ -507,10 +512,13 @@ friend void astParseProduction(Environment &env, Nonterminal *nonterm,
                                AbstractProdDecl const *prodDecl);
 
 protected:
+  // ! the first !
   StoragePool pool;
 
 // ------ representation ------
 public:	    // data
+  virtual void thisIsAbstract() = 0;
+
   SObjList<Nonterminal> nonterminals;
   SObjList<Terminal> terminals;
   SObjList<Production> productions;
@@ -518,7 +526,6 @@ public:	    // data
   string prefix0, pref;
 
   bool terminalCodeMapped;
-  GrowArray<Terminal*> codeHasTerm;
   int maxCode;
   Nonterminal *startSymbol;             // (serf) a particular nonterminal
 
@@ -528,7 +535,7 @@ public:	    // data
   // such a symbol, instead of letting it always be implicit, is
   // motivated by things like the derivability relation, where it's
   // nice to treat empty like any other symbol
-  Nonterminal emptyString;
+  Nonterminal* emptyString;
 
   // sections of verbatim code emitted into the interface file, before
   // the parser context class body

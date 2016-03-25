@@ -943,7 +943,8 @@ void ItemSet::writeGraph(ostream &os, GrammarAnalysis const &g) const
 
 // ------------------------ GrammarAnalysis --------------------
 GrammarAnalysis::GrammarAnalysis()
-  : derivable(NULL),
+  : codeHasTerm(0),
+    derivable(NULL),
     indexedNonterms(NULL),
     indexedTerms(NULL),
     numNonterms(0),
@@ -964,6 +965,7 @@ GrammarAnalysis::GrammarAnalysis()
 }
 
 GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(cpy),
+    codeHasTerm(0),
     allNonterminals(pool,cpy.allNonterminals),
     allTerminals(pool,cpy.allTerminals),
     allProductions(pool,cpy.allProductions),
@@ -1202,7 +1204,7 @@ void GrammarAnalysis::initDerivableRelation()
 
 bool GrammarAnalysis::canDeriveEmpty(Nonterminal const *nonterm) const
 {
-  return canDerive(nonterm, &emptyString);
+  return canDerive(nonterm, emptyString);
 }
 
 
@@ -1275,9 +1277,9 @@ void GrammarAnalysis::computeIndexedNonterms()
   indexedNonterms = new Nonterminal* [numNonterms];
 
   // fill it
-  indexedNonterms[emptyStringIndex] = &emptyString;
+  indexedNonterms[emptyStringIndex] = emptyString;
   int index = emptyStringIndex;
-  emptyString.ntIndex = index++;
+  emptyString->ntIndex = index++;
 
   for (SObjListMutator<Nonterminal> sym(nonterminals);
        !sym.isDone(); index++, sym.adv()) {
@@ -1557,7 +1559,7 @@ void GrammarAnalysis::computeWhatCanDeriveWhat()
       // conclude that anything can derive empty, which is a problem;
       // so I special-case it here
       if (prod->right.isEmpty()) {
-        addDerivable(prod->left, &emptyString);
+        addDerivable(prod->left, emptyString);
         continue;      	// no point in looping over RHS symbols since there are none
       }
 
@@ -1851,7 +1853,7 @@ void GrammarAnalysis::computeFollow()
 
         // I'm not sure what it means to compute Follow(emptyString),
         // so let's just not do so
-        if (&rightNT == &emptyString) {
+        if (&rightNT == emptyString) {
           continue;
         }
 
@@ -4149,7 +4151,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
   }
   {
     ostream &tracer = trace("nonterminals") << "Nonterminals:\n";
-    tracer << "  " << emptyString << endl;
+    tracer << "  " << *emptyString << endl;
     printSymbols(tracer, toSObjList(nonterminals));
   }
 

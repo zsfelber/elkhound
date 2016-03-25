@@ -699,8 +699,7 @@ Production::RHSElt* Production::append(Grammar &g, Symbol *sym, LocString const 
   // productions
   xassert(!sym->isEmptyString);
 
-  RHSElt *r = g.pool.alloc<RHSElt>();
-  r = new (r) RHSElt(sym, tag);
+  RHSElt *r = new (g.pool) RHSElt(sym, tag);
   right.append(r);
   return r;
 }
@@ -801,8 +800,7 @@ void Production::addForbid(Grammar &g, Terminal *t, int numTerminals)
         throw std::exception();
      }
   } else {
-     forbid = g.pool.alloc<TerminalSet>();
-     forbid = new (forbid) TerminalSet(numTerminals);
+     forbid = new (g.pool) TerminalSet(numTerminals);
      g.pool.add(forbid);
 
      forbid_owned = true;
@@ -915,8 +913,6 @@ string Production::toStringMore(bool printCode) const
 // ------------------ Grammar -----------------
 Grammar::Grammar()
   : startSymbol(NULL),
-    emptyString(LocString(HERE_SOURCELOC, "empty"),
-                true /*isEmptyString*/),
     targetLang("C++"),
     useGCDefaults(false),
     defaultMergeAborts(false),
@@ -925,9 +921,13 @@ Grammar::Grammar()
     expectedUNRNonterms(-1),
     expectedUNRTerms(-1),
     terminalCodeMapped(0),
-    codeHasTerm(0),
     maxCode(0)
-{}
+{
+    emptyString = new (pool)
+      Nonterminal(LocString(HERE_SOURCELOC, "empty"),
+                true /*isEmptyString*/);
+    pool.add(emptyString);
+}
 
 
 Grammar::~Grammar()
@@ -1176,7 +1176,7 @@ void Grammar::printAsBison(ostream &os) const
         // print RHS symbols
         FOREACH_OBJLIST(Production::RHSElt, prod.data()->right, symIter) {
           Symbol const *sym = symIter.data()->sym;
-          if (sym != &emptyString) {
+          if (sym != emptyString) {
             if (sym->isTerminal()) {
               os << " " << bisonTokenName(&( sym->asTerminalC() ));
             }
@@ -1241,8 +1241,8 @@ void Grammar::printAsBison(ostream &os) const
 Nonterminal const *Grammar::findNonterminalC(char const *name) const
 {
   // check for empty first, since it's not in the list
-  if (emptyString.name.equals(name)) {
-    return &emptyString;
+  if (emptyString->name.equals(name)) {
+    return emptyString;
   }
 
   SFOREACH_NONTERMINAL(nonterminals, iter) {
@@ -1287,8 +1287,7 @@ Nonterminal *Grammar::getOrMakeNonterminal(LocString const &name)
     return nt;
   }
 
-  nt = pool.alloc<Nonterminal>();
-  nt = new (nt) Nonterminal(name);
+  nt = new (pool) Nonterminal(name);
   nonterminals.append(nt);
   return nt;
 }
@@ -1300,8 +1299,7 @@ Terminal *Grammar::getOrMakeTerminal(LocString const &name)
     return term;
   }
 
-  term = pool.alloc<Terminal>();
-  term = new (term) Terminal(name);
+  term = new (pool) Terminal(name);
   terminals.append(term);
   return term;
 }

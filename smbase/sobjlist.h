@@ -35,7 +35,7 @@ protected:
 
   void chgStorage(StoragePool & pool) {
       for(SObjListMutator< T > iter(*this); !iter.isDone(); iter.adv()) {
-         pool.copyFrom(iter.dataRef());
+         pool.movePointerToChild(iter.dataRef());
       }
   }
 

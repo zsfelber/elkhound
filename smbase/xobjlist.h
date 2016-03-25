@@ -71,7 +71,7 @@ protected:
 
   void chgStorage(StoragePool & pool) {
       for(mutatorName< T > iter(*this); !iter.isDone(); iter.adv()) {
-         pool.copyFrom(iter.dataRef());
+         pool.movePointerToChild(iter.dataRef());
       }
   }
 
