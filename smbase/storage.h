@@ -36,8 +36,8 @@ static const int STORE_BUF_PTR_SZ = 1 << STORE_BUF_PTR_BITS;
 static const int STORE_BUF_HOL_BITS = 11;
 static const int STORE_BUF_HOL_SZ = 1 << STORE_BUF_HOL_BITS;
 
-// 512 Kbytes
-static const int STORE_BUF_VAR_BITS = 19;
+// 256 Kbytes
+static const int STORE_BUF_VAR_BITS = 18;
 static const int STORE_BUF_VAR_SZ = 1 << STORE_BUF_VAR_BITS;
 
 // 16 Mbytes
@@ -48,11 +48,15 @@ static const uint32_t STORE_NEW_ID = 0x9a48fa11;
 
 class StoragePool;
 
+#define STOREABLE_COPY_CON(classname) classname(classname const & src) : Storeable(src) {}
+#define STOREABLE_COPY_CON(classname,baseclass) classname(classname const & src) : baseclass(src) {}
+
 class Storeable {
 friend class StoragePool;
 
 public:
    StoragePool * const __pool;
+   Storeable const * const __parent;
    size_t const __sizeof_this;
 
    void* operator new (std::size_t size);
@@ -81,13 +85,14 @@ protected:
    }
 
    /* new operator filled __pool previously, we use passed argument to double check */
-   Storeable(StoragePool & pool) : /*!fake init:*/__pool(__pool) {
+   Storeable(StoragePool & pool) : /*!fake init:*/__pool(__pool), __parent(NULL) {
        xassert(__pool == &pool);
    }
 
    /**
     * src: source object argument of copy constructor
     * default and very effective implementation
+    * should be additionally invoked for each Storeable class field too
     * @brief Storeable::Storeable
     * @param parent
     */
@@ -95,7 +100,7 @@ protected:
    Storeable(ME const & src);
 
    /**
-    * parent: it is a non-pointer class field of the pointer/non-pointer stored variable
+    * this object is a non-pointer class field of the pointer/non-pointer stored variable, parent
     * @brief Storeable::Storeable
     * @param parent
     */
@@ -112,10 +117,10 @@ private:
    typedef DataPtr* ExternalPtr;
    struct Hole {
        void* mem;
-       // TODO reusing variable too, using the smallest hole for new var, but not re-inserting
-       // residual hole for now : shold be done
+       // TODO reusing variable too, using the smallest hole for new var
        DataPtr* var;
-       size_t length;
+       DataPtr* child;
+       size_t chldlength;
 
        inline bool operator < (Hole const &b) {
            return mem < b.mem;
@@ -127,6 +132,8 @@ private:
    size_t memlength, memcapacity;
    DataPtr* variables;// point to "memory"
    size_t varslength, varscapacity;
+   DataPtr* children;// point to "memory"
+   size_t chldlength, chldcapacity;
    ExternalPtr* pointers;// point to external pointer to "memory"
    size_t ptrslength, ptrscapacity;
    Hole* holes;// point to deleted "sections"
@@ -141,6 +148,15 @@ private:
            DataPtr& variable = *variablesFrom;
            moveVariable(oldmemFrom, oldmemTo, variable, d);
            const_cast<PtrToMe&>(variable->__pool) = this;
+       }
+
+       DataPtr* childrenFrom = children;
+       DataPtr* childrenTo = children+chldlength;
+       for (; childrenFrom<childrenTo; childrenFrom++) {
+           DataPtr& child = *childrenFrom;
+           moveVariable(oldmemFrom, oldmemTo, child, d);
+           moveVariable(oldmemFrom, oldmemTo, constcast(child->__parent), d);
+           const_cast<PtrToMe&>(child->__pool) = this;
        }
 
        ExternalPtr* pointersFrom = pointers;
@@ -230,52 +246,70 @@ private:
       add(externalUninitializedPointer);
    }
 
-   inline void reg(DataPtr data) {
+   inline void reg0(DataPtr data, size_t length, size_t& capacity, DataPtr *&buf, bool chld) {
        // always sorted, ensure binary_search invariant
-       if (varslength) {
-           DataPtr lastvar = variables[varslength-1];
+       if (length) {
+           DataPtr lastvar = buf[length-1];
            xassert(data > lastvar);
            xassert((int8_t*)data < ((int8_t*)memory)+memlength);
        } else {
-           xassert(data == memory);
+           xassert(chld ? data >= memory : data == memory);
        }
 
-       size_t vbufsz = ((varslength+STORE_BUF_VAR_SZ/*+1-1*/)>>STORE_BUF_VAR_BITS)<<STORE_BUF_VAR_BITS;
-       if (varscapacity < vbufsz) {
-           extendBuffer((void*&)variables, varslength, varscapacity, vbufsz, sizeof(DataPtr));
+       size_t bufsz = ((length+STORE_BUF_VAR_SZ/*+1-1*/)>>STORE_BUF_VAR_BITS)<<STORE_BUF_VAR_BITS;
+       if (capacity < bufsz) {
+           extendBuffer((void*&)buf, length, capacity, bufsz, sizeof(DataPtr));
        }
-       variables[varslength++] = data;
+       buf[length+1] = data;
+   }
+
+   inline void reg(DataPtr data) {
+       if (__parent) {
+           reg0(data, chldlength++, chldcapacity, children, true);
+       } else {
+           reg0(data, varslength++, varscapacity, variables, false);
+       }
    }
 
    inline void del(DataPtr data) {
        // TODO join to next hole
 
-       std::cout << "delete " << (void*) data << " : " << data->__sizeof_this << std::endl;
-
-       // TODO not using until debugged basic features
-#if _0
+       std::cout << "delete " << (void*) data << " : " << data->__sizeof_this << "   field : " << (data->__parent?"yes":"no") << std::endl;
        xassert(contains(data));
 
        // binary_search
        DataPtr* ins_var = std::lower_bound(variables, variables+varslength, data);
        // should be in:
        xassert(*ins_var == data);
-       // example : remove var
-       //shift(variables, varlength, ins_var, sizeof(DatePtr));
+
+       // TODO not using until basic features debugged
+
+       // may be either parent or field object
 
        Hole h;
        h.mem = data;
        h.var = ins_var;
-       h.length = data->__sizeof_this;
 
-       size_t hbufsz = ((holeslength+STORE_BUF_HOL_SZ/*+1-1*/)>>STORE_BUF_HOL_BITS)<<STORE_BUF_HOL_BITS;
-       if (holescapacity < hbufsz) {
-           extendBuffer((void*&)holes, holeslength, holescapacity, hbufsz, sizeof(Hole));
+       Hole* last_hole = variables+varslength;
+       Hole* ins_hole = std::upper_bound(holes, last_hole, data);
+
+       if (data->__parent) {
+           remove(holes, holeslength, ins_hole, sizeof(Hole));
+       } else {
+           size_t hbufsz = ((holeslength+STORE_BUF_HOL_SZ/*+1-1*/)>>STORE_BUF_HOL_BITS)<<STORE_BUF_HOL_BITS;
+           if (holescapacity < hbufsz) {
+               extendBuffer((void*&)holes, holeslength, holescapacity, hbufsz, sizeof(Hole));
+           }
+
+           if (ins_hole != last_hole) {
+               insert(holes, holeslength++, ins_hole, sizeof(Hole));
+               *ins_hole = h;
+           } else {
+               holes[holeslength++] = h;
+           }
        }
+#if _0
 
-       Hole* ins_hole = std::lower_bound(holes, variables+varslength, data);
-
-       insert(holes, holeslength, ins_hole, sizeof(Hole));
 #endif
    }
 
@@ -300,7 +334,7 @@ private:
        if (old) delete[] (int8_t*)old;
    }
 
-   inline void shift(void* buf, size_t& size, void* pos, size_t size_of) {
+   inline void remove(void* buf, size_t& size, void* pos, size_t size_of) {
        size--;
        memcpy(pos, ((int8_t*)pos)+size_of, size*size_of-(((int8_t*)pos)-((int8_t*)buf)));
    }
@@ -389,22 +423,23 @@ public:
 };
 
 template<class ME>
-inline Storeable::Storeable(ME const & src) : __pool(src.__pool){
+inline Storeable::Storeable(ME const & src) : __pool(src.__pool), __parent(src.__parent), __sizeof_this(sizeof(ME)){
     if (__pool) {
         __pool->reg(this);
+        std::ptrdiff_t d = ((int8_t*)memory) - ((int8_t*)src.memory);
+        __pool->moveVariable(src.memory, ((int8_t*)src.memory)+src.memlength, src.__parent, d);
     }
 }
 
-template<class ME>
-inline Storeable::Storeable(ME const & src) : __pool(src.__pool){
+inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __pool(parent.__pool), __parent(parent), __sizeof_this(size_of){
     if (__pool) {
         __pool->reg(this);
     }
 }
 
 inline Storeable::~Storeable() {
-    if (__pool) {
-
+    if (__pool && !__parent) {
+        __pool->del(this);
     }
 }
 
@@ -441,9 +476,7 @@ inline void* Storeable::operator new[] (std::size_t size, StoragePool& pool) {
 }
 
 inline void Storeable::operator delete (void* ptr) {
-    Storeable *itm = (Storeable*)ptr;
-    xassert (itm->__pool);
-    itm->__pool->del();
+    // Nothing to do here, everything is in ~Storeable
 }
 /*inline void Storeable::operator delete (void* ptr, const std::nothrow_t& nothrow_constant) {
     Storeable *itm = (Storeable*)ptr;
@@ -456,9 +489,7 @@ inline void Storeable::operator delete (void* ptr, void* voidptr2) {
 
 
 inline void Storeable::operator delete[] (void* ptr) {
-    Storeable *itm = (Storeable*)ptr;
-    xassert (itm->__pool);
-    itm->__pool->del();
+    // Nothing to do here, everything is in ~Storeable
 }
 
 /*inline void Storeable::operator delete[] (void* ptr, const std::nothrow_t& nothrow_constant) {
