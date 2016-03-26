@@ -26,7 +26,7 @@ public:    // funcs
   void xfer(StoragePool &pool, Flatten &flat);
 
   // deallocates its argument; intended for convenient use in bison grammar files
-  EXPLICIT LocString(LocString *obj) : Storeable(*obj->__pool) { copyAndDel(obj); }
+  EXPLICIT LocString(LocString *obj) : Storeable(obj) { copyAndDel(obj); }
   void copyAndDel(LocString *obj);
 
   // sometimes useful for generating arguments to the above ctor

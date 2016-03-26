@@ -49,7 +49,8 @@ public:
   SObjList(StoragePool & pool, SObjList const &obj)         : list(obj.list) {     chgStorage(pool);  }
 
   public:
-    SObjList(StoragePool &pool)                            : Storeable(pool), list(pool) {}
+  SObjList(StoragePool &pool)                            : Storeable(pool), list(pool) {}
+  SObjList(StoragePool &pool, bool dynamic)              : Storeable(pool,dynamic), list(pool, false) {}
 
   ~SObjList()                           {}    /* all items removed */
 

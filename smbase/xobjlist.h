@@ -86,7 +86,8 @@ public:
   className[[[]]](StoragePool & pool, className const &obj)         : list(obj.list) {     chgStorage(pool);  }
 
   public:
-    className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool) {}
+  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool) {}
+  className[[[]]](StoragePool &pool, bool dynamic)              : Storeable(pool,dynamic), list(pool, false) {}
 ]]], [[[m4_dnl          // objlist
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
@@ -101,7 +102,8 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-    className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
+  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
+  className[[[]]](StoragePool &pool, bool dynamic)              : Storeable(pool,dynamic), list(pool, false), owning(true) {}
 ]]])m4_dnl
 
   ~className[[[]]]()                      m4_dnl

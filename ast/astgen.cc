@@ -82,11 +82,11 @@ StoragePool astgen_pool;
 
 // list of all TF_classes in the input, useful for certain
 // applications which don't care about other forms
-SObjList<TF_class> allClasses(astgen_pool);
+SObjList<TF_class> allClasses(astgen_pool, false);
 
 // list of all ASTList "list classes"
 StringSet listClassesSet;
-ASTList<ListClass> listClasses(astgen_pool);
+ASTList<ListClass> listClasses(astgen_pool, false);
 
 // true if the user wants the xmlPrint stuff
 bool wantXMLPrint = false;

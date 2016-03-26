@@ -920,7 +920,11 @@ string Production::toStringMore(bool printCode) const
 
 // ------------------ Grammar -----------------
 Grammar::Grammar()
-  : startSymbol(NULL),
+  :
+    nonterminals(pool),
+    terminals(pool),
+    productions(pool),
+    startSymbol(NULL),
     targetLang("C++"),
     useGCDefaults(false),
     defaultMergeAborts(false),
@@ -929,13 +933,19 @@ Grammar::Grammar()
     expectedUNRNonterms(-1),
     expectedUNRTerms(-1),
     terminalCodeMapped(0),
-    maxCode(0)
+    maxCode(0),
+    verbatim(pool),
+    actionClassName(pool),
+    actionClasses(pool),
+    implVerbatim(pool)
 {
     emptyString = new (pool)
-      Nonterminal(pool, LocString(HERE_SOURCELOC, "empty"),
+      Nonterminal(pool, LocString(pool, HERE_SOURCELOC, "empty"),
                 true /*isEmptyString*/);
     pool.add(emptyString);
 }
+
+
 
 
 Grammar::~Grammar()

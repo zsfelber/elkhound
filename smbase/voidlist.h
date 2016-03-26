@@ -53,7 +53,7 @@ protected:
 
 public:
   VoidList(StoragePool &pool)  : Storeable(pool)                        { top=NULL; }
-  VoidList(Storeable *master) : Storeable(master){}
+  VoidList(Storeable const &parent) : Storeable(parent){}
   VoidList(VoidList const &obj);     // makes a (shallow) copy of the contents
   ~VoidList()                        { removeAll(); }
 

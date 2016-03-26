@@ -53,7 +53,8 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-    ObjList(StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
+  ObjList(StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
+  ObjList(StoragePool &pool, bool dynamic)              : Storeable(pool,dynamic), list(pool, false), owning(true) {}
 
   ~ObjList()                           { deleteAll(); }
 

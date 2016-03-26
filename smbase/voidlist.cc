@@ -12,7 +12,7 @@
 
 
 VoidList::VoidList(VoidList const &obj)
-  : Storeable(obj), top(NULL)
+  : Storeable(*obj.__pool), top(NULL)
 {
   *this = obj;
 }
