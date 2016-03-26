@@ -50,14 +50,33 @@ class StoragePool;
 
 #define STOREABLE_COPY_CON(classname) classname(classname const & src) : Storeable(src) {}
 #define STOREABLE_COPY_CON(classname,baseclass) classname(classname const & src) : baseclass(src) {}
+#define STOREABLE_ALLOCATE(classname, pool, ...)    Construct(pool, new (pool) classname(__VA_ARGS__))
+
 
 class Storeable {
 friend class StoragePool;
+    enum {
+        ST_PARENT,
+        ST_CHILD
+    } __Kind;
+
+    typedef StoragePool* PtrToMe;
+    typedef Storeable* DataPtr;
+    typedef DataPtr* ExternalPtr;
+
+    int8_t __kind;
+    union {
+        StoragePool * pool;
+        Storeable const * parent;
+    } __pool_parent;
+    size_t __sizeof_this;
+    DataPtr* __children;
+
+    void* operator new (std::size_t size, StoragePool & pool);
+    void* operator new[] (std::size_t size, StoragePool & pool);
 
 public:
-   StoragePool * const __pool;
-   Storeable const * const __parent;
-   size_t const __sizeof_this;
+
 
    void* operator new (std::size_t size);
    void* operator new (std::size_t size, void* ptr);
@@ -65,9 +84,6 @@ public:
    void* operator new[] (std::size_t size);
    void* operator new[] (std::size_t size, void* ptr);
    void* operator new[] (std::size_t size, const std::nothrow_t& nothrow_value);
-
-   void* operator new (std::size_t size, StoragePool & pool);
-   void* operator new[] (std::size_t size, StoragePool & pool);
 
    void operator delete (void* ptr);
    void operator delete (void* ptr, const std::nothrow_t& nothrow_constant);
@@ -80,13 +96,13 @@ public:
 
 protected:
 
-   Storeable() : __pool(NULL) {
+   Storeable() : __kind(0), __(NULL), __sizeof_this(0), __children(NULL) {
 
    }
 
-   /* new operator filled __pool previously, we use passed argument to double check */
-   Storeable(StoragePool & pool) : /*!fake init:*/__pool(__pool), __parent(NULL) {
-       xassert(__pool == &pool);
+   /* new operator filled __pool and __sizeof_this previously, we use passed argument to double check */
+   Storeable(StoragePool & pool) : __kind(ST_PARENT) {
+       xassert(__.pool == &pool);
    }
 
    /**
@@ -115,29 +131,14 @@ private:
    typedef StoragePool* PtrToMe;
    typedef Storeable* DataPtr;
    typedef DataPtr* ExternalPtr;
-   struct Hole {
-       void* mem;
-       // TODO reusing variable too, using the smallest hole for new var
-       DataPtr* var;
-       DataPtr* child;
-       size_t chldlength;
-
-       inline bool operator < (Hole const &b) {
-           return mem < b.mem;
-       }
-   };
 
    StoragePool const * const parent;
    void* memory;
    size_t memlength, memcapacity;
-   DataPtr* variables;// point to "memory"
+   DataPtr* variables;
    size_t varslength, varscapacity;
-   DataPtr* children;// point to "memory"
-   size_t chldlength, chldcapacity;
    ExternalPtr* pointers;// point to external pointer to "memory"
    size_t ptrslength, ptrscapacity;
-   Hole* holes;// point to deleted "sections"
-   size_t holeslength, holescapacity;
 
    inline void convertAll(void* oldmemFrom, void* oldmemTo) {
        std::ptrdiff_t d = ((int8_t*)memory) - ((int8_t*)oldmemFrom);
@@ -155,7 +156,7 @@ private:
        for (; childrenFrom<childrenTo; childrenFrom++) {
            DataPtr& child = *childrenFrom;
            moveVariable(oldmemFrom, oldmemTo, child, d);
-           moveVariable(oldmemFrom, oldmemTo, constcast(child->__parent), d);
+           moveVariable(oldmemFrom, oldmemTo, constcast(child->__pool_parent), d);
            const_cast<PtrToMe&>(child->__pool) = this;
        }
 
@@ -167,10 +168,10 @@ private:
            const_cast<PtrToMe&>((*ptr)->__pool) = this;
        }
 
-       Hole* holesFrom = holes;
-       Hole* holesTo = holes+holeslength;
+       Variable* holesFrom = holes;
+       Variable* holesTo = holes+holeslength;
        for (; holesFrom<holesTo; holesFrom++) {
-           Hole& hole = *holesFrom;
+           Variable& hole = *holesFrom;
            moveHole(oldmemFrom, oldmemTo, hole, d);
        }
    }
@@ -195,7 +196,7 @@ private:
        xassert(contains(*pointer));
    }
 
-   inline void moveHole(void* oldmemFrom, void* oldmemTo, Hole& hole, std::ptrdiff_t d) {
+   inline void moveHole(void* oldmemFrom, void* oldmemTo, Variable& hole, std::ptrdiff_t d) {
        void* hole_addr = hole.mem;
        xassert (oldmemFrom<=hole_addr && hole_addr<oldmemTo);
 
@@ -264,10 +265,10 @@ private:
    }
 
    inline void reg(DataPtr data) {
-       if (__parent) {
-           reg0(data, chldlength++, chldcapacity, children, true);
-       } else {
+       if (data->__kind == Storeable::ST_PARENT) {
            reg0(data, varslength++, varscapacity, variables, false);
+       } else {
+           reg0(data, chldlength++, chldcapacity, children, true);
        }
    }
 
@@ -286,23 +287,23 @@ private:
 
        // may be either parent or field object
 
-       Hole h;
+       Variable h;
        h.mem = data;
        h.var = ins_var;
 
-       Hole* last_hole = variables+varslength;
-       Hole* ins_hole = std::upper_bound(holes, last_hole, data);
+       Variable* last_hole = variables+varslength;
+       Variable* ins_hole = std::upper_bound(holes, last_hole, data);
 
        if (data->__parent) {
-           remove(holes, holeslength, ins_hole, sizeof(Hole));
+           remove(holes, holeslength, ins_hole, sizeof(Variable));
        } else {
            size_t hbufsz = ((holeslength+STORE_BUF_HOL_SZ/*+1-1*/)>>STORE_BUF_HOL_BITS)<<STORE_BUF_HOL_BITS;
            if (holescapacity < hbufsz) {
-               extendBuffer((void*&)holes, holeslength, holescapacity, hbufsz, sizeof(Hole));
+               extendBuffer((void*&)holes, holeslength, holescapacity, hbufsz, sizeof(Variable));
            }
 
            if (ins_hole != last_hole) {
-               insert(holes, holeslength++, ins_hole, sizeof(Hole));
+               insert(holes, holeslength++, ins_hole, sizeof(Variable));
                *ins_hole = h;
            } else {
                holes[holeslength++] = h;
@@ -346,6 +347,12 @@ private:
    }
 
 public:
+   struct Construct {
+       StoragePool &pool;
+       size_t const size_of;
+       Construct(StoragePool &pool, size_t size_of) : pool(pool), size_of(size_of) {
+       }
+   };
 
    StoragePool() : parent(0),
        memory(0), memlength(0), memcapacity(0),
@@ -369,7 +376,7 @@ public:
        copyBuffer(oldPool.memory, oldPool.memlength, oldPool.memcapacity, (void*&)memory, memlength, memcapacity, 1/*sizeof(int8_t)*/);
        copyBuffer(oldPool.variables, oldPool.varslength, oldPool.varscapacity, (void*&)variables, varslength, varscapacity, sizeof(DataPtr));
        copyBuffer(oldPool.pointers, oldPool.ptrslength, oldPool.ptrscapacity, (void*&)pointers, ptrslength, ptrscapacity, sizeof(ExternalPtr));
-       copyBuffer(oldPool.holes, oldPool.holeslength, oldPool.holescapacity, (void*&)holes, holeslength, holescapacity, sizeof(Hole));
+       copyBuffer(oldPool.holes, oldPool.holeslength, oldPool.holescapacity, (void*&)holes, holeslength, holescapacity, sizeof(Variable));
 
        void* oldmem = oldPool.memory;
        convertAll(oldmem, ((int8_t*)oldmem)+oldmemlength);
@@ -423,24 +430,34 @@ public:
 };
 
 template<class ME>
-inline Storeable::Storeable(ME const & src) : __pool(src.__pool), __parent(src.__parent), __sizeof_this(sizeof(ME)){
+inline Storeable::Storeable(ME const & src) : __kind(src.__kind), __(&src), __sizeof_this(sizeof(ME)){
     if (__pool) {
         __pool->reg(this);
-        std::ptrdiff_t d = ((int8_t*)memory) - ((int8_t*)src.memory);
-        __pool->moveVariable(src.memory, ((int8_t*)src.memory)+src.memlength, src.__parent, d);
     }
 }
 
-inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __pool(parent.__pool), __parent(parent), __sizeof_this(size_of){
+inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(), __pool(parent.__pool), __parent(parent), __sizeof_this(size_of){
     if (__pool) {
         __pool->reg(this);
     }
 }
 
 inline Storeable::~Storeable() {
-    if (__pool && !__parent) {
+    if (__pool) {
         __pool->del(this);
     }
+}
+
+inline void* Storeable::operator new (std::size_t size, StoragePool& pool) {
+    void* data;
+    pool.alloc0(data, size);
+    return data;
+}
+
+inline void* Storeable::operator new[] (std::size_t size, StoragePool& pool) {
+    void* data;
+    pool.alloc0(data, size);
+    return data;
 }
 
 /* undefined
@@ -462,18 +479,6 @@ inline void* Storeable::operator new[] (std::size_t size, const std::nothrow_t& 
 inline void* Storeable::operator new[] (std::size_t size, void* ptr) {
     throw std::bad_alloc();
 } */
-
-inline void* Storeable::operator new (std::size_t size, StoragePool& pool) {
-    void* data;
-    pool.alloc0(data, size);
-    return data;
-}
-
-inline void* Storeable::operator new[] (std::size_t size, StoragePool& pool) {
-    void* data;
-    pool.alloc0(data, size);
-    return data;
-}
 
 inline void Storeable::operator delete (void* ptr) {
     // Nothing to do here, everything is in ~Storeable
