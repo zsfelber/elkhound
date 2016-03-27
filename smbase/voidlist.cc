@@ -12,7 +12,7 @@
 
 
 VoidList::VoidList(VoidList const &obj)
-  : Storeable(*obj.__pool), top(NULL)
+  : Storeable(obj), top(NULL)
 {
   *this = obj;
 }
@@ -107,7 +107,7 @@ void VoidList::checkUniqueDataPtrs() const
 // insert at front
 void VoidList::prepend(void *newitem)
 {
-  top = new (*__pool) VoidNode(*__pool, newitem, top);
+  top = new (npool) VoidNode(*__pool, newitem, top);
 }
 
 
@@ -122,7 +122,7 @@ VoidNode* VoidList::append(void *newitem)
     VoidNode *p;
     for (p = top; p->next; p = p->next)
       {}
-    p->next = new (*__pool) VoidNode(*__pool, newitem);
+    p->next = new (npool) VoidNode(*__pool, newitem);
     return p->next;
   }
 }
@@ -153,7 +153,7 @@ void VoidList::insertAt(void *newitem, int index)
       // if index isn't 0, then index was greater than count()
 
     // put a node after p
-    VoidNode *n = new (*__pool) VoidNode(*__pool, newitem);
+    VoidNode *n = new (npool) VoidNode(*__pool, newitem);
     n->next = p->next;
     p->next = n;
   }
@@ -177,7 +177,7 @@ void VoidList::insertSorted(void *newitem, VoidDiff diff, void *extra)
   }
   
   // insert 'newitem' after 'cursor'
-  VoidNode *newNode = new (*__pool) VoidNode(*__pool, newitem);
+  VoidNode *newNode = new (npool) VoidNode(*__pool, newitem);
   newNode->next = cursor->next;
   cursor->next = newNode;
 }
@@ -247,7 +247,7 @@ bool VoidList::appendUnique(void *newitem)
     return false;
   }
 
-  p->next = new (*__pool) VoidNode(*__pool, newitem);
+  p->next = new (npool) VoidNode(*__pool, newitem);
   return true;
 }
 
@@ -603,11 +603,13 @@ void VoidList::prependAll(VoidList const &tail)
 
 VoidList& VoidList::operator= (VoidList const &src)
 {
-  xassert(__pool == src.__pool);
+  // TODO FIXME
+  npool = src.npool;
+  /*xassert(__pool == src.__pool);
   if (this != &src) {
     removeAll();
     appendAll(src);
-  }
+  }*/
   return *this;
 }
 

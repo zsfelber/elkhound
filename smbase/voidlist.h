@@ -47,13 +47,15 @@ private:
   friend class VoidListIter;
   friend class VoidListMutator;
 
+  StoragePool npool;
+
 protected:
   VoidNode *top;                     // (owner) first node, or NULL if list is empty
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
   VoidList(StoragePool &pool)  : Storeable(pool)                        { top=NULL; }
-  VoidList(Storeable const &parent) : Storeable(parent){}
+  VoidList(Storeable const &parent) : Storeable(parent, sizeof(VoidList)){}
   VoidList(VoidList const &obj);     // makes a (shallow) copy of the contents
   ~VoidList()                        { removeAll(); }
 
