@@ -31,6 +31,7 @@ private:
 
 public:
   VoidTailList(StoragePool &pool) : VoidList(pool)                     { tail = NULL; }
+  VoidTailList(Storeable &parent) : VoidList(parent)                     { tail = NULL; }
   ~VoidTailList()                    {}
   
   // special ctor which steals the list and then deallocates the header

@@ -14,7 +14,8 @@
 VoidList::VoidList(VoidList const &obj)
   : Storeable(obj), top(NULL)
 {
-  *this = obj;
+  //default impl is just fine
+  //*this = obj;
 }
 
 

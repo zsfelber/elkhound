@@ -69,7 +69,8 @@ public:
 // interface for elements in a boxprint tree
 class BPElement : public Storeable {
 public:
-  BPElement(StoragePool &pool) : Storeable(pool) {}
+    BPElement(StoragePool &pool) : Storeable(pool) {}
+    BPElement(Storeable &parent, size_t size_of) : Storeable(parent, size_of) {}
 
   // if no breaks are taken, compute the # of columns;
   // return with 'forcedBreak' true if we stopped because of
@@ -105,6 +106,7 @@ public:
 
 public:
   BPText(StoragePool &pool, rostring t);
+  BPText(Storeable &parent, rostring t);
   ~BPText();
 
   // BPElement funcs
@@ -179,6 +181,7 @@ public:
 
 public:
   BPBox(StoragePool &pool, BPKind k);
+  BPBox(Storeable &parent, BPKind k);
   ~BPBox();
 
   // BPElement funcs

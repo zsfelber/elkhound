@@ -81,6 +81,9 @@ BPElement::~BPElement()
 BPText::BPText(StoragePool &pool, rostring t)
   : BPElement(pool), text(t)
 {}
+BPText::BPText(Storeable &parent, rostring t)
+  : BPElement(parent, sizeof(BPText)), text(t)
+{}
 
 BPText::~BPText()
 {}
@@ -152,6 +155,12 @@ void BPBreak::debugPrint(std::ostream &os, int /*ind*/) const
 // ------------------------- BPBox ------------------------
 BPBox::BPBox(StoragePool &pool, BPKind k)
   : BPElement(pool), elts(pool),      // initially empty
+    kind(k)
+{
+  xassert((unsigned)k < NUM_BPKINDS);
+}
+BPBox::BPBox(Storeable &parent, BPKind k)
+  : BPElement(parent, sizeof(BPBox)), elts(parent),      // initially empty
     kind(k)
 {
   xassert((unsigned)k < NUM_BPKINDS);
@@ -340,13 +349,13 @@ void BoxPrint::append(BPElement *elt)
 
 BoxPrint& BoxPrint::operator<< (rostring s)
 {
-  append(new BPText(*__pool, s));
+  append(new BPText(*this, s));
   return *this;
 }
 
 BoxPrint& BoxPrint::operator<< (char const *s)
 {
-  append(new BPText(*__pool, s));
+  append(new BPText(*this, s));
   return *this;
 }
 

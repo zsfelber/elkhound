@@ -29,6 +29,7 @@ public:
   bool const owning;
 
   ASTList(StoragePool &pool, bool owning=true) : Storeable(pool), list(pool), owning(owning) {}
+  ASTList(Storeable &parent, bool owning=true) : Storeable(parent, sizeof(ASTList)), list(parent), owning(owning) {}
   ~ASTList()                            { if (owning) deleteAll(); }
 
   // ctor to make singleton list; often quite useful
