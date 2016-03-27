@@ -32,17 +32,20 @@ template <typename P> inline P& constcast(P const & p) {
 static const int STORE_BUF_PTR_BITS = 9;
 static const int STORE_BUF_PTR_SZ = 1 << STORE_BUF_PTR_BITS;
 
-// 2048
-static const int STORE_BUF_HOL_BITS = 11;
-static const int STORE_BUF_HOL_SZ = 1 << STORE_BUF_HOL_BITS;
-
-// 256 Kbytes
-static const int STORE_BUF_VAR_BITS = 18;
-static const int STORE_BUF_VAR_SZ = 1 << STORE_BUF_VAR_BITS;
-
 // 16 Mbytes
 static const int STORE_BUF_BITS = 24;
 static const int STORE_BUF_SZ = 1 << STORE_BUF_BITS;
+
+// 512 Kbytes  1 bit for each slot (32 bytes) : STORE_BUF_BITS-5
+static const int STORE_BUF_VAR_SH = 5;
+static const int STORE_BUF_VAR_BITS = STORE_BUF_BITS-STORE_BUF_VAR_SH;
+static const int STORE_BUF_VAR_SZ = 1 << STORE_BUF_VAR_BITS;
+
+// 64 Kbytes   1 bit for each VAR : VAR_BITS-3
+static const int STORE_BUF_BIT_SH = 3;
+static const int STORE_BUF_BIT_TOT_SH = STORE_BUF_VAR_SH + STORE_BUF_BIT_SH;
+static const int STORE_BUF_BIT_BITS = STORE_BUF_VAR_BITS-STORE_BUF_BIT_SH;
+static const int STORE_BUF_BIT_SZ = 1 << STORE_BUF_BIT_BITS;
 
 static const uint32_t STORE_NEW_ID = 0x9a48fa11;
 
@@ -55,25 +58,82 @@ class StoragePool;
 
 class Storeable {
 friend class StoragePool;
-    enum {
-        ST_PARENT,
-        ST_CHILD
-    } __Kind;
 
     typedef StoragePool* PtrToMe;
     typedef Storeable* DataPtr;
     typedef DataPtr* ExternalPtr;
 
+    enum {
+        ST_NONE,
+        ST_PARENT,
+        ST_CHILD
+    } __Kind;
+
+    class __iterator {
+        int index;
+        void* memend;
+        DataPtr* variablePtr;
+
+        __iterator(DataPtr *variablePtr) : index(0), variablePtr(variablePtr) {
+            memend = ((int8_t*)this) + __sizeof_this;
+            check();
+        }
+
+        void check() {
+            if (*variablePtr > memend) {
+                x_assert_fail("Overindexed StoragePool.", __FILE__, __LINE__);
+            } else if (*variablePtr == memend) {
+                index = -1;
+            } else {
+                index++;
+            }
+        }
+
+      public:
+        __iterator& operator++(int arg) {
+            if (index>=0) {
+                variablePtr++;
+            } else {
+                x_assert_fail("Overindexed Storageable iterator.", __FILE__, __LINE__);
+            }
+        }
+
+        void operator==(int arg) {
+            return index == arg;
+        }
+    };
+
     int8_t __kind;
     union {
         StoragePool * pool;
         Storeable const * parent;
-    } __pool_parent;
+    } __pp;
     size_t __sizeof_this;
-    DataPtr* __children;
 
     void* operator new (std::size_t size, StoragePool & pool);
     void* operator new[] (std::size_t size, StoragePool & pool);
+
+    StoragePool * getPool() {
+        switch (__kind) {
+        case ST_PARENT:
+            return __pp.pool;
+            break;
+        case ST_CHILD:
+            return __pp.parent->getPool();
+            break;
+        default:
+            x_assert_fail("Wrong kind.", __FILE__, __LINE__);
+            break;
+        }
+    }
+
+    inline __iterator begin_children(DataPtr* variablePtr) {
+        return __iterator(variablePtr);
+    }
+
+    inline int end_children() {
+        return -1;
+    }
 
 public:
 
@@ -96,13 +156,13 @@ public:
 
 protected:
 
-   Storeable() : __kind(0), __(NULL), __sizeof_this(0), __children(NULL) {
+   Storeable() : __kind(ST_NONE), __pp(NULL), __sizeof_this(0), __variable(NULL) {
 
    }
 
    /* new operator filled __pool and __sizeof_this previously, we use passed argument to double check */
    Storeable(StoragePool & pool) : __kind(ST_PARENT) {
-       xassert(__.pool == &pool);
+       xassert(__pp.pool == &pool);
    }
 
    /**
@@ -133,10 +193,12 @@ private:
    typedef DataPtr* ExternalPtr;
 
    StoragePool const * const parent;
-   void* memory;
+
+   void *memory;
+   DataPtr *variables;
+   uint8_t *deleted_var_bits;
    size_t memlength, memcapacity;
-   DataPtr* variables;
-   size_t varslength, varscapacity;
+
    ExternalPtr* pointers;// point to external pointer to "memory"
    size_t ptrslength, ptrscapacity;
 
@@ -156,7 +218,7 @@ private:
        for (; childrenFrom<childrenTo; childrenFrom++) {
            DataPtr& child = *childrenFrom;
            moveVariable(oldmemFrom, oldmemTo, child, d);
-           moveVariable(oldmemFrom, oldmemTo, constcast(child->__pool_parent), d);
+           moveVariable(oldmemFrom, oldmemTo, constcast(child->__pp), d);
            const_cast<PtrToMe&>(child->__pool) = this;
        }
 
@@ -166,13 +228,6 @@ private:
            ExternalPtr& ptr = *pointersFrom;
            movePointer(oldmemFrom, oldmemTo, ptr, d);
            const_cast<PtrToMe&>((*ptr)->__pool) = this;
-       }
-
-       Variable* holesFrom = holes;
-       Variable* holesTo = holes+holeslength;
-       for (; holesFrom<holesTo; holesFrom++) {
-           Variable& hole = *holesFrom;
-           moveHole(oldmemFrom, oldmemTo, hole, d);
        }
    }
 
@@ -220,6 +275,8 @@ private:
       void* oldmem = memory;
       if (memcapacity < bufsz) {
           extendBuffer((void*&)memory, memlength, memcapacity, bufsz, 1/*sizeof(int8_t)*/);
+          extendBuffer((void*&)variables, memlength>>STORE_BUF_VAR_SH, bufsz>>STORE_BUF_VAR_SH, sizeof(DataPtr));
+          extendBuffer((void*&)deleted_var_bits, memlength>>STORE_BUF_BIT_TOT_SH, bufsz>>STORE_BUF_BIT_TOT_SH, 1);
           if (oldmemlength) {
               convertAll(oldmem, ((int8_t*)oldmem)+oldmemlength);
           }
@@ -229,7 +286,7 @@ private:
 
       reg((DataPtr)data);
 
-      const_cast<PtrToMe&>(((DataPtr)data)->__pool) = this;
+      const_cast<PtrToMe&>(((DataPtr)data)->__pp.pool) = this;
       const_cast<PtrToMe&>(((DataPtr)data)->__sizeof_this) = size_of;
    }
 
@@ -247,30 +304,24 @@ private:
       add(externalUninitializedPointer);
    }
 
-   inline void reg0(DataPtr data, size_t length, size_t& capacity, DataPtr *&buf, bool chld) {
-       // always sorted, ensure binary_search invariant
-       if (length) {
-           DataPtr lastvar = buf[length-1];
+   inline void reg(DataPtr data) {
+       // always sorted, to ensure binary_search invariant
+       // though may overlap because of parent->children relationship
+       if (varslength) {
+           DataPtr lastvar = variables[varslength-1];
            xassert(data > lastvar);
            xassert((int8_t*)data < ((int8_t*)memory)+memlength);
        } else {
-           xassert(chld ? data >= memory : data == memory);
+           xassert(data == memory);
        }
 
-       size_t bufsz = ((length+STORE_BUF_VAR_SZ/*+1-1*/)>>STORE_BUF_VAR_BITS)<<STORE_BUF_VAR_BITS;
-       if (capacity < bufsz) {
-           extendBuffer((void*&)buf, length, capacity, bufsz, sizeof(DataPtr));
+       size_t bufsz = ((varslength+STORE_BUF_VAR_SZ/*+1-1*/)>>STORE_BUF_VAR_BITS)<<STORE_BUF_VAR_BITS;
+       if (varscapacity < bufsz) {
+           extendBuffer((void*&)variables, varslength, varscapacity, bufsz, sizeof(DataPtr));
        }
-       buf[length+1] = data;
+       variables[varslength+1] = data;
    }
 
-   inline void reg(DataPtr data) {
-       if (data->__kind == Storeable::ST_PARENT) {
-           reg0(data, varslength++, varscapacity, variables, false);
-       } else {
-           reg0(data, chldlength++, chldcapacity, children, true);
-       }
-   }
 
    inline void del(DataPtr data) {
        // TODO join to next hole
@@ -317,11 +368,17 @@ private:
 
    inline void copyBuffer(void* src, size_t srclen, size_t srccap,
                           void*& dest, size_t &dstlen, size_t &dstcap, size_t size_of) {
-       xassert(srccap);
+       xassert(srccap && !dest);
        dest = new int8_t[srccap*size_of];
        if (!dest) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
        dstlen = srclen;
        dstcap = srccap;
+       memcpy(dest, src, srclen*size_of);
+   }
+
+   inline void copyBuffer(void* src, size_t srclen, void*& dest, size_t size_of) {
+       xassert(!dest);
+       dest = new int8_t[srccap*size_of];
        memcpy(dest, src, srclen*size_of);
    }
 
@@ -335,9 +392,19 @@ private:
        if (old) delete[] (int8_t*)old;
    }
 
+   inline void extendBuffer(void*& buf, size_t size, size_t newcap, size_t size_of) {
+       xassert(newcap);
+       void* old = buf;
+       buf = new int8_t[newcap*size_of];
+       if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
+       memcpy(buf, old, size*size_of);
+       if (old) delete[] (int8_t*)old;
+   }
+
    inline void remove(void* buf, size_t& size, void* pos, size_t size_of) {
        size--;
-       memcpy(pos, ((int8_t*)pos)+size_of, size*size_of-(((int8_t*)pos)-((int8_t*)buf)));
+       // allow overlap
+       memmove(pos, ((int8_t*)pos)+size_of, size*size_of-(((int8_t*)pos)-((int8_t*)buf)));
    }
 
    inline void insert(void* buf, size_t& size, void* pos, size_t size_of) {
@@ -356,14 +423,14 @@ public:
 
    StoragePool() : parent(0),
        memory(0), memlength(0), memcapacity(0),
-       variables(0), varslength(0), varscapacity(0),
+       variables(0), deleted_var_bits(0), varslength(0), varscapacity(0),
        pointers(0), ptrslength(0), ptrscapacity(0) {
 
    }
 
    StoragePool(StoragePool const & oldPool) : parent(&oldPool),
        memory(0), memlength(0), memcapacity(0),
-       variables(0), varslength(0), varscapacity(0),
+       variables(0), deleted_var_bits(0), varslength(0), varscapacity(0),
        pointers(0), ptrslength(0), ptrscapacity(0) {
 
        xassert(!oldPool.parent);
@@ -375,8 +442,8 @@ public:
 
        copyBuffer(oldPool.memory, oldPool.memlength, oldPool.memcapacity, (void*&)memory, memlength, memcapacity, 1/*sizeof(int8_t)*/);
        copyBuffer(oldPool.variables, oldPool.varslength, oldPool.varscapacity, (void*&)variables, varslength, varscapacity, sizeof(DataPtr));
+       copyBuffer(oldPool.deleted_var_bits, oldPool.varslength<<3, (void*&)deleted_var_bits, 1);
        copyBuffer(oldPool.pointers, oldPool.ptrslength, oldPool.ptrscapacity, (void*&)pointers, ptrslength, ptrscapacity, sizeof(ExternalPtr));
-       copyBuffer(oldPool.holes, oldPool.holeslength, oldPool.holescapacity, (void*&)holes, holeslength, holescapacity, sizeof(Variable));
 
        void* oldmem = oldPool.memory;
        convertAll(oldmem, ((int8_t*)oldmem)+oldmemlength);
@@ -385,6 +452,7 @@ public:
    ~StoragePool() {
        if (memory) delete[] (int8_t*)memory;
        if (variables) delete[] variables;
+       if (deleted_var_bits) delete[] deleted_var_bits;
        if (pointers) delete[] pointers;
    }
 
@@ -430,21 +498,35 @@ public:
 };
 
 template<class ME>
-inline Storeable::Storeable(ME const & src) : __kind(src.__kind), __(&src), __sizeof_this(sizeof(ME)){
-    if (__pool) {
-        __pool->reg(this);
+inline Storeable::Storeable(ME const & src) : __kind(src.__kind), __pp(src.__pp), __sizeof_this(sizeof(ME)) {
+    switch (__kind) {
+    case ST_PARENT:
+        __pp.pool->reg(this);
+        break;
+    case ST_CHILD:
+        getPool()->reg(this);
+        break;
+    default:
+        break;
     }
 }
 
-inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(), __pool(parent.__pool), __parent(parent), __sizeof_this(size_of){
-    if (__pool) {
-        __pool->reg(this);
+inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(ST_CHILD), __pp(&parent), __sizeof_this(size_of) {
+    if (__pp.parent) {
+        getPool()->reg(this);
     }
 }
 
 inline Storeable::~Storeable() {
-    if (__pool) {
-        __pool->del(this);
+    switch (__kind) {
+    case ST_PARENT:
+        __pp.pool->del(this);
+        break;
+    case ST_CHILD:
+        getPool()->del(this);
+        break;
+    default:
+        break;
     }
 }
 
