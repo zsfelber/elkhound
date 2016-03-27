@@ -618,28 +618,15 @@ inline Storeable::Storeable(StoragePool & pool) : __kind(ST_PARENT) {
 }
 
 template<class ME>
-inline Storeable::Storeable(ME const & src)// : __kind(src.__kind), __pp(src.__pp), __store_size(getStoreSize(sizeof(ME)))
-  #ifdef REG_CHILD
-  //, __next(0)
-  #endif
+inline Storeable::Storeable(ME const & src) : __pp(src.__pp)
 {
-    switch (__kind) {
-    case ST_PARENT:
-        // assume src's parent pool already copied to this object's parent pool
-        xassert(__pp.pool->contains(this));
-        memcpy(this, &src, sizeof(ME));
-        break;
-#ifdef REG_CHILD
-    case ST_CHILD:
-        memcpy(this, &src, sizeof(ME));
-        getRoot()->regChild(this);
-        break;
-#endif
-    default:
-        memcpy(this, &src, sizeof(ME));
-        break;
-    }
+    assert(src.__kind == ST_CHILD);
 
+    StoragePool *pool = getPool();
+    xassert(pool && pool->contains(this));
+
+    memcpy(this, &src, sizeof(ME));
+    pool->movePointerToChild(&src);
 }
 
 inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(ST_CHILD), __pp(&parent), __store_size(getStoreSize(size_of))
