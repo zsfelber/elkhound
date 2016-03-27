@@ -67,7 +67,7 @@ inline void copyBuffer(uint8_t* src, size_t srclen, size_t srccap,
     memcpy(dest, src, srclen*size_of);
 }
 
-inline void copyBuffer(uint8_t* src, size_t srclen, uint8_t*& dest, size_t size_of) {
+inline void copyBuffer(uint8_t* src, size_t srclen, size_t srccap, uint8_t*& dest, size_t size_of) {
     xassert(!dest);
     dest = new uint8_t[srccap*size_of];
     memcpy(dest, src, srclen*size_of);
@@ -80,7 +80,7 @@ inline void extendBuffer(uint8_t*& buf, size_t size, size_t& capacity, size_t ne
     if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
     memcpy(buf, old, size*size_of);
     capacity = newcap;
-    if (old) delete[] (uint8_t*)old;
+    if (old) delete[] old;
 }
 
 inline void extendBuffer(uint8_t*& buf, size_t size, size_t newcap, size_t size_of) {
@@ -89,18 +89,18 @@ inline void extendBuffer(uint8_t*& buf, size_t size, size_t newcap, size_t size_
     buf = new uint8_t[newcap*size_of];
     if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
     memcpy(buf, old, size*size_of);
-    if (old) delete[] (uint8_t*)old;
+    if (old) delete[] old;
 }
 
 inline void remove(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
     size--;
     // allow overlap
-    memmove(pos, ((uint8_t*)pos)+size_of, size*size_of-(((uint8_t*)pos)-((uint8_t*)buf)));
+    memmove(pos, pos+size_of, size*size_of-(pos-buf));
 }
 
 inline void insert(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
     // allow overlap
-    memmove(((uint8_t*)pos)+size_of, pos, size*size_of-(((uint8_t*)pos)-((uint8_t*)buf)));
+    memmove(pos+size_of, pos, size*size_of-(pos-buf));
     size++;
 }
 
@@ -341,7 +341,7 @@ private:
    size_t ptrslength, ptrscapacity;
 
    inline void convertAll(uint8_t* oldmemFrom, uint8_t* oldmemTo) {
-       std::ptrdiff_t d = memory - ((uint8_t*)oldmemFrom);
+       std::ptrdiff_t d = memory - oldmemFrom;
 
        for (iterator it(*this, (DataPtr)memory); it!=end; it++) {
            const_cast<PtrToMe&>(it->__pp.pool) = this;
@@ -381,8 +381,8 @@ private:
 
    inline void allocParent(void*& data, size_t store_size) {
 
-      // if hollow >25% :
-      if (deleted_vars > memlength>>2) {
+      // if hollow >50% :
+      if (deleted_vars > memlength>>1) {
           DataPtr first = NULL;
           size_t continous = 0;
           for (iterator it(*this, first_del_var); it != -1; it++) {
@@ -438,8 +438,8 @@ private:
        const_cast<PtrToMe&>(((DataPtr)data)->__kind) = Storeable::ST_DELETED;
        if (data < first_del_var) {
            first_del_var = data;
-           deleted_vars += data->__store_size;
        }
+       deleted_vars += data->__store_size;
    }
 
 
