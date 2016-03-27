@@ -11,11 +11,13 @@
 #include <ios>
 
 
+// TODO top(top)?
 VoidList::VoidList(VoidList const &obj)
-  : Storeable(obj), top(NULL)
+  : Storeable(obj), npool(npool), top(NULL)
 {
   //default impl is just fine
   //*this = obj;
+  npool.movePointerToChild(top);
 }
 
 
@@ -514,6 +516,7 @@ bool VoidList::isSorted(VoidDiff diff, void *extra) const
 // attach tail's nodes to this; empty the tail
 void VoidList::concat(VoidList &tail)
 {
+  xassert(__pp == tail.__pp);
   if (!top) {
     top = tail.top;
   }
@@ -535,7 +538,8 @@ void VoidList::stealTailAt(int index, VoidList &source)
     concat(source);
     return;
   }
-  
+  xassert(__pp == source.__pp);
+
   // find the node in 'source' just before the first one that
   // will be transferred
   VoidNode *beforeTransfer = source.top;

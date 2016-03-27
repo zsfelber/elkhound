@@ -526,6 +526,32 @@ public:
        return *this;
    }
 
+   void steal(StoragePool * src) {
+       if (memory) delete[] memory;
+       if (pointers) delete[] pointers;
+       parent = src.parent;
+       memory = src.memory;
+       first_del_var = src.first_del_var;
+       deleted_vars = src.deleted_vars;
+       memlength = src.memlength;
+       memcapacity = src.memcapacity;
+       pointers = src.pointers;
+       ptrslength = src.ptrslength;
+       ptrscapacity = src.ptrscapacity;
+
+       src.parent = NULL;
+       src.memory = NULL;
+       src.first_del_var = NULL;
+       src.deleted_vars = 0;
+       src.memlength = 0;
+       src.memcapacity = 0;
+       src.pointers = NULL;
+       src.ptrslength = 0;
+       src.ptrscapacity = 0;
+
+       delete src;
+   }
+
 
    inline bool isParentOf(StoragePool const & pool) const {
        if (pool.parent == this) {
@@ -592,23 +618,28 @@ inline Storeable::Storeable(StoragePool & pool) : __kind(ST_PARENT) {
 }
 
 template<class ME>
-inline Storeable::Storeable(ME const & src) : __kind(src.__kind), __pp(src.__pp), __store_size(getStoreSize(sizeof(ME)))
+inline Storeable::Storeable(ME const & src)// : __kind(src.__kind), __pp(src.__pp), __store_size(getStoreSize(sizeof(ME)))
   #ifdef REG_CHILD
-  , __next(0)
+  //, __next(0)
   #endif
 {
     switch (__kind) {
     case ST_PARENT:
+        // assume src's parent pool already copied to this object's parent pool
         xassert(__pp.pool->contains(this));
+        memcpy(this, &src, sizeof(ME));
         break;
 #ifdef REG_CHILD
     case ST_CHILD:
+        memcpy(this, &src, sizeof(ME));
         getRoot()->regChild(this);
         break;
 #endif
     default:
+        memcpy(this, &src, sizeof(ME));
         break;
     }
+
 }
 
 inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(ST_CHILD), __pp(&parent), __store_size(getStoreSize(size_of))

@@ -3,23 +3,10 @@
 
 #include "vdtllist.h"      // this module
 
-void VoidTailList::steal(VoidTailList *src)
-{
-  if (src) {
-    top = src->top;
-    tail = src->tail;
-    src->top = NULL;    // paranoia
-    delete src;
-  }
-  else {
-    top = NULL;
-    tail = NULL;
-  }
-}
-
 void VoidTailList::steal(VoidTailList *src, bool deleteOrig)
 {
   if (src) {
+    npool.steal(src->npool);
     top = src->top;
     tail = src->tail;
     src->top = NULL;
