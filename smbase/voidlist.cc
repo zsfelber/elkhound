@@ -12,7 +12,7 @@
 
 
 VoidList::VoidList(VoidList const &obj)
-  : Storeable(obj), npool(npool)
+  : Storeable(obj, false), npool(obj.npool, false)
 {
   xassert(__kind == src.__kind);
   xassert(__parentVector == src.__parentVector);
