@@ -30,9 +30,9 @@ private:
   void adjustTails();
 
 public:
-  VoidTailList(StoragePool &pool) : VoidList(pool)                     { tail = NULL; }
-  VoidTailList(Storeable &parent) : VoidList(parent)                     { tail = NULL; }
-  ~VoidTailList()                    {}
+  VoidTailList(StoragePool &pool) : VoidList(pool)                     { tail = NULL;  npool.addPointer(tail); }
+  VoidTailList(Storeable &parent) : VoidList(parent)                     { tail = NULL;  npool.addPointer(tail); }
+  ~VoidTailList()                    { npool.removePointer(tail); }
   
   // special ctor which steals the list and then deallocates the header
   VoidTailList(VoidTailList *src) : VoidList(src)    { tail = NULL; steal(src); }
@@ -104,11 +104,11 @@ public:
   // iterator actions
   bool isDone() const                         { return p == NULL; }
   void adv()                                  { p = p->next; }
-  void *data() const                          { return p->data; }
-  void *&dataRef()                            { return p->data; }
+  Storeable *data() const                          { return p->data; }
+  Storeable *&dataRef()                            { return p->data; }
 
   // iterator mutation; use with caution
-  void setDataLink(void *newData)             { p->data = newData; }
+  void setDataLink(Storeable *newData)             { p->data = newData; }
 };
 
 

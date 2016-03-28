@@ -160,7 +160,7 @@ public:
   T *&dataRef()                         { return (T*&)iter.dataRef(); }
 
   // iterator mutation; use with caution
-  void setDataLink(T *newData)          { iter.setDataLink((void*)newData); }
+  void setDataLink(T *newData)          { iter.setDataLink(newData); }
 };
 
 #define FOREACH_ASTLIST_NC(T, list, iter) \

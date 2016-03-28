@@ -19,9 +19,9 @@ public:
   //TRASHINGDELETE
 
   VoidNode *next;           // (owner) next item in list, or NULL if last item
-  void *data;               // whatever it is the list is holding
+  Storeable *data;               // whatever it is the list is holding
 
-  VoidNode(StoragePool &pool, void *aData=NULL, VoidNode *aNext=NULL) : Storeable(pool) {
+  VoidNode(StoragePool &pool, Storeable *aData=NULL, VoidNode *aNext=NULL) : Storeable(pool) {
       data=aData;
       next=aNext;
       pool.addPointer(next);
@@ -57,9 +57,9 @@ private:
   friend class VoidListIter;
   friend class VoidListMutator;
 
+protected:
   StoragePool npool;
 
-protected:
   VoidNode *top;                     // (owner) first node, or NULL if list is empty
   VoidNode *getTop() const { return top; } // for iterator, below
 
@@ -193,8 +193,8 @@ public:
   // iterator actions
   bool isDone() const              { return current == NULL; }
   void adv()                       { if (stuck) stuck = false; else {prev = current;  current = current->next;} }
-  void *data()                     { return current->data; }
-  void *&dataRef()                 { return current->data; }
+  Storeable *data()                     { return current->data; }
+  Storeable *&dataRef()                 { return current->data; }
 
   // insertion
   void insertBefore(void *item);

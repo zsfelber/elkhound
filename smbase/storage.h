@@ -150,6 +150,16 @@ friend class StoragePool;
     }
 #endif
 
+
+    inline void move(DataPtr source) {
+        std::ptrdiff_t d = ((uint8_t*)this) - ((uint8_t*)source);
+        if (__kind == ST_PARENT) {
+            std::ptrdiff_t p = (std::ptrdiff_t)__parentVector;
+            xassert(p > d);
+            __parentVector = (size_t) (p - d);
+        }
+    }
+
 public:
 
 
@@ -173,7 +183,7 @@ public:
    void operator delete[] (void* ptr, size_t size);
 
 
-   inline Storeable() : __kind(ST_NONE), __parentVector(0), __store_size(0)
+   inline Storeable() : __kind(ST_NONE), __parentVector(std::string::npos), __store_size(0)
     #ifdef REG_CHILD
       , __next(0)
     #endif
@@ -204,10 +214,17 @@ public:
    virtual ~Storeable();
 
 
+   inline StoragePool & getPoolRef() const {
+       StoragePool * pool = getPool();
+       xassert(pool);
+       return *pool;
+   }
+
    inline StoragePool * getPool() const {
        switch (__kind) {
        case ST_PARENT:
-           return (StoragePool*) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
+           StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
+           return *the_first;
            break;
        case ST_CHILD:
            return getParent()->getPool();
@@ -425,6 +442,11 @@ private:
        }
    }
 
+   inline void fixThisPtrInMem() {
+       (void*&)memory[0] = this;
+   }
+
+
 
    inline void allocParent(void*& data, size_t store_size) {
        size_t oldmemlength, newmemlength, bufsz;
@@ -474,6 +496,10 @@ private:
           extendBuffer(memory,           memlength,                       memcapacity, bufsz, 1/*sizeof(uint8_t)*/);
           if (oldmemlength) {
               convertAll(oldmem, oldmem+oldmemlength);
+          } else {
+              fixThisPtrInMem();
+              oldmemlength += sizeof(void*);
+              newmemlength += sizeof(void*);
           }
       }
       memlength = newmemlength;
@@ -481,7 +507,7 @@ private:
 
       ok:
 
-      ((DataPtr)data)->__parentVector = encodeDeltaPtr((uint8_t*)this, (uint8_t*)data);
+      ((DataPtr)data)->__parentVector = encodeDeltaPtr(memory, (uint8_t*)data);
       ((DataPtr)data)->__store_size = store_size;
    }
 
@@ -517,6 +543,8 @@ public:
        copyBuffer((uint8_t*)oldPool.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
        copyBuffer((uint8_t*)oldPool.extpointers, extptrslength, extptrscapacity, (uint8_t*&)extpointers, sizeof(ExternalPtr));
 
+       fixThisPtrInMem();
+
        convertAll(oldPool.memory, oldPool.memory+memlength);
    }
 
@@ -543,6 +571,9 @@ public:
        memcpy(memory, src.memory, memlength = src.memlength);
        memcpy(intpointers, src.intpointers, intptrslength = src.intptrslength);
        memcpy(extpointers, src.extpointers, extptrslength = src.extptrslength);
+
+       fixThisPtrInMem();
+
        return *this;
    }
 
@@ -576,6 +607,8 @@ public:
        src->extptrslength = 0;
        src->extptrscapacity = 0;
 
+       fixThisPtrInMem();
+
        delete src;
    }
 
@@ -594,8 +627,7 @@ public:
        removePointer((void*&)_externalPointer);
    }
 
-   inline void addPointer(void*& _externalPointer) {
-       DataPtr& externalPointer = (DataPtr&) _externalPointer;
+   inline void addPointer(DataPtr& externalPointer) {
        if (externalPointer) {
            if (contains(externalPointer)) {
                xassert(externalPointer->getPool() == this);
@@ -620,8 +652,7 @@ public:
        }
    }
 
-   inline void removePointer(void*& _externalPointer) {
-       DataPtr& externalPointer = (DataPtr&) _externalPointer;
+   inline void removePointer(DataPtr& externalPointer) {
        if (externalPointer) {
            if (contains(externalPointer)) {
                xassert(externalPointer->getPool() == this);
@@ -676,6 +707,7 @@ inline Storeable::Storeable(ME const & src, bool distinguish_from_ctor1)
     StoragePool *pool = getPool();
     xassert(pool);
     xassert(pool->contains(this));
+
 }
 
 inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(ST_CHILD), __parentVector(encodeDeltaPtr((uint8_t*)&parent, (uint8_t*)this)), __store_size(getStoreSize(size_of))

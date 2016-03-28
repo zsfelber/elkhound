@@ -330,11 +330,12 @@ BPKind const BoxPrint::end  = NUM_BPKINDS;
 
 
 BoxPrint::BoxPrint(StoragePool &pool)
-  : Storeable(pool), boxStack(),
+  : Storeable(pool), boxStack(/* *this,*/ sizeof(ObjArrayStack<BPBox>)),
     levelIndent(2)
 {         
   // initial vert box
-  boxStack.push(new BPBox(pool, BP_vertical));
+  // TODO dummy, it is bad, if StoragePool autogrows
+  boxStack.push(new (getPoolRef()) BPBox(getPoolRef(), BP_vertical));
 }
 
 BoxPrint::~BoxPrint()
@@ -373,7 +374,10 @@ BoxPrint& BoxPrint::operator<< (BPKind k)
   }
   else {
     // open new box
-    boxStack.push(new BPBox(*__pool, k));
+    StoragePool *pool = getPool();
+    xassert(pool);
+    // TODO dummy, it is bad, if StoragePool autogrows
+    boxStack.push(new (getPoolRef()) BPBox(getPoolRef(), k));
   }
   return *this;
 }
@@ -416,7 +420,8 @@ BPBox* /*owner*/ BoxPrint::takeTree()
 
   // initialize the box stack again, in case the user wants
   // to build another tree
-  boxStack.push(new BPBox(*__pool, BP_vertical));
+  // TODO dummy, it is bad, if StoragePool autogrows
+  boxStack.push(new (getPoolRef()) BPBox(getPoolRef(), BP_vertical));
 
   return ret;
 }
