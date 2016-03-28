@@ -33,12 +33,6 @@ private:
 protected:
   VoidList list;                        // list itself
 
-  void chgStorage(StoragePool & pool) {
-      for(SObjListMutator< T > iter(*this); !iter.isDone(); iter.adv()) {
-         pool.movePointerToChild(iter.dataRef());
-      }
-  }
-
   #define OWN
   #define NOWN
 public:
@@ -46,11 +40,9 @@ public:
   SObjList(SObjList const &obj)         : list(obj.list) {     }
   SObjList& operator= (SObjList const &src)         { list = src.list; return *this; }
 
-  SObjList(StoragePool & pool, SObjList const &obj)         : list(obj.list) {     chgStorage(pool);  }
-
   public:
   SObjList(StoragePool &pool)                            : Storeable(pool), list(pool) {}
-  SObjList(StoragePool &pool, bool dynamic)              : Storeable(pool,dynamic), list(pool, false) {}
+  SObjList(Storeable const &parent)                      : Storeable(parent, sizeof(SObjList)), list(pool) {}
 
   ~SObjList()                           {}    /* all items removed */
 

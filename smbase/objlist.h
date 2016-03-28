@@ -34,12 +34,6 @@ private:
 protected:
   VoidList list;                        // list itself
 
-  void chgStorage(StoragePool & pool) {
-      for(ObjListMutator< T > iter(*this); !iter.isDone(); iter.adv()) {
-         pool.movePointerToChild(iter.dataRef());
-      }
-  }
-
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
 private:
@@ -48,13 +42,11 @@ private:
   ObjList(ObjList const &obj) : list(obj.list), owning(false) { }
   ObjList& operator= (ObjList const &src) { NOWN list = src.list; return *this;  }
 
-  ObjList(StoragePool & pool, ObjList const &obj) : list(obj.list), owning(false) { chgStorage(pool);  }
-
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
   ObjList(StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
-  ObjList(StoragePool &pool, bool dynamic)              : Storeable(pool,dynamic), list(pool, false), owning(true) {}
+  ObjList(Storeable const &parent)                      : Storeable(parent, sizeof(ObjList)), list(pool), owning(true) {}
 
   ~ObjList()                           { deleteAll(); }
 

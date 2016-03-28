@@ -29,8 +29,8 @@ public:
   }
 
   virtual ~VoidNode() {
-      pool.removePointer(next);
-      pool.removePointer(data);
+      getPool()->removePointer(next);
+      getPool()->removePointer(data);
   }
 };
 
@@ -177,8 +177,8 @@ protected:
   bool stuck = false;
 
 public:
-  VoidListMutator(VoidList &lst)   : list(lst) { reset(); lst.npool.addPointer(prev); lst.npool.addPointer(current); }
-  ~VoidListMutator()               {lst.npool.removePointer(prev); lst.npool.removePointer(current); }
+  VoidListMutator(VoidList &lst)   : list(lst) { reset(); list.npool.addPointer(prev); list.npool.addPointer(current); }
+  ~VoidListMutator()               {list.npool.removePointer(prev); list.npool.removePointer(current); }
 
   void reset()                     { prev = NULL;  current = list.top; }
 

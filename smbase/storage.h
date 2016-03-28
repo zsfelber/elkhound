@@ -150,51 +150,6 @@ friend class StoragePool;
     }
 #endif
 
-    void* operator new (std::size_t size, StoragePool & pool);
-    void* operator new[] (std::size_t size, StoragePool & pool);
-
-    inline StoragePool * getPool() const {
-        switch (__kind) {
-        case ST_PARENT:
-            return (StoragePool*) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
-            break;
-        case ST_CHILD:
-            return getParent()->getPool();
-            break;
-        default:
-            x_assert_fail("Wrong kind.", __FILE__, __LINE__);
-            break;
-        }
-    }
-
-    inline Storeable * getParent() const {
-        switch (__kind) {
-        case ST_PARENT:
-            return NULL;
-            break;
-        case ST_CHILD:
-            return (Storeable*) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
-            break;
-        default:
-            x_assert_fail("Wrong kind.", __FILE__, __LINE__);
-            break;
-        }
-    }
-
-    inline Storeable const * getRoot() const {
-        switch (__kind) {
-        case ST_PARENT:
-            return this;
-            break;
-        case ST_CHILD:
-            return getParent();
-            break;
-        default:
-            x_assert_fail("Wrong kind.", __FILE__, __LINE__);
-            break;
-        }
-    }
-
 public:
 
 
@@ -205,6 +160,9 @@ public:
    void* operator new[] (std::size_t size, void* ptr);
    void* operator new[] (std::size_t size, const std::nothrow_t& nothrow_value);
 
+   void* operator new (std::size_t size, StoragePool & pool);
+   void* operator new[] (std::size_t size, StoragePool & pool);
+
    void operator delete (void* ptr);
    void operator delete (void* ptr, const std::nothrow_t& nothrow_constant);
    void operator delete (void* ptr, void* voidptr2);
@@ -213,6 +171,7 @@ public:
    void operator delete[] (void* ptr, const std::nothrow_t& nothrow_constant);
    void operator delete[] (void* ptr, void* voidptr2);
    void operator delete[] (void* ptr, size_t size);
+
 
    inline Storeable() : __kind(ST_NONE), __parentVector(0), __store_size(0)
     #ifdef REG_CHILD
@@ -233,7 +192,7 @@ public:
     * @param parent
     */
    template<class ME>
-   Storeable(ME const & src);
+   Storeable(ME const & src, bool distinguish_from_ctor1 = true);
 
    /**
     * this object is a non-pointer class field of the pointer/non-pointer stored variable, parent
@@ -243,6 +202,49 @@ public:
    Storeable(Storeable const & parent, size_t size_of);
 
    virtual ~Storeable();
+
+
+   inline StoragePool * getPool() const {
+       switch (__kind) {
+       case ST_PARENT:
+           return (StoragePool*) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
+           break;
+       case ST_CHILD:
+           return getParent()->getPool();
+           break;
+       default:
+           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
+           break;
+       }
+   }
+
+   inline Storeable * getParent() const {
+       switch (__kind) {
+       case ST_PARENT:
+           return NULL;
+           break;
+       case ST_CHILD:
+           return (Storeable*) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
+           break;
+       default:
+           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
+           break;
+       }
+   }
+
+   inline Storeable const * getRoot() const {
+       switch (__kind) {
+       case ST_PARENT:
+           return this;
+           break;
+       case ST_CHILD:
+           return getParent();
+           break;
+       default:
+           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
+           break;
+       }
+   }
 };
 
 
@@ -435,7 +437,7 @@ private:
           uint8_t* da = decodeDeltaPtr(memory, first_del_var);
           for (iterator it(*this, da); it != -1; it++) {
               Storeable *cur = *it;
-              if (cur->__kind == Storeable::ST_DELETED) {
+              if (cur->__kind == ST_DELETED) {
                   if (!first) first = it.variablePtr;
                   continous += cur->__store_size;
                   if (continous >= store_size) {
@@ -448,7 +450,7 @@ private:
                           first_del_var = std::string::npos;
                           if (deleted_vars) {
                               for (it++; it != -1; it++) {
-                                  if (it->__kind == Storeable::ST_DELETED) {
+                                  if (it->__kind == ST_DELETED) {
                                       first_del_var = encodeDeltaPtr(memory, it.variablePtr);
                                       break;
                                   }
@@ -484,7 +486,7 @@ private:
    }
 
    inline void delParent(DataPtr data) {
-       data->__kind = Storeable::ST_DELETED;
+       data->__kind = ST_DELETED;
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)data);
        if (dd < first_del_var) {
            first_del_var = dd;
@@ -503,24 +505,19 @@ public:
 
    }
 
-   StoragePool(StoragePool const & oldPool) : Storeable(oldPool),
-       memory(0), first_del_var(std::string::npos), deleted_vars(0),
-       memlength(0), memcapacity(0),
-       intpointers(0), intptrslength(0), intptrscapacity(0),
-       extpointers(0), extptrslength(0), extptrscapacity(0) {
+   StoragePool(StoragePool const & oldPool) : Storeable(oldPool, true),
+       memory(0), intpointers(0), extpointers(0) {
 
-       xassert(!oldPool.parent);
-       xassert(oldPool.isParentOf(*this));
+       xassert(oldPool.__kind == ST_CHILD || oldPool.__kind == ST_PARENT);
 
-       size_t oldmemlength = oldPool.memlength;
-       size_t bufsz = ((oldmemlength+STORE_BUF_SZ-1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
-       xassert(bufsz==oldPool.memcapacity);
+       size_t bufsz = ((memlength+STORE_BUF_SZ-1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
+       xassert(bufsz==memcapacity);
 
-       copyBuffer(oldPool.memory, oldPool.memlength, oldPool.memcapacity, memory, memlength, memcapacity, 1/*sizeof(uint8_t)*/);
-       copyBuffer((uint8_t*)oldPool.intpointers, oldPool.intptrslength, oldPool.intptrscapacity, (uint8_t*&)intpointers, intptrslength, intptrscapacity, sizeof(size_t));
-       copyBuffer((uint8_t*)oldPool.extpointers, oldPool.extptrslength, oldPool.extptrscapacity, (uint8_t*&)extpointers, extptrslength, extptrscapacity, sizeof(ExternalPtr));
+       copyBuffer(oldPool.memory, memlength, memcapacity, memory, 1/*sizeof(uint8_t)*/);
+       copyBuffer((uint8_t*)oldPool.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
+       copyBuffer((uint8_t*)oldPool.extpointers, extptrslength, extptrscapacity, (uint8_t*&)extpointers, sizeof(ExternalPtr));
 
-       convertAll(oldPool.memory, oldPool.memory+oldmemlength);
+       convertAll(oldPool.memory, oldPool.memory+memlength);
    }
 
    ~StoragePool() {
@@ -550,10 +547,11 @@ public:
    }
 
    void steal(StoragePool * src) {
+       xassert(src && src->__kind == __kind && src->__parentVector == __parentVector);
        if (memory) delete[] memory;
        if (intpointers) delete[] intpointers;
        if (extpointers) delete[] extpointers;
-       const_cast<PtrToMe&>(parent) = constcast(src->parent);
+
        memory = src->memory;
        first_del_var = src->first_del_var;
        deleted_vars = src->deleted_vars;
@@ -566,7 +564,6 @@ public:
        extptrslength = src->extptrslength;
        extptrscapacity = src->extptrscapacity;
 
-       const_cast<PtrToMe&>(src->parent) = NULL;
        src->memory = NULL;
        src->first_del_var = std::string::npos;
        src->deleted_vars = 0;
@@ -583,22 +580,22 @@ public:
    }
 
 
-   inline bool isParentOf(StoragePool const & pool) const {
-       if (pool.parent == this) {
-           return true;
-       } else if (pool.parent) {
-           return isParentOf(*pool.parent);
-       } else {
-           return false;
-       }
-   }
-
    inline bool contains(void* pointer) const {
        return (memory<=pointer && pointer<memory+memlength);
    }
 
    template<class ST>
-   inline void addPointer(ST*& externalPointer) {
+   inline void addPointer(ST*& _externalPointer) {
+       addPointer((void*&)_externalPointer);
+   }
+
+   template<class ST>
+   inline void removePointer(ST*& _externalPointer) {
+       removePointer((void*&)_externalPointer);
+   }
+
+   inline void addPointer(void*& _externalPointer) {
+       DataPtr& externalPointer = (DataPtr&) _externalPointer;
        if (externalPointer) {
            if (contains(externalPointer)) {
                xassert(externalPointer->getPool() == this);
@@ -613,7 +610,7 @@ public:
            if (intptrscapacity < pbufsz) {
                extendBuffer((uint8_t*&)intpointers, intptrslength, intptrscapacity, pbufsz, sizeof(size_t));
            }
-           intpointers[intptrslength++] = encodeDeltaPtr(memory, &externalPointer);
+           intpointers[intptrslength++] = encodeDeltaPtr(memory, (uint8_t*)&externalPointer);
        } else {
            size_t pbufsz = ((extptrslength+STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
            if (extptrscapacity < pbufsz) {
@@ -623,8 +620,8 @@ public:
        }
    }
 
-   template<class ST>
-   inline void removePointer(ST*& externalPointer) {
+   inline void removePointer(void*& _externalPointer) {
+       DataPtr& externalPointer = (DataPtr&) _externalPointer;
        if (externalPointer) {
            if (contains(externalPointer)) {
                xassert(externalPointer->getPool() == this);
@@ -672,7 +669,7 @@ inline Storeable::Storeable(StoragePool & pool) : __kind(ST_PARENT) {
 }
 
 template<class ME>
-inline Storeable::Storeable(ME const & src)
+inline Storeable::Storeable(ME const & src, bool distinguish_from_ctor1)
 {
     memcpy(this, &src, sizeof(ME));
 
@@ -699,7 +696,7 @@ inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(S
 inline Storeable::~Storeable() {
     switch (__kind) {
     case ST_PARENT:
-        __pp.pool->delParent(this);
+        getPool()->delParent(this);
         break;
     default:
         break;
