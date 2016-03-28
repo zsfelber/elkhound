@@ -579,48 +579,53 @@ public:
            copyBuffer((uint8_t*)oldPool.extpointers, extptrslength, extptrscapacity, (uint8_t*&)extpointers, sizeof(ExternalPtr));
            copyBuffer((uint8_t*)oldPool.childpools, chplslength, chplscapacity, (uint8_t*&)childpools, sizeof(size_t));
 
-           fixThisPtrInMem();
-
            convertAll(oldPool.memory, oldPool.memory+memlength);
        }
    }
 
    ~StoragePool() {
+       del();
+   }
+
+   inline void del() {
+       size_t* chPoolsFrom = childpools;
+       size_t* chPoolsTo = childpools+intptrslength;
+       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           ptr->del();
+       }
+
        if (memory) delete[] memory;
        if (intpointers) delete[] intpointers;
        if (extpointers) delete[] extpointers;
+       if (childpools) delete[] childpools;
    }
 
    inline void clear() {
-       memory = NULL;
+       memset(this, 0, sizeof(StoragePool));
        first_del_var = std::string::npos;
-       deleted_vars = 0;
-       memlength = 0;
-       memcapacity = 0;
-       intpointers = NULL;
-       intptrslength = 0;
-       intptrscapacity = 0;
-       extpointers = NULL;
-       extptrslength = 0;
-       extptrscapacity = 0;
    }
 
    StoragePool& operator= (StoragePool const &src) {
        if (memcapacity<src.memcapacity) {
            memcapacity = src.memcapacity;
            delete[] memory;
+           memory = new uint8_t[memcapacity];
        }
        if (intptrscapacity<src.intptrscapacity) {
            intptrscapacity = src.intptrscapacity;
            delete[] intpointers;
+           intpointers = new size_t[intptrscapacity];
        }
        if (extptrscapacity<src.extptrscapacity) {
            extptrscapacity = src.extptrscapacity;
            delete[] extpointers;
+           extpointers = new ExternalPtr[extptrscapacity];
        }
        if (chplscapacity<src.chplscapacity) {
            chplscapacity = src.chplscapacity;
            delete[] childpools;
+           childpools = new size_t[chplscapacity];
        }
 
        memcpy(memory, src.memory, memlength = src.memlength);
@@ -628,33 +633,21 @@ public:
        memcpy(extpointers, src.extpointers, extptrslength = src.extptrslength);
        memcpy(childpools, src.childpools, chplslength = src.chplslength);
 
-       fixThisPtrInMem();
+       convertAll(src.memory, src.memory+memlength);
 
        return *this;
    }
 
    void steal(StoragePool * src) {
-       xassert(src && src->__kind == __kind && src->__parentVector == __parentVector);
-       if (memory) delete[] memory;
-       if (intpointers) delete[] intpointers;
-       if (extpointers) delete[] extpointers;
+       xassert(getPool() == src->getPool());
 
-       memory = src->memory;
-       first_del_var = src->first_del_var;
-       deleted_vars = src->deleted_vars;
-       memlength = src->memlength;
-       memcapacity = src->memcapacity;
-       intpointers = src->intpointers;
-       intptrslength = src->intptrslength;
-       intptrscapacity = src->intptrscapacity;
-       extpointers = src->extpointers;
-       extptrslength = src->extptrslength;
-       extptrscapacity = src->extptrscapacity;
+       del();
+
+       memcpy(this, src, sizeof(StoragePool));
+
+       fixChildPoolsInMem();
 
        src->clear();
-
-       fixThisPtrInMem();
-
        delete src;
    }
 
