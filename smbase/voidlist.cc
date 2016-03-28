@@ -11,13 +11,12 @@
 #include <ios>
 
 
-// TODO top(top)?
 VoidList::VoidList(VoidList const &obj)
-  : Storeable(obj), npool(npool), top(NULL)
+  : Storeable(obj), npool(npool)
 {
-  //default impl is just fine
-  //*this = obj;
-  npool.movePointerToChild(top);
+  xassert(__kind == src.__kind);
+  xassert(__parentVector == src.__parentVector);
+  npool.addPointer(top);
 }
 
 
@@ -110,7 +109,7 @@ void VoidList::checkUniqueDataPtrs() const
 // insert at front
 void VoidList::prepend(void *newitem)
 {
-  top = new (npool) VoidNode(*__pool, newitem, top);
+  top = new (npool) VoidNode(npool, newitem, top);
 }
 
 
@@ -125,7 +124,7 @@ VoidNode* VoidList::append(void *newitem)
     VoidNode *p;
     for (p = top; p->next; p = p->next)
       {}
-    p->next = new (npool) VoidNode(*__pool, newitem);
+    p->next = new (npool) VoidNode(npool, newitem);
     return p->next;
   }
 }
@@ -156,7 +155,7 @@ void VoidList::insertAt(void *newitem, int index)
       // if index isn't 0, then index was greater than count()
 
     // put a node after p
-    VoidNode *n = new (npool) VoidNode(*__pool, newitem);
+    VoidNode *n = new (npool) VoidNode(npool, newitem);
     n->next = p->next;
     p->next = n;
   }
@@ -180,7 +179,7 @@ void VoidList::insertSorted(void *newitem, VoidDiff diff, void *extra)
   }
   
   // insert 'newitem' after 'cursor'
-  VoidNode *newNode = new (npool) VoidNode(*__pool, newitem);
+  VoidNode *newNode = new (npool) VoidNode(npool, newitem);
   newNode->next = cursor->next;
   cursor->next = newNode;
 }
@@ -250,7 +249,7 @@ bool VoidList::appendUnique(void *newitem)
     return false;
   }
 
-  p->next = new (npool) VoidNode(*__pool, newitem);
+  p->next = new (npool) VoidNode(npool, newitem);
   return true;
 }
 
@@ -409,8 +408,8 @@ void VoidList::mergeSort(VoidDiff diff, void *extra)
   }
 
   // half-lists
-  VoidList leftHalf(*__pool);
-  VoidList rightHalf(*__pool);
+  VoidList leftHalf(npool);
+  VoidList rightHalf(npool);
 
   // divide the list
   {
@@ -582,7 +581,7 @@ void VoidList::appendAll(VoidList const &tail)
 
 void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 {
-  VoidList dest(*__pool);
+  VoidList dest(npool);
   VoidListIter srcIter(tail);
   for (; !srcIter.isDone(); srcIter.adv()) {
     void *item = srcIter.data();
@@ -608,8 +607,10 @@ void VoidList::prependAll(VoidList const &tail)
 
 VoidList& VoidList::operator= (VoidList const &src)
 {
-  // TODO FIXME
+  xassert(__kind == src.__kind);
+  xassert(__parentVector == src.__parentVector);
   npool = src.npool;
+  npool.movePointerToChild(top);
   /*xassert(__pool == src.__pool);
   if (this != &src) {
     removeAll();

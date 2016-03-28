@@ -69,12 +69,6 @@ outputCond([[[m4_dnl      // sobjlist
 protected:
   VoidList list;                        // list itself
 
-  void chgStorage(StoragePool & pool) {
-      for(mutatorName< T > iter(*this); !iter.isDone(); iter.adv()) {
-         pool.movePointerToChild(iter.dataRef());
-      }
-  }
-
 outputCond([[[m4_dnl    // sobjlist
   #define OWN
   #define NOWN
@@ -83,11 +77,9 @@ public:
   className[[[]]](className const &obj)         : list(obj.list) {     }
   className& operator= (className const &src)         { list = src.list; return *this; }
 
-  className[[[]]](StoragePool & pool, className const &obj)         : list(obj.list) {     chgStorage(pool);  }
-
   public:
   className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool) {}
-  className[[[]]](StoragePool &pool, bool dynamic)              : Storeable(pool,dynamic), list(pool, false) {}
+  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(pool) {}
 ]]], [[[m4_dnl          // objlist
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
@@ -97,13 +89,11 @@ private:
   className[[[]]](className const &obj) : list(obj.list), owning(false) { }
   className& operator= (className const &src) { NOWN list = src.list; return *this;  }
 
-  className[[[]]](StoragePool & pool, className const &obj) : list(obj.list), owning(false) { chgStorage(pool);  }
-
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
   className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
-  className[[[]]](StoragePool &pool, bool dynamic)              : Storeable(pool,dynamic), list(pool, false), owning(true) {}
+  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(pool), owning(true) {}
 ]]])m4_dnl
 
   ~className[[[]]]()                      m4_dnl

@@ -597,10 +597,13 @@ Production::Production(StoragePool &pool, Nonterminal *L, char const *Ltag)
     rhsLen(-1),
     prodIndex(-1),
     firstSet(0)       // don't allocate bitmap yet
-{}
+{
+    pool.addPointer(forbid);
+}
 
 Production::~Production()
 {
+  pool.removePointer(forbid);
   if (forbid_owned) {
       delete forbid;
   }
@@ -809,7 +812,6 @@ void Production::addForbid(Grammar &g, Terminal *t, int numTerminals)
      }
   } else {
      forbid = new (g.pool) TerminalSet(numTerminals);
-     g.pool.add(forbid);
 
      forbid_owned = true;
   }
@@ -827,7 +829,6 @@ void Production::addForbid(Grammar &g, TerminalSet *s)
     }
   } else {
       forbid = s;
-      g.pool.add(forbid);
       forbid_owned = false;
   }
 }
@@ -942,7 +943,7 @@ Grammar::Grammar()
     emptyString = new (pool)
       Nonterminal(pool, LocString(pool, HERE_SOURCELOC, "empty"),
                 true /*isEmptyString*/);
-    pool.add(emptyString);
+    pool.addPointer(emptyString);
 }
 
 

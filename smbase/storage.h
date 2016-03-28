@@ -92,13 +92,13 @@ inline void extendBuffer(uint8_t*& buf, size_t size, size_t newcap, size_t size_
     if (old) delete[] old;
 }
 
-inline void remove(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
+inline void removeBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
     size--;
     // allow overlap
     memmove(pos, pos+size_of, size*size_of-(pos-buf));
 }
 
-inline void insert(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
+inline void insertBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
     // allow overlap
     memmove(pos+size_of, pos, size*size_of-(pos-buf));
     size++;
@@ -109,16 +109,16 @@ inline size_t getStoreSize(size_t size_of) {
 }
 
 inline size_t encodeDeltaPtr(uint8_t* origin, uint8_t* address) {
-    xassert(address > origin);
-    return (size_t)(address - origin);
+    xassert(origin < address);
+    return origin ? (size_t)(address - origin) : std::string::npos;
 }
 
 inline uint8_t* decodeDeltaPtr(uint8_t* origin, size_t delta) {
-    return origin + delta;
+    return delta == std::string::npos ? NULL : origin + delta;
 }
 
 inline uint8_t* decodeDeltaBackPtr(uint8_t* origin, size_t delta) {
-    return origin - delta;
+    return delta == std::string::npos ? NULL : origin - delta;
 }
 
 
@@ -167,7 +167,7 @@ friend class StoragePool;
         }
     }
 
-    inline StoragePool * getParent() const {
+    inline Storeable * getParent() const {
         switch (__kind) {
         case ST_PARENT:
             return NULL;
@@ -214,7 +214,7 @@ public:
    void operator delete[] (void* ptr, void* voidptr2);
    void operator delete[] (void* ptr, size_t size);
 
-   inline Storeable() : __kind(ST_NONE), __parentVector(), __store_size(0)
+   inline Storeable() : __kind(ST_NONE), __parentVector(0), __store_size(0)
     #ifdef REG_CHILD
       , __next(0)
     #endif
@@ -250,7 +250,7 @@ public:
 
 
 
-class StoragePool {
+class StoragePool : public Storeable {
    friend class Storeable;
 
    typedef StoragePool* PtrToMe;
@@ -381,8 +381,6 @@ public:
 
 private:
 
-   StoragePool const * const parent;
-
    uint8_t *memory;
    size_t first_del_var;
    size_t deleted_vars;
@@ -396,33 +394,35 @@ private:
    inline void convertAll(uint8_t* oldmemFrom, uint8_t* oldmemTo) {
        std::ptrdiff_t d = memory - oldmemFrom;
 
-       ExternalPtr* pointersFrom = pointers;
-       ExternalPtr* pointersTo = pointers+ptrslength;
-       for (; pointersFrom<pointersTo; pointersFrom++) {
-           ExternalPtr& ptr = *pointersFrom;
-           movePointer(oldmemFrom, oldmemTo, ptr, d);
+       size_t* intPointersFrom = intpointers;
+       size_t* intPointersTo = intpointers+intptrslength;
+       for (; intPointersFrom<intPointersTo; intPointersFrom++) {
+           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
+           moveVariable(oldmemFrom, oldmemTo, *ptr, d);
+       }
+
+       ExternalPtr* extPointersFrom = extpointers;
+       ExternalPtr* extPointersTo = extpointers+extptrslength;
+       for (; extPointersFrom<extPointersTo; extPointersFrom++) {
+           ExternalPtr ptr = *extPointersFrom;
+           moveVariable(oldmemFrom, oldmemTo, *ptr, d);
        }
    }
 
    inline void moveVariable(uint8_t* oldmemFrom, uint8_t* oldmemTo, DataPtr& variable, std::ptrdiff_t d) {
        uint8_t* variable_addr = (uint8_t*)variable;
-       xassert (oldmemFrom<=variable_addr && variable_addr<oldmemTo);
+       if (oldmemFrom<=variable_addr && variable_addr<oldmemTo) {
 
-       variable_addr += d;
-       variable = (DataPtr)variable_addr;
+           variable_addr += d;
+           variable = (DataPtr)variable_addr;
 
-       xassert(contains(variable_addr));
-   }
-
-   // NOTE movePointer used from convertAll only
-   inline void movePointer(uint8_t* oldmemFrom, uint8_t* oldmemTo, size_t& pointer, std::ptrdiff_t d) {
-       uint8_t* ptr_addr = (uint8_t*)pointer;
-       if (oldmemFrom<=ptr_addr && ptr_addr<oldmemTo) {
-           ptr_addr += d;
-           pointer = (size_t)ptr_addr;
+           xassert(contains(variable_addr));
+       } else {
+           std::cout << "Warning  StoragePool.moveVariable : pointer to external data : "
+                     << (void*) variable  << " of " << (void*) oldmemFrom << " .. " << (void*) oldmemTo << std::endl;
        }
-       xassert(contains(*pointer));
    }
+
 
    inline void allocParent(void*& data, size_t store_size) {
        size_t oldmemlength, newmemlength, bufsz;
@@ -432,23 +432,24 @@ private:
       if (deleted_vars > memlength>>1) {
           uint8_t* first = NULL;
           size_t continous = 0;
-          for (iterator it(*this, first_del_var); it != -1; it++) {
+          uint8_t* da = decodeDeltaPtr(memory, first_del_var);
+          for (iterator it(*this, da); it != -1; it++) {
               Storeable *cur = *it;
               if (cur->__kind == Storeable::ST_DELETED) {
                   if (!first) first = it.variablePtr;
                   continous += cur->__store_size;
                   if (continous >= store_size) {
-                      xassert(first >= first_del_var);
+                      xassert(first >= da);
 
                       data = first;
                       deleted_vars -= continous;
 
-                      if (first == first_del_var) {
-                          first_del_var = NULL;
+                      if (first == da) {
+                          first_del_var = std::string::npos;
                           if (deleted_vars) {
                               for (it++; it != -1; it++) {
                                   if (it->__kind == Storeable::ST_DELETED) {
-                                      first_del_var = it.variablePtr;
+                                      first_del_var = encodeDeltaPtr(memory, it.variablePtr);
                                       break;
                                   }
                               }
@@ -469,18 +470,24 @@ private:
       oldmem = memory;
       if (memcapacity < bufsz) {
           extendBuffer(memory,           memlength,                       memcapacity, bufsz, 1/*sizeof(uint8_t)*/);
+          if (oldmemlength) {
+              convertAll(oldmem, oldmem+oldmemlength);
+          }
       }
       memlength = newmemlength;
       data = memory+oldmemlength;
 
       ok:
+
+      ((DataPtr)data)->__parentVector = encodeDeltaPtr((uint8_t*)this, (uint8_t*)data);
       ((DataPtr)data)->__store_size = store_size;
    }
 
    inline void delParent(DataPtr data) {
        data->__kind = Storeable::ST_DELETED;
-       if (((uint8_t*)data) < first_del_var) {
-           first_del_var = (uint8_t*)data;
+       size_t dd = encodeDeltaPtr(memory, (uint8_t*)data);
+       if (dd < first_del_var) {
+           first_del_var = dd;
        }
        deleted_vars += data->__store_size;
    }
@@ -488,16 +495,16 @@ private:
 
 public:
 
-   StoragePool() : parent(0),
-       memory(0), first_del_var(0), deleted_vars(0),
+   StoragePool() : Storeable(),
+       memory(0), first_del_var(std::string::npos), deleted_vars(0),
        memlength(0), memcapacity(0),
        intpointers(0), intptrslength(0), intptrscapacity(0),
        extpointers(0), extptrslength(0), extptrscapacity(0) {
 
    }
 
-   StoragePool(StoragePool const & oldPool) : parent(&oldPool),
-       memory(0), first_del_var(0), deleted_vars(0),
+   StoragePool(StoragePool const & oldPool) : Storeable(oldPool),
+       memory(0), first_del_var(std::string::npos), deleted_vars(0),
        memlength(0), memcapacity(0),
        intpointers(0), intptrslength(0), intptrscapacity(0),
        extpointers(0), extptrslength(0), extptrscapacity(0) {
@@ -511,7 +518,9 @@ public:
 
        copyBuffer(oldPool.memory, oldPool.memlength, oldPool.memcapacity, memory, memlength, memcapacity, 1/*sizeof(uint8_t)*/);
        copyBuffer((uint8_t*)oldPool.intpointers, oldPool.intptrslength, oldPool.intptrscapacity, (uint8_t*&)intpointers, intptrslength, intptrscapacity, sizeof(size_t));
-       copyBuffer((ExternalPtr*)oldPool.extpointers, oldPool.extptrslength, oldPool.extptrscapacity, (ExternalPtr*&)extpointers, extptrslength, extptrscapacity, sizeof(ExternalPtr));
+       copyBuffer((uint8_t*)oldPool.extpointers, oldPool.extptrslength, oldPool.extptrscapacity, (uint8_t*&)extpointers, extptrslength, extptrscapacity, sizeof(ExternalPtr));
+
+       convertAll(oldPool.memory, oldPool.memory+oldmemlength);
    }
 
    ~StoragePool() {
@@ -542,8 +551,9 @@ public:
 
    void steal(StoragePool * src) {
        if (memory) delete[] memory;
-       if (pointers) delete[] pointers;
-       parent = src->parent;
+       if (intpointers) delete[] intpointers;
+       if (extpointers) delete[] extpointers;
+       const_cast<PtrToMe&>(parent) = constcast(src->parent);
        memory = src->memory;
        first_del_var = src->first_del_var;
        deleted_vars = src->deleted_vars;
@@ -556,9 +566,9 @@ public:
        extptrslength = src->extptrslength;
        extptrscapacity = src->extptrscapacity;
 
-       src->parent = NULL;
+       const_cast<PtrToMe&>(src->parent) = NULL;
        src->memory = NULL;
-       src->first_del_var = NULL;
+       src->first_del_var = std::string::npos;
        src->deleted_vars = 0;
        src->memlength = 0;
        src->memcapacity = 0;
@@ -588,39 +598,53 @@ public:
    }
 
    template<class ST>
-   inline void add(ST*& externalPointerToConstructedData) {
-       xassert(contains(externalPointerToConstructedData));
-       //
-       xassert(externalPointerToConstructedData->getPool() == this);
+   inline void addPointer(ST*& externalPointer) {
+       if (externalPointer) {
+           if (contains(externalPointer)) {
+               xassert(externalPointer->getPool() == this);
+           } else {
+               std::cout << "Warning  StoragePool.addPointer : pointer to external data : "
+                         << (void*) externalPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+           }
+       }
 
-       if (contains(&externalPointerToConstructedData)) {
+       if (contains(&externalPointer)) {
            size_t pbufsz = ((intptrslength+STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
            if (intptrscapacity < pbufsz) {
                extendBuffer((uint8_t*&)intpointers, intptrslength, intptrscapacity, pbufsz, sizeof(size_t));
            }
-           intpointers[intptrslength++] = encodeDeltaPtr(memory, &externalPointerToConstructedData);
+           intpointers[intptrslength++] = encodeDeltaPtr(memory, &externalPointer);
        } else {
            size_t pbufsz = ((extptrslength+STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
            if (extptrscapacity < pbufsz) {
                extendBuffer((uint8_t*&)extpointers, extptrslength, extptrscapacity, pbufsz, sizeof(ExternalPtr));
            }
-           extpointers[extptrslength++] = &externalPointerToConstructedData;
+           extpointers[extptrslength++] = &externalPointer;
        }
-
-       // const_cast<PtrToMe&>(externalPointerToConstructedData->__pool) = this;
    }
 
    template<class ST>
-   inline void movePointerToChild(ST*& dataPointerConvertFromParentPool) {
-       StoragePool const & oldPool = *dataPointerConvertFromParentPool->__pool;
-       xassert(oldPool.isParentOf(*this));
+   inline void removePointer(ST*& externalPointer) {
+       if (externalPointer) {
+           if (contains(externalPointer)) {
+               xassert(externalPointer->getPool() == this);
+           } else {
+               std::cout << "Warning  StoragePool.removePointer : pointer to external data : "
+                         << (void*) externalPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+           }
+       }
 
-       size_t size = oldPool.memlength;
-       uint8_t* oldmem = oldPool.memory;
-       std::ptrdiff_t d = memory - oldmem;
-
-       moveVariable(oldmem, oldmem+size, (DataPtr&)dataPointerConvertFromParentPool, d);
-       xassert(dataPointerConvertFromParentPool->__pool == this);
+       if (contains(&externalPointer)) {
+           size_t dd = encodeDeltaPtr(memory, (uint8_t*)&externalPointer);
+           size_t* val = std::lower_bound(intpointers, intpointers+intptrslength, dd);
+           xassert (*val == dd);
+           removeBufferItem((uint8_t*)intpointers, intptrslength, (uint8_t*)val, sizeof(size_t));
+       } else {
+           ExternalPtr dd = &externalPointer;
+           ExternalPtr* val = std::lower_bound(extpointers, extpointers+extptrslength, dd);
+           xassert (*val == dd);
+           removeBufferItem((uint8_t*)extpointers, extptrslength, (uint8_t*)val, sizeof(ExternalPtr));
+       }
    }
 
    inline iterator begin(DataPtr variablePtr = 0) {
@@ -643,23 +667,21 @@ public:
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
 inline Storeable::Storeable(StoragePool & pool) : __kind(ST_PARENT) {
-    xassert(__pp.pool == &pool);
+    xassert(getPool() == &pool);
     xassert(pool.contains(this));
 }
 
 template<class ME>
-inline Storeable::Storeable(ME const & src) : __pp(src.__pp)
+inline Storeable::Storeable(ME const & src)
 {
-    assert(src.__kind == ST_CHILD);
+    memcpy(this, &src, sizeof(ME));
 
     StoragePool *pool = getPool();
     xassert(pool);
     xassert(pool->contains(this));
-
-    memcpy(this, &src, sizeof(ME));
 }
 
-inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(ST_CHILD), __pp(&parent), __store_size(getStoreSize(size_of))
+inline Storeable::Storeable(Storeable const & parent, size_t size_of) : __kind(ST_CHILD), __parentVector(encodeDeltaPtr((uint8_t*)&parent, (uint8_t*)this)), __store_size(getStoreSize(size_of))
 #ifdef REG_CHILD
   , __next(0) {
     switch (__kind) {

@@ -16,12 +16,22 @@
 // non-typesafe list node
 class VoidNode : public Storeable {
 public:
-  TRASHINGDELETE
+  //TRASHINGDELETE
 
   VoidNode *next;           // (owner) next item in list, or NULL if last item
   void *data;               // whatever it is the list is holding
 
-  VoidNode(StoragePool &pool, void *aData=NULL, VoidNode *aNext=NULL) : Storeable(pool) { data=aData; next=aNext; }
+  VoidNode(StoragePool &pool, void *aData=NULL, VoidNode *aNext=NULL) : Storeable(pool) {
+      data=aData;
+      next=aNext;
+      pool.addPointer(next);
+      pool.addPointer(data);
+  }
+
+  virtual ~VoidNode() {
+      pool.removePointer(next);
+      pool.removePointer(data);
+  }
 };
 
 
@@ -54,10 +64,10 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
-  VoidList(StoragePool &pool)  : Storeable(pool)                        { top=NULL; }
-  VoidList(Storeable const &parent) : Storeable(parent, sizeof(VoidList)){}
+  VoidList(StoragePool &pool)  : Storeable(pool)                        { top=NULL;   npool.addPointer(top); }
+  VoidList(Storeable const &parent) : Storeable(parent, sizeof(VoidList)) { top=NULL;   npool.addPointer(top); }
   VoidList(VoidList const &obj);     // makes a (shallow) copy of the contents
-  ~VoidList()                        { removeAll(); }
+  ~VoidList()                        { removeAll(); npool.removePointer(top); }
 
   // selectors
   int count() const;                 // # of items in list
@@ -167,8 +177,8 @@ protected:
   bool stuck = false;
 
 public:
-  VoidListMutator(VoidList &lst)   : list(lst) { reset(); }
-  ~VoidListMutator()               {}
+  VoidListMutator(VoidList &lst)   : list(lst) { reset(); lst.npool.addPointer(prev); lst.npool.addPointer(current); }
+  ~VoidListMutator()               {lst.npool.removePointer(prev); lst.npool.removePointer(current); }
 
   void reset()                     { prev = NULL;  current = list.top; }
 
