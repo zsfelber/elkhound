@@ -11,8 +11,9 @@
 #include <ios>
 
 
-VoidList::VoidList(VoidList const &obj, size_t size_of, bool move)
-  : Storeable(obj, size_of?size_of:sizeof(VoidList), false), npool(obj.npool, false, move?StoragePool::Cp_Move:StoragePool::Cp_All)
+VoidList::VoidList(VoidList const &src, size_t size_of, bool move)
+  : Storeable(src, size_of?size_of:sizeof(VoidList), false),
+    npool(src.npool, false, move ? StoragePool::Cp_Move : StoragePool::Cp_All)
 {
   xassert(__kind == src.__kind);
   xassert(__parentVector == src.__parentVector);
@@ -32,7 +33,7 @@ int VoidList::count() const
 
 
 // get particular item, 0 is first (item must exist)
-void *VoidList::nth(int which) const
+Storeable *VoidList::nth(int which) const
 {
   VoidNode *p;
   xassert(which>=0);
@@ -107,14 +108,14 @@ void VoidList::checkUniqueDataPtrs() const
 
 
 // insert at front
-void VoidList::prepend(void *newitem)
+void VoidList::prepend(Storeable *newitem)
 {
   top = new (npool) VoidNode(npool, newitem, top);
 }
 
 
 // insert at rear
-VoidNode* VoidList::append(void *newitem)
+VoidNode* VoidList::append(Storeable *newitem)
 {
   if (!top) {
     prepend(newitem);
@@ -131,7 +132,7 @@ VoidNode* VoidList::append(void *newitem)
 
 
 // insert at particular point, index of new node becomes 'index'
-void VoidList::insertAt(void *newitem, int index)
+void VoidList::insertAt(Storeable *newitem, int index)
 {
   if (index == 0 || isEmpty()) {
     // special case prepending or an empty list
@@ -162,7 +163,7 @@ void VoidList::insertAt(void *newitem, int index)
 }
 
 
-void VoidList::insertSorted(void *newitem, VoidDiff diff, void *extra)
+void VoidList::insertSorted(Storeable *newitem, VoidDiff diff, Storeable *extra)
 {
   // put it first?
   if (!top ||
@@ -187,7 +188,7 @@ void VoidList::insertSorted(void *newitem, VoidDiff diff, void *extra)
 
 // ----------------- list-as-set stuff -------------------
 // get the index of an item's first occurrance
-int VoidList::indexOf(void *item) const
+int VoidList::indexOf(Storeable *item) const
 {
   int index = 0;
   for (VoidNode *p = top; p != NULL; p = p->next, index++) {
@@ -198,7 +199,7 @@ int VoidList::indexOf(void *item) const
   return -1;
 }
 
-int VoidList::indexOf(void *item, VoidEq eq) const
+int VoidList::indexOf(Storeable *item, VoidEq eq) const
 {
   int index = 0;
   for (VoidNode *p = top; p != NULL; p = p->next, index++) {
@@ -210,7 +211,7 @@ int VoidList::indexOf(void *item, VoidEq eq) const
 }
 
 
-int VoidList::indexOfF(void *item) const
+int VoidList::indexOfF(Storeable *item) const
 {
   int ret = indexOf(item);
   xassert(ret >= 0);
@@ -218,7 +219,7 @@ int VoidList::indexOfF(void *item) const
 }
 
 
-bool VoidList::prependUnique(void *newitem)
+bool VoidList::prependUnique(Storeable *newitem)
 {
   if (!contains(newitem)) {
     prepend(newitem);
@@ -230,7 +231,7 @@ bool VoidList::prependUnique(void *newitem)
 }
 
 
-bool VoidList::appendUnique(void *newitem)
+bool VoidList::appendUnique(Storeable *newitem)
 {
   if (!top) {
     prepend(newitem);
@@ -254,7 +255,7 @@ bool VoidList::appendUnique(void *newitem)
 }
 
 
-bool VoidList::removeIfPresent(void *item)
+bool VoidList::removeIfPresent(Storeable *item)
 {
   // for now, not a real fast implementation
   int index = indexOf(item);
@@ -267,7 +268,7 @@ bool VoidList::removeIfPresent(void *item)
   }
 }
 
-bool VoidList::removeIfPresent(void *item, VoidEq eq)
+bool VoidList::removeIfPresent(Storeable *item, VoidEq eq)
 {
   // for now, not a real fast implementation
   int index = indexOf(item, eq);
@@ -289,7 +290,7 @@ bool VoidList::removeItems(VoidList const &lst, VoidEq eq) {   // remove all; re
 }
 
 
-void VoidList::removeItem(void *item)
+void VoidList::removeItem(Storeable *item)
 {
   bool wasThere = removeIfPresent(item);
   xassert(wasThere);
@@ -298,12 +299,12 @@ void VoidList::removeItem(void *item)
 // ----------------- end of list-as-set stuff -------------------
 
 
-void *VoidList::removeAt(int index)
+Storeable *VoidList::removeAt(int index)
 {
   if (index == 0) {
     xassert(top != NULL);   // element must exist to remove
     VoidNode *temp = top;
-    void *retval = temp->data;
+    Storeable *retval = temp->data;
     top = top->next;
     delete temp;
     return retval;
@@ -320,7 +321,7 @@ void *VoidList::removeAt(int index)
   if (p->next) {
     // index==0, so p->next is node to remove
     VoidNode *temp = p->next;
-    void *retval = temp->data;
+    Storeable *retval = temp->data;
     p->next = p->next->next;
     delete temp;
     return retval;
@@ -369,7 +370,7 @@ void VoidList::reverse()
 //   The 'extra' parameter passed to sort is passed to diff each time it
 // is called.
 //   O(n^2) time, O(1) space
-void VoidList::insertionSort(VoidDiff diff, void *extra)
+void VoidList::insertionSort(VoidDiff diff, Storeable *extra)
 {
   VoidNode *primary = top;                   // primary sorting pointer
   while (primary && primary->next) {
@@ -401,7 +402,7 @@ void VoidList::insertionSort(VoidDiff diff, void *extra)
 
 
 // O(n log n) time, O(log n) space
-void VoidList::mergeSort(VoidDiff diff, void *extra)
+void VoidList::mergeSort(VoidDiff diff, Storeable *extra)
 {
   if (top == NULL || top->next == NULL) {
     return;   // base case: 0 or 1 elements, already sorted
@@ -486,17 +487,17 @@ void VoidList::mergeSort(VoidDiff diff, void *extra)
 }
 
 
-bool VoidList::isSorted(VoidDiff diff, void *extra) const
+bool VoidList::isSorted(VoidDiff diff, Storeable *extra) const
 {
   if (isEmpty()) {
     return true;
   }
 
-  void *prev = top->data;
+  Storeable *prev = top->data;
   VoidListIter iter(*this);
   iter.adv();
   for (; !iter.isDone(); iter.adv()) {
-    void *current = iter.data();
+    Storeable *current = iter.data();
 
     if (diff(prev, current, extra) <= 0) {
       // ok: prev <= current
@@ -515,7 +516,7 @@ bool VoidList::isSorted(VoidDiff diff, void *extra) const
 // attach tail's nodes to this; empty the tail
 void VoidList::concat(VoidList &tail)
 {
-  xassert(__pp == tail.__pp);
+  xassert(__parentVector == tail.__parentVector);
   if (!top) {
     top = tail.top;
   }
@@ -537,7 +538,7 @@ void VoidList::stealTailAt(int index, VoidList &source)
     concat(source);
     return;
   }
-  xassert(__pp == source.__pp);
+  xassert(__parentVector == source.__parentVector);
 
   // find the node in 'source' just before the first one that
   // will be transferred
@@ -564,13 +565,16 @@ void VoidList::stealTailAt(int index, VoidList &source)
   }
 }
 
-// TODO better using StoragePool impl based on buffer-copy
+// using StoragePool impl based on buffer-copy
 void VoidList::appendAll(VoidList const &tail)
 {
-  StoragePool childView;
-  npool.append(tail.npool, childView);
-  top = childView.pointerToParent(tail.npool, tail.top);
+  xassert(tail.npool.getExtPtrsLength() == 1);
 
+  ExternalPtr ptrs[] = { (ExternalPtr)&top };
+  StoragePool childView;
+  npool.append(tail.npool, childView, ptrs);
+
+  /*
   // make a dest iter and move it to the end
   VoidListMutator destIter(*this);
   while (!destIter.isDone()) {
@@ -580,7 +584,7 @@ void VoidList::appendAll(VoidList const &tail)
   VoidListIter srcIter(tail);
   for (; !srcIter.isDone(); srcIter.adv()) {
     destIter.append(srcIter.data());
-  }
+  }*/
 }
 
 // TODO better using StoragePool impl based on buffer-copy
@@ -589,7 +593,7 @@ void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
   VoidList dest(npool);
   VoidListIter srcIter(tail);
   for (; !srcIter.isDone(); srcIter.adv()) {
-    void *item = srcIter.data();
+    Storeable *item = srcIter.data();
     int index = indexOf(item, eq);
     if (index == -1) {
        dest.append(item);
@@ -616,7 +620,6 @@ VoidList& VoidList::operator= (VoidList const &src)
   xassert(__kind == src.__kind);
   xassert(__parentVector == src.__parentVector);
   npool = src.npool;
-  npool.movePointerToChild(top);
   /*xassert(__pool == src.__pool);
   if (this != &src) {
     removeAll();
@@ -626,12 +629,12 @@ VoidList& VoidList::operator= (VoidList const &src)
 }
 
 
-bool VoidList::equalAsLists(VoidList const &otherList, VoidDiff diff, void *extra) const
+bool VoidList::equalAsLists(VoidList const &otherList, VoidDiff diff, Storeable *extra) const
 {
   return 0==compareAsLists(otherList, diff, extra);
 }
 
-int VoidList::compareAsLists(VoidList const &otherList, VoidDiff diff, void *extra) const
+int VoidList::compareAsLists(VoidList const &otherList, VoidDiff diff, Storeable *extra) const
 {
   VoidListIter mine(*this);
   VoidListIter his(otherList);
@@ -659,14 +662,14 @@ int VoidList::compareAsLists(VoidList const &otherList, VoidDiff diff, void *ext
 }
 
 
-bool VoidList::equalAsSets(VoidList const &otherList, VoidDiff diff, void *extra) const
+bool VoidList::equalAsSets(VoidList const &otherList, VoidDiff diff, Storeable *extra) const
 {
   return this->isSubsetOf(otherList, diff, extra) &&
          otherList.isSubsetOf(*this, diff, extra);
 }
 
 
-bool VoidList::isSubsetOf(VoidList const &otherList, VoidDiff diff, void *extra) const
+bool VoidList::isSubsetOf(VoidList const &otherList, VoidDiff diff, Storeable *extra) const
 {
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {
     if (!otherList.containsByDiff(iter.data(), diff, extra)) {
@@ -677,7 +680,7 @@ bool VoidList::isSubsetOf(VoidList const &otherList, VoidDiff diff, void *extra)
 }
 
 
-bool VoidList::containsByDiff(void *item, VoidDiff diff, void *extra) const
+bool VoidList::containsByDiff(Storeable *item, VoidDiff diff, Storeable *extra) const
 {
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {
     if (0==diff(item, iter.data(), extra)) {
@@ -688,7 +691,7 @@ bool VoidList::containsByDiff(void *item, VoidDiff diff, void *extra) const
 }
 
 
-void VoidList::removeDuplicatesAsMultiset(VoidDiff diff, void *extra)
+void VoidList::removeDuplicatesAsMultiset(VoidDiff diff, Storeable *extra)
 {
   if (isEmpty()) {
     return;
@@ -698,7 +701,7 @@ void VoidList::removeDuplicatesAsMultiset(VoidDiff diff, void *extra)
 
   VoidListMutator mut(*this);
 
-  void *prevItem = mut.data();
+  Storeable *prevItem = mut.data();
   mut.adv();
 
   while (!mut.isDone()) {
@@ -715,7 +718,7 @@ void VoidList::removeDuplicatesAsMultiset(VoidDiff diff, void *extra)
 }
 
 
-STATICDEF int VoidList::pointerAddressDiff(void *left, void *right, void*)
+STATICDEF int VoidList::pointerAddressDiff(Storeable *left, Storeable *right, Storeable*)
 {
   return comparePointerAddresses(left, right);
 }
@@ -751,7 +754,7 @@ VoidListMutator&
 }
 
 
-void VoidListMutator::insertBefore(void *item)
+void VoidListMutator::insertBefore(Storeable *item)
 {
   if (prev == NULL) {
     // insert at start of list
@@ -764,14 +767,14 @@ void VoidListMutator::insertBefore(void *item)
 }
 
 
-void VoidListMutator::insertAfter(void *item)
+void VoidListMutator::insertAfter(Storeable *item)
 {
   xassert(!isDone());
   current->next = new (list.npool) VoidNode(list.npool, item, current->next);
 }
 
 
-void VoidListMutator::append(void *item)
+void VoidListMutator::append(Storeable *item)
 {
   xassert(isDone());
   insertBefore(item);
@@ -779,10 +782,10 @@ void VoidListMutator::append(void *item)
 }
 
 
-void *VoidListMutator::remove()
+Storeable *VoidListMutator::remove()
 {
   xassert(!isDone());
-  void *retval = data();
+  Storeable *retval = data();
   if (prev == NULL) {
     // removing first node
     list.top = current->next;
@@ -843,7 +846,7 @@ void testSorting()
       list3.removeAll();
       numItems = rand()%ITEMS;
       loopj(numItems) {
-        void *toInsert = (void*)( (rand()%ITEMS) * 4 );
+        Storeable *toInsert = (Storeable*)( (rand()%ITEMS) * 4 );
 	list1.prepend(toInsert);
         list3.insertSorted(toInsert, VoidList::pointerAddressDiff);
       }
@@ -880,7 +883,7 @@ void testSorting()
     xassert(list1.equalAsPointerLists(list3));
 
     // to test as-sets equality
-    void *first = list1.first();
+    Storeable *first = list1.first();
     while (list1.removeIfPresent(first))
       {}     // remove all occurrances of 'first'
     xassert(!list1.equalAsPointerSets(list2));
@@ -893,7 +896,7 @@ void entry()
   // first set of tests
   {
     // some sample items
-    void *a=(void*)4, *b=(void*)8, *c=(void*)12, *d=(void*)16;
+    Storeable *a=(Storeable*)4, *b=(Storeable*)8, *c=(Storeable*)12, *d=(Storeable*)16;
 
     VoidList list;
 

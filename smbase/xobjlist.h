@@ -78,8 +78,8 @@ public:
   className& operator= (className const &src)         { list = src.list; return *this; }
 
   public:
-  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool) {}
-  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(pool) {}
+  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(*this,true) {}
+  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(*this,true) {}
 ]]], [[[m4_dnl          // objlist
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
@@ -92,8 +92,8 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(pool), owning(true) {}
-  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(pool), owning(true) {}
+  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(*this,true), owning(true) {}
+  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(*this,true), owning(true) {}
 ]]])m4_dnl
 
   ~className[[[]]]()                      m4_dnl
@@ -103,7 +103,7 @@ private:
   // right, 0 if they are equivalent, and >0 if right should come before
   // left.  For example, if we are sorting numbers into ascending order,
   // then 'diff' would simply be subtraction.
-  typedef int (*Diff)(T const *left, T const *right, void *extra);
+  typedef int (*Diff)(T const *left, T const *right, Storeable *extra);
 
   // selectors
   int count() const                     { return list.count(); }
@@ -117,11 +117,11 @@ private:
   T const *lastC() const                { return (T const*)list.last(); }
 
   // insertion
-  void prepend(T *newitem)              { OWN list.prepend((void*)newitem); }
-  VoidNode* append(T *newitem)          { OWN return list.append((void*)newitem); }
-  void insertAt(T *newitem, int index)  { OWN list.insertAt((void*)newitem, index); }
-  void insertSorted(T *newitem, Diff diff, void *extra=NULL)
-    { OWN list.insertSorted((void*)newitem, (VoidDiff)diff, extra); }
+  void prepend(T *newitem)              { OWN list.prepend(newitem); }
+  VoidNode* append(T *newitem)          { OWN return list.append(newitem); }
+  void insertAt(T *newitem, int index)  { OWN list.insertAt(newitem, index); }
+  void insertSorted(T *newitem, Diff diff, Storeable *extra=NULL)
+    { OWN list.insertSorted(newitem, (VoidDiff)diff, extra); }
 
   // removal
   T *removeAt(int index)                { return (T*)list.removeAt(index); }
@@ -135,23 +135,23 @@ outputCond([[[m4_dnl     // sobjlist
 ]]])m4_dnl
 
   // list-as-set: selectors
-  int indexOf(T const *item) const      { return list.indexOf((void*)item); }
-  int indexOfF(void *item) const        { return list.indexOfF((void*)item); }
-  bool contains(T const *item) const    { return list.contains((void*)item); }
+  int indexOf(T const *item) const      { return list.indexOf(item); }
+  int indexOfF(Storeable *item) const        { return list.indexOfF(item); }
+  bool contains(T const *item) const    { return list.contains(item); }
 
   // list-as-set: mutators
-  bool prependUnique(T *newitem)        { OWN return list.prependUnique((void*)newitem); }
-  bool appendUnique(T *newitem)         { OWN return list.appendUnique((void*)newitem); }
-  void removeItem(T const *item)        { list.removeItem((void*)item); }    // whether the arg should be const is debatable..
-  bool removeIfPresent(T const *item)   { return list.removeIfPresent((void*)item); }
+  bool prependUnique(T *newitem)        { OWN return list.prependUnique(newitem); }
+  bool appendUnique(T *newitem)         { OWN return list.appendUnique(newitem); }
+  void removeItem(T const *item)        { list.removeItem(item); }    // whether the arg should be const is debatable..
+  bool removeIfPresent(T const *item)   { return list.removeIfPresent(item); }
 
   // complex modifiers
   void reverse()                                    { list.reverse(); }
-  void insertionSort(Diff diff, void *extra=NULL)   { list.insertionSort((VoidDiff)diff, extra); }
-  void mergeSort(Diff diff, void *extra=NULL)       { list.mergeSort((VoidDiff)diff, extra); }
+  void insertionSort(Diff diff, Storeable *extra=NULL)   { list.insertionSort((VoidDiff)diff, extra); }
+  void mergeSort(Diff diff, Storeable *extra=NULL)       { list.mergeSort((VoidDiff)diff, extra); }
 
   // and a related test
-  bool isSorted(Diff diff, void *extra=NULL) const  { return list.isSorted((VoidDiff)diff, extra); }
+  bool isSorted(Diff diff, Storeable *extra=NULL) const  { return list.isSorted((VoidDiff)diff, extra); }
 
   // multiple lists
   template <class XObjList>
@@ -172,18 +172,18 @@ outputCond([[[m4_dnl     // sobjlist
   void stealTailAt(int index, className &tail)       { list.stealTailAt(index, tail.list); }
 
   // equal items in equal positions
-  bool equalAsLists(className const &otherList, Diff diff, void *extra=NULL) const
+  bool equalAsLists(className const &otherList, Diff diff, Storeable *extra=NULL) const
     { return list.equalAsLists(otherList.list, (VoidDiff)diff, extra); }
-  int compareAsLists(className const &otherList, Diff diff, void *extra=NULL) const
+  int compareAsLists(className const &otherList, Diff diff, Storeable *extra=NULL) const
     { return list.compareAsLists(otherList.list, (VoidDiff)diff, extra); }
 
   // last-as-set: comparisons (NOT efficient)
-  bool equalAsSets(className const &otherList, Diff diff, void *extra=NULL) const
+  bool equalAsSets(className const &otherList, Diff diff, Storeable *extra=NULL) const
     { return list.equalAsSets(otherList.list, (VoidDiff)diff, extra); }
-  bool isSubsetOf(className const &otherList, Diff diff, void *extra=NULL) const
+  bool isSubsetOf(className const &otherList, Diff diff, Storeable *extra=NULL) const
     { return list.isSubsetOf(otherList.list, (VoidDiff)diff, extra); }
-  bool containsByDiff(T const *item, Diff diff, void *extra=NULL) const
-    { return list.containsByDiff((void*)item, (VoidDiff)diff, extra); }
+  bool containsByDiff(T const *item, Diff diff, Storeable *extra=NULL) const
+    { return list.containsByDiff(item, (VoidDiff)diff, extra); }
 
   // treating the pointer values themselves as the basis for comparison
   bool equalAsPointerLists(className const &otherList) const
@@ -193,7 +193,7 @@ outputCond([[[m4_dnl     // sobjlist
 
 outputCond([[[m4_dnl    // sobjlist
   // removing duplicates
-  void removeDuplicatesAsMultiset(Diff diff, void *extra=NULL)
+  void removeDuplicatesAsMultiset(Diff diff, Storeable *extra=NULL)
     { list.removeDuplicatesAsMultiset((VoidDiff)diff, extra); }
   void removeDuplicatesAsPointerMultiset()
     { list.removeDuplicatesAsPointerMultiset(); }
@@ -275,15 +275,15 @@ mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut), owning(obj
   T *&dataRef()                         { return (T*&)mut.dataRef(); }
 
   // insertion
-  void insertBefore(T *item)            { OWN mut.insertBefore((void*)item); }
+  void insertBefore(T *item)            { OWN mut.insertBefore(item); }
     // 'item' becomes the new 'current', and the current 'current' is
     // pushed forward (so the next adv() will make it current again)
 
-  void insertAfter(T *item)             { OWN mut.insertAfter((void*)item); }
+  void insertAfter(T *item)             { OWN mut.insertAfter(item); }
     // 'item' becomes what we reach with the next adv();
     // isDone() must be false
 
-  void append(T *item)                  { OWN mut.append((void*)item); }
+  void append(T *item)                  { OWN mut.append(item); }
     // only valid while isDone() is true, it inserts 'item' at the end of
     // the list, and advances such that isDone() remains true; equivalent
     // to { xassert(isDone()); insertBefore(item); adv(); }

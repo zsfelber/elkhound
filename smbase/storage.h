@@ -165,10 +165,9 @@ inline uint8_t* decodeSignedDeltaPtr(uint8_t* origin, std::ptrdiff_t delta) {
 
 class Storeable {
 friend class StoragePool;
-
-    typedef StoragePool* PtrToMe;
-    typedef Storeable* DataPtr;
-    typedef DataPtr* ExternalPtr;
+friend class VoidList;
+friend class VoidTailList;
+friend class VoidNode;
 
     enum {
         ST_NONE = 0,
@@ -197,6 +196,10 @@ friend class StoragePool;
 
 
 public:
+
+   typedef StoragePool* PtrToMe;
+   typedef Storeable* DataPtr;
+   typedef DataPtr* ExternalPtr;
 
 
    void* operator new (std::size_t size);
@@ -321,10 +324,6 @@ public:
 
 class StoragePool : public Storeable {
    friend class Storeable;
-
-   typedef StoragePool* PtrToMe;
-   typedef Storeable* DataPtr;
-   typedef DataPtr* ExternalPtr;
 
 public:
 
@@ -813,6 +812,7 @@ public:
    StoragePool& operator+= (StoragePool const &src) {
        StoragePool childView;
        append(src, childView);
+       return *this;
    }
 
    void append(StoragePool const &src, StoragePool &childView, ExternalPtr* convertExternalPointers = NULL) {
@@ -843,7 +843,6 @@ public:
        childView.moveInternalPointers(src.memory, src.memory+memlength, memory);
 
        if (convertExternalPointers) {
-           std::ptrdiff_t d = memory - src.memory;
 
            if (extptrscapacity<(c=getPtrBufSize(extptrslength+src.extptrslength))) {
                extendBuffer((uint8_t*&)extpointers, extptrslength, c, sizeof(ExternalPtr));
@@ -851,10 +850,13 @@ public:
 
            ExternalPtr* extPointersFrom = extpointers + extptrslength;
            ExternalPtr* extPointersTo = extpointers + extptrslength + src.extptrslength;
+           uint8_t* src_bg = src.memory;
+           uint8_t* src_end = src_bg + memlength;
+           std::ptrdiff_t d = memory - src_bg;
            for (; extPointersFrom<extPointersTo; extPointersFrom++, convertExternalPointers++) {
                ExternalPtr srcPtr = *convertExternalPointers;
                *extPointersFrom = srcPtr;
-               moveVariable(src.memory, src.memory+memlength, *srcPtr, d);
+               moveVariable(src_bg, src_end, *srcPtr, d);
            }
 
            childView.extpointers = extpointers + extptrslength;
@@ -867,22 +869,12 @@ public:
        intptrslength += src.intptrslength;
        chplslength += src.chplslength;
 
-       return *this;
-   }
-
-   template<class ST>
-   ST* convertPointers(StoragePool const &src, ST** ptrInSrc) {
-       ExternalPtr* extPointersFrom = extpointers + extptrslength;
-       ExternalPtr* src_extPointersFrom = src.extpointers;
-       ExternalPtr* src_extPointersTo = src.extpointers+src.extptrslength;
-       for (; src_extPointersFrom<src_extPointersTo; extPointersFrom++, src_extPointersFrom++) {
-           ExternalPtr ptr = new DataPtr(**src_extPointersFrom);
-           *extPointersFrom = ptr;
-           moveVariable(src.memory, src.memory+memlength, *ptr, d);
-       }
    }
 
 
+   inline size_t getExtPtrsLength() const {
+       return extptrslength;
+   }
 
    inline bool contains(void* pointer) const {
        return (memory<=pointer && pointer<memory+memlength);

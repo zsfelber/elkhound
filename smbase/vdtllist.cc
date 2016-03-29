@@ -23,7 +23,7 @@ void VoidTailList::steal(VoidTailList *src, bool deleteOrig)
 }
 */
 
-void VoidTailList::prepend(void *newitem)
+void VoidTailList::prepend(Storeable *newitem)
 {
   VoidList::prepend(newitem);
   if (!tail) {
@@ -31,7 +31,7 @@ void VoidTailList::prepend(void *newitem)
   }
 }
 
-void VoidTailList::append(void *newitem)
+void VoidTailList::append(Storeable *newitem)
 {
   if (isEmpty()) {
     prepend(newitem);
@@ -43,32 +43,38 @@ void VoidTailList::append(void *newitem)
   }
 }
 
-void VoidTailList::appendAll(VoidTailList const &src)
+void VoidTailList::appendAll(VoidTailList const &tail)
 {
-  VoidList::appendAll(src);
+  xassert(tail.npool.getExtPtrsLength() == 2);
+
+  ExternalPtr ptrs[] = { (ExternalPtr)&top, (ExternalPtr)&this->tail };
+  StoragePool childView;
+  npool.append(tail.npool, childView, ptrs);
+
+  /*VoidList::appendAll(src);
   if (!tail) {
       tail = top;
   }
   if (tail) {
       while (tail->next) tail = tail->next;
-  }
+  }*/
 }
 
-void VoidTailList::appendAllNew(VoidTailList const &src, VoidEq eq)
+void VoidTailList::appendAllNew(VoidTailList const &tail, VoidEq eq)
 {
-    VoidList::appendAllNew(src, eq);
+    VoidList::appendAllNew(tail, eq);
     adjustTails();
 }
 
-void VoidTailList::reappendAll(VoidTailList const &src, VoidEq eq)
+void VoidTailList::reappendAll(VoidTailList const &tail, VoidEq eq)
 {
-  VoidList::removeItems(src, eq);
-  tail = top;
+  VoidList::removeItems(tail, eq);
+  this->tail = top;
   adjustTails();
-  appendAll(src);
+  appendAll(tail);
 }
 
-void VoidTailList::insertAt(void *newitem, int index)
+void VoidTailList::insertAt(Storeable *newitem, int index)
 {
   VoidList::insertAt(newitem, index);
   adjustTail();
@@ -109,20 +115,20 @@ void VoidTailList::adjustTails()
 }
 
 
-void *VoidTailList::removeFirst()
+Storeable *VoidTailList::removeFirst()
 {
   xassert(top);
   if (top == tail) {
     tail = NULL;
   }
-  void *retval = top->data;
+  Storeable *retval = top->data;
   VoidNode *tmp = top;
   top = top->next;
   delete tmp;
   return retval;
 }
 
-void *VoidTailList::removeLast()
+Storeable *VoidTailList::removeLast()
 {
   xassert(top);
   if (top == tail) {
@@ -133,14 +139,14 @@ void *VoidTailList::removeLast()
   while (before->next != tail) {
     before = before->next;
   }
-  void *retval = tail->data;
+  Storeable *retval = tail->data;
   delete tail;
   tail = before;
   tail->next = NULL;
   return retval;
 }
 
-void *VoidTailList::removeAt(int index)
+Storeable *VoidTailList::removeAt(int index)
 {
   xassert(top);
   if (index == 0) {
@@ -162,7 +168,7 @@ void *VoidTailList::removeAt(int index)
 
   // patch around before->next
   VoidNode *toDelete = before->next;
-  void *retval = toDelete->data;
+  Storeable *retval = toDelete->data;
   before->next = toDelete->next;
   delete toDelete;
 
@@ -175,14 +181,14 @@ void VoidTailList::removeAll()
   tail = NULL;
 }
 
-bool VoidTailList::prependUnique(void *newitem)
+bool VoidTailList::prependUnique(Storeable *newitem)
 {
   bool retval = VoidList::prependUnique(newitem);
   adjustTail();
   return retval;
 }
 
-bool VoidTailList::appendUnique(void *newitem)
+bool VoidTailList::appendUnique(Storeable *newitem)
 {
   bool retval = VoidList::appendUnique(newitem);
   adjustTail();

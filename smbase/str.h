@@ -17,6 +17,7 @@
 #include <iostream>	 // istream, ostream
 #include <stdarg.h>      // va_list
 #include <string.h>      // strcmp, etc.
+#include "storage.h"
 
 class Flatten;           // flatten.h
 
@@ -48,7 +49,7 @@ class Flatten;           // flatten.h
 // marked as incompatible.
 enum SmbaseStringFunc { SMBASE_STRING_FUNC };
 
-class string {
+class string : public Storeable {
 protected:     // data
   // 10/12/00: switching to never letting s be NULL
   char *s;     	       	       	       // string contents; never NULL

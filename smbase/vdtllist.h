@@ -52,21 +52,21 @@ public:
   VoidList::isNotEmpty;
   VoidList::nth;
   VoidList::first;
-  void *last() const                 { xassert(tail); return tail->data; }
+  Storeable *last() const                 { xassert(tail); return tail->data; }
 
   // insertion
-  void prepend(void *newitem);
-  void append(void *newitem);
-  void appendAll(VoidTailList const &src);
-  void appendAllNew(VoidTailList const &src, VoidEq eq);
-  void reappendAll(VoidTailList const &src, VoidEq eq);
-  void insertAt(void *newitem, int index);
+  void prepend(Storeable *newitem);
+  void append(Storeable *newitem);
+  void appendAll(VoidTailList const &tail);
+  void appendAllNew(VoidTailList const &tail, VoidEq eq);
+  void reappendAll(VoidTailList const &tail, VoidEq eq);
+  void insertAt(Storeable *newitem, int index);
   void concat(VoidTailList &tail);
 
   // removal
-  void *removeFirst();               // remove first, return data; must exist
-  void *removeLast();
-  void *removeAt(int index);
+  Storeable *removeFirst();               // remove first, return data; must exist
+  Storeable *removeLast();
+  Storeable *removeAt(int index);
   void removeAll();
   VoidList::removeItem;
 
@@ -76,10 +76,10 @@ public:
   VoidList::contains;
 
   // list-as-set: mutators
-  bool prependUnique(void *newitem);
-  bool appendUnique(void *newitem);
-  //void removeItem(void *item);
-  //bool removeIfPresent(void *item);
+  bool prependUnique(Storeable *newitem);
+  bool appendUnique(Storeable *newitem);
+  //void removeItem(Storeable *item);
+  //bool removeIfPresent(Storeable *item);
 
   // debugging
   void selfCheck() const;

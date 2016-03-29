@@ -55,19 +55,9 @@ public:
   T *last()                             { return (T*)list.last(); }
   T const *lastC() const                { return (T const*)list.last(); }
 
-  T* adopt(T* newitem) {
-     if (owning) newitem=list.npool.adopt(newitem);
-     return newitem;
-  }
-  ASTList<T> &adopt(ASTList<T> &tail) {
-      if (owning) {
-          list.
-      }
-  }
-
   // insertion
-  void prepend(T *newitem)              { list.prepend(adopt(newitem)); }
-  void append(T *newitem)               { list.append(adopt(newitem)); }
+  void prepend(T *newitem)              { list.prepend(newitem); }
+  void append(T *newitem)               { list.append(newitem); }
   void appendAll(ASTList<T> &tail)      { list.appendAll(tail.list); }
   void appendAllNew(ASTList<T> const &tail, VoidEq eq)    { list.appendAllNew(tail.list, eq); }
   void reappendAll(ASTList<T> const &tail, VoidEq eq)    { list.reappendAll(tail.list, eq); }
@@ -78,7 +68,7 @@ public:
   T *removeFirst()                      { return (T*)list.removeFirst(); }
   T *removeLast()                       { return (T*)list.removeLast(); }
   T *removeAt(int index)                { return (T*)list.removeAt(index); }
-  void removeItem(T *item)              { list.removeItem((void*)item); }
+  void removeItem(T *item)              { list.removeItem(item); }
   
   // this one is awkwardly named to remind the user that it's
   // contrary to the usual intent of this class
@@ -90,9 +80,9 @@ public:
   //void deleteAll();
 
   // list-as-set: selectors
-  int indexOf(T const *item) const      { return list.indexOf((void*)item); }
-  int indexOfF(T const *item) const     { return list.indexOfF((void*)item); }
-  bool contains(T const *item) const    { return list.contains((void*)item); }
+  int indexOf(T const *item) const      { return list.indexOf(item); }
+  int indexOfF(T const *item) const     { return list.indexOfF(item); }
+  bool contains(T const *item) const    { return list.contains(item); }
 
   // list-as-set: mutators
   bool prependUnique(T *newitem)        { return list.prependUnique(newitem); }

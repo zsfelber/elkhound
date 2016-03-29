@@ -90,7 +90,7 @@ private:     // types
 
 public:      // types
   // describes a file we know about
-  class File {
+  class File : public Storeable {
   public:    // data
     // file name; we consider two files to be the same if and only
     // if their names are equal, i.e. there is no checking done to
@@ -145,6 +145,7 @@ public:      // types
   public:    // funcs
     // this builds both the array and the index
     File(char const *name, SourceLoc startLoc);
+    //File(StoragePool &pool, char const *name, SourceLoc startLoc);
     ~File();
     
     // line number to character offset
@@ -171,7 +172,7 @@ public:      // types
   // available, yet we'd like to be able to store some location
   // information anyway; the queries below just return the static
   // information stored, and incremental update is impossible
-  class StaticLoc {
+  class StaticLoc : public Storeable {
   public:
     string name;      // file name
     int offset;       // char offset
