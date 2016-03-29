@@ -1401,17 +1401,17 @@ yyreduce:
   case 10:
 #line 136 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.tfClass)=(yyvsp[0].tfClass))->super->name = unbox((yyvsp[-3].str)); 
-           (yyval.tfClass)->super->args.steal((yyvsp[-2].ctorArgList)); 
-           (yyval.tfClass)->super->bases.steal((yyvsp[-1].baseClassList)); }
+           (yyval.tfClass)->super->args.assign((yyvsp[-2].ctorArgList), true);
+           (yyval.tfClass)->super->bases.assign((yyvsp[-1].baseClassList), true); }
 #line 1407 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
 #line 140 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.tfClass)=(yyvsp[0].tfClass))->super->name = unbox((yyvsp[-4].str));
-           (yyval.tfClass)->super->args.steal((yyvsp[-3].ctorArgList));
-           (yyval.tfClass)->super->lastArgs.steal((yyvsp[-2].ctorArgList));
-           (yyval.tfClass)->super->bases.steal((yyvsp[-1].baseClassList)); }
+           (yyval.tfClass)->super->args.assign((yyvsp[-3].ctorArgList), true);
+           (yyval.tfClass)->super->lastArgs.assign((yyvsp[-2].ctorArgList), true);
+           (yyval.tfClass)->super->bases.assign((yyvsp[-1].baseClassList), true); }
 #line 1416 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 

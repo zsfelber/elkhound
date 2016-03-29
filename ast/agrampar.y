@@ -134,13 +134,13 @@ Input: /* empty */           { $$ = new (y_pool) ASTList<ToplevelForm>(y_pool); 
 /* yields TF_class */
 Class: NewOpt "class" TOK_NAME CtorArgsOpt BaseClassesOpt ClassBody
          { ($$=$6)->super->name = unbox($3); 
-           $$->super->args.steal($4); 
-           $$->super->bases.steal($5); }
+           $$->super->args.assign($4, true);
+           $$->super->bases.assign($5, true); }
      | NewOpt "class" TOK_NAME CtorArgs CtorArgs BaseClassesOpt ClassBody
          { ($$=$7)->super->name = unbox($3);
-           $$->super->args.steal($4);
-           $$->super->lastArgs.steal($5);
-           $$->super->bases.steal($6); }
+           $$->super->args.assign($4, true);
+           $$->super->lastArgs.assign($5, true);
+           $$->super->bases.assign($6, true); }
      ;
 
 /* for now, just allow "new" but don't interpret it */

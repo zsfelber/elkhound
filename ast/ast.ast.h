@@ -39,7 +39,7 @@ public:      // data
   ASTList <ToplevelForm > forms;
 
 public:      // funcs
-  ASTSpecFile(StoragePool &pool, ASTList <ToplevelForm > *_forms) : Storeable(pool), forms(_forms) {
+  ASTSpecFile(StoragePool &pool, ASTList <ToplevelForm > *_forms) : Storeable(pool), forms(_forms, true/*move*/) {
   }
   ~ASTSpecFile();
 
@@ -123,7 +123,7 @@ public:      // data
   ASTList <ASTClass > ctors;
 
 public:      // funcs
-  TF_class(StoragePool &pool, ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(pool), super(_super), ctors(_ctors) {
+  TF_class(StoragePool &pool, ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(pool), super(_super), ctors(_ctors, true/*move*/) {
   }
   virtual ~TF_class();
 
@@ -143,7 +143,7 @@ public:      // data
   ASTList <string > args;
 
 public:      // funcs
-  TF_option(StoragePool &pool, string _name, ASTList <string > *_args) : ToplevelForm(pool), name(_name), args(_args) {
+  TF_option(StoragePool &pool, string _name, ASTList <string > *_args) : ToplevelForm(pool), name(_name), args(_args, true/*move*/) {
   }
   virtual ~TF_option();
 
@@ -180,7 +180,7 @@ public:      // data
   ASTList <string > enumerators;
 
 public:      // funcs
-  TF_enum(StoragePool &pool, string _name, ASTList <string > *_enumerators) : ToplevelForm(pool), name(_name), enumerators(_enumerators) {
+  TF_enum(StoragePool &pool, string _name, ASTList <string > *_enumerators) : ToplevelForm(pool), name(_name), enumerators(_enumerators, true/*move*/) {
   }
   virtual ~TF_enum();
 
@@ -211,8 +211,8 @@ public:      // data
   ASTList <CtorArg > totLastArgs;
 
 public:      // funcs
-  ASTClass(StoragePool &pool, string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : Storeable(pool), name(_name), args(_args), lastArgs(_lastArgs), bases(_bases), decls(_decls),
-    level(0), consumed(0), parent(0), totArgs(false), totLastArgs(false){
+  ASTClass(StoragePool &pool, string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : Storeable(pool), name(_name), args(_args, true/*move*/), lastArgs(_lastArgs, true/*move*/), bases(_bases, true/*move*/), decls(_decls, true/*move*/),
+    level(0), consumed(0), parent(0), totArgs(), totLastArgs(){
   }
   ~ASTClass();
 
@@ -257,7 +257,7 @@ public:      // data
   ASTList <string > mods;
 
 public:      // funcs
-  AccessMod(StoragePool &pool, AccessCtl _acc, ASTList <string > *_mods) : Storeable(pool), acc(_acc), mods(_mods) {
+  AccessMod(StoragePool &pool, AccessCtl _acc, ASTList <string > *_mods) : Storeable(pool), acc(_acc), mods(_mods, true/*move*/) {
   }
   ~AccessMod();
 

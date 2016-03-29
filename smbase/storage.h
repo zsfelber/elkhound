@@ -20,13 +20,11 @@
 
 
 template <typename P>
-P* NN(P* a) {
-    if (a) {
-        return a;
-    } else {
+P& NN(P* a) {
+    if (!a) {
         x_assert_fail("Non-nullable pointer is null.", __FILE__, __LINE__);
-        return NULL;
     }
+    return *a;
 }
 
 template <typename P> inline P* constcast(P const * p) {
@@ -251,9 +249,7 @@ public:
    void assign(Storeable const & srcOrParent, size_t size_of);
 
    inline StoragePool & getPoolRef() const {
-       StoragePool * pool = getPool();
-       xassert(pool);
-       return *pool;
+       return NN(getPool());
    }
 
    inline StoragePool * getPool() const {
@@ -719,8 +715,7 @@ public:
 
            fixAllPoolPointers();
 
-           StoragePool & srcOrParentPool = (StoragePool &) srcOrParentPool;
-           srcOrParentPool.clear();
+           constcast(src).clear();
            break;
        }
        case Cp_All:

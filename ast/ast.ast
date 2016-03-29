@@ -44,8 +44,8 @@ class ASTClass (string name,
                 ASTList<CtorArg> lastArgs,    // only for nonterminal
                 ASTList<BaseClass> bases,
                 ASTList<Annotation> decls,
-                ASTList <CtorArg > totArgs=false,
-                ASTList <CtorArg > totLastArgs=false) {
+                ASTList <CtorArg > totArgs,
+                ASTList <CtorArg > totLastArgs) {
 
   public int level = 0;
   public bool consumed = 0;

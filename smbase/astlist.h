@@ -27,6 +27,7 @@ private:
 
 public:
 
+  ASTList() : Storeable(), list() {}
   ASTList(StoragePool &pool) : Storeable(pool), list(*this) {}
   ASTList(Storeable &parent) : Storeable(parent, sizeof(ASTList)), list(*this) {}
   ~ASTList()                            {  }
@@ -38,9 +39,10 @@ public:
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
   ASTList(ASTList<T> &src,bool move) : Storeable(src, false), list(src.list,move) { }
-  ASTList(ASTList<T> *src,bool move) : Storeable(NN(src), false), list(src.list,move) { }
+  ASTList(ASTList<T> *src,bool move) : Storeable(NN(src), false), list(src->list,move) { }
 
-  void assign(ASTList<T> &src)           { list.assign(src->list); }
+  void assign(ASTList<T> &src, bool move)           { list.assign(src.list, move); }
+  void assign(ASTList<T> *src, bool move)           { list.assign(NN(src).list, move); }
 
   // selectors
   int count() const                     { return list.count(); }

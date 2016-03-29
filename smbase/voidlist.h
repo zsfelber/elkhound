@@ -67,6 +67,9 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
+  VoidList()  : Storeable(), npool()
+  { top=NULL;   npool.addPointer(top); }
+
   VoidList(StoragePool &pool, StoragePool::CopyMode copy)  : Storeable(), npool(pool, false, copy)
   { top=NULL;   npool.addPointer(top); }
 

@@ -30,6 +30,9 @@ private:
   void adjustTails();
 
 public:
+  VoidTailList() : VoidList()
+  { tail = NULL;  npool.addPointer(tail); }
+
   VoidTailList(StoragePool &pool) : VoidList(pool)
   { tail = NULL;  npool.addPointer(tail); }
   VoidTailList(Storeable &parent) : VoidList(parent,sizeof(VoidTailList))
@@ -37,10 +40,10 @@ public:
   ~VoidTailList()                    { npool.removePointer(tail); }
   
   // move:true  special ctor which steals the list. NOTE invoker should always deallocate the header
-  VoidTailList(VoidTailList &src, bool move) : VoidList(src, sizeof(VoidTailList), move)
+  VoidTailList(VoidTailList const &src, bool move) : VoidList(src, sizeof(VoidTailList), move)
   { }
 
-  void assign(VoidTailList &src, bool move)
+  void assign(VoidTailList const &src, bool move)
   { VoidList::assign(src, sizeof(VoidTailList), move);
     tail = src.tail;
     ExternalPtr ptrs[] = { (ExternalPtr)&tail };
