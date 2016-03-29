@@ -640,6 +640,8 @@ public:
    }
 
    StoragePool& operator= (StoragePool const &src) {
+       del();
+
        if (memcapacity<src.memcapacity) {
            memcapacity = src.memcapacity;
            delete[] memory;
@@ -672,6 +674,8 @@ public:
    }
 
    void steal(StoragePool * src) {
+       xassert(__kind == ST_PARENT);
+       xassert(__kind == src->__kind);
        xassert(getPool() == src->getPool());
 
        del();
