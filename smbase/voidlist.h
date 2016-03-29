@@ -64,9 +64,9 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
-  VoidList(StoragePool &pool)  : Storeable(pool), npool(pool, true)
+  VoidList(StoragePool &pool)  : Storeable(pool), npool(*this, true)
   { top=NULL;   npool.addPointer(top); }
-  VoidList(Storeable const &parent) : Storeable(parent, sizeof(VoidList)), npool(parent.getPoolRef(), true)
+  VoidList(Storeable const &parent) : Storeable(parent, sizeof(VoidList)), npool(*this, true)
   { top=NULL;   npool.addPointer(top); }
   VoidList(VoidList const &obj);     // makes a (shallow) copy of the contents
   ~VoidList()                        { /*npool clears it completely*/  }

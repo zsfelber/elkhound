@@ -223,16 +223,18 @@ public:
     * @param parent
     */
    template<class ME>
-   Storeable(ME const & src, bool childOfParent);
+   Storeable(ME const & srcOrParent, bool childOfParent);
 
    /**
     * this object is a non-pointer class field of the pointer/non-pointer stored variable, parent
     * @brief Storeable::Storeable
     * @param parent
     */
-   Storeable(Storeable const & parent, size_t size_of);
+   Storeable(Storeable const & srcOrParent, size_t size_of, bool childOfParent);
 
    virtual ~Storeable();
+
+   void init(Storeable const & srcOrParent, size_t size_of, bool childOfParent);
 
 
    inline StoragePool & getPoolRef() const {
@@ -589,7 +591,7 @@ public:
        clear();
    }
 
-   StoragePool(StoragePool const & srcOrParentPool, bool childOfParent) : Storeable(srcOrParentPool, childOfParent),
+   StoragePool(Storeable const & srcOrParent, bool childOfParent) : Storeable(srcOrParent, sizeof(StoragePool), childOfParent),
        memory(0), intpointers(0), extpointers(0), childpools(0) {
 
 
@@ -601,6 +603,8 @@ public:
 
            size_t bufsz = ((memlength+STORE_BUF_SZ-1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
            xassert(bufsz==memcapacity);
+
+           StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
 
            copyBuffer(srcOrParentPool.memory, memlength, memcapacity, memory, 1/*sizeof(uint8_t)*/);
            copyBuffer((uint8_t*)srcOrParentPool.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
@@ -805,48 +809,12 @@ inline Storeable::Storeable(StoragePool & pool) : __kind(ST_PARENT) {
 template<class ME>
 inline Storeable::Storeable(ME const & srcOrParent, bool childOfParent)
 {
-    if (childOfParent) {
-        clear(sizeof(ME));
-        __kind = ST_CHILD;
-        __parentVector = encodeDeltaPtr((uint8_t*)&srcOrParent, (uint8_t*)this);
-        __store_size = getStoreSize(sizeof(ME));
-#ifdef REG_CHILD
-        __next = 0;
-        getParent()->regChild(this);
-#endif
-    } else {
-        memcpy(this, &srcOrParent, sizeof(ME));
-
-        // transfer __parentVector (we keep parent)
-        switch (__kind) {
-        case ST_PARENT:
-            StoragePool * srcPool = srcOrParent.getPool();
-            __parentVector = encodeDeltaPtr((uint8_t*)srcPool->memory, (uint8_t*)this);
-            break;
-        case ST_CHILD:
-            Storeable * srcParent = srcOrParent.getParent();
-            __parentVector = encodeDeltaPtr((uint8_t*)srcParent, (uint8_t*)this);
-            break;
-        default:
-            x_assert_fail("Invalid kind.", __FILE__, __LINE__);
-        }
-    }
-
-    StoragePool *pool = getPool();
-    xassert(pool);
-    xassert(pool->contains(this));
+    init(srcOrParent, sizeof(ME), childOfParent);
 }
 
-inline Storeable::Storeable(Storeable const & parent, size_t size_of)
+inline Storeable::Storeable(Storeable const & srcOrParent, size_t size_of, bool childOfParent)
 {
-    clear(size_of);
-    __kind = ST_CHILD;
-    __parentVector = encodeDeltaPtr((uint8_t*)&parent, (uint8_t*)this);
-    __store_size = getStoreSize(size_of);
-#ifdef REG_CHILD
-    __next = 0;
-    getParent()->regChild(this);
-#endif
+    init(srcOrParent, size_of, childOfParent);
 }
 
 inline Storeable::~Storeable() {
@@ -857,6 +825,47 @@ inline Storeable::~Storeable() {
     default:
         break;
     }
+}
+
+inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent) {
+    if (childOfParent) {
+        clear(size_of);
+        __kind = ST_CHILD;
+        __parentVector = encodeDeltaPtr((uint8_t*)&srcOrParent, (uint8_t*)this);
+        __store_size = getStoreSize(size_of);
+    #ifdef REG_CHILD
+        __next = 0;
+        getParent()->regChild(this);
+    #endif
+    } else {
+        // !
+        xassert(srcOrParent.__store_size == getStoreSize(size_of));
+
+        memcpy(this, &srcOrParent, size_of);
+
+        // transfer __parentVector (we keep parent)
+        switch (__kind) {
+        case ST_PARENT:
+        {
+            StoragePool * srcPool = srcOrParent.getPool();
+            __parentVector = encodeDeltaPtr((uint8_t*)srcPool->memory, (uint8_t*)this);
+            break;
+        }
+        case ST_CHILD:
+        {
+            Storeable * srcParent = srcOrParent.getParent();
+            __parentVector = encodeDeltaPtr((uint8_t*)srcParent, (uint8_t*)this);
+            break;
+        }
+        default:
+            x_assert_fail("Invalid kind.", __FILE__, __LINE__);
+        }
+    }
+
+    StoragePool *pool = getPool();
+    xassert(pool);
+    xassert(pool->contains(this));
+
 }
 
 inline void* Storeable::operator new (std::size_t size, StoragePool& pool) {
