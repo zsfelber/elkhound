@@ -54,6 +54,7 @@ typedef bool (*VoidEq)(void *left, void *right);
 // (well, some comparison has creeped in now... but only via VoidDiff)
 class VoidList : public Storeable {
 private:
+  friend class VoidTailList;
   friend class VoidListIter;
   friend class VoidListMutator;
 
@@ -66,9 +67,9 @@ protected:
 public:
   VoidList(StoragePool &pool)  : Storeable(pool), npool(*this, true)
   { top=NULL;   npool.addPointer(top); }
-  VoidList(Storeable const &parent) : Storeable(parent, sizeof(VoidList)), npool(*this, true)
+  VoidList(Storeable const &parent, size_t size_of=0) : Storeable(parent, size_of?size_of:sizeof(VoidList), true), npool(*this, true)
   { top=NULL;   npool.addPointer(top); }
-  VoidList(VoidList const &obj);     // makes a (shallow) copy of the contents
+  VoidList(VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
   ~VoidList()                        { /*npool clears it completely*/  }
 
   // selectors

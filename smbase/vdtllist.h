@@ -31,11 +31,11 @@ private:
 
 public:
   VoidTailList(StoragePool &pool) : VoidList(pool)                     { tail = NULL;  npool.addPointer(tail); }
-  VoidTailList(Storeable &parent) : VoidList(parent)                     { tail = NULL;  npool.addPointer(tail); }
+  VoidTailList(Storeable &parent) : VoidList(parent,sizeof(VoidTailList))                     { tail = NULL;  npool.addPointer(tail); }
   ~VoidTailList()                    { npool.removePointer(tail); }
   
   // special ctor which steals the list and then deallocates the header
-  VoidTailList(VoidTailList *src) : VoidList(src)    { tail = NULL; steal(src); }
+  VoidTailList(VoidTailList &src) : VoidList(src, )    { tail = NULL; steal(src); }
   void steal(VoidTailList *src,bool deleteOrig=true);
 
   // this syntax just makes the implementation inherited from

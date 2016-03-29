@@ -591,13 +591,25 @@ public:
        clear();
    }
 
-   StoragePool(Storeable const & srcOrParent, bool childOfParent) : Storeable(srcOrParent, sizeof(StoragePool), childOfParent),
+   StoragePool(Storeable const & srcOrParent, bool childOfParent, bool move=false) :
+       Storeable(srcOrParent, sizeof(StoragePool), childOfParent),
        memory(0), intpointers(0), extpointers(0), childpools(0) {
 
 
        if (childOfParent) {
            xassert(__kind == ST_CHILD);
+           xassert(!move);
            first_del_var = std::string::npos;
+       } else if (move) {
+           xassert(__kind == ST_PARENT);
+           xassert(__kind == srcOrParent.__kind);
+           xassert(getPool() == srcOrParent.getPool());
+
+           fixChildPoolsInMem();
+
+           StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
+           srcOrParentPool.clear();
+
        } else {
            xassert(__kind == ST_CHILD || __kind == ST_PARENT);
 
@@ -675,22 +687,6 @@ public:
        convertAll(src.memory, src.memory+memlength);
 
        return *this;
-   }
-
-   void steal(StoragePool * src) {
-       xassert(__kind == ST_PARENT);
-       xassert(__kind == src->__kind);
-       xassert(getPool() == src->getPool());
-
-       del();
-
-       memcpy(this, src, sizeof(StoragePool));
-
-       fixChildPoolsInMem();
-
-       src->clear();
-
-       delete src;
    }
 
 

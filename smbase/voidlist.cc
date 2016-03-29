@@ -11,8 +11,8 @@
 #include <ios>
 
 
-VoidList::VoidList(VoidList const &obj)
-  : Storeable(obj, false), npool(*this, true)
+VoidList::VoidList(VoidList const &obj, size_t size_of, bool move)
+  : Storeable(obj, size_of?size_of:sizeof(VoidList), false), npool(obj.npool, false, move)
 {
   xassert(__kind == src.__kind);
   xassert(__parentVector == src.__parentVector);
