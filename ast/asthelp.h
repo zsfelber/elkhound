@@ -370,15 +370,16 @@ ASTList<T> * /*owner*/ cloneASTList(StoragePool &pool, ASTList<T> const &src, in
   deepness--;listDeepness--;
 
   const bool d = (deepness >= 0);
-  ASTList<T> *ret = new (pool) ASTList<T>(pool, d);
+  ASTList<T> *ret = new (pool) ASTList<T>(pool);
   if (d) {
       FOREACH_ASTLIST(T, src, iter) {
         ret->append(iter.data()->clone(pool, deepness, listDeepness));
       }
   } else {
-      FOREACH_ASTLIST(T, src, iter) {
-        ret->append(constcast(iter.data()));
-      }
+      ret->assign(src, false);
+      //FOREACH_ASTLIST(T, src, iter) {
+      //  ret->append(constcast(iter.data()));
+      //}
   }
 
   return ret;
@@ -391,12 +392,13 @@ ASTList<T> * /*owner*/ cloneASTList(StoragePool &pool, ASTList<T> const &src, in
 template <class T>
 ASTList<T> * /*owner*/ shallowCloneASTList(StoragePool &pool, ASTList<T> const &src)
 {
-  ASTList<T> *ret = new (pool) ASTList<T>(pool, false);
+  ASTList<T> *ret = new (pool) ASTList<T>(pool);
+  ret->assign(src, false);
 
-  FOREACH_ASTLIST(T, src, iter) {
+  //FOREACH_ASTLIST(T, src, iter) {
     // list backbone is const, but nodes' constness leaks away..
-    ret->append(const_cast<T*>(iter.data()));
-  }
+  //  ret->append(const_cast<T*>(iter.data()));
+  //}
 
   return ret;
 }

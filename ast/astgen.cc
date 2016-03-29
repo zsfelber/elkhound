@@ -1592,7 +1592,7 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
   if (!emitCustomCode(myClass->decls, "substituteClone")) {
     out << "  deepness--; listDeepness--;" << std::endl;
-    out << "  " << name << " *ret = new " << name << "(";
+    out << "  " << name << " *ret = new (pool) " << name << "(";
 
     // clone each of the superclass ctor arguments
     int ct=0;

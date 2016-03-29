@@ -41,8 +41,8 @@ public:
   ASTList(ASTList<T> &src,bool move) : Storeable(src, false), list(src.list,move) { }
   ASTList(ASTList<T> *src,bool move) : Storeable(NN(src), false), list(src->list,move) { }
 
-  void assign(ASTList<T> &src, bool move)           { list.assign(src.list, move); }
-  void assign(ASTList<T> *src, bool move)           { list.assign(NN(src).list, move); }
+  void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
+  void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
 
   // selectors
   int count() const                     { return list.count(); }
