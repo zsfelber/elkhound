@@ -18,6 +18,7 @@
 #include "nonport.h"        // vnprintf
 #include "array.h"          // Array
 
+static StoragePool pool;
 
 // ----------------------- string ---------------------
 
@@ -37,6 +38,12 @@ string::string(char const *src, int length, SmbaseStringFunc)
   memcpy(s, src, length);
 }
 
+void* string::operator new (size_t size) {
+    return Storeable::operator new(size, pool);
+}
+void* string::operator new (size_t size, StoragePool &pool) {
+    return Storeable::operator new(size, pool);
+}
 
 void string::dup(char const *src)
 {

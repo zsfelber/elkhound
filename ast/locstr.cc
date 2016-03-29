@@ -13,6 +13,10 @@ LocString::LocString(LocString const &obj)
   : Storeable(obj,false)
 {}
 
+LocString::LocString(Storeable const &parent)
+  : Storeable(parent, true)
+{}
+
 LocString::LocString(StoragePool &pool, SourceLoc L, StringRef s)
   : Storeable(pool), loc(L),
     str(s)

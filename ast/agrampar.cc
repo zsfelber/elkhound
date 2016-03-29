@@ -26,12 +26,12 @@ string unbox(string *s)
 
 string *box(char const *s)
 {
-  return new string(s);
+  return new (y_pool) string(y_pool, s);
 }
 
 string *appendStr(string *left, string *right)
 {
-  string *ret = new string(*left & *right);
+  string *ret = new (y_pool) string(y_pool, *left & *right);
   delete left;
   delete right;
   return ret;

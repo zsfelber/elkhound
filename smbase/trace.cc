@@ -15,8 +15,10 @@ static StoragePool pool;
 // auto-init
 static bool inited = false;
 
+static ObjList<string>* _tracers = new (pool) ObjList<string>(pool);
+
 // list of active tracers, initially empty
-static ObjList<string> tracers(pool);
+static ObjList<string>& tracers = *_tracers;
 
 // stream connected to /dev/null
 std::ofstream devNullObj("/dev/null");
@@ -44,7 +46,7 @@ void traceAddSys(char const *sysName)
 {
   init();
 
-  tracers.prepend(new string(sysName));
+  tracers.prepend(new (pool) string(pool, sysName));
 }
 
 

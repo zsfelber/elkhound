@@ -19,6 +19,7 @@ public:    // data
 public:    // funcs
   LocString(StoragePool &pool);
   LocString(LocString const &obj);
+  LocString(Storeable const &parent);
   LocString(StoragePool &pool, SourceLoc loc, StringRef str);
 
   LocString(StoragePool &pool, Flatten&);

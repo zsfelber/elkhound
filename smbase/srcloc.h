@@ -145,8 +145,10 @@ public:      // types
   public:    // funcs
     // this builds both the array and the index
     File(char const *name, SourceLoc startLoc);
+    File(StoragePool &pool, char const *name, SourceLoc startLoc);
     //File(StoragePool &pool, char const *name, SourceLoc startLoc);
     ~File();
+    void init();
     
     // line number to character offset
     int lineToChar(int lineNum);
@@ -183,6 +185,10 @@ public:      // types
       : name(n), offset(o), line(L), col(c) {}
     StaticLoc(StaticLoc const &obj)
       : DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
+    StaticLoc(StoragePool &pool, char const *n, int o, int L, int c)
+      : Storeable(pool), name(n), offset(o), line(L), col(c) {}
+    StaticLoc(StoragePool &pool, StaticLoc const &obj)
+      : Storeable(pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
   };
 

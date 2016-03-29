@@ -63,6 +63,8 @@ protected:     // funcs
 public:	       // funcs
   string(string const &src) { if (src.s) dup(src.s); else s = nullString; }
   string(char const *src) { if (src) dup(src); else s = nullString; }
+  string(StoragePool & pool, string const &src) : Storeable(pool) { if (src.s) dup(src.s); else s = nullString; }
+  string(StoragePool & pool, char const *src) : Storeable(pool) { if (src) dup(src); else s = nullString; }
   string() { s=emptyString; }
   ~string() { kill(); }
 
@@ -165,6 +167,9 @@ public:	       // funcs
   // debugging
   void selfCheck() const;
     // fail an assertion if there is a problem
+
+  void* operator new (size_t size);
+  void* operator new (size_t size, StoragePool &pool);
 };
 
 

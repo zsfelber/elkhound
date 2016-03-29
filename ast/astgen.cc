@@ -33,12 +33,17 @@ enum ListKind {
 // a product type of the information relevant to a list member of a
 // class; used to construct the traverse calls and visitors to the
 // fictional list classes
-struct ListClass {
+struct ListClass : public Storeable {
   ListKind lkind;
   string classAndMemberName;
   string elementClassName;
   explicit ListClass(ListKind lkind0, rostring classAndMemberName0, rostring elementClassName0)
     : lkind(lkind0)
+    , classAndMemberName(classAndMemberName0)
+    , elementClassName(elementClassName0)
+  {}
+  ListClass(StoragePool &pool, ListKind lkind0, rostring classAndMemberName0, rostring elementClassName0)
+    : Storeable(pool), lkind(lkind0)
     , classAndMemberName(classAndMemberName0)
     , elementClassName(elementClassName0)
   {}
@@ -80,13 +85,16 @@ ASTSpecFile *wholeAST = NULL;
 
 StoragePool astgen_pool;
 
+SObjList<TF_class> *_allClasses = new (astgen_pool) SObjList<TF_class>(astgen_pool);
+ASTList<ListClass> *_listClasses = new (astgen_pool) ASTList<ListClass>(astgen_pool);
+
 // list of all TF_classes in the input, useful for certain
 // applications which don't care about other forms
-SObjList<TF_class> allClasses(astgen_pool, false);
+SObjList<TF_class> &allClasses = *_allClasses;
 
 // list of all ASTList "list classes"
 StringSet listClassesSet;
-ASTList<ListClass> listClasses(astgen_pool, false);
+ASTList<ListClass> &listClasses = *_listClasses;
 
 // true if the user wants the xmlPrint stuff
 bool wantXMLPrint = false;
@@ -3357,8 +3365,8 @@ void mergeExtension(ASTSpecFile *base, ASTSpecFile *ext)
 
 void recordListClass(ListKind lkind, rostring className, CtorArg const *arg) {
   rostring argName = arg->name;
-  ListClass *cls = new ListClass
-    (lkind, stringc << className << "_" << argName, extractListType(arg->type));
+  ListClass *cls = new (astgen_pool) ListClass
+    (astgen_pool, lkind, stringc << className << "_" << argName, extractListType(arg->type));
   if (!listClassesSet.contains(cls->classAndMemberName)) {
     listClassesSet.add(cls->classAndMemberName);
     listClasses.append(cls);
@@ -3501,7 +3509,7 @@ void entry(int argc, char **argv)
     char const *fname = *argv;
     argv++;
     
-    modules.append(new string(fname));
+    modules.append(new (astgen_pool) string(fname));
 
     Owner<ASTSpecFile> extension;
     extension = readAbstractGrammar(fname);

@@ -73,9 +73,11 @@ private:     // data
 
   public:
     FileState(rostring filename, std::istream *source);
+    FileState(StoragePool &pool, rostring filename, std::istream *source);
     ~FileState();
 
     FileState(FileState const &obj);
+    FileState(StoragePool &pool, FileState const &obj);
     FileState& operator= (FileState const &obj);
   };
 

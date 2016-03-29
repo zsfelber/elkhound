@@ -639,6 +639,7 @@ private:
 
       ok:
 
+      ((DataPtr)data)->__kind = ST_PARENT;
       ((DataPtr)data)->__parentVector = encodeDeltaPtr(memory, (uint8_t*)data);
       ((DataPtr)data)->__store_size = store_size;
    }
@@ -676,6 +677,7 @@ public:
        ownerPool = this;
 
        if (childOfParent) {
+           memset(((uint8_t*)this)+sizeof(Storeable), 0, sizeof(StoragePool)-sizeof(Storeable));
            xassert(__kind == ST_CHILD);
            xassert(copyMode == Cp_All);
            first_del_var = std::string::npos;
@@ -1023,11 +1025,23 @@ public:
  */
 
 
-inline Storeable::Storeable() : __kind(ST_NONE), __parentVector(std::string::npos), __store_size(0)
+inline Storeable::Storeable()
  #ifdef REG_CHILD
    , __next(0)
  #endif
 {
+#if debug_this
+    if (__kind == ST_PARENT && __parentVector && __parentVector != std::string::npos) {
+        StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
+        StoragePool* pool = *the_first;
+        if (pool->contains(this)) {
+            std::cout<<"Bad allocation, use Storable(StoragePool &pool)" << std::endl;
+        }
+    }
+#endif
+    __kind = ST_NONE;
+    __parentVector = std::string::npos;
+    __store_size  = 0;
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
@@ -1059,7 +1073,6 @@ inline Storeable::~Storeable() {
 
 inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent) {
     if (childOfParent) {
-        clear(size_of);
         __kind = ST_CHILD;
         __parentVector = encodeDeltaPtr((uint8_t*)&srcOrParent, (uint8_t*)this);
         __store_size = getStoreSize(size_of);

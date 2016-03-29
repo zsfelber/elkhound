@@ -31,6 +31,17 @@ void addLineLength(ArrayStack<unsigned char> &lengths, int len)
   lengths.push((unsigned char)len);
 }
 
+SourceLocManager::File::File(StoragePool &pool, char const *n, SourceLoc aStartLoc)
+: Storeable(pool),  name(n),
+  startLoc(aStartLoc),     // assigned by SourceLocManager
+  hashLines(NULL),
+
+  // valid marker/col for the first char in the file
+  marker(0, 1, 0),
+  markerCol(1)
+{
+    init();
+}
 
 SourceLocManager::File::File(char const *n, SourceLoc aStartLoc)
   : name(n),
@@ -41,6 +52,10 @@ SourceLocManager::File::File(char const *n, SourceLoc aStartLoc)
     marker(0, 1, 0),
     markerCol(1)
 {
+    init();
+}
+
+void SourceLocManager::File::init() {
   // open in binary mode since it's too unpredictable whether
   // the lower level (e.g. cygwin) will do CRLF translation,
   // and whether that will be done consistently, if text mode
@@ -451,7 +466,7 @@ SourceLocManager::File *SourceLocManager::getFile(char const *name)
   File *f = findFile(name);
   if (!f) {
     // read the file
-    f = new File(name, nextLoc);
+    f = new (pool) File(pool, name, nextLoc);
     files.append(f);
 
     // bump 'nextLoc' according to how long that file was,
@@ -512,7 +527,7 @@ SourceLoc SourceLocManager::encodeStatic(StaticLoc const &obj)
   }
 
   // save this location
-  statics.append(new StaticLoc(obj));
+  statics.append(new (pool) StaticLoc(pool, obj));
 
   // return current index, yield next
   SourceLoc ret = nextStaticLoc;

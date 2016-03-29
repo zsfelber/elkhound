@@ -40,6 +40,11 @@ GrammarLexer::FileState::FileState(rostring filename, std::istream *src)
     source(src),
     bufstate(NULL)
 {}
+GrammarLexer::FileState::FileState(StoragePool &pool, rostring filename, std::istream *src)
+  : Storeable(pool), loc(sourceLocManager->encodeBegin(toCStr(filename))),
+    source(src),
+    bufstate(NULL)
+{}
 
 
 GrammarLexer::FileState::~FileState()
@@ -51,6 +56,12 @@ GrammarLexer::FileState::~FileState()
 
 
 GrammarLexer::FileState::FileState(FileState const &obj)
+{
+  *this = obj;
+}
+
+GrammarLexer::FileState::FileState(StoragePool &pool, FileState const &obj)
+    : Storeable(pool)
 {
   *this = obj;
 }
@@ -277,7 +288,7 @@ void GrammarLexer::recursivelyProcess(rostring fname, std::istream *source)
   xassert(fileState.bufstate);
 
   // push current state
-  fileStack.prepend(new FileState(fileState));
+  fileStack.prepend(new (pool) FileState(pool, fileState));
 
   // reset current state
   fileState = FileState(fname, source);
