@@ -566,7 +566,11 @@ void VoidList::stealTailAt(int index, VoidList &source)
 
 // TODO better using StoragePool impl based on buffer-copy
 void VoidList::appendAll(VoidList const &tail)
-{ 
+{
+  StoragePool childView;
+  npool.append(tail.npool, childView);
+  top = childView.pointerToParent(tail.npool, tail.top);
+
   // make a dest iter and move it to the end
   VoidListMutator destIter(*this);
   while (!destIter.isDone()) {

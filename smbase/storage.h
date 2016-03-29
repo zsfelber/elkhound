@@ -116,6 +116,15 @@ inline size_t getStoreSize(size_t size_of) {
     return ((size_of + STORE_BUF_ADDR_SZ - 1)>>STORE_BUF_VAR_SH)<<STORE_BUF_VAR_SH;
 }
 
+inline size_t getMemBufSize(size_t memlength) {
+    return ((memlength + STORE_BUF_SZ - 1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
+}
+
+inline size_t getPtrBufSize(size_t ptrslength) {
+    return ((ptrslength + STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
+}
+
+
 inline size_t encodeDeltaPtr(uint8_t* origin, uint8_t* address) {
     if (!address || !origin) {
         return std::string::npos;
@@ -462,17 +471,39 @@ private:
 
    StoragePool * ownerPool;
 
-   inline void convertAll(uint8_t* oldmemFrom, uint8_t* oldmemTo) {
+   inline void movePointers(uint8_t* oldmemFrom, uint8_t* oldmemTo, uint8_t* origin = NULL) {
        xassert(ownerPool == this);
+       if (!origin) {
+           origin = memory;
+       }
 
-       std::ptrdiff_t d = memory - oldmemFrom;
+       moveInternalPointers(oldmemFrom, oldmemTo, origin);
+       moveExternalPointers(oldmemFrom, oldmemTo, origin);
+   }
+
+   inline void moveInternalPointers(uint8_t* oldmemFrom, uint8_t* oldmemTo, uint8_t* origin = NULL) {
+       xassert(ownerPool == this);
+       if (!origin) {
+           origin = memory;
+       }
+
+       std::ptrdiff_t d = origin - oldmemFrom;
 
        size_t* intPointersFrom = intpointers;
        size_t* intPointersTo = intpointers+intptrslength;
        for (; intPointersFrom<intPointersTo; intPointersFrom++) {
-           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
+           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(origin, *intPointersFrom);
            moveVariable(oldmemFrom, oldmemTo, *ptr, d);
        }
+   }
+
+   inline void moveExternalPointers(uint8_t* oldmemFrom, uint8_t* oldmemTo, uint8_t* origin = NULL) {
+       xassert(ownerPool == this);
+       if (!origin) {
+           origin = memory;
+       }
+
+       std::ptrdiff_t d = origin - oldmemFrom;
 
        ExternalPtr* extPointersFrom = extpointers;
        ExternalPtr* extPointersTo = extpointers+extptrslength;
@@ -480,8 +511,6 @@ private:
            ExternalPtr ptr = *extPointersFrom;
            moveVariable(oldmemFrom, oldmemTo, *ptr, d);
        }
-
-       fixChildPoolsInMem();
    }
 
    inline void moveVariable(uint8_t* oldmemFrom, uint8_t* oldmemTo, DataPtr& variable, std::ptrdiff_t d) {
@@ -505,18 +534,39 @@ private:
        }
    }
 
-   inline void fixChildPoolsInMem() {
-       fixThisPtrInMem();
+   inline void fixAllPoolPointers() {
+       fixPoolPointer();
 
        size_t* chPoolsFrom = childpools;
        size_t* chPoolsTo = childpools+intptrslength;
        for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
            PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
-           ptr->fixThisPtrInMem();
+           ptr->fixAllPoolPointers();
        }
    }
 
-   inline void fixThisPtrInMem() {
+   inline void copyChildPools(StoragePool const & source) {
+       xassert(ownerPool == this);
+
+       size_t* chPoolsFrom = childpools;
+       size_t* chPoolsTo = childpools+intptrslength;
+       size_t* src_chPoolsFrom = source.childpools;
+       size_t* src_chPoolsTo = source.childpools+source.intptrslength;
+
+       xassert(chPoolsTo-chPoolsFrom == src_chPoolsTo-src_chPoolsFrom);
+
+       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++, src_chPoolsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           PtrToMe src_ptr = (PtrToMe)decodeDeltaPtr(source.memory, *src_chPoolsFrom);
+
+           ptr->fixPoolPointer();
+           ptr->clear();
+           *ptr = source;
+           ptr->copyChildPools(*src_ptr);
+       }
+   }
+
+   inline void fixPoolPointer() {
        xassert(ownerPool == this);
 
        (void*&)memory[0] = this;
@@ -571,14 +621,15 @@ private:
 
       oldmemlength = memlength;
       newmemlength = oldmemlength + store_size;
-      bufsz = ((newmemlength + STORE_BUF_SZ - 1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
+      bufsz = getMemBufSize(newmemlength);
       oldmem = memory;
       if (memcapacity < bufsz) {
           extendBuffer(memory,           memlength,                       memcapacity, bufsz, 1/*sizeof(uint8_t)*/);
           if (oldmemlength) {
-              convertAll(oldmem, oldmem+oldmemlength);
+              movePointers(oldmem, oldmem+oldmemlength);
+              fixAllPoolPointers();
           } else {
-              fixThisPtrInMem();
+              fixPoolPointer();
               oldmemlength += sizeof(void*);
               newmemlength += sizeof(void*);
           }
@@ -646,7 +697,7 @@ public:
                xassert(__kind == srcOrParent.__kind);
                xassert(getPool() == srcOrParent.getPool());
 
-               fixChildPoolsInMem();
+               fixAllPoolPointers();
 
                StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
                srcOrParentPool.clear();
@@ -656,7 +707,7 @@ public:
            {
                xassert(__kind != ST_DELETED);
 
-               size_t bufsz = ((memlength+STORE_BUF_SZ-1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
+               size_t bufsz = getMemBufSize(memlength);
                xassert(bufsz==memcapacity);
 
                memory = NULL;
@@ -664,14 +715,17 @@ public:
                extpointers = NULL;
                childpools = NULL;
 
+               extptrslength = 0;
+               extptrscapacity = 0;
+
                StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
 
                copyBuffer(srcOrParentPool.memory, memlength, memcapacity, memory, 1/*sizeof(uint8_t)*/);
                copyBuffer((uint8_t*)srcOrParentPool.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
-               copyBuffer((uint8_t*)srcOrParentPool.extpointers, extptrslength, extptrscapacity, (uint8_t*&)extpointers, sizeof(ExternalPtr));
                copyBuffer((uint8_t*)srcOrParentPool.childpools, chplslength, chplscapacity, (uint8_t*&)childpools, sizeof(size_t));
 
-               convertAll(srcOrParentPool.memory, srcOrParentPool.memory+memlength);
+               moveInternalPointers(srcOrParentPool.memory, srcOrParentPool.memory+memlength);
+               fixAllPoolPointers();
                break;
            }
            default:
@@ -693,12 +747,7 @@ public:
    inline void del() {
        xassert(ownerPool == this);
 
-       size_t* chPoolsFrom = childpools;
-       size_t* chPoolsTo = childpools+intptrslength;
-       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
-           ptr->del();
-       }
+       delChildPools();
 
        if (memory) delete[] memory;
        if (intpointers) delete[] intpointers;
@@ -706,6 +755,15 @@ public:
        if (childpools) delete[] childpools;
 
        clear();
+   }
+
+   inline void delChildPools() {
+       size_t* chPoolsFrom = childpools;
+       size_t* chPoolsTo = childpools+intptrslength;
+       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           ptr->del();
+       }
    }
 
    inline void clear() {
@@ -717,7 +775,7 @@ public:
    StoragePool& operator= (StoragePool const &src) {
        xassert(ownerPool == this);
 
-       del();
+       delChildPools();
 
        if (memcapacity<src.memcapacity) {
            memcapacity = src.memcapacity;
@@ -729,26 +787,101 @@ public:
            delete[] intpointers;
            intpointers = new size_t[intptrscapacity];
        }
-       if (extptrscapacity<src.extptrscapacity) {
-           extptrscapacity = src.extptrscapacity;
-           delete[] extpointers;
-           extpointers = new ExternalPtr[extptrscapacity];
-       }
        if (chplscapacity<src.chplscapacity) {
            chplscapacity = src.chplscapacity;
            delete[] childpools;
            childpools = new size_t[chplscapacity];
        }
 
+       extptrslength=0;
+       extptrscapacity=0;
+       if (extpointers) {
+           delete[] extpointers;
+           extpointers = NULL;
+       }
+
        memcpy(memory, src.memory, memlength = src.memlength);
        memcpy(intpointers, src.intpointers, intptrslength = src.intptrslength);
-       memcpy(extpointers, src.extpointers, extptrslength = src.extptrslength);
        memcpy(childpools, src.childpools, chplslength = src.chplslength);
 
-       convertAll(src.memory, src.memory+memlength);
+       copyChildPools(src);
+       moveInternalPointers(src.memory, src.memory+memlength);
 
        return *this;
    }
+
+   StoragePool& operator+= (StoragePool const &src) {
+       StoragePool childView;
+       append(src, childView);
+   }
+
+   void append(StoragePool const &src, StoragePool &childView, ExternalPtr* convertExternalPointers = NULL) {
+       xassert(ownerPool == this);
+
+       size_t c;
+       if (memcapacity<(c=getMemBufSize(memlength+src.memlength))) {
+           extendBuffer(memory, memlength, c, 1);
+       }
+       if (intptrscapacity<(c=getPtrBufSize(intptrslength+src.intptrslength))) {
+           extendBuffer((uint8_t*&)intpointers, intptrslength, c, sizeof(size_t));
+       }
+       if (chplscapacity<(c=getPtrBufSize(chplslength+src.chplslength))) {
+           extendBuffer((uint8_t*&)childpools, chplslength, c, sizeof(size_t));
+       }
+
+       memcpy(memory+memlength, src.memory, src.memlength);
+       memcpy(intpointers+intptrslength, src.intpointers, src.intptrslength);
+       memcpy(childpools+chplslength, src.childpools, src.chplslength);
+
+       childView.clear();
+       childView.ownerPool = NULL;
+       childView.memory = memory + memlength;
+       childView.intpointers = intpointers + intptrslength;
+       childView.childpools = childpools + chplslength;
+
+       childView.copyChildPools(src);
+       childView.moveInternalPointers(src.memory, src.memory+memlength, memory);
+
+       if (convertExternalPointers) {
+           std::ptrdiff_t d = memory - src.memory;
+
+           if (extptrscapacity<(c=getPtrBufSize(extptrslength+src.extptrslength))) {
+               extendBuffer((uint8_t*&)extpointers, extptrslength, c, sizeof(ExternalPtr));
+           }
+
+           ExternalPtr* extPointersFrom = extpointers + extptrslength;
+           ExternalPtr* extPointersTo = extpointers + extptrslength + src.extptrslength;
+           for (; extPointersFrom<extPointersTo; extPointersFrom++, convertExternalPointers++) {
+               ExternalPtr srcPtr = *convertExternalPointers;
+               *extPointersFrom = srcPtr;
+               moveVariable(src.memory, src.memory+memlength, *srcPtr, d);
+           }
+
+           childView.extpointers = extpointers + extptrslength;
+           extptrslength += src.extptrslength;
+       }
+
+       childView.ownerPool = this;
+
+       memlength += src.memlength;
+       intptrslength += src.intptrslength;
+       chplslength += src.chplslength;
+
+       return *this;
+   }
+
+   template<class ST>
+   ST* convertPointers(StoragePool const &src, ST** ptrInSrc) {
+       ExternalPtr* extPointersFrom = extpointers + extptrslength;
+       ExternalPtr* src_extPointersFrom = src.extpointers;
+       ExternalPtr* src_extPointersTo = src.extpointers+src.extptrslength;
+       for (; src_extPointersFrom<src_extPointersTo; extPointersFrom++, src_extPointersFrom++) {
+           ExternalPtr ptr = new DataPtr(**src_extPointersFrom);
+           *extPointersFrom = ptr;
+           moveVariable(src.memory, src.memory+memlength, *ptr, d);
+       }
+   }
+
 
 
    inline bool contains(void* pointer) const {
@@ -786,13 +919,13 @@ public:
        }
 
        if (contains(&dataPointer)) {
-           size_t pbufsz = ((intptrslength+STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
+           size_t pbufsz = getPtrBufSize(intptrslength);
            if (intptrscapacity < pbufsz) {
                extendBuffer((uint8_t*&)intpointers, intptrslength, intptrscapacity, pbufsz, sizeof(size_t));
            }
            intpointers[intptrslength++] = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
        } else {
-           size_t pbufsz = ((extptrslength+STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
+           size_t pbufsz = getPtrBufSize(extptrslength);
            if (extptrscapacity < pbufsz) {
                extendBuffer((uint8_t*&)extpointers, extptrslength, extptrscapacity, pbufsz, sizeof(ExternalPtr));
            }
@@ -837,7 +970,7 @@ public:
        xassert(ownerPool == this);
        xassert(contains(childPoolPointer));
 
-       size_t pbufsz = ((chplslength+STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
+       size_t pbufsz = getPtrBufSize(chplslength);
        if (chplscapacity < pbufsz) {
            extendBuffer((uint8_t*&)childpools, chplslength, chplscapacity, pbufsz, sizeof(size_t));
        }
