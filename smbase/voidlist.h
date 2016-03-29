@@ -58,6 +58,8 @@ private:
   friend class VoidListIter;
   friend class VoidListMutator;
 
+  void chk_assign(VoidList const &obj);
+
 protected:
   StoragePool npool;
 
@@ -76,6 +78,8 @@ public:
 
   VoidList(VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
   virtual ~VoidList()                { npool.removePointer(top);/*npool clears it completely*/  }
+
+  void assign(VoidList const &src, size_t size_of=0, bool move=false);
 
   // selectors
   int count() const;                 // # of items in list

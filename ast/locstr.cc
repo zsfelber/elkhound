@@ -9,14 +9,8 @@ LocString::LocString(StoragePool &pool)
     str(NULL)           // problem with "" is we don't have the string table here..
 {}
 
-LocString::LocString(Storeable *master)
-  : Storeable(master), loc(SL_UNKNOWN),
-    str(NULL)           // problem with "" is we don't have the string table here..
-{}
-
 LocString::LocString(LocString const &obj)
-  : Storeable(obj), loc(obj.loc),
-    str(obj.str)
+  : Storeable(obj,false)
 {}
 
 LocString::LocString(StoragePool &pool, SourceLoc L, StringRef s)
@@ -43,12 +37,12 @@ void LocString::xfer(StoragePool &pool, Flatten &flat)
 }
 
 
-void LocString::copyAndDel(LocString *obj)
+/*void LocString::copyAndDel(LocString *obj)
 {
   loc = obj->loc;
   str = obj->str;
   delete obj;
-}
+}*/
 
 LocString *LocString::clone(StoragePool &pool) const
 {

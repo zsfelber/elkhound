@@ -66,7 +66,7 @@ public:      // data
 
 private:     // data
   // state of a file we were or are lexing
-  struct FileState {
+  struct FileState : public Storeable {
     SourceLoc loc;                 // location in the file
     std::istream *source;               // (owner?) source stream
     yy_buffer_state *bufstate;     // (owner?) flex's internal buffer state

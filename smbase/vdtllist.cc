@@ -47,9 +47,16 @@ void VoidTailList::appendAll(VoidTailList const &tail)
 {
   xassert(tail.npool.getExtPtrsLength() == 2);
 
-  ExternalPtr ptrs[] = { (ExternalPtr)&top, (ExternalPtr)&this->tail };
+  if (this->tail) {
+      this->tail->next = tail.top;
+  }
+  if (tail.tail) {
+      npool.removePointer(this->tail);
+      this->tail = tail.tail;
+  }
+  ExternalPtr ptrs[] = { (ExternalPtr)&this->tail };
   StoragePool childView;
-  npool.append(tail.npool, childView, ptrs);
+  npool.append(tail.npool, childView, ptrs, ptrs+1);
 
   /*VoidList::appendAll(src);
   if (!tail) {

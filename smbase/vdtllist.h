@@ -40,6 +40,12 @@ public:
   VoidTailList(VoidTailList &src, bool move) : VoidList(src, sizeof(VoidTailList), move)
   { }
 
+  void assign(VoidTailList &src, bool move)
+  { VoidList::assign(src, sizeof(VoidTailList), move);
+    tail = src.tail;
+    ExternalPtr ptrs[] = { (ExternalPtr)&tail };
+    npool.convertExternalPointers(src.npool, ptrs, ptrs+1);  }
+
   //void steal(VoidTailList *src,bool deleteOrig=true);
 
   // this syntax just makes the implementation inherited from

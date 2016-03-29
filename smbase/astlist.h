@@ -26,23 +26,21 @@ private:
   ASTList(ASTList const &obj);          // not allowed
 
 public:
-  bool const owning;
 
-  ASTList(StoragePool &pool, bool owning=true) : Storeable(pool), list(*this), owning(owning) {}
-  ASTList(Storeable &parent, bool owning=true) : Storeable(parent, sizeof(ASTList)), list(*this), owning(owning) {}
+  ASTList(StoragePool &pool) : Storeable(pool), list(*this) {}
+  ASTList(Storeable &parent) : Storeable(parent, sizeof(ASTList)), list(*this) {}
   ~ASTList()                            {  }
 
   // ctor to make singleton list; often quite useful
-  ASTList(StoragePool &pool, T *elt)                       : Storeable(pool), list(*this), owning(true) { prepend(elt); }
-  ASTList(StoragePool &pool, T *elt, bool owning)          : Storeable(pool), list(*this), owning(owning) { prepend(elt); }
+  ASTList(StoragePool &pool, T *elt)                       : Storeable(pool), list(*this) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(ASTList<T> &src) : Storeable(src, false), list(src.list,src.owning), owning(src.owning) { }
-  ASTList(ASTList<T> &src,bool owning) : Storeable(src, false), list(src.list,src.owning), owning(owning) { }
-  //void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
-  //void steal(ASTList<T> *src,bool deleteOrig)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list, deleteOrig); }
+  ASTList(ASTList<T> &src,bool move) : Storeable(src, false), list(src.list,move) { }
+  ASTList(ASTList<T> *src,bool move) : Storeable(NN(src), false), list(src.list,move) { }
+
+  void assign(ASTList<T> &src)           { list.assign(src->list); }
 
   // selectors
   int count() const                     { return list.count(); }

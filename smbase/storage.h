@@ -195,6 +195,8 @@ friend class VoidNode;
     }
 
 
+    void init(Storeable const & srcOrParent, size_t size_of, bool childOfParent);
+
 public:
 
    typedef StoragePool* PtrToMe;
@@ -246,8 +248,7 @@ public:
 
    virtual ~Storeable();
 
-   void init(Storeable const & srcOrParent, size_t size_of, bool childOfParent);
-
+   void assign(Storeable const & srcOrParent, size_t size_of);
 
    inline StoragePool & getPoolRef() const {
        StoragePool * pool = getPool();
@@ -492,7 +493,9 @@ private:
        size_t* intPointersTo = intpointers+intptrslength;
        for (; intPointersFrom<intPointersTo; intPointersFrom++) {
            ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(origin, *intPointersFrom);
-           moveVariable(oldmemFrom, oldmemTo, *ptr, d);
+           if (ptr) {
+               moveVariable(oldmemFrom, oldmemTo, *ptr, d);
+           }
        }
    }
 
@@ -508,7 +511,9 @@ private:
        ExternalPtr* extPointersTo = extpointers+extptrslength;
        for (; extPointersFrom<extPointersTo; extPointersFrom++) {
            ExternalPtr ptr = *extPointersFrom;
-           moveVariable(oldmemFrom, oldmemTo, *ptr, d);
+           if (ptr) {
+               moveVariable(oldmemFrom, oldmemTo, *ptr, d);
+           }
        }
    }
 
@@ -679,57 +684,8 @@ public:
            xassert(copyMode == Cp_All);
            first_del_var = std::string::npos;
        } else {
-           switch (copyMode) {
-           case Cp_TmpDuplicate:
-           {
-               xassert(__kind != ST_DELETED);
-               xassert(__kind == srcOrParent.__kind);
-               xassert(getPool() == srcOrParent.getPool());
-
-               ownerPool = (StoragePool*) &srcOrParent;
-
-               break;
-           }
-           case Cp_Move:
-           {
-               xassert(__kind != ST_DELETED);
-               xassert(__kind == srcOrParent.__kind);
-               xassert(getPool() == srcOrParent.getPool());
-
-               fixAllPoolPointers();
-
-               StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
-               srcOrParentPool.clear();
-               break;
-           }
-           case Cp_All:
-           {
-               xassert(__kind != ST_DELETED);
-
-               size_t bufsz = getMemBufSize(memlength);
-               xassert(bufsz==memcapacity);
-
-               memory = NULL;
-               intpointers = NULL;
-               extpointers = NULL;
-               childpools = NULL;
-
-               extptrslength = 0;
-               extptrscapacity = 0;
-
-               StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
-
-               copyBuffer(srcOrParentPool.memory, memlength, memcapacity, memory, 1/*sizeof(uint8_t)*/);
-               copyBuffer((uint8_t*)srcOrParentPool.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
-               copyBuffer((uint8_t*)srcOrParentPool.childpools, chplslength, chplscapacity, (uint8_t*&)childpools, sizeof(size_t));
-
-               moveInternalPointers(srcOrParentPool.memory, srcOrParentPool.memory+memlength);
-               fixAllPoolPointers();
-               break;
-           }
-           default:
-               break;
-           }
+           StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
+           assign(srcOrParentPool, copyMode);
        }
 
        getPool()->addChildPool(this);
@@ -740,6 +696,58 @@ public:
            clear();
        } else {
            del();
+       }
+   }
+
+   inline void assign(StoragePool const & src, CopyMode copyMode=Cp_All) {
+       switch (copyMode) {
+       case Cp_TmpDuplicate:
+       {
+           xassert(__kind != ST_DELETED);
+           xassert(__kind == src.__kind);
+           xassert(getPool() == src.getPool());
+
+           ownerPool = (StoragePool*) &src;
+
+           break;
+       }
+       case Cp_Move:
+       {
+           xassert(__kind != ST_DELETED);
+           xassert(__kind == src.__kind);
+           xassert(getPool() == src.getPool());
+
+           fixAllPoolPointers();
+
+           StoragePool & srcOrParentPool = (StoragePool &) srcOrParentPool;
+           srcOrParentPool.clear();
+           break;
+       }
+       case Cp_All:
+       {
+           xassert(__kind != ST_DELETED);
+
+           size_t bufsz = getMemBufSize(memlength);
+           xassert(bufsz==memcapacity);
+
+           memory = NULL;
+           intpointers = NULL;
+           extpointers = NULL;
+           childpools = NULL;
+
+           extptrslength = 0;
+           extptrscapacity = 0;
+
+           copyBuffer(src.memory, memlength, memcapacity, memory, 1/*sizeof(uint8_t)*/);
+           copyBuffer((uint8_t*)src.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
+           copyBuffer((uint8_t*)src.childpools, chplslength, chplscapacity, (uint8_t*&)childpools, sizeof(size_t));
+
+           moveInternalPointers(src.memory, src.memory+memlength);
+           fixAllPoolPointers();
+           break;
+       }
+       default:
+           break;
        }
    }
 
@@ -815,7 +823,7 @@ public:
        return *this;
    }
 
-   void append(StoragePool const &src, StoragePool &childView, ExternalPtr* convertExternalPointers = NULL) {
+   void append(StoragePool const &src, StoragePool &childView, ExternalPtr* convertExtPointersFrom = NULL, ExternalPtr* convertExtPointersTo = NULL) {
        xassert(ownerPool == this);
 
        size_t c;
@@ -836,31 +844,29 @@ public:
        childView.clear();
        childView.ownerPool = NULL;
        childView.memory = memory + memlength;
+       childView.memlength = src.memlength;
+       childView.memcapacity = src.memcapacity;
        childView.intpointers = intpointers + intptrslength;
+       childView.intptrslength = src.intptrslength;
+       childView.intptrscapacity = src.intptrscapacity;
+       childView.extpointers = NULL;
+       childView.extptrslength = 0;
+       childView.extptrscapacity = 0;
        childView.childpools = childpools + chplslength;
+       childView.chplslength = src.chplslength;
+       childView.chplscapacity = src.chplscapacity;
 
        childView.copyChildPools(src);
        childView.moveInternalPointers(src.memory, src.memory+memlength, memory);
 
-       if (convertExternalPointers) {
+       if (convertExtPointersFrom) {
+           size_t oldl = extptrslength;
 
-           if (extptrscapacity<(c=getPtrBufSize(extptrslength+src.extptrslength))) {
-               extendBuffer((uint8_t*&)extpointers, extptrslength, c, sizeof(ExternalPtr));
-           }
+           convertExternalPointers(src, convertExtPointersFrom, convertExtPointersTo);
 
-           ExternalPtr* extPointersFrom = extpointers + extptrslength;
-           ExternalPtr* extPointersTo = extpointers + extptrslength + src.extptrslength;
-           uint8_t* src_bg = src.memory;
-           uint8_t* src_end = src_bg + memlength;
-           std::ptrdiff_t d = memory - src_bg;
-           for (; extPointersFrom<extPointersTo; extPointersFrom++, convertExternalPointers++) {
-               ExternalPtr srcPtr = *convertExternalPointers;
-               *extPointersFrom = srcPtr;
-               moveVariable(src_bg, src_end, *srcPtr, d);
-           }
-
-           childView.extpointers = extpointers + extptrslength;
-           extptrslength += src.extptrslength;
+           childView.extpointers = extpointers + oldl;
+           childView.extptrslength = extptrslength - oldl;
+           childView.extptrscapacity = extptrscapacity - oldl;
        }
 
        childView.ownerPool = this;
@@ -871,6 +877,30 @@ public:
 
    }
 
+   void convertExternalPointers(StoragePool const &src, ExternalPtr* convertExtPointersFrom, ExternalPtr* convertExtPointersTo) {
+       xassert(convertExtPointersFrom <= convertExtPointersTo);
+
+       size_t plen = (convertExtPointersTo-convertExtPointersFrom) / sizeof(std::ptrdiff_t);
+       size_t c;
+       if (extptrscapacity<(c=getPtrBufSize(extptrslength+plen))) {
+           extendBuffer((uint8_t*&)extpointers, extptrslength, c, sizeof(ExternalPtr));
+       }
+
+       ExternalPtr* extPointersFrom = extpointers + extptrslength;
+       ExternalPtr* extPointersTo = extpointers + extptrslength + plen;
+       uint8_t* src_bg = src.memory;
+       uint8_t* src_end = src_bg + memlength;
+       std::ptrdiff_t d = memory - src_bg;
+       for (; extPointersFrom<extPointersTo; extPointersFrom++, convertExtPointersFrom++) {
+           ExternalPtr srcPtr = *convertExtPointersFrom;
+           if (srcPtr) {
+               *extPointersFrom = srcPtr;
+               moveVariable(src_bg, src_end, *srcPtr, d);
+           }
+       }
+
+       extptrslength += plen;
+   }
 
    inline size_t getExtPtrsLength() const {
        return extptrslength;
@@ -949,12 +979,14 @@ public:
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
            size_t* val = std::lower_bound(intpointers, intpointers+intptrslength, dd);
            xassert (*val == dd);
-           removeBufferItem((uint8_t*)intpointers, intptrslength, (uint8_t*)val, sizeof(size_t));
+           //removeBufferItem((uint8_t*)intpointers, intptrslength, (uint8_t*)val, sizeof(size_t));
+           *val = std::string::npos;
        } else {
            ExternalPtr dd = &dataPointer;
            ExternalPtr* val = std::lower_bound(extpointers, extpointers+extptrslength, dd);
            xassert (*val == dd);
-           removeBufferItem((uint8_t*)extpointers, extptrslength, (uint8_t*)val, sizeof(ExternalPtr));
+           //removeBufferItem((uint8_t*)extpointers, extptrslength, (uint8_t*)val, sizeof(ExternalPtr));
+           *val = NULL;
        }
    }
 
@@ -1041,36 +1073,41 @@ inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool 
         getParent()->regChild(this);
     #endif
     } else {
-        // !
-        xassert(srcOrParent.__store_size == getStoreSize(size_of));
-
-        memcpy(this, &srcOrParent, size_of);
-
-        // transfer __parentVector (we keep parent)
-        switch (__kind) {
-        case ST_NONE:
-            xassert(__parentVector == std::string::npos);
-            break;
-        case ST_PARENT:
-        {
-            StoragePool * srcPool = srcOrParent.getPool();
-            __parentVector = encodeDeltaPtr((uint8_t*)srcPool->memory, (uint8_t*)this);
-            xassert(srcPool->contains(this));
-            break;
-        }
-        case ST_CHILD:
-        {
-            Storeable * srcParent = srcOrParent.getParent();
-            __parentVector = encodeDeltaPtr((uint8_t*)srcParent, (uint8_t*)this);
-            xassert(getPool()->contains(this));
-            break;
-        }
-        default:
-            x_assert_fail("Invalid kind.", __FILE__, __LINE__);
-        }
+        assign(srcOrParent, size_of);
     }
 
 }
+
+inline void Storeable::assign(Storeable const & src, size_t size_of) {
+    // !
+    xassert(src.__store_size == getStoreSize(size_of));
+
+    memcpy(this, &src, size_of);
+
+    // transfer __parentVector (we keep parent)
+    switch (__kind) {
+    case ST_NONE:
+        xassert(__parentVector == std::string::npos);
+        break;
+    case ST_PARENT:
+    {
+        StoragePool * srcPool = src.getPool();
+        __parentVector = encodeDeltaPtr((uint8_t*)srcPool->memory, (uint8_t*)this);
+        xassert(srcPool->contains(this));
+        break;
+    }
+    case ST_CHILD:
+    {
+        Storeable * srcParent = src.getParent();
+        __parentVector = encodeDeltaPtr((uint8_t*)srcParent, (uint8_t*)this);
+        xassert(getPool()->contains(this));
+        break;
+    }
+    default:
+        x_assert_fail("Invalid kind.", __FILE__, __LINE__);
+    }
+}
+
 
 inline void* Storeable::operator new (std::size_t size, StoragePool& pool) {
     void* data;

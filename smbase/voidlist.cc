@@ -15,10 +15,24 @@ VoidList::VoidList(VoidList const &src, size_t size_of, bool move)
   : Storeable(src, size_of?size_of:sizeof(VoidList), false),
     npool(src.npool, false, move ? StoragePool::Cp_Move : StoragePool::Cp_All)
 {
-  xassert(__kind == src.__kind);
-  xassert(__parentVector == src.__parentVector);
-  npool.addPointer(top);
+    chk_assign(src);
 }
+
+void VoidList::assign(VoidList const &src, size_t size_of, bool move) {
+    Storeable::assign(src, size_of?size_of:sizeof(VoidList));
+    npool.assign(src.npool, move ? StoragePool::Cp_Move : StoragePool::Cp_All);
+    chk_assign(src);
+}
+
+void VoidList::chk_assign(VoidList const &src) {
+    xassert(__kind == src.__kind);
+    xassert(__parentVector == src.__parentVector);
+
+    top = src.top;
+    ExternalPtr ptrs[] = { (ExternalPtr)&top };
+    npool.convertExternalPointers(src.npool, ptrs, ptrs+1);
+}
+
 
 
 // # of items in list
@@ -570,9 +584,7 @@ void VoidList::appendAll(VoidList const &tail)
 {
   xassert(tail.npool.getExtPtrsLength() == 1);
 
-  ExternalPtr ptrs[] = { (ExternalPtr)&top };
-  StoragePool childView;
-  npool.append(tail.npool, childView, ptrs);
+  npool += tail.npool;
 
   /*
   // make a dest iter and move it to the end
