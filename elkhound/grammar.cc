@@ -572,7 +572,7 @@ Production::RHSElt::~RHSElt()
 
 Production::RHSElt::RHSElt(StoragePool &pool, Flatten &flat)
   : Storeable(pool), sym(NULL),
-    tag(flat)
+    tag(pool, flat)
 {}
 
 void Production::RHSElt::xfer(StoragePool &pool, Flatten &flat)
@@ -603,7 +603,7 @@ Production::Production(StoragePool &pool, Nonterminal *L, char const *Ltag)
 
 Production::~Production()
 {
-  pool.removePointer(forbid);
+  getPoolRef().removePointer(forbid);
   if (forbid_owned) {
       delete forbid;
   }

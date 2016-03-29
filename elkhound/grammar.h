@@ -196,11 +196,11 @@ protected:  // funcs
 public:     // funcs
   Terminal(StoragePool &pool, LocString const &name)        // canonical name for terminal class
     : Symbol(pool, name, true /*terminal*/),
-      alias(this),
+      alias(*this),
       precedence(0),
       associativity(AK_NONASSOC),
       classifyParam(NULL),
-      classifyCode(this),
+      classifyCode(*this),
       termCode(-1),
       termIndex(-1)
   {}
@@ -389,7 +389,7 @@ public:     // types
     RHSElt(StoragePool &pool, Symbol *s, LocString const &t) : Storeable(pool), sym(s), tag(t) {}
     ~RHSElt();
 
-    RHSElt(Flatten&);
+    RHSElt(StoragePool &pool, Flatten&);
     void xfer(StoragePool &pool, Flatten &flat);
     void xferSerfs(Flatten &flat, Grammar &g);
 
@@ -418,7 +418,7 @@ public:	    // funcs
   Production(StoragePool &pool, Nonterminal *left, char const *leftTag);
   ~Production();
 
-  Production(Flatten &flat);
+  Production(StoragePool &pool, Flatten &flat);
   void xfer(StoragePool &pool, Flatten &flat);
   void xferSerfs(Flatten &flat, Grammar &g);
 
