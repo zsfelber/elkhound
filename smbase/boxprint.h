@@ -70,7 +70,7 @@ public:
 class BPElement : public Storeable {
 public:
     BPElement(StoragePool &pool) : Storeable(pool) {}
-    BPElement(Storeable &parent, size_t size_of) : Storeable(parent, size_of) {}
+    BPElement(Storeable &parent, size_t size_of) : Storeable(parent, size_of, true) {}
 
   // if no breaks are taken, compute the # of columns;
   // return with 'forcedBreak' true if we stopped because of

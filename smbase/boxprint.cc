@@ -387,12 +387,12 @@ BoxPrint& BoxPrint::operator<< (Cmd c)
 {
   switch (c) {
     default: xfailure("bad cmd");
-    case sp:        append(new BPBreak(*__pool, BT_DISABLED, 0 /*indent*/)); break;
-    case br:        append(new BPBreak(*__pool, BT_ENABLED, 0 /*indent*/)); break;
-    case fbr:       append(new BPBreak(*__pool, BT_FORCED, 0 /*indent*/)); break;
-    case lineStart: append(new BPBreak(*__pool, BT_LINE_START, 0 /*indent*/)); break;
-    case ind:       append(new BPBreak(*__pool, BT_ENABLED, levelIndent)); break;
-    case und:       append(new BPBreak(*__pool, BT_ENABLED, -levelIndent)); break;
+    case sp:        append(new BPBreak(getPoolRef(), BT_DISABLED, 0 /*indent*/)); break;
+    case br:        append(new BPBreak(getPoolRef(), BT_ENABLED, 0 /*indent*/)); break;
+    case fbr:       append(new BPBreak(getPoolRef(), BT_FORCED, 0 /*indent*/)); break;
+    case lineStart: append(new BPBreak(getPoolRef(), BT_LINE_START, 0 /*indent*/)); break;
+    case ind:       append(new BPBreak(getPoolRef(), BT_ENABLED, levelIndent)); break;
+    case und:       append(new BPBreak(getPoolRef(), BT_ENABLED, -levelIndent)); break;
   }
   return *this;
 }
@@ -400,7 +400,7 @@ BoxPrint& BoxPrint::operator<< (Cmd c)
 
 BoxPrint& BoxPrint::operator<< (IBreak b)
 {
-  append(new BPBreak(*__pool, BT_ENABLED, b.indent /*indent*/));
+  append(new BPBreak(getPoolRef(), BT_ENABLED, b.indent /*indent*/));
   return *this;
 }
 

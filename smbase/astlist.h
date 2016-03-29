@@ -28,21 +28,21 @@ private:
 public:
   bool const owning;
 
-  ASTList(StoragePool &pool, bool owning=true) : Storeable(pool), list(pool), owning(owning) {}
-  ASTList(Storeable &parent, bool owning=true) : Storeable(parent, sizeof(ASTList)), list(parent), owning(owning) {}
-  ~ASTList()                            { if (owning) deleteAll(); }
+  ASTList(StoragePool &pool, bool owning=true) : Storeable(pool), list(*this), owning(owning) {}
+  ASTList(Storeable &parent, bool owning=true) : Storeable(parent, sizeof(ASTList)), list(*this), owning(owning) {}
+  ~ASTList()                            {  }
 
   // ctor to make singleton list; often quite useful
-  ASTList(StoragePool &pool, T *elt)                       : Storeable(pool), list(pool), owning(true) { prepend(elt); }
-  ASTList(StoragePool &pool, T *elt, bool owning)          : Storeable(pool), list(pool), owning(owning) { prepend(elt); }
+  ASTList(StoragePool &pool, T *elt)                       : Storeable(pool), list(*this), owning(true) { prepend(elt); }
+  ASTList(StoragePool &pool, T *elt, bool owning)          : Storeable(pool), list(*this), owning(owning) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(ASTList<T> *src) : Storeable(src), list((src&&src->owning)?&src->list:0), owning(src&&src->owning) { if (!owning&&src) list.appendAll(src->list);}
-  ASTList(ASTList<T> *src,bool owning) : Storeable(src), list((src&&owning)?&src->list:0), owning(owning) { if (!owning&&src) list.appendAll(src->list);}
-  void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
-  void steal(ASTList<T> *src,bool deleteOrig)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list, deleteOrig); }
+  ASTList(ASTList<T> &src) : Storeable(src, false), list(src.list,src.owning), owning(src.owning) { }
+  ASTList(ASTList<T> &src,bool owning) : Storeable(src, false), list(src.list,src.owning), owning(owning) { }
+  //void steal(ASTList<T> *src)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list); }
+  //void steal(ASTList<T> *src,bool deleteOrig)           { if (owning) deleteAll(); const_cast<bool&>(owning) = src->owning; list.steal(&src->list, deleteOrig); }
 
   // selectors
   int count() const                     { return list.count(); }
@@ -55,9 +55,19 @@ public:
   T *last()                             { return (T*)list.last(); }
   T const *lastC() const                { return (T const*)list.last(); }
 
+  T* adopt(T* newitem) {
+     if (owning) newitem=list.npool.adopt(newitem);
+     return newitem;
+  }
+  ASTList<T> &adopt(ASTList<T> &tail) {
+      if (owning) {
+          list.
+      }
+  }
+
   // insertion
-  void prepend(T *newitem)              { list.prepend(newitem); }
-  void append(T *newitem)               { list.append(newitem); }
+  void prepend(T *newitem)              { list.prepend(adopt(newitem)); }
+  void append(T *newitem)               { list.append(adopt(newitem)); }
   void appendAll(ASTList<T> &tail)      { list.appendAll(tail.list); }
   void appendAllNew(ASTList<T> const &tail, VoidEq eq)    { list.appendAllNew(tail.list, eq); }
   void reappendAll(ASTList<T> const &tail, VoidEq eq)    { list.reappendAll(tail.list, eq); }
@@ -76,8 +86,8 @@ public:
 
   // deletion
   void deleteFirst()                    { delete (T*)list.removeFirst(); }
-  void deleteAllOwning();
-  void deleteAll();
+  //void deleteAllOwning();
+  //void deleteAll();
 
   // list-as-set: selectors
   int indexOf(T const *item) const      { return list.indexOf((void*)item); }
@@ -95,6 +105,7 @@ public:
 };
 
 
+/*
 template <class T>
 void ASTList<T>::deleteAllOwning()
 {
@@ -106,11 +117,12 @@ void ASTList<T>::deleteAllOwning()
 template <class T>
 void ASTList<T>::deleteAll()
 {
-  while (!list.isEmpty()) {
-    deleteFirst();
-  }
+  //while (!list.isEmpty()) {
+  //  deleteFirst();
+  //}
+  list.deleteAll();
 }
-
+*/
 
 template <class T>
 class ASTListIter {

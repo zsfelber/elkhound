@@ -12,7 +12,7 @@
 
 
 VoidList::VoidList(VoidList const &obj, size_t size_of, bool move)
-  : Storeable(obj, size_of?size_of:sizeof(VoidList), false), npool(obj.npool, false, move)
+  : Storeable(obj, size_of?size_of:sizeof(VoidList), false), npool(obj.npool, false, move?StoragePool::Cp_Move:StoragePool::Cp_All)
 {
   xassert(__kind == src.__kind);
   xassert(__parentVector == src.__parentVector);
@@ -408,8 +408,8 @@ void VoidList::mergeSort(VoidDiff diff, void *extra)
   }
 
   // half-lists
-  VoidList leftHalf(npool);
-  VoidList rightHalf(npool);
+  VoidList leftHalf(npool, StoragePool::Cp_TmpDuplicate);
+  VoidList rightHalf(npool, StoragePool::Cp_TmpDuplicate);
 
   // divide the list
   {
@@ -564,7 +564,7 @@ void VoidList::stealTailAt(int index, VoidList &source)
   }
 }
 
-
+// TODO better using StoragePool impl based on buffer-copy
 void VoidList::appendAll(VoidList const &tail)
 { 
   // make a dest iter and move it to the end
@@ -579,6 +579,7 @@ void VoidList::appendAll(VoidList const &tail)
   }
 }
 
+// TODO better using StoragePool impl based on buffer-copy
 void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 {
   VoidList dest(npool);
@@ -594,6 +595,7 @@ void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 }
 
 
+// TODO better using StoragePool impl based on buffer-copy
 void VoidList::prependAll(VoidList const &tail)
 {
   VoidListMutator destIter(*this);
@@ -753,7 +755,7 @@ void VoidListMutator::insertBefore(void *item)
     reset();
   }
   else {
-    current = prev->next = new (*list.__pool) VoidNode(*list.__pool, item, current);
+    current = prev->next = new (list.npool) VoidNode(list.npool, item, current);
   }
 }
 
@@ -761,7 +763,7 @@ void VoidListMutator::insertBefore(void *item)
 void VoidListMutator::insertAfter(void *item)
 {
   xassert(!isDone());
-  current->next = new (*list.__pool) VoidNode(*list.__pool, item, current->next);
+  current->next = new (list.npool) VoidNode(list.npool, item, current->next);
 }
 
 

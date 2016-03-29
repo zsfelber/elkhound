@@ -65,12 +65,17 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
+  VoidList(StoragePool &pool, StoragePool::CopyMode copy)  : Storeable(), npool(pool, false, copy)
+  { top=NULL;   npool.addPointer(top); }
+
   VoidList(StoragePool &pool)  : Storeable(pool), npool(*this, true)
   { top=NULL;   npool.addPointer(top); }
+
   VoidList(Storeable const &parent, size_t size_of=0) : Storeable(parent, size_of?size_of:sizeof(VoidList), true), npool(*this, true)
   { top=NULL;   npool.addPointer(top); }
+
   VoidList(VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
-  ~VoidList()                        { /*npool clears it completely*/  }
+  virtual ~VoidList()                { npool.removePointer(top);/*npool clears it completely*/  }
 
   // selectors
   int count() const;                 // # of items in list

@@ -3,6 +3,7 @@
 
 #include "vdtllist.h"      // this module
 
+/*
 void VoidTailList::steal(VoidTailList *src, bool deleteOrig)
 {
   if (src) {
@@ -20,6 +21,7 @@ void VoidTailList::steal(VoidTailList *src, bool deleteOrig)
     tail = NULL;
   }
 }
+*/
 
 void VoidTailList::prepend(void *newitem)
 {
@@ -36,7 +38,7 @@ void VoidTailList::append(void *newitem)
   }
   else {
     // payoff: constant-time append
-    tail->next = new (npool) VoidNode(*__pool, newitem, NULL);
+    tail->next = new (npool) VoidNode(npool, newitem, NULL);
     tail = tail->next;
   }
 }

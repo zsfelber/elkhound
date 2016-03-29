@@ -30,13 +30,17 @@ private:
   void adjustTails();
 
 public:
-  VoidTailList(StoragePool &pool) : VoidList(pool)                     { tail = NULL;  npool.addPointer(tail); }
-  VoidTailList(Storeable &parent) : VoidList(parent,sizeof(VoidTailList))                     { tail = NULL;  npool.addPointer(tail); }
+  VoidTailList(StoragePool &pool) : VoidList(pool)
+  { tail = NULL;  npool.addPointer(tail); }
+  VoidTailList(Storeable &parent) : VoidList(parent,sizeof(VoidTailList))
+  { tail = NULL;  npool.addPointer(tail); }
   ~VoidTailList()                    { npool.removePointer(tail); }
   
-  // special ctor which steals the list and then deallocates the header
-  VoidTailList(VoidTailList &src) : VoidList(src, )    { tail = NULL; steal(src); }
-  void steal(VoidTailList *src,bool deleteOrig=true);
+  // move:true  special ctor which steals the list. NOTE invoker should always deallocate the header
+  VoidTailList(VoidTailList &src, bool move) : VoidList(src, sizeof(VoidTailList), move)
+  { }
+
+  //void steal(VoidTailList *src,bool deleteOrig=true);
 
   // this syntax just makes the implementation inherited from
   // 'VoidList' public, whereas it would default to private,
