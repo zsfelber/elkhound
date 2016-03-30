@@ -955,17 +955,27 @@ public:
        }
 
        if (contains(&dataPointer)) {
+           size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
+           // to ensure it is ordered (binary search invariant)
+           if (intptrslength) {
+               xassert(dd > intpointers[intptrslength-1]);
+           }
            size_t pbufsz = getPtrBufSize(intptrslength);
            if (intptrscapacity < pbufsz) {
                extendBuffer((uint8_t*&)intpointers, intptrslength, intptrscapacity, pbufsz, sizeof(size_t));
            }
-           intpointers[intptrslength++] = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
+           intpointers[intptrslength++] = dd;
        } else {
+           ExternalPtr dd = &dataPointer;
+           // to ensure it is ordered (binary search invariant)
+           if (extptrslength) {
+               xassert(dd > extpointers[extptrslength-1]);
+           }
            size_t pbufsz = getPtrBufSize(extptrslength);
            if (extptrscapacity < pbufsz) {
                extendBuffer((uint8_t*&)extpointers, extptrslength, extptrscapacity, pbufsz, sizeof(ExternalPtr));
            }
-           extpointers[extptrslength++] = &dataPointer;
+           extpointers[extptrslength++] = dd;
        }
    }
 
@@ -998,6 +1008,7 @@ public:
                          << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
            } else {
                xassert (vval == dd);
+               itt -> bin searc elrontha
                //removeBufferItem((uint8_t*)intpointers, intptrslength, (uint8_t*)val, sizeof(size_t));
                *val = std::string::npos;
            }
