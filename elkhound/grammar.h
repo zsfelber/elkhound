@@ -270,6 +270,7 @@ private:    // funcs
 
 public:     // funcs
   TerminalSet(StoragePool &pool, int numTerms=0);                   // allocate new set, initially empty
+  TerminalSet(Storeable const &parent, int numTerms=0);                   // allocate new set, initially empty
   TerminalSet(TerminalSet const &obj);
   ~TerminalSet();
 
@@ -279,6 +280,7 @@ public:     // funcs
   void convert(GrammarAnalysis& g);
 
   TerminalSet(StoragePool &pool, Flatten&);
+  TerminalSet(Storeable const &parent, Flatten&);
   void xfer(StoragePool &pool, Flatten &flat);
 
   // call this to re-allocate at a new size; set is emptied

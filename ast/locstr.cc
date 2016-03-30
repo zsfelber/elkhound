@@ -27,6 +27,10 @@ LocString::LocString(StoragePool &pool, Flatten&)
   : Storeable(pool), loc(SL_UNKNOWN), str(NULL)
 {}
 
+LocString::LocString(Storeable const &parent, Flatten&)
+  : Storeable(parent), loc(SL_UNKNOWN), str(NULL)
+{}
+
 void LocString::xfer(StoragePool &pool, Flatten &flat)
 {
   // doh.. flattening locs is hard.  I wasn't even doing

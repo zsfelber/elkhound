@@ -177,7 +177,7 @@ void VoidList::insertAt(Storeable *newitem, int index)
 }
 
 
-void VoidList::insertSorted(Storeable *newitem, VoidDiff diff, Storeable *extra)
+void VoidList::insertSorted(Storeable *newitem, VoidDiff const diff, Storeable const *extra)
 {
   // put it first?
   if (!top ||
@@ -202,7 +202,7 @@ void VoidList::insertSorted(Storeable *newitem, VoidDiff diff, Storeable *extra)
 
 // ----------------- list-as-set stuff -------------------
 // get the index of an item's first occurrance
-int VoidList::indexOf(Storeable *item) const
+int VoidList::indexOf(Storeable const *item) const
 {
   int index = 0;
   for (VoidNode *p = top; p != NULL; p = p->next, index++) {
@@ -213,7 +213,7 @@ int VoidList::indexOf(Storeable *item) const
   return -1;
 }
 
-int VoidList::indexOf(Storeable *item, VoidEq eq) const
+int VoidList::indexOf(Storeable const *item, VoidEq const eq) const
 {
   int index = 0;
   for (VoidNode *p = top; p != NULL; p = p->next, index++) {
@@ -225,7 +225,7 @@ int VoidList::indexOf(Storeable *item, VoidEq eq) const
 }
 
 
-int VoidList::indexOfF(Storeable *item) const
+int VoidList::indexOfF(Storeable const *item) const
 {
   int ret = indexOf(item);
   xassert(ret >= 0);
@@ -269,7 +269,7 @@ bool VoidList::appendUnique(Storeable *newitem)
 }
 
 
-bool VoidList::removeIfPresent(Storeable *item)
+bool VoidList::removeIfPresent(Storeable const *item)
 {
   // for now, not a real fast implementation
   int index = indexOf(item);
@@ -282,7 +282,7 @@ bool VoidList::removeIfPresent(Storeable *item)
   }
 }
 
-bool VoidList::removeIfPresent(Storeable *item, VoidEq eq)
+bool VoidList::removeIfPresent(Storeable const *item, VoidEq eq)
 {
   // for now, not a real fast implementation
   int index = indexOf(item, eq);
@@ -304,7 +304,7 @@ bool VoidList::removeItems(VoidList const &lst, VoidEq eq) {   // remove all; re
 }
 
 
-void VoidList::removeItem(Storeable *item)
+void VoidList::removeItem(Storeable const *item)
 {
   bool wasThere = removeIfPresent(item);
   xassert(wasThere);
@@ -641,12 +641,12 @@ VoidList& VoidList::operator= (VoidList const &src)
 }
 
 
-bool VoidList::equalAsLists(VoidList const &otherList, VoidDiff diff, Storeable *extra) const
+bool VoidList::equalAsLists(VoidList const &otherList, VoidDiff const diff, Storeable const *extra) const
 {
   return 0==compareAsLists(otherList, diff, extra);
 }
 
-int VoidList::compareAsLists(VoidList const &otherList, VoidDiff diff, Storeable *extra) const
+int VoidList::compareAsLists(VoidList const &otherList, VoidDiff const diff, Storeable const *extra) const
 {
   VoidListIter mine(*this);
   VoidListIter his(otherList);
@@ -674,14 +674,14 @@ int VoidList::compareAsLists(VoidList const &otherList, VoidDiff diff, Storeable
 }
 
 
-bool VoidList::equalAsSets(VoidList const &otherList, VoidDiff diff, Storeable *extra) const
+bool VoidList::equalAsSets(VoidList const &otherList, VoidDiff const diff, Storeable const *extra) const
 {
   return this->isSubsetOf(otherList, diff, extra) &&
          otherList.isSubsetOf(*this, diff, extra);
 }
 
 
-bool VoidList::isSubsetOf(VoidList const &otherList, VoidDiff diff, Storeable *extra) const
+bool VoidList::isSubsetOf(VoidList const &otherList, VoidDiff const diff, Storeable const *extra) const
 {
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {
     if (!otherList.containsByDiff(iter.data(), diff, extra)) {
@@ -692,7 +692,7 @@ bool VoidList::isSubsetOf(VoidList const &otherList, VoidDiff diff, Storeable *e
 }
 
 
-bool VoidList::containsByDiff(Storeable *item, VoidDiff diff, Storeable *extra) const
+bool VoidList::containsByDiff(Storeable const *item, VoidDiff const diff, Storeable const *extra) const
 {
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {
     if (0==diff(item, iter.data(), extra)) {
@@ -730,7 +730,7 @@ void VoidList::removeDuplicatesAsMultiset(VoidDiff diff, Storeable *extra)
 }
 
 
-STATICDEF int VoidList::pointerAddressDiff(Storeable *left, Storeable *right, Storeable*)
+STATICDEF int VoidList::pointerAddressDiff(Storeable const *left, Storeable const *right, Storeable const * )
 {
   return comparePointerAddresses(left, right);
 }

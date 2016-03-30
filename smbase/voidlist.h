@@ -44,9 +44,9 @@ class VoidListMutator;
 // right, 0 if they are equivalent, and >0 if right should come before
 // left.  For example, if we are sorting numbers into ascending order,
 // then 'diff' could simply be subtraction.
-typedef int (*VoidDiff)(Storeable *left, Storeable *right, Storeable *extra);
+typedef int (*VoidDiff)(Storeable const *left, Storeable const *right, Storeable const *extra);
 
-typedef bool (*VoidEq)(Storeable *left, Storeable *right);
+typedef bool (*VoidEq)(Storeable const *left, Storeable const *right);
 
 
 // list of void*; at this level, the void* are completely opaque;
@@ -97,7 +97,7 @@ public:
   VoidNode* append(Storeable *newitem);        // insert at rear
   void insertAt(Storeable *newitem, int index);
     // new item is inserted such that its index becomdes 'index'
-  void insertSorted(Storeable *newitem, VoidDiff diff, Storeable *extra=NULL);
+  void insertSorted(Storeable *newitem, VoidDiff const diff, Storeable const *extra=NULL);
     // insert into an already-sorted list so that the list is sorted afterwards
 
   // removal
@@ -107,18 +107,18 @@ public:
   void removeAll();
 
   // list-as-set: selectors
-  int indexOf(Storeable *item) const;     // returns index of *first* occurrance, or -1 if not present
-  int indexOf(Storeable *item, VoidEq eq) const;     // returns index of *first* occurrance, or -1 if not present
-  int indexOfF(Storeable *item) const;    // same as indexOf, but throws exception if not present
-  bool contains(Storeable *item) const    // true if the item appears in the list
+  int indexOf(Storeable const *item) const;     // returns index of *first* occurrance, or -1 if not present
+  int indexOf(Storeable const *item, VoidEq const eq) const;     // returns index of *first* occurrance, or -1 if not present
+  int indexOfF(Storeable const *item) const;    // same as indexOf, but throws exception if not present
+  bool contains(Storeable const *item) const    // true if the item appears in the list
     { return indexOf(item) >= 0; }
 
   // list-as-set: mutators
   bool prependUnique(Storeable *newitem); // prepend only if not already there
   bool appendUnique(Storeable *newitem);  // append   "            "
-  void removeItem(Storeable *item);       // remove first occurrance -- must exist
-  bool removeIfPresent(Storeable *item);  // remove first occurrance; return true if changed
-  bool removeIfPresent(Storeable *item, VoidEq eq);  // remove first occurrance; return true if changed
+  void removeItem(Storeable const *item);       // remove first occurrance -- must exist
+  bool removeIfPresent(Storeable const *item);  // remove first occurrance; return true if changed
+  bool removeIfPresent(Storeable const *item, VoidEq eq);  // remove first occurrance; return true if changed
   bool removeItems(VoidList const &lst, VoidEq eq);   // remove all; return true if changed
 
   // complex modifiers
@@ -143,25 +143,25 @@ public:
   void stealTailAt(int index, VoidList &source);
 
   // equal items in equal positions
-  bool equalAsLists(VoidList const &otherList, VoidDiff diff, Storeable *extra=NULL) const;
+  bool equalAsLists(VoidList const &otherList, VoidDiff const diff, Storeable const *extra=NULL) const;
   
   // if equal, returns 0; otherwise, return order (-1/+1) according to
   // the first differing pair of elements; a shorter (but otherwise
   // idential list) will compare as being less
-  int compareAsLists(VoidList const &otherList, VoidDiff diff, Storeable *extra=NULL) const;
+  int compareAsLists(VoidList const &otherList, VoidDiff const diff, Storeable const * extra=NULL) const;
 
   // last-as-set: comparisons (NOT efficient)
-  bool equalAsSets(VoidList const &otherList, VoidDiff diff, Storeable *extra=NULL) const;
+  bool equalAsSets(VoidList const &otherList, VoidDiff const diff, Storeable const * extra=NULL) const;
     // A subset of B, and vice-versa
-  bool isSubsetOf(VoidList const &otherList, VoidDiff diff, Storeable *extra=NULL) const;
+  bool isSubsetOf(VoidList const &otherList, VoidDiff const diff, Storeable const * extra=NULL) const;
     // uses slow elementwise containment
-  bool containsByDiff(Storeable *item, VoidDiff diff, Storeable *extra=NULL) const;
+  bool containsByDiff(Storeable const * item, VoidDiff const diff, Storeable const * extra=NULL) const;
 
   // use 'diff' to mergesort the list, then remove duplicate entries
   void removeDuplicatesAsMultiset(VoidDiff diff, Storeable *extra=NULL);
 
   // treating the pointer values themselves as the basis for comparison
-  static int pointerAddressDiff(Storeable *left, Storeable *right, Storeable*);
+  static int pointerAddressDiff(Storeable const *left, Storeable const *right, Storeable const *);
   bool equalAsPointerLists(VoidList const &otherList) const
     { return equalAsLists(otherList, pointerAddressDiff); }
   bool equalAsPointerSets(VoidList const &otherList) const

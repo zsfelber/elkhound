@@ -23,6 +23,7 @@ public:    // funcs
   LocString(StoragePool &pool, SourceLoc loc, StringRef str);
 
   LocString(StoragePool &pool, Flatten&);
+  LocString(Storeable const &parent, Flatten&);
   void xfer(StoragePool &pool, Flatten &flat);
 
   // deallocates its argument; intended for convenient use in bison grammar files

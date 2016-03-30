@@ -337,6 +337,11 @@ TerminalSet::TerminalSet(StoragePool &pool, int numTerms) : Storeable(pool)
   init(numTerms);
 }
 
+TerminalSet::TerminalSet(Storeable const &parent, int numTerms) : Storeable(parent, sizeof(TerminalSet), true)
+{
+  init(numTerms);
+}
+
 TerminalSet::TerminalSet(TerminalSet const &obj) : Storeable(obj)
 {
   init(obj.bitmapLen * 8);    // close enough; same # of bytes at least
@@ -426,6 +431,10 @@ TerminalSet::TerminalSet(StoragePool &pool, Flatten&) : Storeable(pool)
   , bitmap(NULL)
 {}
 
+TerminalSet::TerminalSet(Storeable const &parent, Flatten&) : Storeable(parent, sizeof(TerminalSet), true)
+  , bitmap(NULL)
+{}
+
 void TerminalSet::xfer(StoragePool &pool, Flatten &flat)
 {
   flat.xferInt(bitmapLen);
@@ -460,7 +469,7 @@ unsigned char *TerminalSet::getByte(int index) const
 bool TerminalSet::contains(int index) const
 {
   unsigned char *p = getByte(index);
-  return (*p >> getBit(index)) & 1 == 1;
+  return ((*p >> getBit(index)) & 1) == 1;
 }
 
 
@@ -590,13 +599,14 @@ void Production::RHSElt::xferSerfs(Flatten &flat, Grammar &g)
 // -------------------- Production -------------------------
 Production::Production(StoragePool &pool, Nonterminal *L, char const *Ltag)
   : Storeable(pool), left(L),
-    right(),
+    right(*this),
     precedence(0),
     forbid(NULL),
     forbid_owned(false),
     rhsLen(-1),
     prodIndex(-1),
-    firstSet(0)       // don't allocate bitmap yet
+    action(*this),
+    firstSet(*this)       // don't allocate bitmap yet
 {
     pool.addPointer(forbid);
 }
@@ -611,11 +621,11 @@ Production::~Production()
 
 
 Production::Production(StoragePool &pool, Flatten &flat)
-  : Storeable(pool), left(NULL),
+  : Storeable(pool), left(NULL), right(*this),
     forbid(NULL),
     forbid_owned(false),
-    action(flat),
-    firstSet(flat)
+    action(*this,flat),
+    firstSet(*this,flat)
 {}
 
 void Production::xfer(StoragePool &pool, Flatten &flat)
@@ -811,7 +821,7 @@ void Production::addForbid(Grammar &g, Terminal *t, int numTerminals)
         throw std::exception();
      }
   } else {
-     forbid = new (g.pool) TerminalSet(numTerminals);
+     forbid = new (g.pool) TerminalSet(g.pool, numTerminals);
 
      forbid_owned = true;
   }
@@ -1306,7 +1316,7 @@ Nonterminal *Grammar::getOrMakeNonterminal(LocString const &name)
     return nt;
   }
 
-  nt = new (pool) Nonterminal(name);
+  nt = new (pool) Nonterminal(pool, name);
   nonterminals.append(nt);
   return nt;
 }
@@ -1318,7 +1328,7 @@ Terminal *Grammar::getOrMakeTerminal(LocString const &name)
     return term;
   }
 
-  term = new (pool) Terminal(name);
+  term = new (pool) Terminal(pool, name);
   terminals.append(term);
   return term;
 }

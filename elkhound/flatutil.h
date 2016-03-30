@@ -15,7 +15,7 @@ void xferOwnerPtr(StoragePool &pool, Flatten &flat, T *&ptr)
 {
   if (flat.reading()) {
     // construct a new, empty object
-    ptr = new T(flat);
+    ptr = new (pool) T(pool, flat);
   }
 
   // read/write it
@@ -77,7 +77,7 @@ void xferObjList(StoragePool& pool, Flatten &flat, ObjList <T> &list)
     ObjListMutator<T> mut(list);
     while (listLen--) {
       // construct a new, empty object
-      T *obj = new (pool) T(flat);
+      T *obj = new (pool) T(pool, flat);
 
       // read it
       obj->xfer(pool, flat);
@@ -106,7 +106,7 @@ void xferSObjList(StoragePool& pool, Flatten &flat, SObjList <T> &list)
     SObjListMutator<T> mut(list);
     while (listLen--) {
       // construct a new, empty object
-      T *obj = new (pool) T(flat);
+      T *obj = new (pool) T(pool, flat);
 
       // read it
       obj->xfer(pool, flat);
