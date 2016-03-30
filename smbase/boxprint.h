@@ -239,6 +239,7 @@ private:     // funcs
 
 public:      // funcs
   BoxPrint(StoragePool &pool);
+  BoxPrint();
   ~BoxPrint();
 
   // append another element to the current innermost box

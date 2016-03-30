@@ -45,8 +45,8 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-  ObjList(StoragePool &pool)                            : Storeable(pool), list(*this,true), owning(true) {}
-  ObjList(Storeable const &parent)                      : Storeable(parent, sizeof(ObjList)), list(*this,true), owning(true) {}
+  ObjList(StoragePool &pool)                            : Storeable(pool), list(*this,0,true), owning(true) {}
+  ObjList(Storeable const &parent)                      : Storeable(parent, sizeof(ObjList)), list(*this,0,true), owning(true) {}
 
   ~ObjList()                           { deleteAll(); }
 
@@ -54,7 +54,7 @@ private:
   // right, 0 if they are equivalent, and >0 if right should come before
   // left.  For example, if we are sorting numbers into ascending order,
   // then 'diff' would simply be subtraction.
-  typedef int (*Diff)(T const *left, T const *right, Storeable *extra);
+  typedef int (*Diff)(T const *left, T const *right, Storeable const *extra);
 
   // selectors
   int count() const                     { return list.count(); }

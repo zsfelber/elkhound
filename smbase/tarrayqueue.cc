@@ -4,6 +4,7 @@
 #include "arrayqueue.h"      // module to test
 #include "objlist.h"         // ObjList
 #include "ckheap.h"          // malloc_stats
+#include "int.h"          // malloc_stats
 
 #include <stdio.h>           // printf
 #include <stdlib.h>          // exit
@@ -14,11 +15,12 @@ int maxLength = 0;
 // one round of testing
 void round(int ops)
 {
+  StoragePool pool;
   // implementation to test
   ArrayQueue<int> arrayQueue;
 
   // "trusted" implementation to compare with
-  ObjList<int> listQueue;
+  STORE_NEW_REF0(pool, ObjList<Integer>, listQueue);
 
   while (ops--) {
     // check that the array and list agree
@@ -52,15 +54,15 @@ void round(int ops)
     else if (op < 40 && arrayQueue.isNotEmpty()) {
       // dequeue
       int i = arrayQueue.dequeue();
-      int *j = listQueue.removeFirst();
-      xassert(i == *j);
-      delete j;
+      int j = listQueue.removeFirst()->i;
+      xassert(i == j);
+      //delete j;
     }
     else {
       // enqueue
       int elt = rand() % 100;
       arrayQueue.enqueue(elt);
-      listQueue.append(new int(elt));
+      listQueue.append(new Integer(elt));
     }
   }
 }

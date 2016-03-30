@@ -338,6 +338,15 @@ BoxPrint::BoxPrint(StoragePool &pool)
   boxStack.push(new (getPoolRef()) BPBox(getPoolRef(), BP_vertical));
 }
 
+BoxPrint::BoxPrint()
+  : boxStack(/* *this,*/ sizeof(ObjArrayStack<BPBox>)),
+    levelIndent(2)
+{
+  // initial vert box
+  // TODO dummy, it is bad, if StoragePool autogrows
+  boxStack.push(new BPBox(getPoolRef(), BP_vertical));
+}
+
 BoxPrint::~BoxPrint()
 {}
 

@@ -3,6 +3,7 @@
 
 #include "strdict.h"        // this module
 #include <string.h>         // strcmp
+#include <iostream>
 
 
 #define FOREACH_NODE(itervar) \
@@ -460,11 +461,11 @@ void entry()
     }
   }
 
-  cout << "final size: " << size
+  std::cout << "final size: " << size
        << "\ncollisions: " << collisions
        << "\n";
 
-  cout << "all tests passed\n";
+  std::cout << "all tests passed\n";
 }
 
 USUAL_MAIN

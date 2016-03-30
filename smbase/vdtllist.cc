@@ -2,6 +2,7 @@
 // code for vdtllist.h
 
 #include "vdtllist.h"      // this module
+#include "int.h"
 
 /*
 void VoidTailList::steal(VoidTailList *src, bool deleteOrig)
@@ -230,7 +231,7 @@ void VoidTailList::selfCheck() const
 int main()
 {
   VoidTailList list;
-  int zero, one, two, three;
+  Integer zero(0), one(1), two(2), three(3);
 
   // This isn't a very exhaustive test; it's mainly to check that
   // selfCheck doesn't do anything really stupid (it used to).

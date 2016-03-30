@@ -5,6 +5,7 @@
 #include "array.h"     // module to test
 #include "objlist.h"         // ObjList
 #include "ckheap.h"          // malloc_stats
+#include "int.h"          // malloc_stats
 
 #include <stdio.h>           // printf
 #include <stdlib.h>          // exit
@@ -15,20 +16,21 @@ int maxLength = 0;
 // one round of testing
 void round(int ops)
 {
+  StoragePool pool;
   // implementations to test
   ArrayStack<int> arrayStack;
   ArrayStackEmbed<int, 10> arrayStackEmbed;
 
   // "trusted" implementation to compare with
-  ObjList<int> listStack;
+  STORE_NEW_REF0(pool, ObjList<Integer>, listStack);
 
   while (ops--) {
     // check that the arrays and list agree
     {
       int length = listStack.count();
       if (length > 0) {
-        xassert(listStack.first()[0] == arrayStack.top());
-        xassert(listStack.first()[0] == arrayStackEmbed.top());
+        xassert(listStack.first()[0].i == arrayStack.top());
+        xassert(listStack.first()[0].i == arrayStackEmbed.top());
       }
 
       int index = length-1;
@@ -56,17 +58,17 @@ void round(int ops)
       // pop
       int i = arrayStack.pop();
       int j = arrayStackEmbed.pop();
-      int *k = listStack.removeFirst();
-      xassert(i == *k);
-      xassert(j == *k);
-      delete k;
+      int k = listStack.removeFirst()->i;
+      xassert(i == k);
+      xassert(j == k);
+      //delete k;
     }
     else {
       // push
       int elt = rand() % 100;
       arrayStack.push(elt);
       arrayStackEmbed.push(elt);
-      listStack.prepend(new int(elt));
+      listStack.prepend(new Integer(elt));
     }
   }
 }

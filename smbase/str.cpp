@@ -11,6 +11,7 @@
 #include <iostream>       // std::ostream << char*
 #include <assert.h>         // assert
 #include <unistd.h>         // write
+#include <iostream>
 
 #include "xassert.h"        // xassert
 #include "ckheap.h"         // checkHeapNode
@@ -478,7 +479,7 @@ void test(unsigned long val)
 {
   //cout << stringb(val << " in hex: 0x" << stringBuilder::Hex(val)) << endl;
 
-  cout << stringb(val << " in hex: " << SBHex(val)) << endl;
+  std::cout << stringb(val << " in hex: " << SBHex(val)) << std::endl;
 }
 
 int main()
@@ -490,10 +491,10 @@ int main()
   test((unsigned long)(-1));
   test(1);
 
-  cout << "stringf: " << stringf("int=%d hex=%X str=%s char=%c float=%f",
-                                 5, 0xAA, "hi", 'f', 3.4) << endl;            
+  std::cout << "stringf: " << stringf("int=%d hex=%X str=%s char=%c float=%f",
+                                 5, 0xAA, "hi", 'f', 3.4) << std::endl;
 
-  cout << "tests passed\n";
+  std::cout << "tests passed\n";
 
   return 0;
 }

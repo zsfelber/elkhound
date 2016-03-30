@@ -59,6 +59,16 @@ Bit2d::Bit2d(Flatten &)
     owning(true)
 {}
 
+void Bit2d::xfer(Flatten &flat)
+{
+  flat.xferInt(size.x);
+  flat.xferInt(size.y);
+  flat.xferInt(stride);
+
+  flat.xferHeapBuffer((void*&)data, datasize());
+}
+
+
 void Bit2d::xfer(StoragePool &pool, Flatten &flat)
 {
   flat.xferInt(size.x);

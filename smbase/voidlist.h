@@ -123,11 +123,11 @@ public:
 
   // complex modifiers
   void reverse();
-  void insertionSort(VoidDiff diff, Storeable *extra=NULL);
-  void mergeSort(VoidDiff diff, Storeable *extra=NULL);
+  void insertionSort(VoidDiff diff, Storeable const *extra=NULL);
+  void mergeSort(VoidDiff diff, Storeable const *extra=NULL);
 
   // and a related test
-  bool isSorted(VoidDiff diff, Storeable *extra=NULL) const;
+  bool isSorted(VoidDiff diff, Storeable const *extra=NULL) const;
 
   // multiple lists
   void concat(VoidList &tail);           // tail is emptied, nodes appended to this
@@ -158,7 +158,7 @@ public:
   bool containsByDiff(Storeable const * item, VoidDiff const diff, Storeable const * extra=NULL) const;
 
   // use 'diff' to mergesort the list, then remove duplicate entries
-  void removeDuplicatesAsMultiset(VoidDiff diff, Storeable *extra=NULL);
+  void removeDuplicatesAsMultiset(VoidDiff diff, Storeable const *extra=NULL);
 
   // treating the pointer values themselves as the basis for comparison
   static int pointerAddressDiff(Storeable const *left, Storeable const *right, Storeable const *);

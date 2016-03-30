@@ -4,41 +4,15 @@
 #include "objlist.h"    // this module
 #include "breaker.h"    // breaker
 #include "test.h"       // USUAL_MAIN
+#include "int.h"
 
 #include <stdlib.h>     // rand()
 #include <stdio.h>      // printf()
 
 
-// ------------ object class --------------------
-// class of objects to hold in the list
-class Integer {
-public:
-  static int ctorcount;     // # of calls to ctor
-  static int dtorcount;     // # of calls to dtor
-  int i;                    // data this class holds
-
-public:
-  Integer(int ii);
-  ~Integer();
-};
-
-int Integer::ctorcount = 0;
-int Integer::dtorcount = 0;
-
-Integer::Integer(int ii)
-  : i(ii)
-{
-  ctorcount++;
-}
-
-Integer::~Integer()
-{
-  dtorcount++;
-}
-
 
 // ----------- testing ObjList -----------
-int intDiff(Integer const *left, Integer const *right, void*)
+int intDiff(Integer const *left, Integer const *right, Storeable const *)
 {
   return left->i - right->i;
 }
@@ -72,12 +46,14 @@ void print(ObjList<Integer> const &list)
 
 void testSorting()
 {
+  StoragePool pool;
   enum { ITERS=100, ITEMS=20 };
 
   loopi(ITERS) {
     // construct a list
-    ObjList<Integer> list1;
-    ObjList<Integer> list2;
+    STORE_NEW_REF0(pool, ObjList<Integer>, list1);
+    STORE_NEW_REF0(pool, ObjList<Integer>, list2);
+
     int items = rand()%ITEMS;
     loopj(items) {
       int it = rand()%ITEMS;
@@ -118,6 +94,7 @@ void testSorting()
 
 void entry()
 {
+  StoragePool pool;
   // first set of tests
   {
     // some sample items
@@ -126,7 +103,7 @@ void entry()
     Integer *c = new Integer(3);
     Integer *d = new Integer(4);
 
-    ObjList<Integer> list;
+    STORE_NEW_REF0(pool, ObjList<Integer>, list);
 
     // test simple modifiers and info
     list.append(c);     PRINT(list);   // c
@@ -149,7 +126,7 @@ void entry()
   // test that we can detect accidental duplication
   {
     Integer *x = new Integer(1);
-    ObjList<Integer> list;
+    STORE_NEW_REF0(pool, ObjList<Integer>, list);
     list.prepend(x);
     bool bad = false;
     try {

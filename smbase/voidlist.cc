@@ -25,8 +25,7 @@ void VoidList::assign(VoidList const &src, size_t size_of, bool move) {
 }
 
 void VoidList::chk_assign(VoidList const &src) {
-    xassert(__kind == src.__kind);
-    xassert(__parentVector == src.__parentVector);
+    xassert(__kind == src.__kind && __parentVector == src.__parentVector);
 
     top = src.top;
     ExternalPtr ptrs[] = { (ExternalPtr)&top };
@@ -384,7 +383,7 @@ void VoidList::reverse()
 //   The 'extra' parameter passed to sort is passed to diff each time it
 // is called.
 //   O(n^2) time, O(1) space
-void VoidList::insertionSort(VoidDiff diff, Storeable *extra)
+void VoidList::insertionSort(VoidDiff diff, Storeable const *extra)
 {
   VoidNode *primary = top;                   // primary sorting pointer
   while (primary && primary->next) {
@@ -416,7 +415,7 @@ void VoidList::insertionSort(VoidDiff diff, Storeable *extra)
 
 
 // O(n log n) time, O(log n) space
-void VoidList::mergeSort(VoidDiff diff, Storeable *extra)
+void VoidList::mergeSort(VoidDiff diff, Storeable const *extra)
 {
   if (top == NULL || top->next == NULL) {
     return;   // base case: 0 or 1 elements, already sorted
@@ -501,7 +500,7 @@ void VoidList::mergeSort(VoidDiff diff, Storeable *extra)
 }
 
 
-bool VoidList::isSorted(VoidDiff diff, Storeable *extra) const
+bool VoidList::isSorted(VoidDiff diff, Storeable const *extra) const
 {
   if (isEmpty()) {
     return true;
@@ -530,7 +529,15 @@ bool VoidList::isSorted(VoidDiff diff, Storeable *extra) const
 // attach tail's nodes to this; empty the tail
 void VoidList::concat(VoidList &tail)
 {
-  xassert(__parentVector == tail.__parentVector);
+  xassert(getParent() == tail.getParent());
+
+  tail.getPoolRef().removeChildPool(&tail.npool);
+  // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
+  tail.npool.removeAllExternalPointers();
+
+  //StoragePool stealSP =
+  new (npool) StoragePool(tail.npool, false, StoragePool::Cp_Move);
+
   if (!top) {
     top = tail.top;
   }
@@ -542,6 +549,7 @@ void VoidList::concat(VoidList &tail)
   }
 
   tail.top = NULL;
+
 }
 
 
@@ -703,7 +711,7 @@ bool VoidList::containsByDiff(Storeable const *item, VoidDiff const diff, Storea
 }
 
 
-void VoidList::removeDuplicatesAsMultiset(VoidDiff diff, Storeable *extra)
+void VoidList::removeDuplicatesAsMultiset(VoidDiff diff, Storeable const *extra)
 {
   if (isEmpty()) {
     return;

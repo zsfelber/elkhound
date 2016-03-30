@@ -34,6 +34,7 @@ public:      // funcs
   ~Bit2d();
 
   Bit2d(Flatten&);
+  void xfer(Flatten &flat);
   void xfer(StoragePool &pool, Flatten &flat);
 
   bool okpt(point const &p) const    { return p.gtez() && p < size; }
