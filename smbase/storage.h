@@ -538,7 +538,7 @@ private:
            std::cout << "Warning  StoragePool.moveVariable : (old) pointer to external data : "
                      << (void*) variable  << " of " << (void*) oldmemFrom << " .. " << (void*) oldmemTo << std::endl;
            StoragePool const * parent = getPool();
-           if (parent != this && !parent->contains(variable)) {
+           if (parent && parent != this && !parent->contains(variable)) {
                std::cout << "Warning  StoragePool.moveVariable : (new) (parent) pointer to external data : "
                          << (void*) variable  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
            }
@@ -947,7 +947,7 @@ public:
                std::cout << "Warning  StoragePool.addPointer : pointer to external data : "
                          << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
                StoragePool const * parent = getPool();
-               if (parent != this && !parent->contains(dataPointer)) {
+               if (parent && parent != this && !parent->contains(dataPointer)) {
                    std::cout << "Warning  StoragePool.addPointer : (parent) pointer to external data : "
                              << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
                }
@@ -982,7 +982,7 @@ public:
                std::cout << "Warning  StoragePool.removePointer : pointer to external data : "
                          << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
                StoragePool const * parent = getPool();
-               if (parent != this && !parent->contains(dataPointer)) {
+               if (parent && parent != this && !parent->contains(dataPointer)) {
                    std::cout << "Warning  StoragePool.removePointer : (parent) pointer to external data : "
                              << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
                }
@@ -992,15 +992,27 @@ public:
        if (contains(&dataPointer)) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
            size_t* val = std::lower_bound(intpointers, intpointers+intptrslength, dd);
-           xassert (*val == dd);
-           //removeBufferItem((uint8_t*)intpointers, intptrslength, (uint8_t*)val, sizeof(size_t));
-           *val = std::string::npos;
+           size_t vval = *val;
+           if (vval == std::string::npos) {
+               std::cout << "Warning  StoragePool.removePointer : internal poinrer already removed : " << (void*) &dataPointer
+                         << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+           } else {
+               xassert (vval == dd);
+               //removeBufferItem((uint8_t*)intpointers, intptrslength, (uint8_t*)val, sizeof(size_t));
+               *val = std::string::npos;
+           }
        } else {
            ExternalPtr dd = &dataPointer;
            ExternalPtr* val = std::lower_bound(extpointers, extpointers+extptrslength, dd);
-           xassert (*val == dd);
-           //removeBufferItem((uint8_t*)extpointers, extptrslength, (uint8_t*)val, sizeof(ExternalPtr));
-           *val = NULL;
+           ExternalPtr vval = *val;
+           if (vval) {
+               xassert (vval == dd);
+               //removeBufferItem((uint8_t*)extpointers, extptrslength, (uint8_t*)val, sizeof(ExternalPtr));
+               *val = NULL;
+           } else {
+               std::cout << "Warning  StoragePool.removePointer : external poinrer already removed : " << (void*) &dataPointer
+                         << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+           }
        }
    }
 
