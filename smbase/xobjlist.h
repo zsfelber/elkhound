@@ -78,8 +78,8 @@ public:
   className& operator= (className const &src)         { list = src.list; return *this; }
 
   public:
-  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(*this,true) {}
-  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(*this,true) {}
+  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(*this,0,true) {}
+  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(*this,0,true) {}
 ]]], [[[m4_dnl          // objlist
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
@@ -92,8 +92,8 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(*this,true), owning(true) {}
-  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(*this,true), owning(true) {}
+  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(*this,0,true), owning(true) {}
+  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(*this,0,true), owning(true) {}
 ]]])m4_dnl
 
   ~className[[[]]]()                      m4_dnl

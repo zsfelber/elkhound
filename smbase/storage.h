@@ -574,9 +574,9 @@ private:
 
 
 
-   inline void allocParentItem(void*& data, size_t store_size) {
+   inline void allocParentItem(void*& _data, size_t store_size) {
        if (ownerPool != this) {
-           ownerPool->allocParentItem(data, store_size);
+           ownerPool->allocParentItem(_data, store_size);
            return;
        }
 
@@ -596,7 +596,7 @@ private:
                   if (continous >= store_size) {
                       xassert(first >= da);
 
-                      data = first;
+                      _data = first;
                       deleted_vars -= continous;
 
                       if (first == da) {
@@ -635,13 +635,14 @@ private:
           }
       }
       memlength = newmemlength;
-      data = memory+oldmemlength;
+      _data = memory+oldmemlength;
 
       ok:
 
-      ((DataPtr)data)->__kind = ST_PARENT;
-      ((DataPtr)data)->__parentVector = encodeDeltaPtr(memory, (uint8_t*)data);
-      ((DataPtr)data)->__store_size = store_size;
+      DataPtr data = (DataPtr) _data;
+      data->__kind = ST_PARENT;
+      data->__parentVector = encodeDeltaPtr(memory, (uint8_t*)_data);
+      data->__store_size = store_size;
    }
 
    inline void freeParentItem(DataPtr data) {
@@ -656,6 +657,51 @@ private:
            first_del_var = dd;
        }
        deleted_vars += data->__store_size;
+   }
+
+   inline void assignImpl(StoragePool const & src, CopyMode copyMode=Cp_All) {
+       switch (copyMode) {
+       case Cp_TmpDuplicate:
+       {
+           xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
+
+           ownerPool = (StoragePool*) &src;
+
+           break;
+       }
+       case Cp_Move:
+       {
+           xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
+
+           fixAllPoolPointers();
+
+           constcast(src).clear();
+           break;
+       }
+       case Cp_All:
+       {
+           size_t bufsz = getMemBufSize(memlength);
+           xassert(__kind != ST_DELETED && bufsz==memcapacity);
+
+           memory = NULL;
+           intpointers = NULL;
+           extpointers = NULL;
+           childpools = NULL;
+
+           extptrslength = 0;
+           extptrscapacity = 0;
+
+           copyBuffer(src.memory, memlength, memcapacity, memory, 1/*sizeof(uint8_t)*/);
+           copyBuffer((uint8_t*)src.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
+           copyBuffer((uint8_t*)src.childpools, chplslength, chplscapacity, (uint8_t*&)childpools, sizeof(size_t));
+
+           moveInternalPointers(src.memory, src.memory+memlength);
+           fixAllPoolPointers();
+           break;
+       }
+       default:
+           break;
+       }
    }
 
 
@@ -678,12 +724,11 @@ public:
 
        if (childOfParent) {
            memset(((uint8_t*)this)+sizeof(Storeable), 0, sizeof(StoragePool)-sizeof(Storeable));
-           xassert(__kind == ST_CHILD);
-           xassert(copyMode == Cp_All);
+           xassert(__kind == ST_CHILD && copyMode == Cp_All);
            first_del_var = std::string::npos;
        } else {
            StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
-           assign(srcOrParentPool, copyMode);
+           assignImpl(srcOrParentPool, copyMode);
        }
 
        getPool()->addChildPool(this);
@@ -698,54 +743,8 @@ public:
    }
 
    inline void assign(StoragePool const & src, CopyMode copyMode=Cp_All) {
-       switch (copyMode) {
-       case Cp_TmpDuplicate:
-       {
-           xassert(__kind != ST_DELETED);
-           xassert(__kind == src.__kind);
-           xassert(getPool() == src.getPool());
-
-           ownerPool = (StoragePool*) &src;
-
-           break;
-       }
-       case Cp_Move:
-       {
-           xassert(__kind != ST_DELETED);
-           xassert(__kind == src.__kind);
-           xassert(getPool() == src.getPool());
-
-           fixAllPoolPointers();
-
-           constcast(src).clear();
-           break;
-       }
-       case Cp_All:
-       {
-           xassert(__kind != ST_DELETED);
-
-           size_t bufsz = getMemBufSize(memlength);
-           xassert(bufsz==memcapacity);
-
-           memory = NULL;
-           intpointers = NULL;
-           extpointers = NULL;
-           childpools = NULL;
-
-           extptrslength = 0;
-           extptrscapacity = 0;
-
-           copyBuffer(src.memory, memlength, memcapacity, memory, 1/*sizeof(uint8_t)*/);
-           copyBuffer((uint8_t*)src.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
-           copyBuffer((uint8_t*)src.childpools, chplslength, chplscapacity, (uint8_t*&)childpools, sizeof(size_t));
-
-           moveInternalPointers(src.memory, src.memory+memlength);
-           fixAllPoolPointers();
-           break;
-       }
-       default:
-           break;
-       }
+       memcpy(this, &src, sizeof(StoragePool));
+       assignImpl(src, copyMode);
    }
 
    inline void del() {
@@ -774,6 +773,7 @@ public:
        memset(this, 0, sizeof(StoragePool));
        __parentVector = std::string::npos;
         first_del_var = std::string::npos;
+        ownerPool = this;
    }
 
    StoragePool& operator= (StoragePool const &src) {
@@ -909,12 +909,12 @@ public:
 
    template<class ST>
    inline void addPointer(ST*& _externalPointer) {
-       addPointer((void*&)_externalPointer);
+       addPointer((DataPtr&)_externalPointer);
    }
 
    template<class ST>
    inline void removePointer(ST*& _externalPointer) {
-       removePointer((void*&)_externalPointer);
+       removePointer((DataPtr&)_externalPointer);
    }
 
    inline void addPointer(DataPtr& dataPointer) {
@@ -988,8 +988,7 @@ public:
    }
 
    inline void addChildPool(PtrToMe childPoolPointer) {
-       xassert(ownerPool == this);
-       xassert(contains(childPoolPointer));
+       xassert(ownerPool == this && contains(childPoolPointer));
 
        size_t pbufsz = getPtrBufSize(chplslength);
        if (chplscapacity < pbufsz) {
@@ -1045,9 +1044,8 @@ inline Storeable::Storeable()
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-inline Storeable::Storeable(StoragePool & pool) : __kind(ST_PARENT) {
-    xassert(getPool() == &pool);
-    xassert(pool.contains(this));
+inline Storeable::Storeable(StoragePool & pool) {
+    xassert(__kind == ST_PARENT && getPool() == &pool && pool.contains(this));
 }
 
 template<class ME>
