@@ -132,6 +132,7 @@ OBJS := \
   growbuf.o \
   hashline.o \
   hashtbl.o \
+  int.o \
   $(MALLOC_MODULE).o \
   missing.o \
   mypopen.o \

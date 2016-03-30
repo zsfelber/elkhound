@@ -3,12 +3,13 @@
 // test code for taillist
 #include "taillist.h"
 #include "test.h" // USUAL_MAIN
+#include "int.h"
 
 void entry()
 {
-  int a = 2,b = 4,c = 8,d = 16, e = 42;
+  Integer a = 2,b = 4,c = 8,d = 16, e = 42;
 
-  TailList<int> list;
+  TailList<Integer> list;
 
   list.append(&d);
   list.prepend(&b);		// 4, 16
@@ -34,8 +35,8 @@ void entry()
   list.prepend(&a);		// 2, 4, 8, 16
   
   int count = 2;
-  FOREACH_TAILLIST_NC(int,list, iter) {
-    xassert( *(iter.data()) == count);
+  FOREACH_TAILLIST_NC(Integer, list, iter) {
+    xassert( iter.data()->i == count);
     count *= 2;
   }
 

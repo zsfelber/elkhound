@@ -36,7 +36,7 @@ public:
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
   TailList(TailList<T> *src)              : list(&src->list) {}
-  void steal(TailList<T> *src)           { list.steal(&src->list); }
+  void assign(TailList<T> &src, bool move)           { list.assign(src.list, move); }
 
   // selectors
   int count() const                     { return list.count(); }
@@ -59,12 +59,12 @@ public:
   T *removeFirst()                      { return (T*)list.removeFirst(); }
   T *removeLast()                       { return (T*)list.removeLast(); }
   T *removeAt(int index)                { return (T*)list.removeAt(index); }
-  void removeItem(T *item)              { list.removeItem((void*)item); }
+  void removeItem(T const *item)              { list.removeItem(item); }
   
   // list-as-set: selectors
-  int indexOf(T const *item) const      { return list.indexOf((void*)item); }
-  int indexOfF(T const *item) const     { return list.indexOfF((void*)item); }
-  bool contains(T const *item) const    { return list.contains((void*)item); }
+  int indexOf(T const *item) const      { return list.indexOf(item); }
+  int indexOfF(T const *item) const     { return list.indexOfF(item); }
+  bool contains(T const *item) const    { return list.contains(item); }
 
   // list-as-set: mutators
   bool prependUnique(T *newitem)        { return list.prependUnique(newitem); }
@@ -122,7 +122,7 @@ public:
   T *data() const                       { return (T*)iter.data(); }
   
   // iterator mutation; use with caution
-  void setDataLink(T *newData)          { iter.setDataLink((void*)newData); }
+  void setDataLink(T *newData)          { iter.setDataLink(newData); }
 };
 
 #define FOREACH_TAILLIST_NC(T, list, iter) \

@@ -4,6 +4,7 @@
 #include "voidlist.h"   // this module
 #include "breaker.h"    // breaker
 #include "str.h"        // stringc
+#include "int.h"     // checkHeap
 #include "ckheap.h"     // checkHeap
 
 #include <stdlib.h>     // rand()
@@ -916,7 +917,7 @@ void entry()
   // first set of tests
   {
     // some sample items
-    Storeable *a=(Storeable*)4, *b=(Storeable*)8, *c=(Storeable*)12, *d=(Storeable*)16;
+    Storeable *a=new Integer(4), *b=new Integer(8), *c=new Integer(12), *d=new Integer(16);
 
     VoidList list;
 

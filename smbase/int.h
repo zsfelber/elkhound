@@ -1,6 +1,7 @@
 #ifndef INT_H
 #define INT_H
 
+#include "storage.h"
 
 // ------------ object class --------------------
 // class of objects to hold in the list
@@ -14,20 +15,6 @@ public:
   Integer(int ii);
   ~Integer();
 };
-
-int Integer::ctorcount = 0;
-int Integer::dtorcount = 0;
-
-Integer::Integer(int ii)
-  : i(ii)
-{
-  ctorcount++;
-}
-
-Integer::~Integer()
-{
-  dtorcount++;
-}
 
 
 #endif // INT_H

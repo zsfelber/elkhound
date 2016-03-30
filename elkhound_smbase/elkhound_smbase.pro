@@ -54,7 +54,8 @@ SOURCES += main.cpp \
     ../smbase/malloc_stub.c \
     ../smbase/mypopen.c \
     ../smbase/tmalloc.c \
-    ../smbase/unixutil.c
+    ../smbase/unixutil.c \
+    ../smbase/int.cc
 
 DISTFILES += \
     ../smbase/SMBASE.IDE \
@@ -223,5 +224,6 @@ HEADERS += \
     ../smbase/warn.h \
     ../smbase/xassert.h \
     ../smbase/xobjlist.h \
-    ../smbase/storage.h
+    ../smbase/storage.h \
+    ../smbase/int.h
 
