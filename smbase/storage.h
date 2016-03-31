@@ -1040,15 +1040,14 @@ public:
            intpointers[intptrslength++] = dd;
        } else {
            ExternalPtr dd = &dataPointer;
-           // to ensure it is ordered (binary search invariant)
-           if (extptrslength) {
-               xassert(dd > extpointers[extptrslength-1]);
-           }
            size_t pbufsz = getPtrBufSize(extptrslength);
            if (extptrscapacity < pbufsz) {
                extendBuffer((uint8_t*&)extpointers, extptrslength, extptrscapacity, pbufsz, sizeof(ExternalPtr));
            }
-           extpointers[extptrslength++] = dd;
+           // to ensure it is ordered (binary search invariant)
+           ExternalPtr* val = lower_bound(extpointers, extpointers+extptrslength, dd, (ExternalPtr&)LNULL);
+           insertBufferItem((uint8_t*)extpointers, extptrslength, (uint8_t*)val, sizeof(ExternalPtr));
+           *val = dd;
        }
    }
 
@@ -1190,6 +1189,9 @@ inline Storeable::~Storeable() {
     case ST_PARENT:
         getPool()->freeParentItem(this);
         break;
+    case ST_DELETED:
+        x_assert_fail("Already deleted.", __FILE__, __LINE__);
+        break;
     default:
         break;
     }
@@ -1293,9 +1295,6 @@ inline void Storeable::operator delete (void* _ptr) {
     case ST_NONE:
         free(_ptr);
         break;
-    case ST_DELETED:
-        x_assert_fail("Already deleted.", __FILE__, __LINE__);
-        break;
     default:
         // Nothing to do here, everything is in ~Storeable
         break;
@@ -1307,9 +1306,6 @@ inline void Storeable::operator delete[] (void* _ptr) {
     switch (ptr->__kind) {
     case ST_NONE:
         free(_ptr);
-        break;
-    case ST_DELETED:
-        x_assert_fail("Already deleted[].", __FILE__, __LINE__);
         break;
     default:
         // Nothing to do here, everything is in ~Storeable
