@@ -33,9 +33,9 @@ public:
   VoidTailList() : VoidList()
   { tail = NULL;  npool.addPointer(tail); }
 
-  VoidTailList(StoragePool &pool) : VoidList(pool)
+  VoidTailList(str::StoragePool &pool) : VoidList(pool)
   { tail = NULL;  npool.addPointer(tail); }
-  VoidTailList(Storeable &parent) : VoidList(parent,sizeof(VoidTailList))
+  VoidTailList(str::Storeable &parent) : VoidList(parent,sizeof(VoidTailList))
   { tail = NULL;  npool.addPointer(tail); }
   ~VoidTailList()                    { npool.removePointer(tail); }
   
@@ -61,21 +61,21 @@ public:
   VoidList::isNotEmpty;
   VoidList::nth;
   VoidList::first;
-  Storeable *last() const                 { xassert(tail); return tail->data; }
+  str::Storeable *last() const                 { xassert(tail); return tail->data; }
 
   // insertion
-  void prepend(Storeable *newitem);
-  void append(Storeable *newitem);
+  void prepend(str::Storeable *newitem);
+  void append(str::Storeable *newitem);
   void appendAll(VoidTailList const &tail);
   void appendAllNew(VoidTailList const &tail, VoidEq eq);
   void reappendAll(VoidTailList const &tail, VoidEq eq);
-  void insertAt(Storeable *newitem, int index);
+  void insertAt(str::Storeable *newitem, int index);
   void concat(VoidTailList &tail);
 
   // removal
-  Storeable *removeFirst();               // remove first, return data; must exist
-  Storeable *removeLast();
-  Storeable *removeAt(int index);
+  str::Storeable *removeFirst();               // remove first, return data; must exist
+  str::Storeable *removeLast();
+  str::Storeable *removeAt(int index);
   void removeAll();
   VoidList::removeItem;
 
@@ -85,10 +85,10 @@ public:
   VoidList::contains;
 
   // list-as-set: mutators
-  bool prependUnique(Storeable *newitem);
-  bool appendUnique(Storeable *newitem);
-  //void removeItem(Storeable *item);
-  //bool removeIfPresent(Storeable *item);
+  bool prependUnique(str::Storeable *newitem);
+  bool appendUnique(str::Storeable *newitem);
+  //void removeItem(str::Storeable *item);
+  //bool removeIfPresent(str::Storeable *item);
 
   // debugging
   void selfCheck() const;
@@ -117,11 +117,11 @@ public:
   // iterator actions
   bool isDone() const                         { return p == NULL; }
   void adv()                                  { p = p->next; }
-  Storeable *data() const                          { return p->data; }
-  Storeable *&dataRef()                            { return p->data; }
+  str::Storeable *data() const                          { return p->data; }
+  str::Storeable *&dataRef()                            { return p->data; }
 
   // iterator mutation; use with caution
-  void setDataLink(Storeable *newData)             { p->data = newData; }
+  void setDataLink(str::Storeable *newData)             { p->data = newData; }
 };
 
 

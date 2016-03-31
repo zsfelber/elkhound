@@ -12,11 +12,26 @@
 
 
 
+class VoidList;
+class VoidTailList;
+class VoidNode;
+
+
+namespace str {
+
+
+
 /****************************************************************************************************
  * LIBRARY STUFF
  *
  * ..................................................................................................
  */
+
+
+
+
+class StoragePool;
+
 
 
 template <typename P>
@@ -66,8 +81,8 @@ static const int STORE_BUF_BIT_TOT_SH = STORE_BUF_VAR_SH + STORE_BUF_BIT_SH;
 static const int STORE_BUF_BIT_BITS = STORE_BUF_VAR_BITS-STORE_BUF_BIT_SH;
 static const int STORE_BUF_BIT_SZ = 1 << STORE_BUF_BIT_BITS;
 
-class StoragePool;
 
+static void const * const LNULL = NULL;
 
 
 inline void copyBuffer(uint8_t* src, size_t srclen, size_t srccap,
@@ -163,6 +178,64 @@ inline uint8_t* decodeSignedDeltaPtr(uint8_t* origin, std::ptrdiff_t delta) {
     return delta == 0 ? NULL : origin + delta;
 }
 
+/**
+ * std::lower_bound  with  null item (we ignore null items)
+ *  @brief Finds the first position in which @a val could be inserted
+ *         without changing the ordering.
+ *  @param  __first   An iterator.
+ *  @param  __last    Another iterator.
+ *  @param  __val     The search term.
+ *  @return         An iterator pointing to the first element <em>not less
+ *                  than</em> @a val, or end() if every element is less than
+ *                  @a val.
+ *  @ingroup binary_search_algorithms
+*/
+template<typename T>
+T* lower_bound(T* first, T* last,
+      const T& val, const T& nullItem) {
+
+  while (first < last) {
+    std::ptrdiff_t half = (last-first) >> 1;
+    T* middle = first + half;
+    bool nothingToTheRight = NULL;
+
+    if (*middle == nullItem) {
+        T* _middle = middle;
+        do {
+            _middle++;
+        } while (*_middle == nullItem && _middle < last);
+
+        if (_middle == last) {
+            nothingToTheRight = true;
+            _middle = middle;
+
+            do {
+                _middle--;
+            } while (*_middle == nullItem && _middle >= first);
+
+            if (_middle < first) {
+                return last;
+            }
+        }
+
+        middle = _middle;
+    }
+
+    if (*middle < val) {
+        if (nothingToTheRight) {
+            return last;
+        } else {
+            first = middle+1;
+        }
+    } else if (*middle > val) {
+        last = middle-1;
+    } else {
+        return middle;
+    }
+  }
+  return last;
+}
+
 
 
 /****************************************************************************************************
@@ -174,9 +247,9 @@ inline uint8_t* decodeSignedDeltaPtr(uint8_t* origin, std::ptrdiff_t delta) {
 
 class Storeable {
 friend class StoragePool;
-friend class VoidList;
-friend class VoidTailList;
-friend class VoidNode;
+friend class ::VoidList;
+friend class ::VoidTailList;
+friend class ::VoidNode;
 
     enum {
         ST_NONE = 0,
@@ -1001,24 +1074,21 @@ public:
 
        if (contains(&dataPointer)) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
-           size_t* val = std::lower_bound(intpointers, intpointers+intptrslength, dd);
+           size_t* val = lower_bound(intpointers, intpointers+intptrslength, dd, std::string::npos);
            size_t vval = *val;
            if (vval == std::string::npos) {
                std::cout << "Warning  StoragePool.removePointer : internal poinrer already removed : " << (void*) &dataPointer
                          << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
            } else {
                xassert (vval == dd);
-               itt -> bin searc elrontha
-               //removeBufferItem((uint8_t*)intpointers, intptrslength, (uint8_t*)val, sizeof(size_t));
                *val = std::string::npos;
            }
        } else {
            ExternalPtr dd = &dataPointer;
-           ExternalPtr* val = std::lower_bound(extpointers, extpointers+extptrslength, dd);
+           ExternalPtr* val = lower_bound(extpointers, extpointers+extptrslength, dd, (ExternalPtr&)LNULL);
            ExternalPtr vval = *val;
            if (vval) {
                xassert (vval == dd);
-               //removeBufferItem((uint8_t*)extpointers, extptrslength, (uint8_t*)val, sizeof(ExternalPtr));
                *val = NULL;
            } else {
                std::cout << "Warning  StoragePool.removePointer : external poinrer already removed : " << (void*) &dataPointer
@@ -1047,7 +1117,7 @@ public:
        xassert(ownerPool == this && contains(childPoolPointer));
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
-       size_t* val = std::lower_bound(childpools, childpools+chplslength, dd);
+       size_t* val = lower_bound(childpools, childpools+chplslength, dd, std::string::npos);
        xassert (*val == dd);
        //removeBufferItem((uint8_t*)childpools, chplslength, (uint8_t*)val, sizeof(size_t));
        *val = std::string::npos;
@@ -1246,6 +1316,10 @@ inline void Storeable::operator delete[] (void* _ptr) {
         break;
     }
 }
+
+
+}// namespace str
+
 
 #endif // STORAGE_H
 

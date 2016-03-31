@@ -78,10 +78,10 @@ BPElement::~BPElement()
 
 
 // ------------------------- BPText ----------------------
-BPText::BPText(StoragePool &pool, rostring t)
+BPText::BPText(str::StoragePool &pool, rostring t)
   : BPElement(pool), text(t)
 {}
-BPText::BPText(Storeable &parent, rostring t)
+BPText::BPText(str::Storeable &parent, rostring t)
   : BPElement(parent, sizeof(BPText)), text(t)
 {}
 
@@ -108,7 +108,7 @@ void BPText::debugPrint(std::ostream &os, int /*ind*/) const
 
 
 // ------------------------ BPBreak ---------------------
-BPBreak::BPBreak(StoragePool &pool, BreakType e, int i)
+BPBreak::BPBreak(str::StoragePool &pool, BreakType e, int i)
   : BPElement(pool), enabled(e),
     indent(i)
 {}
@@ -153,13 +153,13 @@ void BPBreak::debugPrint(std::ostream &os, int /*ind*/) const
 
 
 // ------------------------- BPBox ------------------------
-BPBox::BPBox(StoragePool &pool, BPKind k)
+BPBox::BPBox(str::StoragePool &pool, BPKind k)
   : BPElement(pool), elts(pool),      // initially empty
     kind(k)
 {
   xassert((unsigned)k < NUM_BPKINDS);
 }
-BPBox::BPBox(Storeable &parent, BPKind k)
+BPBox::BPBox(str::Storeable &parent, BPKind k)
   : BPElement(parent, sizeof(BPBox)), elts(parent),      // initially empty
     kind(k)
 {
@@ -329,12 +329,12 @@ BPKind const BoxPrint::hv   = BP_correlated;
 BPKind const BoxPrint::end  = NUM_BPKINDS;
 
 
-BoxPrint::BoxPrint(StoragePool &pool)
-  : Storeable(pool), boxStack(/* *this,*/ sizeof(ObjArrayStack<BPBox>)),
+BoxPrint::BoxPrint(str::StoragePool &pool)
+  : str::Storeable(pool), boxStack(/* *this,*/ sizeof(ObjArrayStack<BPBox>)),
     levelIndent(2)
 {         
   // initial vert box
-  // TODO dummy, it is bad, if StoragePool autogrows
+  // TODO dummy, it is bad, if str::StoragePool autogrows
   boxStack.push(new (getPoolRef()) BPBox(getPoolRef(), BP_vertical));
 }
 
@@ -343,7 +343,7 @@ BoxPrint::BoxPrint()
     levelIndent(2)
 {
   // initial vert box
-  // TODO dummy, it is bad, if StoragePool autogrows
+  // TODO dummy, it is bad, if str::StoragePool autogrows
   boxStack.push(new BPBox(getPoolRef(), BP_vertical));
 }
 
@@ -383,9 +383,9 @@ BoxPrint& BoxPrint::operator<< (BPKind k)
   }
   else {
     // open new box
-    StoragePool *pool = getPool();
+    str::StoragePool *pool = getPool();
     xassert(pool);
-    // TODO dummy, it is bad, if StoragePool autogrows
+    // TODO dummy, it is bad, if str::StoragePool autogrows
     boxStack.push(new (getPoolRef()) BPBox(getPoolRef(), k));
   }
   return *this;
@@ -429,7 +429,7 @@ BPBox* /*owner*/ BoxPrint::takeTree()
 
   // initialize the box stack again, in case the user wants
   // to build another tree
-  // TODO dummy, it is bad, if StoragePool autogrows
+  // TODO dummy, it is bad, if str::StoragePool autogrows
   boxStack.push(new (getPoolRef()) BPBox(getPoolRef(), BP_vertical));
 
   return ret;

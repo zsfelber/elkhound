@@ -7,7 +7,7 @@
 
 int main()
 {
-  StoragePool pool;
+  str::StoragePool pool;
   char const *_hi = "hi there";
   char const *_what = "what's up?";
   string hi(_hi);

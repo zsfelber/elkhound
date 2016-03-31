@@ -32,8 +32,8 @@ void addLineLength(ArrayStack<unsigned char> &lengths, int len)
   lengths.push((unsigned char)len);
 }
 
-SourceLocManager::File::File(StoragePool &pool, char const *n, SourceLoc aStartLoc)
-: Storeable(pool),  name(n),
+SourceLocManager::File::File(str::StoragePool &pool, char const *n, SourceLoc aStartLoc)
+: str::Storeable(pool),  name(n),
   startLoc(aStartLoc),     // assigned by SourceLocManager
   hashLines(NULL),
 

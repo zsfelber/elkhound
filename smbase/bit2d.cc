@@ -69,7 +69,7 @@ void Bit2d::xfer(Flatten &flat)
 }
 
 
-void Bit2d::xfer(StoragePool &pool, Flatten &flat)
+void Bit2d::xfer(str::StoragePool &pool, Flatten &flat)
 {
   flat.xferInt(size.x);
   flat.xferInt(size.y);

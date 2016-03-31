@@ -16,7 +16,7 @@ int maxLength = 0;
 // one round of testing
 void round(int ops)
 {
-  StoragePool pool;
+  str::StoragePool pool;
   // implementations to test
   ArrayStack<int> arrayStack;
   ArrayStackEmbed<int, 10> arrayStackEmbed;

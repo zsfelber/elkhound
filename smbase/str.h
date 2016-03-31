@@ -49,7 +49,7 @@ class Flatten;           // flatten.h
 // marked as incompatible.
 enum SmbaseStringFunc { SMBASE_STRING_FUNC };
 
-class string : public Storeable {
+class string : public str::Storeable {
 protected:     // data
   // 10/12/00: switching to never letting s be NULL
   char *s;     	       	       	       // string contents; never NULL
@@ -63,8 +63,8 @@ protected:     // funcs
 public:	       // funcs
   string(string const &src) { if (src.s) dup(src.s); else s = nullString; }
   string(char const *src) { if (src) dup(src); else s = nullString; }
-  string(StoragePool & pool, string const &src) : Storeable(pool) { if (src.s) dup(src.s); else s = nullString; }
-  string(StoragePool & pool, char const *src) : Storeable(pool) { if (src) dup(src); else s = nullString; }
+  string(str::StoragePool & pool, string const &src) : str::Storeable(pool) { if (src.s) dup(src.s); else s = nullString; }
+  string(str::StoragePool & pool, char const *src) : str::Storeable(pool) { if (src) dup(src); else s = nullString; }
   string() { s=emptyString; }
   ~string() { kill(); }
 
@@ -169,7 +169,7 @@ public:	       // funcs
     // fail an assertion if there is a problem
 
   void* operator new (size_t size);
-  void* operator new (size_t size, StoragePool &pool);
+  void* operator new (size_t size, str::StoragePool &pool);
 };
 
 

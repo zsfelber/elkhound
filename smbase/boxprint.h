@@ -67,10 +67,10 @@ public:
 
 
 // interface for elements in a boxprint tree
-class BPElement : public Storeable {
+class BPElement : public str::Storeable {
 public:
-    BPElement(StoragePool &pool) : Storeable(pool) {}
-    BPElement(Storeable &parent, size_t size_of) : Storeable(parent, size_of, true) {}
+    BPElement(str::StoragePool &pool) : str::Storeable(pool) {}
+    BPElement(str::Storeable &parent, size_t size_of) : str::Storeable(parent, size_of, true) {}
 
   // if no breaks are taken, compute the # of columns;
   // return with 'forcedBreak' true if we stopped because of
@@ -105,8 +105,8 @@ public:
   string text;
 
 public:
-  BPText(StoragePool &pool, rostring t);
-  BPText(Storeable &parent, rostring t);
+  BPText(str::StoragePool &pool, rostring t);
+  BPText(str::Storeable &parent, rostring t);
   ~BPText();
 
   // BPElement funcs
@@ -141,7 +141,7 @@ public:
   int indent;
 
 public:
-  BPBreak(StoragePool &pool, BreakType e, int i);
+  BPBreak(str::StoragePool &pool, BreakType e, int i);
   ~BPBreak();
 
   // BPElement funcs
@@ -180,8 +180,8 @@ public:
   BPKind kind;
 
 public:
-  BPBox(StoragePool &pool, BPKind k);
-  BPBox(Storeable &parent, BPKind k);
+  BPBox(str::StoragePool &pool, BPKind k);
+  BPBox(str::Storeable &parent, BPKind k);
   ~BPBox();
 
   // BPElement funcs
@@ -193,7 +193,7 @@ public:
 
 // assists in the process of building a box tree by providing
 // a number of syntactic shortcuts
-class BoxPrint : public Storeable {
+class BoxPrint : public str::Storeable {
 public:      // types
   // additional command besides BPKind
   enum Cmd {
@@ -238,7 +238,7 @@ private:     // funcs
   BPBox *box() { return boxStack.top(); }
 
 public:      // funcs
-  BoxPrint(StoragePool &pool);
+  BoxPrint(str::StoragePool &pool);
   BoxPrint();
   ~BoxPrint();
 

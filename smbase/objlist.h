@@ -23,7 +23,7 @@ template <class T> class ObjListIterNC;
 // into any such list
 template<typename T> class SObjList;
 template <class T>
-class ObjList : public Storeable {
+class ObjList : public str::Storeable {
 private:
   friend class ObjListIter<T>;
   friend class ObjListMutator<T>;
@@ -45,8 +45,8 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-  ObjList(StoragePool &pool)                            : Storeable(pool), list(*this,0,true), owning(true) {}
-  ObjList(Storeable const &parent)                      : Storeable(parent, sizeof(ObjList)), list(*this,0,true), owning(true) {}
+  ObjList(str::StoragePool &pool)                            : str::Storeable(pool), list(*this,0,true), owning(true) {}
+  ObjList(str::Storeable const &parent)                      : str::Storeable(parent, sizeof(ObjList)), list(*this,0,true), owning(true) {}
 
   ~ObjList()                           { deleteAll(); }
 
@@ -54,7 +54,7 @@ private:
   // right, 0 if they are equivalent, and >0 if right should come before
   // left.  For example, if we are sorting numbers into ascending order,
   // then 'diff' would simply be subtraction.
-  typedef int (*Diff)(T const *left, T const *right, Storeable const *extra);
+  typedef int (*Diff)(T const *left, T const *right, str::Storeable const *extra);
 
   // selectors
   int count() const                     { return list.count(); }
@@ -71,7 +71,7 @@ private:
   void prepend(T *newitem)              { OWN list.prepend(newitem); }
   VoidNode* append(T *newitem)          { OWN return list.append(newitem); }
   void insertAt(T *newitem, int index)  { OWN list.insertAt(newitem, index); }
-  void insertSorted(T *newitem, Diff diff, Storeable *extra=NULL)
+  void insertSorted(T *newitem, Diff diff, str::Storeable *extra=NULL)
     { OWN list.insertSorted(newitem, (VoidDiff)diff, extra); }
 
   // removal
@@ -83,7 +83,7 @@ private:
 
   // list-as-set: selectors
   int indexOf(T const *item) const      { return list.indexOf(item); }
-  int indexOfF(Storeable *item) const        { return list.indexOfF(item); }
+  int indexOfF(str::Storeable *item) const        { return list.indexOfF(item); }
   bool contains(T const *item) const    { return list.contains(item); }
 
   // list-as-set: mutators
@@ -94,11 +94,11 @@ private:
 
   // complex modifiers
   void reverse()                                    { list.reverse(); }
-  void insertionSort(Diff diff, Storeable *extra=NULL)   { list.insertionSort((VoidDiff)diff, extra); }
-  void mergeSort(Diff diff, Storeable *extra=NULL)       { list.mergeSort((VoidDiff)diff, extra); }
+  void insertionSort(Diff diff, str::Storeable *extra=NULL)   { list.insertionSort((VoidDiff)diff, extra); }
+  void mergeSort(Diff diff, str::Storeable *extra=NULL)       { list.mergeSort((VoidDiff)diff, extra); }
 
   // and a related test
-  bool isSorted(Diff diff, Storeable *extra=NULL) const  { return list.isSorted((VoidDiff)diff, extra); }
+  bool isSorted(Diff diff, str::Storeable *extra=NULL) const  { return list.isSorted((VoidDiff)diff, extra); }
 
   // multiple lists
   template <class XObjList>
@@ -116,17 +116,17 @@ private:
   void stealTailAt(int index, ObjList &tail)       { list.stealTailAt(index, tail.list); }
 
   // equal items in equal positions
-  bool equalAsLists(ObjList const &otherList, Diff diff, Storeable *extra=NULL) const
+  bool equalAsLists(ObjList const &otherList, Diff diff, str::Storeable *extra=NULL) const
     { return list.equalAsLists(otherList.list, (VoidDiff)diff, extra); }
-  int compareAsLists(ObjList const &otherList, Diff diff, Storeable *extra=NULL) const
+  int compareAsLists(ObjList const &otherList, Diff diff, str::Storeable *extra=NULL) const
     { return list.compareAsLists(otherList.list, (VoidDiff)diff, extra); }
 
   // last-as-set: comparisons (NOT efficient)
-  bool equalAsSets(ObjList const &otherList, Diff diff, Storeable *extra=NULL) const
+  bool equalAsSets(ObjList const &otherList, Diff diff, str::Storeable *extra=NULL) const
     { return list.equalAsSets(otherList.list, (VoidDiff)diff, extra); }
-  bool isSubsetOf(ObjList const &otherList, Diff diff, Storeable *extra=NULL) const
+  bool isSubsetOf(ObjList const &otherList, Diff diff, str::Storeable *extra=NULL) const
     { return list.isSubsetOf(otherList.list, (VoidDiff)diff, extra); }
-  bool containsByDiff(T const *item, Diff diff, Storeable *extra=NULL) const
+  bool containsByDiff(T const *item, Diff diff, str::Storeable *extra=NULL) const
     { return list.containsByDiff(item, (VoidDiff)diff, extra); }
 
   // treating the pointer values themselves as the basis for comparison

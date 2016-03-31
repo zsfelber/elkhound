@@ -19,7 +19,7 @@
 #include "nonport.h"        // vnprintf
 #include "array.h"          // Array
 
-static StoragePool pool;
+static str::StoragePool pool;
 
 // ----------------------- string ---------------------
 
@@ -40,10 +40,10 @@ string::string(char const *src, int length, SmbaseStringFunc)
 }
 
 void* string::operator new (size_t size) {
-    return Storeable::operator new(size, pool);
+    return str::Storeable::operator new(size, pool);
 }
-void* string::operator new (size_t size, StoragePool &pool) {
-    return Storeable::operator new(size, pool);
+void* string::operator new (size_t size, str::StoragePool &pool) {
+    return str::Storeable::operator new(size, pool);
 }
 
 void string::dup(char const *src)

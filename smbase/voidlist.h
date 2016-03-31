@@ -14,14 +14,14 @@
 
 // -------------------------- non-typesafe core -----------------------------
 // non-typesafe list node
-class VoidNode : public Storeable {
+class VoidNode : public str::Storeable {
 public:
   //TRASHINGDELETE
 
   VoidNode *next;           // (owner) next item in list, or NULL if last item
-  Storeable *data;               // whatever it is the list is holding
+  str::Storeable *data;               // whatever it is the list is holding
 
-  VoidNode(StoragePool &pool, Storeable *aData=NULL, VoidNode *aNext=NULL) : Storeable(pool) {
+  VoidNode(str::StoragePool &pool, str::Storeable *aData=NULL, VoidNode *aNext=NULL) : str::Storeable(pool) {
       data=aData;
       next=aNext;
       pool.addPointer(next);
@@ -44,15 +44,15 @@ class VoidListMutator;
 // right, 0 if they are equivalent, and >0 if right should come before
 // left.  For example, if we are sorting numbers into ascending order,
 // then 'diff' could simply be subtraction.
-typedef int (*VoidDiff)(Storeable const *left, Storeable const *right, Storeable const *extra);
+typedef int (*VoidDiff)(str::Storeable const *left, str::Storeable const *right, str::Storeable const *extra);
 
-typedef bool (*VoidEq)(Storeable const *left, Storeable const *right);
+typedef bool (*VoidEq)(str::Storeable const *left, str::Storeable const *right);
 
 
 // list of void*; at this level, the void* are completely opaque;
 // the list won't attempt to delete(), compare them, or anything else
 // (well, some comparison has creeped in now... but only via VoidDiff)
-class VoidList : public Storeable {
+class VoidList : public str::Storeable {
 private:
   friend class VoidTailList;
   friend class VoidListIter;
@@ -61,22 +61,22 @@ private:
   void chk_assign(VoidList const &obj);
 
 protected:
-  StoragePool npool;
+  str::StoragePool npool;
 
   VoidNode *top;                     // (owner) first node, or NULL if list is empty
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
-  VoidList()  : Storeable(), npool()
+  VoidList()  : str::Storeable(), npool()
   { top=NULL;   npool.addPointer(top); }
 
-  VoidList(StoragePool &pool, StoragePool::CopyMode copy)  : Storeable(), npool(pool, false, copy)
+  VoidList(str::StoragePool &pool, str::StoragePool::CopyMode copy)  : str::Storeable(), npool(pool, false, copy)
   { top=NULL;   npool.addPointer(top); }
 
-  VoidList(StoragePool &pool)  : Storeable(pool), npool(*this, true)
+  VoidList(str::StoragePool &pool)  : str::Storeable(pool), npool(*this, true)
   { top=NULL;   npool.addPointer(top); }
 
-  VoidList(Storeable const &parent, size_t size_of=0) : Storeable(parent, size_of?size_of:sizeof(VoidList), true), npool(*this, true)
+  VoidList(str::Storeable const &parent, size_t size_of=0) : str::Storeable(parent, size_of?size_of:sizeof(VoidList), true), npool(*this, true)
   { top=NULL;   npool.addPointer(top); }
 
   VoidList(VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
@@ -88,46 +88,46 @@ public:
   int count() const;                 // # of items in list
   bool isEmpty() const               { return top == NULL; }
   bool isNotEmpty() const            { return top != NULL; }
-  Storeable *nth(int which) const;        // get particular item, 0 is first (item must exist)
-  Storeable *first() const { return nth(0); }
-  Storeable *last() const { return nth(count()-1); }
+  str::Storeable *nth(int which) const;        // get particular item, 0 is first (item must exist)
+  str::Storeable *first() const { return nth(0); }
+  str::Storeable *last() const { return nth(count()-1); }
 
   // insertion
-  void prepend(Storeable *newitem);       // insert at front
-  VoidNode* append(Storeable *newitem);        // insert at rear
-  void insertAt(Storeable *newitem, int index);
+  void prepend(str::Storeable *newitem);       // insert at front
+  VoidNode* append(str::Storeable *newitem);        // insert at rear
+  void insertAt(str::Storeable *newitem, int index);
     // new item is inserted such that its index becomdes 'index'
-  void insertSorted(Storeable *newitem, VoidDiff const diff, Storeable const *extra=NULL);
+  void insertSorted(str::Storeable *newitem, VoidDiff const diff, str::Storeable const *extra=NULL);
     // insert into an already-sorted list so that the list is sorted afterwards
 
   // removal
-  Storeable *removeAt(int index);         // remove from list (must exist), and return removed item
-  Storeable *removeFirst()                { return removeAt(0); }
-  Storeable *removeLast()                 { return removeAt(count()-1); }
+  str::Storeable *removeAt(int index);         // remove from list (must exist), and return removed item
+  str::Storeable *removeFirst()                { return removeAt(0); }
+  str::Storeable *removeLast()                 { return removeAt(count()-1); }
   void removeAll();
 
   // list-as-set: selectors
-  int indexOf(Storeable const *item) const;     // returns index of *first* occurrance, or -1 if not present
-  int indexOf(Storeable const *item, VoidEq const eq) const;     // returns index of *first* occurrance, or -1 if not present
-  int indexOfF(Storeable const *item) const;    // same as indexOf, but throws exception if not present
-  bool contains(Storeable const *item) const    // true if the item appears in the list
+  int indexOf(str::Storeable const *item) const;     // returns index of *first* occurrance, or -1 if not present
+  int indexOf(str::Storeable const *item, VoidEq const eq) const;     // returns index of *first* occurrance, or -1 if not present
+  int indexOfF(str::Storeable const *item) const;    // same as indexOf, but throws exception if not present
+  bool contains(str::Storeable const *item) const    // true if the item appears in the list
     { return indexOf(item) >= 0; }
 
   // list-as-set: mutators
-  bool prependUnique(Storeable *newitem); // prepend only if not already there
-  bool appendUnique(Storeable *newitem);  // append   "            "
-  void removeItem(Storeable const *item);       // remove first occurrance -- must exist
-  bool removeIfPresent(Storeable const *item);  // remove first occurrance; return true if changed
-  bool removeIfPresent(Storeable const *item, VoidEq eq);  // remove first occurrance; return true if changed
+  bool prependUnique(str::Storeable *newitem); // prepend only if not already there
+  bool appendUnique(str::Storeable *newitem);  // append   "            "
+  void removeItem(str::Storeable const *item);       // remove first occurrance -- must exist
+  bool removeIfPresent(str::Storeable const *item);  // remove first occurrance; return true if changed
+  bool removeIfPresent(str::Storeable const *item, VoidEq eq);  // remove first occurrance; return true if changed
   bool removeItems(VoidList const &lst, VoidEq eq);   // remove all; return true if changed
 
   // complex modifiers
   void reverse();
-  void insertionSort(VoidDiff diff, Storeable const *extra=NULL);
-  void mergeSort(VoidDiff diff, Storeable const *extra=NULL);
+  void insertionSort(VoidDiff diff, str::Storeable const *extra=NULL);
+  void mergeSort(VoidDiff diff, str::Storeable const *extra=NULL);
 
   // and a related test
-  bool isSorted(VoidDiff diff, Storeable const *extra=NULL) const;
+  bool isSorted(VoidDiff diff, str::Storeable const *extra=NULL) const;
 
   // multiple lists
   void concat(VoidList &tail);           // tail is emptied, nodes appended to this
@@ -143,25 +143,25 @@ public:
   void stealTailAt(int index, VoidList &source);
 
   // equal items in equal positions
-  bool equalAsLists(VoidList const &otherList, VoidDiff const diff, Storeable const *extra=NULL) const;
+  bool equalAsLists(VoidList const &otherList, VoidDiff const diff, str::Storeable const *extra=NULL) const;
   
   // if equal, returns 0; otherwise, return order (-1/+1) according to
   // the first differing pair of elements; a shorter (but otherwise
   // idential list) will compare as being less
-  int compareAsLists(VoidList const &otherList, VoidDiff const diff, Storeable const * extra=NULL) const;
+  int compareAsLists(VoidList const &otherList, VoidDiff const diff, str::Storeable const * extra=NULL) const;
 
   // last-as-set: comparisons (NOT efficient)
-  bool equalAsSets(VoidList const &otherList, VoidDiff const diff, Storeable const * extra=NULL) const;
+  bool equalAsSets(VoidList const &otherList, VoidDiff const diff, str::Storeable const * extra=NULL) const;
     // A subset of B, and vice-versa
-  bool isSubsetOf(VoidList const &otherList, VoidDiff const diff, Storeable const * extra=NULL) const;
+  bool isSubsetOf(VoidList const &otherList, VoidDiff const diff, str::Storeable const * extra=NULL) const;
     // uses slow elementwise containment
-  bool containsByDiff(Storeable const * item, VoidDiff const diff, Storeable const * extra=NULL) const;
+  bool containsByDiff(str::Storeable const * item, VoidDiff const diff, str::Storeable const * extra=NULL) const;
 
   // use 'diff' to mergesort the list, then remove duplicate entries
-  void removeDuplicatesAsMultiset(VoidDiff diff, Storeable const *extra=NULL);
+  void removeDuplicatesAsMultiset(VoidDiff diff, str::Storeable const *extra=NULL);
 
   // treating the pointer values themselves as the basis for comparison
-  static int pointerAddressDiff(Storeable const *left, Storeable const *right, Storeable const *);
+  static int pointerAddressDiff(str::Storeable const *left, str::Storeable const *right, str::Storeable const *);
   bool equalAsPointerLists(VoidList const &otherList) const
     { return equalAsLists(otherList, pointerAddressDiff); }
   bool equalAsPointerSets(VoidList const &otherList) const
@@ -208,28 +208,28 @@ public:
   // iterator actions
   bool isDone() const              { return current == NULL; }
   void adv()                       { if (stuck) stuck = false; else {prev = current;  current = current->next;} }
-  Storeable *data()                     { return current->data; }
-  Storeable *&dataRef()                 { return current->data; }
+  str::Storeable *data()                     { return current->data; }
+  str::Storeable *&dataRef()                 { return current->data; }
 
   // insertion
-  void insertBefore(Storeable *item);
+  void insertBefore(str::Storeable *item);
     // 'item' becomes the new 'current', and the current 'current' is
     // pushed forward (so the next adv() will make it current again)
 
-  void insertAfter(Storeable *item);
+  void insertAfter(str::Storeable *item);
     // 'item' becomes what we reach with the next adv();
     // isDone() must be false
 
-  void append(Storeable *item);
+  void append(str::Storeable *item);
     // only valid while isDone() is true, it inserts 'item' at the end of
     // the list, and advances such that isDone() remains true; equivalent
     // to { xassert(isDone()); insertBefore(item); adv(); }
 
   // removal
-  Storeable *remove();
+  str::Storeable *remove();
     // 'current' is removed from the list and returned, and whatever was
     // next becomes the new 'current'
-  Storeable *removeAndStuck()
+  str::Storeable *removeAndStuck()
   {
     stuck = true;
     return remove();
@@ -266,7 +266,7 @@ public:
   // iterator actions
   bool isDone() const                 { return p == NULL; }
   void adv()                          { p = p->next; }
-  Storeable *data() const                  { return p->data; }
+  str::Storeable *data() const                  { return p->data; }
 };
 
 

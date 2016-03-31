@@ -15,7 +15,7 @@ int maxLength = 0;
 // one round of testing
 void round(int ops)
 {
-  StoragePool pool;
+  str::StoragePool pool;
   // implementation to test
   ArrayQueue<int> arrayQueue;
 

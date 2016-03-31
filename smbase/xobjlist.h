@@ -54,7 +54,7 @@ template<typename T> class ObjList;
 template<typename T> class SObjList;
 ]]])m4_dnl
 template <class T>
-class className : public Storeable {
+class className : public str::Storeable {
 private:
   friend class iterName<T>;
   friend class mutatorName<T>;
@@ -78,8 +78,8 @@ public:
   className& operator= (className const &src)         { list = src.list; return *this; }
 
   public:
-  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(*this,0,true) {}
-  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(*this,0,true) {}
+  className[[[]]](str::StoragePool &pool)                            : str::Storeable(pool), list(*this,0,true) {}
+  className[[[]]](str::Storeable const &parent)                      : str::Storeable(parent, sizeof(className)), list(*this,0,true) {}
 ]]], [[[m4_dnl          // objlist
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
@@ -92,8 +92,8 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-  className[[[]]](StoragePool &pool)                            : Storeable(pool), list(*this,0,true), owning(true) {}
-  className[[[]]](Storeable const &parent)                      : Storeable(parent, sizeof(className)), list(*this,0,true), owning(true) {}
+  className[[[]]](str::StoragePool &pool)                            : str::Storeable(pool), list(*this,0,true), owning(true) {}
+  className[[[]]](str::Storeable const &parent)                      : str::Storeable(parent, sizeof(className)), list(*this,0,true), owning(true) {}
 ]]])m4_dnl
 
   ~className[[[]]]()                      m4_dnl
@@ -103,7 +103,7 @@ private:
   // right, 0 if they are equivalent, and >0 if right should come before
   // left.  For example, if we are sorting numbers into ascending order,
   // then 'diff' would simply be subtraction.
-  typedef int (*Diff)(T const *left, T const *right, Storeable const *extra);
+  typedef int (*Diff)(T const *left, T const *right, str::Storeable const *extra);
 
   // selectors
   int count() const                     { return list.count(); }
@@ -120,7 +120,7 @@ private:
   void prepend(T *newitem)              { OWN list.prepend(newitem); }
   VoidNode* append(T *newitem)          { OWN return list.append(newitem); }
   void insertAt(T *newitem, int index)  { OWN list.insertAt(newitem, index); }
-  void insertSorted(T *newitem, Diff diff, Storeable const *extra=NULL)
+  void insertSorted(T *newitem, Diff diff, str::Storeable const *extra=NULL)
     { OWN list.insertSorted(newitem, (VoidDiff)diff, extra); }
 
   // removal
@@ -136,7 +136,7 @@ outputCond([[[m4_dnl     // sobjlist
 
   // list-as-set: selectors
   int indexOf(T const *item) const      { return list.indexOf(item); }
-  int indexOfF(Storeable const *item) const        { return list.indexOfF(item); }
+  int indexOfF(str::Storeable const *item) const        { return list.indexOfF(item); }
   bool contains(T const *item) const    { return list.contains(item); }
 
   // list-as-set: mutators
@@ -147,11 +147,11 @@ outputCond([[[m4_dnl     // sobjlist
 
   // complex modifiers
   void reverse()                                    { list.reverse(); }
-  void insertionSort(Diff diff, Storeable const *extra=NULL)   { list.insertionSort((VoidDiff)diff, extra); }
-  void mergeSort(Diff diff, Storeable const *extra=NULL)       { list.mergeSort((VoidDiff)diff, extra); }
+  void insertionSort(Diff diff, str::Storeable const *extra=NULL)   { list.insertionSort((VoidDiff)diff, extra); }
+  void mergeSort(Diff diff, str::Storeable const *extra=NULL)       { list.mergeSort((VoidDiff)diff, extra); }
 
   // and a related test
-  bool isSorted(Diff diff, Storeable const *extra=NULL) const  { return list.isSorted((VoidDiff)diff, extra); }
+  bool isSorted(Diff diff, str::Storeable const *extra=NULL) const  { return list.isSorted((VoidDiff)diff, extra); }
 
   // multiple lists
   template <class XObjList>
@@ -172,17 +172,17 @@ outputCond([[[m4_dnl     // sobjlist
   void stealTailAt(int index, className &tail)       { list.stealTailAt(index, tail.list); }
 
   // equal items in equal positions
-  bool equalAsLists(className const &otherList, Diff diff, Storeable const *extra=NULL) const
+  bool equalAsLists(className const &otherList, Diff diff, str::Storeable const *extra=NULL) const
     { return list.equalAsLists(otherList.list, (VoidDiff)diff, extra); }
-  int compareAsLists(className const &otherList, Diff diff, Storeable const *extra=NULL) const
+  int compareAsLists(className const &otherList, Diff diff, str::Storeable const *extra=NULL) const
     { return list.compareAsLists(otherList.list, (VoidDiff)diff, extra); }
 
   // last-as-set: comparisons (NOT efficient)
-  bool equalAsSets(className const &otherList, Diff diff, Storeable const *extra=NULL) const
+  bool equalAsSets(className const &otherList, Diff diff, str::Storeable const *extra=NULL) const
     { return list.equalAsSets(otherList.list, (VoidDiff)diff, extra); }
-  bool isSubsetOf(className const &otherList, Diff diff, Storeable const *extra=NULL) const
+  bool isSubsetOf(className const &otherList, Diff diff, str::Storeable const *extra=NULL) const
     { return list.isSubsetOf(otherList.list, (VoidDiff)diff, extra); }
-  bool containsByDiff(T const *item, Diff diff, Storeable const *extra=NULL) const
+  bool containsByDiff(T const *item, Diff diff, str::Storeable const *extra=NULL) const
     { return list.containsByDiff(item, (VoidDiff)diff, extra); }
 
   // treating the pointer values themselves as the basis for comparison
@@ -193,7 +193,7 @@ outputCond([[[m4_dnl     // sobjlist
 
 outputCond([[[m4_dnl    // sobjlist
   // removing duplicates
-  void removeDuplicatesAsMultiset(Diff diff, Storeable const *extra=NULL)
+  void removeDuplicatesAsMultiset(Diff diff, str::Storeable const *extra=NULL)
     { list.removeDuplicatesAsMultiset((VoidDiff)diff, extra); }
   void removeDuplicatesAsPointerMultiset()
     { list.removeDuplicatesAsPointerMultiset(); }

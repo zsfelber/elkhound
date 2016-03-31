@@ -10,7 +10,7 @@
 #include <fstream>   // std::ofstream
 #include <stdlib.h>    // getenv
 
-static StoragePool pool;
+static str::StoragePool pool;
 
 // auto-init
 static bool inited = false;

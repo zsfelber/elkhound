@@ -14,7 +14,7 @@ template <class T> class ASTListIterNC;
 // a list which owns the items in it (will deallocate them), and
 // has constant-time access to the last element
 template <class T>
-class ASTList : public Storeable {
+class ASTList : public str::Storeable {
 private:
   friend class ASTListIter<T>;        
   friend class ASTListIterNC<T>;
@@ -27,19 +27,19 @@ private:
 
 public:
 
-  ASTList() : Storeable(), list() {}
-  ASTList(StoragePool &pool) : Storeable(pool), list(*this) {}
-  ASTList(Storeable &parent) : Storeable(parent, sizeof(ASTList)), list(*this) {}
+  ASTList() : str::Storeable(), list() {}
+  ASTList(str::StoragePool &pool) : str::Storeable(pool), list(*this) {}
+  ASTList(str::Storeable &parent) : str::Storeable(parent, sizeof(ASTList)), list(*this) {}
   ~ASTList()                            {  }
 
   // ctor to make singleton list; often quite useful
-  ASTList(StoragePool &pool, T *elt)                       : Storeable(pool), list(*this) { prepend(elt); }
+  ASTList(str::StoragePool &pool, T *elt)                       : str::Storeable(pool), list(*this) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(ASTList<T> &src,bool move) : Storeable(src, false), list(src.list,move) { }
-  ASTList(ASTList<T> *src,bool move) : Storeable(NN(src), false), list(src->list,move) { }
+  ASTList(ASTList<T> &src,bool move) : str::Storeable(src, false), list(src.list,move) { }
+  ASTList(ASTList<T> *src,bool move) : str::Storeable(NN(src), false), list(src->list,move) { }
 
   void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
@@ -172,7 +172,7 @@ public:
 // this function is somewhat at odds with the nominal purpose
 // of ASTLists, but I need it in a weird situation so ...
 template <class T>
-ASTList<T> *shallowCopy(StoragePool &pool, ASTList<T> *src)
+ASTList<T> *shallowCopy(str::StoragePool &pool, ASTList<T> *src)
 {
   ASTList<T> *ret = new (pool) ASTList<T>;
   FOREACH_ASTLIST_NC(T, *src, iter) {

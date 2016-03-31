@@ -5,7 +5,7 @@
 
 // ------------ object class --------------------
 // class of objects to hold in the list
-class Integer : public Storeable {
+class Integer : public str::Storeable {
 public:
   static int ctorcount;     // # of calls to ctor
   static int dtorcount;     // # of calls to dtor

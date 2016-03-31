@@ -12,7 +12,7 @@
 
 
 // ----------- testing ObjList -----------
-int intDiff(Integer const *left, Integer const *right, Storeable const *)
+int intDiff(Integer const *left, Integer const *right, str::Storeable const *)
 {
   return left->i - right->i;
 }
@@ -46,7 +46,7 @@ void print(ObjList<Integer> const &list)
 
 void testSorting()
 {
-  StoragePool pool;
+  str::StoragePool pool;
   enum { ITERS=100, ITEMS=20 };
 
   loopi(ITERS) {
@@ -94,7 +94,7 @@ void testSorting()
 
 void entry()
 {
-  StoragePool pool;
+  str::StoragePool pool;
   // first set of tests
   {
     // some sample items

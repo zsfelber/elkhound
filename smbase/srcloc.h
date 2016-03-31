@@ -62,7 +62,7 @@ class SourceLocManager {
 private:     // types
 
   // ! first !
-  StoragePool pool;
+  str::StoragePool pool;
 
   // a triple which identifies a line boundary in a file (it's
   // implicit which file it is) with respect to all of the relevant
@@ -90,7 +90,7 @@ private:     // types
 
 public:      // types
   // describes a file we know about
-  class File : public Storeable {
+  class File : public str::Storeable {
   public:    // data
     // file name; we consider two files to be the same if and only
     // if their names are equal, i.e. there is no checking done to
@@ -145,8 +145,8 @@ public:      // types
   public:    // funcs
     // this builds both the array and the index
     File(char const *name, SourceLoc startLoc);
-    File(StoragePool &pool, char const *name, SourceLoc startLoc);
-    //File(StoragePool &pool, char const *name, SourceLoc startLoc);
+    File(str::StoragePool &pool, char const *name, SourceLoc startLoc);
+    //File(str::StoragePool &pool, char const *name, SourceLoc startLoc);
     ~File();
     void init();
     
@@ -174,7 +174,7 @@ public:      // types
   // available, yet we'd like to be able to store some location
   // information anyway; the queries below just return the static
   // information stored, and incremental update is impossible
-  class StaticLoc : public Storeable {
+  class StaticLoc : public str::Storeable {
   public:
     string name;      // file name
     int offset;       // char offset
@@ -185,10 +185,10 @@ public:      // types
       : name(n), offset(o), line(L), col(c) {}
     StaticLoc(StaticLoc const &obj)
       : DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
-    StaticLoc(StoragePool &pool, char const *n, int o, int L, int c)
-      : Storeable(pool), name(n), offset(o), line(L), col(c) {}
-    StaticLoc(StoragePool &pool, StaticLoc const &obj)
-      : Storeable(pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
+    StaticLoc(str::StoragePool &pool, char const *n, int o, int L, int c)
+      : str::Storeable(pool), name(n), offset(o), line(L), col(c) {}
+    StaticLoc(str::StoragePool &pool, StaticLoc const &obj)
+      : str::Storeable(pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
   };
 

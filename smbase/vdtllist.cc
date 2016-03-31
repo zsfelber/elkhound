@@ -24,7 +24,7 @@ void VoidTailList::steal(VoidTailList *src, bool deleteOrig)
 }
 */
 
-void VoidTailList::prepend(Storeable *newitem)
+void VoidTailList::prepend(str::Storeable *newitem)
 {
   VoidList::prepend(newitem);
   if (!tail) {
@@ -32,7 +32,7 @@ void VoidTailList::prepend(Storeable *newitem)
   }
 }
 
-void VoidTailList::append(Storeable *newitem)
+void VoidTailList::append(str::Storeable *newitem)
 {
   if (isEmpty()) {
     prepend(newitem);
@@ -56,7 +56,7 @@ void VoidTailList::appendAll(VoidTailList const &tail)
       this->tail = tail.tail;
   }
   ExternalPtr ptrs[] = { (ExternalPtr)&this->tail };
-  StoragePool childView;
+  str::StoragePool childView;
   npool.append(tail.npool, childView, ptrs, ptrs+1);
 
   /*VoidList::appendAll(src);
@@ -82,7 +82,7 @@ void VoidTailList::reappendAll(VoidTailList const &tail, VoidEq eq)
   appendAll(tail);
 }
 
-void VoidTailList::insertAt(Storeable *newitem, int index)
+void VoidTailList::insertAt(str::Storeable *newitem, int index)
 {
   VoidList::insertAt(newitem, index);
   adjustTail();
@@ -123,20 +123,20 @@ void VoidTailList::adjustTails()
 }
 
 
-Storeable *VoidTailList::removeFirst()
+str::Storeable *VoidTailList::removeFirst()
 {
   xassert(top);
   if (top == tail) {
     tail = NULL;
   }
-  Storeable *retval = top->data;
+  str::Storeable *retval = top->data;
   VoidNode *tmp = top;
   top = top->next;
   delete tmp;
   return retval;
 }
 
-Storeable *VoidTailList::removeLast()
+str::Storeable *VoidTailList::removeLast()
 {
   xassert(top);
   if (top == tail) {
@@ -147,14 +147,14 @@ Storeable *VoidTailList::removeLast()
   while (before->next != tail) {
     before = before->next;
   }
-  Storeable *retval = tail->data;
+  str::Storeable *retval = tail->data;
   delete tail;
   tail = before;
   tail->next = NULL;
   return retval;
 }
 
-Storeable *VoidTailList::removeAt(int index)
+str::Storeable *VoidTailList::removeAt(int index)
 {
   xassert(top);
   if (index == 0) {
@@ -176,7 +176,7 @@ Storeable *VoidTailList::removeAt(int index)
 
   // patch around before->next
   VoidNode *toDelete = before->next;
-  Storeable *retval = toDelete->data;
+  str::Storeable *retval = toDelete->data;
   before->next = toDelete->next;
   delete toDelete;
 
@@ -189,14 +189,14 @@ void VoidTailList::removeAll()
   tail = NULL;
 }
 
-bool VoidTailList::prependUnique(Storeable *newitem)
+bool VoidTailList::prependUnique(str::Storeable *newitem)
 {
   bool retval = VoidList::prependUnique(newitem);
   adjustTail();
   return retval;
 }
 
-bool VoidTailList::appendUnique(Storeable *newitem)
+bool VoidTailList::appendUnique(str::Storeable *newitem)
 {
   bool retval = VoidList::appendUnique(newitem);
   adjustTail();
