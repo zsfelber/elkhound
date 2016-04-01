@@ -72,14 +72,14 @@ static const int STORE_BUF_SZ = 1 << STORE_BUF_BITS;
 // 512 Kbytes  1 bit for each slot (32 bytes) : STORE_BUF_BITS-5
 static const int STORE_BUF_VAR_SH = 5;
 static const int STORE_BUF_ADDR_SZ = 1 << STORE_BUF_VAR_SH;
-static const int STORE_BUF_VAR_BITS = STORE_BUF_BITS-STORE_BUF_VAR_SH;
-static const int STORE_BUF_VAR_SZ = 1 << STORE_BUF_VAR_BITS;
+//static const int STORE_BUF_VAR_BITS = STORE_BUF_BITS-STORE_BUF_VAR_SH;
+//static const int STORE_BUF_VAR_SZ = 1 << STORE_BUF_VAR_BITS;
 
 // 64 Kbytes   1 bit for each VAR : VAR_BITS-3
-static const int STORE_BUF_BIT_SH = 3;
-static const int STORE_BUF_BIT_TOT_SH = STORE_BUF_VAR_SH + STORE_BUF_BIT_SH;
-static const int STORE_BUF_BIT_BITS = STORE_BUF_VAR_BITS-STORE_BUF_BIT_SH;
-static const int STORE_BUF_BIT_SZ = 1 << STORE_BUF_BIT_BITS;
+//static const int STORE_BUF_BIT_SH = 3;
+//static const int STORE_BUF_BIT_TOT_SH = STORE_BUF_VAR_SH + STORE_BUF_BIT_SH;
+//static const int STORE_BUF_BIT_BITS = STORE_BUF_VAR_BITS-STORE_BUF_BIT_SH;
+//static const int STORE_BUF_BIT_SZ = 1 << STORE_BUF_BIT_BITS;
 
 
 static void const * const LNULL = NULL;
@@ -127,12 +127,12 @@ inline void extendBuffer(uint8_t*& buf, size_t size, size_t newcap, size_t size_
 inline void removeBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
     size--;
     // allow overlap
-    memmove(pos, pos+size_of, size*size_of-(pos-buf));
+    memmove(pos, pos+size_of, (size-(pos-buf))*size_of);
 }
 
 inline void insertBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
     // allow overlap
-    memmove(pos+size_of, pos, size*size_of-(pos-buf));
+    memmove(pos+size_of, pos, (size-(pos-buf))*size_of);
     size++;
 }
 
@@ -197,7 +197,7 @@ T* lower_bound(T* first, T* last,
   while (first < last) {
     std::ptrdiff_t half = (last-first) >> 1;
     T* middle = first + half;
-    bool nothingToTheRight = NULL;
+    bool nothingToTheRight = false;
 
     if (*middle == nullItem) {
         T* _middle = middle;
@@ -536,6 +536,18 @@ public:
 
 private:
 
+   struct SwapVars {
+       uint8_t *memory;
+       size_t first_del_var;
+       size_t deleted_vars;
+       size_t memlength, memcapacity;
+
+       size_t* intpointers;
+       size_t intptrslength, intptrscapacity;
+   };
+
+   //  swapvars--
+
    uint8_t *memory;
    size_t first_del_var;
    size_t deleted_vars;
@@ -543,6 +555,9 @@ private:
 
    size_t* intpointers;
    size_t intptrslength, intptrscapacity;
+
+   //  --swapvars
+
    ExternalPtr* extpointers;
    size_t extptrslength, extptrscapacity;
 
@@ -712,11 +727,12 @@ private:
       bufsz = getMemBufSize(newmemlength);
       oldmem = memory;
       if (memcapacity < bufsz) {
-          extendBuffer(memory,           memlength,                       memcapacity, bufsz, 1/*sizeof(uint8_t)*/);
           if (oldmemlength) {
-              movePointers(oldmem, oldmem+oldmemlength);
-              fixAllPoolPointers();
+              // FIXME insert child pool instead of large block memcpy
+              StoragePool * child = new (*this)  StoragePool(*this, true);
+              swap(*child);
           } else {
+              extendBuffer(memory,           memlength,                       memcapacity, bufsz, 1/*sizeof(uint8_t)*/);
               fixPoolPointer();
               oldmemlength += sizeof(void*);
               newmemlength += sizeof(void*);
@@ -790,6 +806,15 @@ private:
        default:
            break;
        }
+   }
+
+   inline void swap(StoragePool & pool) {
+       uint8_t buf[sizeof(SwapVars)];
+       memcpy(buf, this, sizeof(SwapVars));
+       memcpy(this, pool, sizeof(SwapVars));
+       memcpy(pool, buf, sizeof(SwapVars));
+
+       fixAllPoolPointers();
    }
 
 
@@ -925,20 +950,18 @@ public:
        }
 
        memcpy(memory+memlength, src.memory, src.memlength);
+       // ! still remains sorted
        memcpy(intpointers+intptrslength, src.intpointers, src.intptrslength);
+       // ! still remains sorted
        memcpy(childpools+chplslength, src.childpools, src.chplslength);
 
        childView.clear();
-       childView.ownerPool = NULL;
        childView.memory = memory + memlength;
        childView.memlength = src.memlength;
        childView.memcapacity = src.memcapacity;
        childView.intpointers = intpointers + intptrslength;
        childView.intptrslength = src.intptrslength;
        childView.intptrscapacity = src.intptrscapacity;
-       childView.extpointers = NULL;
-       childView.extptrslength = 0;
-       childView.extptrscapacity = 0;
        childView.childpools = childpools + chplslength;
        childView.chplslength = src.chplslength;
        childView.chplscapacity = src.chplscapacity;
@@ -947,13 +970,7 @@ public:
        childView.moveInternalPointers(src.memory, src.memory+memlength, memory);
 
        if (convertExtPointersFrom) {
-           size_t oldl = extptrslength;
-
            convertExternalPointers(src, convertExtPointersFrom, convertExtPointersTo);
-
-           childView.extpointers = extpointers + oldl;
-           childView.extptrslength = extptrslength - oldl;
-           childView.extptrscapacity = extptrscapacity - oldl;
        }
 
        childView.ownerPool = this;
@@ -987,6 +1004,8 @@ public:
        }
 
        extptrslength += plen;
+       // ! still remains sorted
+       std::sort(extpointers, extpointers+extptrslength);
    }
 
    inline size_t getExtPtrsLength() const {
@@ -1105,11 +1124,16 @@ public:
    inline void addChildPool(PtrToMe childPoolPointer) {
        xassert(ownerPool == this && contains(childPoolPointer));
 
+       size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
+       // to ensure it is ordered (binary search invariant)
+       if (chplslength) {
+           xassert(dd > childpools[chplslength-1]);
+       }
        size_t pbufsz = getPtrBufSize(chplslength);
        if (chplscapacity < pbufsz) {
            extendBuffer((uint8_t*&)childpools, chplslength, chplscapacity, pbufsz, sizeof(size_t));
        }
-       childpools[chplslength++] = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
+       childpools[chplslength++] = dd;
    }
 
    inline void removeChildPool(PtrToMe childPoolPointer) {
