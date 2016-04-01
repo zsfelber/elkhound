@@ -532,8 +532,9 @@ void VoidList::concat(VoidList &tail)
 {
   xassert(getParent() == tail.getParent());
 
-  tail.getPoolRef().removeChildPool(&tail.npool);
   // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
+
+  tail.getPoolRef().removeChildPool(&tail.npool);
   tail.npool.removeAllExternalPointers();
 
   //StoragePool stealSP =
@@ -561,7 +562,11 @@ void VoidList::stealTailAt(int index, VoidList &source)
     concat(source);
     return;
   }
-  xassert(__parentVector == source.__parentVector);
+
+  // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
+
+  //StoragePool stealSP =
+  new (npool)  str::StoragePool(source.npool, false,  str::StoragePool::Cp_TmpDuplicate);
 
   // find the node in 'source' just before the first one that
   // will be transferred

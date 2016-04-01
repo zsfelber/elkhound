@@ -69,17 +69,9 @@ static const int STORE_BUF_PTR_SZ = 1 << STORE_BUF_PTR_BITS;
 static const int STORE_BUF_BITS = 24;
 static const int STORE_BUF_SZ = 1 << STORE_BUF_BITS;
 
-// 512 Kbytes  1 bit for each slot (32 bytes) : STORE_BUF_BITS-5
+// 1 bit for each slot (32 bytes) : STORE_BUF_BITS-5
 static const int STORE_BUF_VAR_SH = 5;
 static const int STORE_BUF_ADDR_SZ = 1 << STORE_BUF_VAR_SH;
-//static const int STORE_BUF_VAR_BITS = STORE_BUF_BITS-STORE_BUF_VAR_SH;
-//static const int STORE_BUF_VAR_SZ = 1 << STORE_BUF_VAR_BITS;
-
-// 64 Kbytes   1 bit for each VAR : VAR_BITS-3
-//static const int STORE_BUF_BIT_SH = 3;
-//static const int STORE_BUF_BIT_TOT_SH = STORE_BUF_VAR_SH + STORE_BUF_BIT_SH;
-//static const int STORE_BUF_BIT_BITS = STORE_BUF_VAR_BITS-STORE_BUF_BIT_SH;
-//static const int STORE_BUF_BIT_SZ = 1 << STORE_BUF_BIT_BITS;
 
 
 static void const * const LNULL = NULL;
@@ -233,7 +225,7 @@ T* lower_bound(T* first, T* last,
         return middle;
     }
   }
-  return last;
+  return first;
 }
 
 
@@ -402,6 +394,7 @@ public:
 
 
 class SwapVars {
+protected:
     uint8_t *memory;
     size_t first_del_var;
     size_t deleted_vars;
@@ -672,7 +665,6 @@ private:
        }
 
        size_t oldmemlength, newmemlength, bufsz;
-       uint8_t* oldmem;
 
       // if hollow >50% :
       if (deleted_vars > memlength>>1) {
@@ -713,7 +705,6 @@ private:
       oldmemlength = memlength;
       newmemlength = oldmemlength + store_size;
       bufsz = getMemBufSize(newmemlength);
-      oldmem = memory;
       if (memcapacity < bufsz) {
           if (oldmemlength) {
               // FIXME insert child pool instead of large block memcpy
