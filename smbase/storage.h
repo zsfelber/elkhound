@@ -397,6 +397,10 @@ public:
 
 
 class SwapVars {
+    friend class ::VoidList;
+    friend class ::VoidTailList;
+    friend class ::VoidNode;
+
 protected:
     uint8_t *memory;
     size_t first_del_var;
@@ -412,8 +416,11 @@ protected:
 
 
 
-class StoragePool : public Storeable, SwapVars {
+class StoragePool : public Storeable, public SwapVars {
    friend class Storeable;
+   friend class ::VoidList;
+   friend class ::VoidTailList;
+   friend class ::VoidNode;
 
 public:
 

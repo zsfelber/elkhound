@@ -611,7 +611,7 @@ void VoidList::appendAll(VoidList const &tail)
   if (n) {
       n->next = tail.top;
       npool.moveVariable(tail.npool.memory, tail.npool.memory+tail.npool.memlength,
-                         n->next, oldmemend-tail.npool.memory);
+                         (DataPtr&)n->next, oldmemend-tail.npool.memory);
   }
 }
 
@@ -638,6 +638,7 @@ void VoidList::prependAll(VoidList const &tail)
     //glue the first to the second !
     VoidList dup(tail.npool,  str::StoragePool::Cp_Duplicate);
 
+    uint8_t * oldmemend = dup.npool.memory+dup.npool.memlength;
     dup.npool += npool;
 
     // find the end of 'sup' list
@@ -647,9 +648,9 @@ void VoidList::prependAll(VoidList const &tail)
 
     // TODO not verified
     if (n) {
-        n->next = npool.tail.top;
+        n->next = top;
         dup.npool.moveVariable(tail.npool.memory, tail.npool.memory+tail.npool.memlength,
-                               n->next, oldmemend-tail.npool.memory);
+                               (DataPtr&)n->next, oldmemend-tail.npool.memory);
     }
 
     npool.swap(&dup.npool);
