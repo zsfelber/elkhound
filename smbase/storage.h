@@ -76,6 +76,9 @@ static const int STORE_BUF_ADDR_SZ = 1 << STORE_BUF_VAR_SH;
 
 static void const * const LNULL = NULL;
 
+extern const size_t STORAGE_POOL_SIZE;
+
+
 
 inline void copyBuffer(uint8_t* src, size_t srclen, size_t srccap,
                        uint8_t*& dest, size_t &dstlen, size_t &dstcap, size_t size_of) {
@@ -537,7 +540,8 @@ public:
    enum CopyMode {
        Cp_All,
        Cp_Move,
-       Cp_TmpDuplicate
+       Cp_Duplicate,
+       Cp_TmpDuplicate,
    };
 
 private:
@@ -546,6 +550,10 @@ private:
    size_t chplslength, chplscapacity;
 
    StoragePool * ownerPool;
+
+   // ! __parentVector0 is the last !
+
+   size_t __parentVector0;
 
    inline void movePointers(uint8_t* oldmemFrom, uint8_t* oldmemTo, uint8_t* origin = NULL) {
        xassert(ownerPool == this);
@@ -725,6 +733,9 @@ private:
       DataPtr data = (DataPtr) _data;
       data->__kind = ST_PARENT;
       data->__parentVector = encodeDeltaPtr(memory, (uint8_t*)_data);
+      if (store_size == STORAGE_POOL_SIZE) {
+          ((StoragePool*)data)->__parentVector0 = data->__parentVector;
+      }
       data->__store_size = store_size;
    }
 
@@ -744,6 +755,17 @@ private:
 
    inline void assignImpl(StoragePool const & src, CopyMode copyMode=Cp_All) {
        switch (copyMode) {
+       case Cp_Duplicate:
+       {
+           xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
+
+           ownerPool = (StoragePool*) &src;
+           __kind = ST_PARENT;
+           __parentVector = __parentVector0;
+           xassert(getPoolRef().contains(this));
+
+           break;
+       }
        case Cp_TmpDuplicate:
        {
            xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
@@ -811,10 +833,11 @@ public:
 
    StoragePool() : Storeable() {
        clear();
+       __store_size = STORAGE_POOL_SIZE;
    }
 
    StoragePool(Storeable const & srcOrParent, bool childOfParent, CopyMode copyMode=Cp_All) :
-       Storeable(srcOrParent, sizeof(StoragePool), childOfParent) {
+       Storeable(srcOrParent, sizeof(StoragePool)-sizeof(__parentVector0), childOfParent) {
 
        ownerPool = this;
 
@@ -827,7 +850,7 @@ public:
            assignImpl(srcOrParentPool, copyMode);
        }
 
-       getPool()->addChildPool(this);
+       getPoolRef().addChildPool(this);
    }
 
    virtual ~StoragePool() {
@@ -839,7 +862,7 @@ public:
    }
 
    inline void assign(StoragePool const & src, CopyMode copyMode=Cp_All) {
-       memcpy(this, &src, sizeof(StoragePool));
+       memcpy(this, &src, sizeof(StoragePool)-sizeof(__parentVector0));
        assignImpl(src, copyMode);
    }
 
@@ -1161,8 +1184,6 @@ public:
    }
 };
 
-
-
 /****************************************************************************************************
  * STOREABLE
  *
@@ -1221,7 +1242,7 @@ inline Storeable::~Storeable() {
 inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent) {
     if (childOfParent) {
         StoragePool * srcPool = srcOrParent.getPool();
-        xassert(srcPool->contains(this));
+        xassert(srcPool && srcPool->contains(this));
         __kind = ST_CHILD;
         __parentVector = encodeDeltaPtr((uint8_t*)&srcOrParent, (uint8_t*)this);
         __store_size = getStoreSize(size_of);

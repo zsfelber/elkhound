@@ -55,7 +55,8 @@ SOURCES += main.cpp \
     ../smbase/mypopen.c \
     ../smbase/tmalloc.c \
     ../smbase/unixutil.c \
-    ../smbase/int.cc
+    ../smbase/int.cc \
+    ../smbase/storage.cc
 
 DISTFILES += \
     ../smbase/SMBASE.IDE \

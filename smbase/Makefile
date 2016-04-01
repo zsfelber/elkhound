@@ -145,6 +145,7 @@ OBJS := \
   pprint.o \
   smregexp.o \
   srcloc.o \
+  storage.o \
   str.o \
   strdict.o \
   strhash.o \

@@ -566,7 +566,7 @@ void VoidList::stealTailAt(int index, VoidList &source)
   // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
 
   //StoragePool stealSP =
-  new (npool)  str::StoragePool(source.npool, false,  str::StoragePool::Cp_TmpDuplicate);
+  new (npool)  str::StoragePool(source.npool, false,  str::StoragePool::Cp_Duplicate);
 
   // find the node in 'source' just before the first one that
   // will be transferred
