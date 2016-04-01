@@ -401,9 +401,22 @@ public:
  */
 
 
+class SwapVars {
+    uint8_t *memory;
+    size_t first_del_var;
+    size_t deleted_vars;
+    size_t memlength, memcapacity;
+
+    size_t* intpointers;
+    size_t intptrslength, intptrscapacity;
+
+    Storeable::ExternalPtr* extpointers;
+    size_t extptrslength, extptrscapacity;
+};
 
 
-class StoragePool : public Storeable {
+
+class StoragePool : public Storeable, SwapVars {
    friend class Storeable;
 
 public:
@@ -535,31 +548,6 @@ public:
    };
 
 private:
-
-   struct SwapVars {
-       uint8_t *memory;
-       size_t first_del_var;
-       size_t deleted_vars;
-       size_t memlength, memcapacity;
-
-       size_t* intpointers;
-       size_t intptrslength, intptrscapacity;
-   };
-
-   //  swapvars--
-
-   uint8_t *memory;
-   size_t first_del_var;
-   size_t deleted_vars;
-   size_t memlength, memcapacity;
-
-   size_t* intpointers;
-   size_t intptrslength, intptrscapacity;
-
-   //  --swapvars
-
-   ExternalPtr* extpointers;
-   size_t extptrslength, extptrscapacity;
 
    size_t* childpools;
    size_t chplslength, chplscapacity;
@@ -730,7 +718,7 @@ private:
           if (oldmemlength) {
               // FIXME insert child pool instead of large block memcpy
               StoragePool * child = new (*this)  StoragePool(*this, true);
-              swap(*child);
+              swap(child);
           } else {
               extendBuffer(memory,           memlength,                       memcapacity, bufsz, 1/*sizeof(uint8_t)*/);
               fixPoolPointer();
@@ -808,13 +796,17 @@ private:
        }
    }
 
-   inline void swap(StoragePool & pool) {
+   inline void swap(StoragePool * pool) {
        uint8_t buf[sizeof(SwapVars)];
-       memcpy(buf, this, sizeof(SwapVars));
-       memcpy(this, pool, sizeof(SwapVars));
-       memcpy(pool, buf, sizeof(SwapVars));
+       uint8_t *_this = sizeof(Storeable) + (uint8_t*) this;
+       uint8_t *_pool = sizeof(Storeable) + (uint8_t*) pool;
+
+       memcpy(buf, _this, sizeof(SwapVars));
+       memcpy(_this, _pool, sizeof(SwapVars));
+       memcpy(_pool, buf, sizeof(SwapVars));
 
        fixAllPoolPointers();
+       pool->fixAllPoolPointers();
    }
 
 
@@ -1092,22 +1084,32 @@ public:
 
        if (contains(&dataPointer)) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
-           size_t* val = lower_bound(intpointers, intpointers+intptrslength, dd, std::string::npos);
+           size_t* last = intpointers+intptrslength;
+           size_t* val = lower_bound(intpointers, last, dd, std::string::npos);
            size_t vval = *val;
            if (vval == std::string::npos) {
                std::cout << "Warning  StoragePool.removePointer : internal poinrer already removed : " << (void*) &dataPointer
                          << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
            } else {
                xassert (vval == dd);
-               *val = std::string::npos;
+               if (val == last) {
+                   intptrslength--;
+               } else {
+                   *val = std::string::npos;
+               }
            }
        } else {
            ExternalPtr dd = &dataPointer;
-           ExternalPtr* val = lower_bound(extpointers, extpointers+extptrslength, dd, (ExternalPtr&)LNULL);
+           ExternalPtr* last = extpointers+extptrslength;
+           ExternalPtr* val = lower_bound(extpointers, last, dd, (ExternalPtr&)LNULL);
            ExternalPtr vval = *val;
            if (vval) {
                xassert (vval == dd);
-               *val = NULL;
+               if (val == last) {
+                   extptrslength--;
+               } else {
+                   *val = NULL;
+               }
            } else {
                std::cout << "Warning  StoragePool.removePointer : external poinrer already removed : " << (void*) &dataPointer
                          << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
@@ -1140,10 +1142,14 @@ public:
        xassert(ownerPool == this && contains(childPoolPointer));
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
-       size_t* val = lower_bound(childpools, childpools+chplslength, dd, std::string::npos);
+       size_t* last = childpools+chplslength;
+       size_t* val = lower_bound(childpools, last, dd, std::string::npos);
        xassert (*val == dd);
-       //removeBufferItem((uint8_t*)childpools, chplslength, (uint8_t*)val, sizeof(size_t));
-       *val = std::string::npos;
+       if (val == last) {
+           chplslength--;
+       } else {
+           *val = std::string::npos;
+       }
    }
 
    inline iterator begin(DataPtr variablePtr = 0) {
