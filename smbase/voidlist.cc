@@ -565,6 +565,7 @@ void VoidList::stealTailAt(int index, VoidList &source)
 
   // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
 
+  // TODO fixme : ownerPool == NULL is ok?  see StoragePool.assignImpl
   //StoragePool stealSP =
   new (npool)  str::StoragePool(source.npool, false,  str::StoragePool::Cp_Duplicate);
 
@@ -598,19 +599,20 @@ void VoidList::appendAll(VoidList const &tail)
 {
   xassert(tail.npool.getExtPtrsLength() == 1);
 
+  uint8_t * oldmemend = npool.memory+npool.memlength;
   npool += tail.npool;
 
-  /*
-  // make a dest iter and move it to the end
-  VoidListMutator destIter(*this);
-  while (!destIter.isDone()) {
-    destIter.adv();
-  }
+  // find the end of 'this' list
+  VoidNode *n = top;
+  for(; n->next; n = n->next)
+    {}
 
-  VoidListIter srcIter(tail);
-  for (; !srcIter.isDone(); srcIter.adv()) {
-    destIter.append(srcIter.data());
-  }*/
+  // TODO not verified
+  if (n) {
+      n->next = tail.top;
+      npool.moveVariable(tail.npool.memory, tail.npool.memory+tail.npool.memlength,
+                         n->next, oldmemend-tail.npool.memory);
+  }
 }
 
 // TODO better using str::StoragePool impl based on buffer-copy
@@ -629,15 +631,28 @@ void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 }
 
 
-// TODO better using str::StoragePool impl based on buffer-copy
+// using str::StoragePool impl based on buffer-copy
 void VoidList::prependAll(VoidList const &tail)
 {
-  VoidListMutator destIter(*this);
-  VoidListIter srcIter(tail);
-  for (; !srcIter.isDone(); srcIter.adv()) {
-    destIter.insertBefore(srcIter.data());
-    destIter.adv();
-  }
+    xassert(tail.npool.getExtPtrsLength() == 1);
+    //glue the first to the second !
+    VoidList dup(tail.npool,  str::StoragePool::Cp_Duplicate);
+
+    dup.npool += npool;
+
+    // find the end of 'sup' list
+    VoidNode *n = dup.top;
+    for(; n->next; n = n->next)
+      {}
+
+    // TODO not verified
+    if (n) {
+        n->next = npool.tail.top;
+        dup.npool.moveVariable(tail.npool.memory, tail.npool.memory+tail.npool.memlength,
+                               n->next, oldmemend-tail.npool.memory);
+    }
+
+    npool.swap(&dup.npool);
 }
 
 

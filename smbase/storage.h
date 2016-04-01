@@ -759,7 +759,7 @@ private:
        {
            xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
 
-           ownerPool = (StoragePool*) &src;
+           // keep it NULL!! ownerPool = (StoragePool*) &src;
            __kind = ST_PARENT;
            __parentVector = __parentVector0;
            xassert(getPoolRef().contains(this));
@@ -807,19 +807,6 @@ private:
        default:
            break;
        }
-   }
-
-   inline void swap(StoragePool * pool) {
-       uint8_t buf[sizeof(SwapVars)];
-       uint8_t *_this = sizeof(Storeable) + (uint8_t*) this;
-       uint8_t *_pool = sizeof(Storeable) + (uint8_t*) pool;
-
-       memcpy(buf, _this, sizeof(SwapVars));
-       memcpy(_this, _pool, sizeof(SwapVars));
-       memcpy(_pool, buf, sizeof(SwapVars));
-
-       fixAllPoolPointers();
-       pool->fixAllPoolPointers();
    }
 
 
@@ -985,6 +972,19 @@ public:
        intptrslength += src.intptrslength;
        chplslength += src.chplslength;
 
+   }
+
+   inline void swap(StoragePool * pool) {
+       uint8_t buf[sizeof(SwapVars)];
+       uint8_t *_this = sizeof(Storeable) + (uint8_t*) this;
+       uint8_t *_pool = sizeof(Storeable) + (uint8_t*) pool;
+
+       memcpy(buf, _this, sizeof(SwapVars));
+       memcpy(_this, _pool, sizeof(SwapVars));
+       memcpy(_pool, buf, sizeof(SwapVars));
+
+       fixAllPoolPointers();
+       pool->fixAllPoolPointers();
    }
 
    void convertExternalPointers(StoragePool const &src, ExternalPtr* convertExtPointersFrom, ExternalPtr* convertExtPointersTo) {
