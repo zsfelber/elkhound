@@ -308,7 +308,9 @@ friend class ::VoidNode;
 
     inline void clear(size_t size_of) {
 #ifdef DEBUG
-        memset(sizeof(char const *)+(uint8_t*)this, 0, size_of-sizeof(char const *));
+        uint8_t * bg = sizeof(objectName)+(uint8_t*)&objectName;
+        uint8_t * th = (uint8_t*)this;
+        memset(bg, 0, size_of-(bg-th));
 #else
         memset(this, 0, size_of);
 #endif
@@ -910,7 +912,14 @@ public:
    }
 
    inline void assign(StoragePool const & src, CopyMode copyMode=Cp_All) {
+#ifdef DEBUG
+       uint8_t * bg = sizeof(objectName)+(uint8_t*)&objectName;
+       uint8_t * th = (uint8_t*)this;
+       std::ptrdiff_t d = bg-th;
+       memcpy(bg, d+(uint8_t*)&src, sizeof(StoragePool)-sizeof(__parentVector0)-d);
+#else
        memcpy(this, &src, sizeof(StoragePool)-sizeof(__parentVector0));
+#endif
        assignImpl(src, copyMode);
    }
 
@@ -940,7 +949,9 @@ public:
 
    inline void clear() {
 #ifdef DEBUG
-       memset(sizeof(char const*)+(uint8_t*)this, 0, sizeof(StoragePool)-sizeof(char const*));
+       uint8_t * bg = sizeof(objectName)+(uint8_t*)&objectName;
+       uint8_t * th = (uint8_t*)this;
+       memset(bg, 0, sizeof(StoragePool)-(bg-th));
 #else
        memset(this, 0, sizeof(StoragePool));
 #endif
@@ -1394,7 +1405,10 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     xassert(src.__store_size == getStoreSize(size_of));
 
 #ifdef DEBUG
-    memcpy(sizeof(char const *)+(uint8_t*)this, sizeof(char const *)+(uint8_t*)&src, size_of-sizeof(char const *));
+    uint8_t * bg = sizeof(objectName)+(uint8_t*)&objectName;
+    uint8_t * th = (uint8_t*)this;
+    std::ptrdiff_t d = bg-th;
+    memcpy(bg, d+(uint8_t*)&src, size_of-d);
 #else
     memcpy(this, &src, size_of);
 #endif
