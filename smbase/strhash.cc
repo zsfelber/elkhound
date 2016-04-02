@@ -338,7 +338,7 @@ void readDataFromFile(char *inFileName) {
   fb.open (inFileName, std::ios::in);
   std::istream in(&fb);
   while(true) {
-    stringBuilder s;
+    stringBuilder s(DBG_INFO_ARG0);
     s.readdelim(in, delim);
 //      cout << ":" << s->pcharc() << ":" << endl;
     if (in.eof()) break;

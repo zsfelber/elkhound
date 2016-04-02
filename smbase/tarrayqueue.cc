@@ -15,7 +15,7 @@ int maxLength = 0;
 // one round of testing
 void round(int ops)
 {
-  str::StoragePool pool;
+  str::StoragePool pool(DBG_INFO_ARG0);
   // implementation to test
   ArrayQueue<int> arrayQueue;
 
@@ -62,7 +62,7 @@ void round(int ops)
       // enqueue
       int elt = rand() % 100;
       arrayQueue.enqueue(elt);
-      listQueue.append(new Integer(elt));
+      listQueue.append(new Integer(DBG_INFO_ARG0_FIRST  elt));
     }
   }
 }

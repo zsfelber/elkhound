@@ -91,7 +91,7 @@ private:     // types
   public:      // funcs
     Setter(PPrint &p)
       : pprint(p),
-        curLine(),
+        curLine(DBG_INFO_ARG0),
         curLineInd(0),
         lineIndex(0),
         indentGroups()
@@ -163,7 +163,7 @@ public:
 
 public:
   PPrintToString()
-    : PPrint(sbOut), sb(), sbOut(sb) {}
+    : PPrint(sbOut), sb(DBG_INFO_ARG0), sbOut(sb) {}
   ~PPrintToString();
 };
 

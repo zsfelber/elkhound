@@ -119,7 +119,7 @@ bool StringDict::query(char const *key, string &value) const
 
 string StringDict::queryf(char const *key) const
 {
-  string ret;
+  string ret(DBG_INFO_ARG0);
   bool ok = query(key, ret);
   xassert(ok);
   return ret;
@@ -128,7 +128,7 @@ string StringDict::queryf(char const *key) const
 
 bool StringDict::isMapped(char const *key) const
 {
-  string dummy;
+  string dummy(DBG_INFO_ARG0);
   return query(key, dummy);
 }
 
@@ -318,7 +318,7 @@ void StringDict::insertOstream(std::ostream &os) const
 
 string StringDict::toString() const
 {
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
   sb << "{";
   int count=0;
   FOREACH_ITERC(*this, entry) {
@@ -347,7 +347,7 @@ char randChar()
 
 string randString(int len)
 {
-  stringBuilder str;
+  stringBuilder str(DBG_INFO_ARG0);
   loopj(len) {
     str << randChar();
   }

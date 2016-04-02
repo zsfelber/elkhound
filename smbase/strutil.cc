@@ -16,7 +16,7 @@
 // replace all instances of oldstr in src with newstr, return result
 string replace(rostring origSrc, rostring oldstr, rostring newstr)
 {
-  stringBuilder ret;
+  stringBuilder ret(DBG_INFO_ARG0);
   char const *src = toCStr(origSrc);
 
   while (*src) {
@@ -42,8 +42,8 @@ string replace(rostring origSrc, rostring oldstr, rostring newstr)
 
 string expandRanges(char const *chars)
 {
-  stringBuilder ret;
-  
+  stringBuilder ret(DBG_INFO_ARG0);
+
   while (*chars) {
     if (chars[1] == '-' && chars[2] != 0) {
       // range specification
@@ -168,7 +168,7 @@ static struct Escape {
 
 string encodeWithEscapes(char const *p, int len)
 {
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
 
   for (; len>0; len--, p++) {
     // look for an escape code
@@ -473,7 +473,7 @@ string readStringFromFile(rostring fname)
 {
   AutoFILE fp(toCStr(fname), "r");
 
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
 
   char buf[4096];
   for (;;) {
@@ -507,7 +507,7 @@ bool readLine(string &dest, FILE *fp)
   }
 
   // only got part of the string; need to iteratively construct
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
   while (buf[strlen(buf)-1] != '\n') {
     sb << buf;
     if (!fgets(buf, 80, fp)) {

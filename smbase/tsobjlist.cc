@@ -7,7 +7,7 @@
 
 int main()
 {
-  str::StoragePool pool;
+  str::StoragePool pool(DBG_INFO_ARG0);
   char const *_hi = "hi there";
   char const *_what = "what's up?";
   string hi(_hi);

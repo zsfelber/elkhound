@@ -87,7 +87,7 @@ string StrtokParse::
 string StrtokParse::
   join(int firstTok, int lastTok, rostring separator) const
 {
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
   
   for (int i=firstTok; i<=lastTok; i++) {
     if (i > firstTok) {

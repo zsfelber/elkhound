@@ -144,9 +144,9 @@ public:      // types
 
   public:    // funcs
     // this builds both the array and the index
-    File(char const *name, SourceLoc startLoc);
-    File(str::StoragePool &pool, char const *name, SourceLoc startLoc);
-    //File(str::StoragePool &pool, char const *name, SourceLoc startLoc);
+    File(DBG_INFO_FORMAL_FIRST  char const *name, SourceLoc startLoc);
+    File(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, char const *name, SourceLoc startLoc);
+    //File(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, char const *name, SourceLoc startLoc);
     ~File();
     void init();
     
@@ -175,20 +175,23 @@ public:      // types
   // information anyway; the queries below just return the static
   // information stored, and incremental update is impossible
   class StaticLoc : public str::Storeable {
+#ifdef DEBUG
+      StaticLoc(StaticLoc const &obj);
+#endif
   public:
     string name;      // file name
     int offset;       // char offset
     int line, col;    // line,col
               
   public:
-    StaticLoc(char const *n, int o, int L, int c)
-      : name(n), offset(o), line(L), col(c) {}
-    StaticLoc(StaticLoc const &obj)
-      : DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
-    StaticLoc(str::StoragePool &pool, char const *n, int o, int L, int c)
-      : str::Storeable(pool), name(n), offset(o), line(L), col(c) {}
-    StaticLoc(str::StoragePool &pool, StaticLoc const &obj)
-      : str::Storeable(pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
+    StaticLoc(DBG_INFO_FORMAL_FIRST  char const *n, int o, int L, int c)
+      : str::Storeable(DBG_INFO_ARG_FWD), name(n), offset(o), line(L), col(c) {}
+    StaticLoc(DBG_INFO_FORMAL_FIRST  StaticLoc const &obj)
+      : str::Storeable(DBG_INFO_ARG_FWD), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
+    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, char const *n, int o, int L, int c)
+      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(n), offset(o), line(L), col(c) {}
+    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, StaticLoc const &obj)
+      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
   };
 
@@ -270,7 +273,7 @@ public:      // funcs
   // encoded more than once, if possible
   SourceLoc encodeStatic(StaticLoc const &obj);
   SourceLoc encodeStatic(char const *fname, int offset, int line, int col)
-    { return encodeStatic(StaticLoc(fname, offset, line, col)); }
+    { return encodeStatic(StaticLoc(DBG_INFO_ARG0_FIRST  fname, offset, line, col)); }
   static bool isStatic(SourceLoc loc) { return toInt(loc) <= 0; }
 
   // encode incremental; these are the methods we expect are called

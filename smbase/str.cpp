@@ -19,7 +19,7 @@
 #include "nonport.h"        // vnprintf
 #include "array.h"          // Array
 
-static str::StoragePool pool;
+static str::StoragePool pool(DBG_INFO_ARG0);
 
 // ----------------------- string ---------------------
 
@@ -32,7 +32,7 @@ char const nul_byte = 0;
 char * const string::emptyString = const_cast<char*>(&nul_byte);
 char * const string::nullString = "<null>";
 
-string::string(char const *src, int length, SmbaseStringFunc)
+string::string(DBG_INFO_FORMAL_FIRST  char const *src, int length, SmbaseStringFunc) : str::Storeable(DBG_INFO_ARG_FWD)
 {
   s=emptyString;
   setlength(length);       // setlength already has the +1; sets final NUL
@@ -69,8 +69,8 @@ void string::kill()
 }
 
 
-string::string(Flatten&)
-  : s(emptyString)
+string::string(DBG_INFO_FORMAL_FIRST  Flatten&)
+  : str::Storeable(DBG_INFO_ARG_FWD), s(emptyString)
 {}
 
 void string::xfer(Flatten &flat)
@@ -135,7 +135,7 @@ int string::compareTo(char const *src) const
 
 string string::operator&(string const &tail) const
 {
-  string dest(length() + tail.length(), SMBASE_STRING_FUNC);
+  string dest(DBG_INFO_ARG0_FIRST  length() + tail.length(), SMBASE_STRING_FUNC);
   strcpy(dest.s, s);
   strcat(dest.s, tail.s);
   return dest;
@@ -149,7 +149,7 @@ string& string::operator&=(string const &tail)
 
 void string::readdelim(std::istream &is, char const *delim)
 {
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
   sb.readdelim(is, delim);
   operator= (sb);
 }
@@ -196,7 +196,7 @@ string substring(char const *p, int n)
 
 
 // --------------------- stringBuilder ------------------
-stringBuilder::stringBuilder(int len)
+stringBuilder::stringBuilder(DBG_INFO_FORMAL_FIRST  int len) : string(DBG_INFO_ARG_FWD)
 {
   init(len);
 }
@@ -219,13 +219,13 @@ void stringBuilder::dup(char const *str)
 }
 
 
-stringBuilder::stringBuilder(char const *str)
+stringBuilder::stringBuilder(DBG_INFO_FORMAL_FIRST  char const *str) : string(DBG_INFO_ARG_FWD)
 {
   dup(str);
 }
 
 
-stringBuilder::stringBuilder(char const *str, int len)
+stringBuilder::stringBuilder(DBG_INFO_FORMAL_FIRST  char const *str, int len) : string(DBG_INFO_ARG_FWD)
 {
   init(len);
   memcpy(s, str, len);

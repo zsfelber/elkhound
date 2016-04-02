@@ -12,7 +12,7 @@ public:
   int i;                    // data this class holds
 
 public:
-  Integer(int ii);
+  Integer(DBG_INFO_FORMAL_FIRST  int ii);
   ~Integer();
 };
 

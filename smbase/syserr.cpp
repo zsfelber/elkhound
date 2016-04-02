@@ -62,7 +62,7 @@ STATICDEF string xSysError::
                      rostring syscall, rostring ctx)
 {
   // build string; start with syscall that failed
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
   sb << syscall << ": ";
 
   // now a failure reason string
@@ -108,7 +108,7 @@ STATICDEF void xSysError::
   int code = getSystemErrorCode();
 
   // translate it into one of ours
-  string sysMsg;
+  string sysMsg(DBG_INFO_ARG0);
   Reason r = portablize(code, sysMsg);
 
   // construct an object to throw
@@ -132,7 +132,7 @@ void xsyserror(rostring syscallName, rostring context)
 string sysErrorCodeString(int systemErrorCode, rostring syscallName,
                                                rostring context)
 {
-  string sysMsg;
+  string sysMsg(DBG_INFO_ARG0);
   xSysError::Reason r = xSysError::portablize(systemErrorCode, sysMsg);
   return xSysError::constructWhyString(
            r, sysMsg,

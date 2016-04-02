@@ -61,15 +61,15 @@ protected:     // funcs
   void kill();                         // dealloc if str != 0
 
 public:	       // funcs
-  string(string const &src) { if (src.s) dup(src.s); else s = nullString; }
-  string(char const *src) { if (src) dup(src); else s = nullString; }
-  string(str::StoragePool & pool, string const &src) : str::Storeable(pool) { if (src.s) dup(src.s); else s = nullString; }
-  string(str::StoragePool & pool, char const *src) : str::Storeable(pool) { if (src) dup(src); else s = nullString; }
-  string() { s=emptyString; }
+  string(DBG_INFO_FORMAL_FIRST string const &src) : str::Storeable(DBG_INFO_ARG_FWD) { if (src.s) dup(src.s); else s = nullString; }
+  string(DBG_INFO_FORMAL_FIRST char const *src) : str::Storeable(DBG_INFO_ARG_FWD) { if (src) dup(src); else s = nullString; }
+  string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
+  string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
+  string(DBG_INFO_FORMAL ) : str::Storeable(DBG_INFO_ARG_FWD) { s=emptyString; }
   ~string() { kill(); }
 
   // for this one, use ::substring instead
-  string(char const *src, int length, SmbaseStringFunc);
+  string(DBG_INFO_FORMAL_FIRST char const *src, int length, SmbaseStringFunc);
 
   // for this one, there are two alternatives:
   //   - stringBuilder has nearly the same constructor interface
@@ -78,9 +78,9 @@ public:	       // funcs
   //     be used
   //   - Array<char> is very flexible, but remember to add 1 to 
   //     the length passed to its constructor!
-  string(int length, SmbaseStringFunc) { s=emptyString; setlength(length); }
+  string(DBG_INFO_FORMAL_FIRST int length, SmbaseStringFunc) : str::Storeable(DBG_INFO_ARG_FWD) { s=emptyString; setlength(length); }
 
-  string(Flatten&);
+  string(DBG_INFO_FORMAL_FIRST Flatten&);
   void xfer(Flatten &flat);
 
   // simple queries
@@ -229,11 +229,11 @@ protected:
   void dup(char const *src);
 
 public:
-  stringBuilder(int length=0);    // creates an empty string
-  stringBuilder(char const *str);
-  stringBuilder(char const *str, int length);
-  stringBuilder(string const &str) { dup(str.c_str()); }
-  stringBuilder(stringBuilder const &obj) { dup(obj.c_str()); }
+  stringBuilder(DBG_INFO_FORMAL_FIRST  int length=0);    // creates an empty string
+  stringBuilder(DBG_INFO_FORMAL_FIRST  char const *str);
+  stringBuilder(DBG_INFO_FORMAL_FIRST  char const *str, int length);
+  stringBuilder(DBG_INFO_FORMAL_FIRST  string const &str) : string(DBG_INFO_ARG_FWD) { dup(str.c_str()); }
+  stringBuilder(DBG_INFO_FORMAL_FIRST  stringBuilder const &obj) : string(DBG_INFO_ARG_FWD) { dup(obj.c_str()); }
   ~stringBuilder() {}
 
   stringBuilder& operator= (char const *src);
@@ -329,12 +329,12 @@ public:
 // the real strength of this entire module: construct strings in-place
 // using the same syntax as C++ iostreams.  e.g.:
 //   puts(stringb("x=" << x << ", y=" << y));
-#define stringb(expr) (stringBuilder() << expr)
+#define stringb(expr) (stringBuilder(DBG_INFO_ARG0) << expr)
 
 // experimenting with dropping the () in favor of <<
 // (the "c" can be interpreted as "constructor", or maybe just
 // the successor to "b" above)
-#define stringc stringBuilder()
+#define stringc stringBuilder(DBG_INFO_ARG0)
 
 
 // experimenting with using toString as a general method for datatypes

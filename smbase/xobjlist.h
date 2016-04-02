@@ -69,31 +69,35 @@ outputCond([[[m4_dnl      // sobjlist
 protected:
   VoidList list;                        // list itself
 
+#ifdef DEBUG
+className[[[]]](className const &obj);
+#endif
+
 outputCond([[[m4_dnl    // sobjlist
   #define OWN
   #define NOWN
 public:
   // make shallow copies
-  className[[[]]](className const &obj)         : list(obj.list) {     }
+  className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj)         : str::Storeable(DBG_INFO_ARG_FWD), list(DBG_INFO_ARG0_FIRST  obj.list) {     }
   className& operator= (className const &src)         { list = src.list; return *this; }
 
   public:
-  className[[[]]](str::StoragePool &pool)                            : str::Storeable(pool), list(*this,0,true) {}
-  className[[[]]](str::Storeable const &parent)                      : str::Storeable(parent, sizeof(className)), list(*this,0,true) {}
+  className[[[]]](DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG0_FIRST  *this,0,true) {}
+  className[[[]]](DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(className)), list(DBG_INFO_ARG0_FIRST  *this,0,true) {}
 ]]], [[[m4_dnl          // objlist
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
 private:
   bool const owning;
   // make shallow copies and non-owning list
-  className[[[]]](className const &obj) : list(obj.list), owning(false) { }
+  className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj) : str::Storeable(DBG_INFO_ARG_FWD), list(obj.list), owning(false) { }
   className& operator= (className const &src) { NOWN list = src.list; return *this;  }
 
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-  className[[[]]](str::StoragePool &pool)                            : str::Storeable(pool), list(*this,0,true), owning(true) {}
-  className[[[]]](str::Storeable const &parent)                      : str::Storeable(parent, sizeof(className)), list(*this,0,true), owning(true) {}
+  className[[[]]](DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG0_FIRST  *this,0,true), owning(true) {}
+  className[[[]]](DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(className)), list(DBG_INFO_ARG0_FIRST  *this,0,true), owning(true) {}
 ]]])m4_dnl
 
   ~className[[[]]]()                      m4_dnl

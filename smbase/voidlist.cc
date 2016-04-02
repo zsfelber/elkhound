@@ -12,9 +12,9 @@
 #include <ios>
 
 
-VoidList::VoidList(VoidList const &src, size_t size_of, bool move)
-  : str::Storeable(src, size_of?size_of:sizeof(VoidList), false),
-    npool(src.npool, false, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All)
+VoidList::VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &src, size_t size_of, bool move)
+  : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, size_of?size_of:sizeof(VoidList), false),
+    npool(DBG_INFO_ARG0_FIRST  src.npool, false, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All)
 {
     chk_assign(src);
 }
@@ -543,7 +543,7 @@ void VoidList::concat(VoidList &tail)
   tail.npool.removeAllExternalPointers();
 
   //StoragePool stealSP =
-  new (npool)  str::StoragePool(tail.npool, false,  str::StoragePool::Cp_Move);
+  new (npool)  str::StoragePool(DBG_INFO_ARG0_FIRST  tail.npool, false,  str::StoragePool::Cp_Move);
 
   if (!top) {
     top = tail.top;
@@ -572,7 +572,7 @@ void VoidList::stealTailAt(int index, VoidList &source)
 
   // TODO fixme : ownerPool == NULL is ok?  see StoragePool.assignImpl
   //StoragePool stealSP =
-  new (npool)  str::StoragePool(source.npool, false,  str::StoragePool::Cp_Duplicate);
+  new (npool)  str::StoragePool(DBG_INFO_ARG0_FIRST  source.npool, false,  str::StoragePool::Cp_Duplicate);
 
   // find the node in 'source' just before the first one that
   // will be transferred
@@ -962,7 +962,11 @@ void entry()
   // first set of tests
   {
     // some sample items
-    str::Storeable *a=new Integer(4), *b=new Integer(8), *c=new Integer(12), *d=new Integer(16);
+    str::Storeable
+            *a=new Integer(DBG_INFO_ARG0_FIRST  4),
+            *b=new Integer(DBG_INFO_ARG0_FIRST  8),
+            *c=new Integer(DBG_INFO_ARG0_FIRST  12),
+            *d=new Integer(DBG_INFO_ARG0_FIRST  16);
 
     VoidList list;
 

@@ -46,7 +46,7 @@ void print(ObjList<Integer> const &list)
 
 void testSorting()
 {
-  str::StoragePool pool;
+  str::StoragePool pool(DBG_INFO_ARG0);
   enum { ITERS=100, ITEMS=20 };
 
   loopi(ITERS) {
@@ -57,8 +57,8 @@ void testSorting()
     int items = rand()%ITEMS;
     loopj(items) {
       int it = rand()%ITEMS;
-      list1.prepend(new Integer(it));
-      list2.prepend(new Integer(it));     // two lists with identical contents
+      list1.prepend(new Integer(DBG_INFO_ARG0_FIRST  it));
+      list2.prepend(new Integer(DBG_INFO_ARG0_FIRST  it));     // two lists with identical contents
     }
     //PRINT(list1);
 
@@ -94,14 +94,14 @@ void testSorting()
 
 void entry()
 {
-  str::StoragePool pool;
+  str::StoragePool pool(DBG_INFO_ARG0  );
   // first set of tests
   {
     // some sample items
-    Integer *a = new Integer(1);
-    Integer *b = new Integer(2);
-    Integer *c = new Integer(3);
-    Integer *d = new Integer(4);
+    Integer *a = new Integer(DBG_INFO_ARG0_FIRST  1);
+    Integer *b = new Integer(DBG_INFO_ARG0_FIRST  2);
+    Integer *c = new Integer(DBG_INFO_ARG0_FIRST  3);
+    Integer *d = new Integer(DBG_INFO_ARG0_FIRST  4);
 
     STORE_NEW_REF0(pool, ObjList<Integer>, list);
 
@@ -125,7 +125,7 @@ void entry()
 
   // test that we can detect accidental duplication
   {
-    Integer *x = new Integer(1);
+    Integer *x = new Integer(DBG_INFO_ARG0_FIRST  1);
     STORE_NEW_REF0(pool, ObjList<Integer>, list);
     list.prepend(x);
     bool bad = false;

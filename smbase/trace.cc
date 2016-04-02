@@ -10,7 +10,7 @@
 #include <fstream>   // std::ofstream
 #include <stdlib.h>    // getenv
 
-static str::StoragePool pool;
+static str::StoragePool pool(DBG_INFO_ARG0);
 
 // auto-init
 static bool inited = false;
@@ -46,7 +46,7 @@ void traceAddSys(char const *sysName)
 {
   init();
 
-  tracers.prepend(new (pool) string(pool, sysName));
+  tracers.prepend(new (pool) string(DBG_INFO_ARG0_FIRST  pool, sysName));
 }
 
 

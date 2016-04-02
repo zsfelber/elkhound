@@ -30,17 +30,17 @@ private:
   void adjustTails();
 
 public:
-  VoidTailList() : VoidList()
+  VoidTailList(DBG_INFO_FORMAL) : VoidList(DBG_INFO_ARG_FWD)
   { tail = NULL;  npool.addPointer(tail); }
 
-  VoidTailList(str::StoragePool &pool) : VoidList(pool)
+  VoidTailList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : VoidList(DBG_INFO_ARG_FWD_FIRST  pool)
   { tail = NULL;  npool.addPointer(tail); }
-  VoidTailList(str::Storeable &parent) : VoidList(parent,sizeof(VoidTailList))
+  VoidTailList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : VoidList(DBG_INFO_ARG_FWD_FIRST  parent,sizeof(VoidTailList))
   { tail = NULL;  npool.addPointer(tail); }
   ~VoidTailList()                    { npool.removePointer(tail); }
   
   // move:true  special ctor which steals the list. NOTE invoker should always deallocate the header
-  VoidTailList(VoidTailList const &src, bool move) : VoidList(src, sizeof(VoidTailList), move)
+  VoidTailList(DBG_INFO_FORMAL_FIRST  VoidTailList const &src, bool move) : VoidList(DBG_INFO_ARG_FWD_FIRST  src, sizeof(VoidTailList), move)
   { }
 
   void assign(VoidTailList const &src, bool move)

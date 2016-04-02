@@ -372,7 +372,7 @@ void StringVoidDict::insertOstream(std::ostream &os) const
 
 string StringVoidDict::toString() const
 {
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
   sb << "{";
   int count=0;
   FOREACH_ITERC(*this, entry) {
@@ -401,7 +401,7 @@ char randChar()
 
 string randString(int len)
 {
-  stringBuilder str;
+  stringBuilder str(DBG_INFO_ARG0);
   loopj(len) {
     str << randChar();
   }

@@ -16,6 +16,29 @@ class VoidList;
 class VoidTailList;
 class VoidNode;
 
+#define S1(x) #x
+#define S2(x) S1(x)
+#define __FILE_LINE__ __FILE__ " : " S2(__LINE__)
+
+#ifdef DEBUG
+#define DBG_INFO_FORMAL char const * objectName
+#define DBG_INFO_FORMAL_FIRST char const * objectName,
+#define DBG_INFO_ARG(str) str
+#define DBG_INFO_ARG_FIRST(str) str,
+#define DBG_INFO_ARG_FWD objectName
+#define DBG_INFO_ARG_FWD_FIRST objectName,
+#define DBG_INFO_ARG0 DBG_INFO_ARG(__FILE_LINE__)
+#define DBG_INFO_ARG0_FIRST DBG_INFO_ARG_FIRST(__FILE_LINE__)
+#else
+#define DBG_INFO_FORMAL
+#define DBG_INFO_FORMAL_FIRST
+#define DBG_INFO_ARG(str)
+#define DBG_INFO_ARG_FIRST(str)
+#define DBG_INFO_ARG_FWD
+#define DBG_INFO_ARG_FWD_FIRST
+#define DBG_INFO_ARG0
+#define DBG_INFO_ARG0_FIRST
+#endif
 
 namespace str {
 
@@ -301,10 +324,10 @@ public:
    void operator delete[] (void* ptr, size_t size);
 
 
-   Storeable();
+   Storeable(DBG_INFO_FORMAL);
 
    /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-   Storeable(StoragePool & pool);
+   Storeable(DBG_INFO_FORMAL_FIRST StoragePool & pool);
 
    /**
     * src: source object argument of copy constructor
@@ -314,14 +337,14 @@ public:
     * @param parent
     */
    template<class ME>
-   Storeable(ME const & srcOrParent, bool childOfParent);
+   Storeable(DBG_INFO_FORMAL_FIRST  ME const & srcOrParent, bool childOfParent);
 
    /**
     * this object is a non-pointer class field of the pointer/non-pointer stored variable, parent
     * @brief Storeable::Storeable
     * @param parent
     */
-   Storeable(Storeable const & srcOrParent, size_t size_of, bool childOfParent);
+   Storeable(DBG_INFO_FORMAL_FIRST  Storeable const & srcOrParent, size_t size_of, bool childOfParent);
 
    virtual ~Storeable();
 
@@ -726,7 +749,7 @@ private:
       if (memcapacity < bufsz) {
           if (oldmemlength) {
               // FIXME insert child pool instead of large block memcpy
-              StoragePool * child = new (*this)  StoragePool(*this, true);
+              StoragePool * child = new (*this)  StoragePool(DBG_INFO_ARG_FIRST("allocParentItem") *this, true);
               swap(child);
           } else {
               extendBuffer(memory,           memlength,                       memcapacity, bufsz, 1/*sizeof(uint8_t)*/);
@@ -834,13 +857,13 @@ private:
 
 public:
 
-   StoragePool() : Storeable() {
+   StoragePool(DBG_INFO_FORMAL) : Storeable(DBG_INFO_ARG_FWD) {
        clear();
        __store_size = STORAGE_POOL_SIZE;
    }
 
-   StoragePool(Storeable const & srcOrParent, bool childOfParent, CopyMode copyMode=Cp_All) :
-       Storeable(srcOrParent, sizeof(StoragePool)-sizeof(__parentVector0), childOfParent) {
+   StoragePool(DBG_INFO_FORMAL_FIRST Storeable const & srcOrParent, bool childOfParent, CopyMode copyMode=Cp_All) :
+       Storeable(DBG_INFO_ARG_FWD_FIRST srcOrParent, sizeof(StoragePool)-sizeof(__parentVector0), childOfParent) {
 
        ownerPool = this;
 
@@ -941,7 +964,7 @@ public:
    }
 
    StoragePool& operator+= (StoragePool const &src) {
-       StoragePool childView;
+       StoragePool childView(DBG_INFO_ARG("operator+="));
        append(src, childView);
        return *this;
    }
@@ -1262,7 +1285,7 @@ public:
  */
 
 
-inline Storeable::Storeable()
+inline Storeable::Storeable(DBG_INFO_FORMAL)
  #ifdef REG_CHILD
    , __next(0)
  #endif
@@ -1282,17 +1305,17 @@ inline Storeable::Storeable()
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-inline Storeable::Storeable(StoragePool & pool) {
+inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool) {
     xassert(__kind == ST_PARENT && getPool() == &pool && pool.contains(this));
 }
 
 template<class ME>
-inline Storeable::Storeable(ME const & srcOrParent, bool childOfParent)
+inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  ME const & srcOrParent, bool childOfParent)
 {
     init(srcOrParent, sizeof(ME), childOfParent);
 }
 
-inline Storeable::Storeable(Storeable const & srcOrParent, size_t size_of, bool childOfParent)
+inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParent, size_t size_of, bool childOfParent)
 {
     init(srcOrParent, size_of, childOfParent);
 }

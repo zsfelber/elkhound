@@ -56,7 +56,7 @@ void VoidTailList::appendAll(VoidTailList const &tail)
       this->tail = tail.tail;
   }
   ExternalPtr ptrs[] = { (ExternalPtr)&this->tail };
-  str::StoragePool childView;
+  str::StoragePool childView(DBG_INFO_ARG0  );
   npool.append(tail.npool, childView, ptrs, ptrs+1);
 
   /*VoidList::appendAll(src);
@@ -231,7 +231,10 @@ void VoidTailList::selfCheck() const
 int main()
 {
   VoidTailList list;
-  Integer zero(0), one(1), two(2), three(3);
+  Integer zero(DBG_INFO_ARG0_FIRST  0),
+          one(DBG_INFO_ARG0_FIRST  1),
+          two(DBG_INFO_ARG0_FIRST  2),
+          three(DBG_INFO_ARG0_FIRST  3);
 
   // This isn't a very exhaustive test; it's mainly to check that
   // selfCheck doesn't do anything really stupid (it used to).

@@ -136,7 +136,7 @@ void entry()
 
   // place to put the data we read
   int x2, y2;
-  string s2;
+  string s2(DBG_INFO_ARG0);
   int *px2, *py2;
 
   // read them back

@@ -32,7 +32,7 @@ void addLineLength(ArrayStack<unsigned char> &lengths, int len)
   lengths.push((unsigned char)len);
 }
 
-SourceLocManager::File::File(str::StoragePool &pool, char const *n, SourceLoc aStartLoc)
+SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, char const *n, SourceLoc aStartLoc)
 : str::Storeable(pool),  name(n),
   startLoc(aStartLoc),     // assigned by SourceLocManager
   hashLines(NULL),
@@ -44,8 +44,8 @@ SourceLocManager::File::File(str::StoragePool &pool, char const *n, SourceLoc aS
     init();
 }
 
-SourceLocManager::File::File(char const *n, SourceLoc aStartLoc)
-  : name(n),
+SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  char const *n, SourceLoc aStartLoc)
+  : Storeable(DBG_INFO_ARG_FWD), name(n),
     startLoc(aStartLoc),     // assigned by SourceLocManager
     hashLines(NULL),
 
@@ -406,9 +406,10 @@ SourceLocManager *sourceLocManager = NULL;
 
 
 SourceLocManager::SourceLocManager()
-  : files(pool),
+  : pool(DBG_INFO_ARG0),
+    files(DBG_INFO_ARG0_FIRST  pool),
     recent(NULL),
-    statics(pool),
+    statics(DBG_INFO_ARG0_FIRST  pool),
     nextLoc(toLoc(1)),
     nextStaticLoc(toLoc(0)),
     maxStaticLocs(100),
@@ -419,12 +420,12 @@ SourceLocManager::SourceLocManager()
   }
 
   // slightly clever: treat SL_UNKNOWN as a static
-  SourceLoc u = encodeStatic(StaticLoc("<noloc>", 0,1,1));
+  SourceLoc u = encodeStatic(StaticLoc(DBG_INFO_ARG0_FIRST  "<noloc>", 0,1,1));
   xassert(u == SL_UNKNOWN);
   PRETEND_USED(u);     // silence warning in case xasserts are turned off
 
   // similarly for SL_INIT
-  u = encodeStatic(StaticLoc("<init>", 0,1,1));
+  u = encodeStatic(StaticLoc(DBG_INFO_ARG0_FIRST  "<init>", 0,1,1));
   xassert(u == SL_INIT);
   PRETEND_USED(u);
 }
@@ -467,7 +468,7 @@ SourceLocManager::File *SourceLocManager::getFile(char const *name)
   File *f = findFile(name);
   if (!f) {
     // read the file
-    f = new (pool) File(pool, name, nextLoc);
+    f = new (pool) File(DBG_INFO_ARG0_FIRST  pool, name, nextLoc);
     files.append(f);
 
     // bump 'nextLoc' according to how long that file was,
@@ -528,7 +529,7 @@ SourceLoc SourceLocManager::encodeStatic(StaticLoc const &obj)
   }
 
   // save this location
-  statics.append(new (pool) StaticLoc(pool, obj));
+  statics.append(new (pool) StaticLoc(DBG_INFO_ARG0_FIRST  pool, obj));
 
   // return current index, yield next
   SourceLoc ret = nextStaticLoc;

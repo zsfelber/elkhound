@@ -67,19 +67,19 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
-  VoidList()  : str::Storeable(), npool()
+  VoidList(DBG_INFO_FORMAL)  : str::Storeable(DBG_INFO_ARG_FWD), npool(DBG_INFO_ARG0)
   { top=NULL;   npool.addPointer(top); }
 
-  VoidList(str::StoragePool &pool, str::StoragePool::CopyMode copy)  : str::Storeable(), npool(pool, false, copy)
+  VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, str::StoragePool::CopyMode copy)  : str::Storeable(DBG_INFO_ARG_FWD), npool(DBG_INFO_ARG0_FIRST  pool, false, copy)
   { top=NULL;   npool.addPointer(top); }
 
-  VoidList(str::StoragePool &pool)  : str::Storeable(pool), npool(*this, true)
+  VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)  : str::Storeable(DBG_INFO_ARG_FWD_FIRST pool), npool(DBG_INFO_ARG0_FIRST  *this, true)
   { top=NULL;   npool.addPointer(top); }
 
-  VoidList(str::Storeable const &parent, size_t size_of=0) : str::Storeable(parent, size_of?size_of:sizeof(VoidList), true), npool(*this, true)
+  VoidList(DBG_INFO_FORMAL_FIRST  str::Storeable const &parent, size_t size_of=0) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, size_of?size_of:sizeof(VoidList), true), npool(DBG_INFO_ARG0_FIRST  *this, true)
   { top=NULL;   npool.addPointer(top); }
 
-  VoidList(VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
+  VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
   virtual ~VoidList()                { npool.removePointer(top);/*npool clears it completely*/  }
 
   void assign(VoidList const &src, size_t size_of=0, bool move=false);

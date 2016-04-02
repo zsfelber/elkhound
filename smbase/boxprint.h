@@ -69,8 +69,8 @@ public:
 // interface for elements in a boxprint tree
 class BPElement : public str::Storeable {
 public:
-    BPElement(str::StoragePool &pool) : str::Storeable(pool) {}
-    BPElement(str::Storeable &parent, size_t size_of) : str::Storeable(parent, size_of, true) {}
+    BPElement(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) {}
+    BPElement(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, size_t size_of) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, size_of, true) {}
 
   // if no breaks are taken, compute the # of columns;
   // return with 'forcedBreak' true if we stopped because of
@@ -105,8 +105,8 @@ public:
   string text;
 
 public:
-  BPText(str::StoragePool &pool, rostring t);
-  BPText(str::Storeable &parent, rostring t);
+  BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, rostring t);
+  BPText(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, rostring t);
   ~BPText();
 
   // BPElement funcs
@@ -141,7 +141,7 @@ public:
   int indent;
 
 public:
-  BPBreak(str::StoragePool &pool, BreakType e, int i);
+  BPBreak(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, BreakType e, int i);
   ~BPBreak();
 
   // BPElement funcs
@@ -180,8 +180,8 @@ public:
   BPKind kind;
 
 public:
-  BPBox(str::StoragePool &pool, BPKind k);
-  BPBox(str::Storeable &parent, BPKind k);
+  BPBox(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, BPKind k);
+  BPBox(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, BPKind k);
   ~BPBox();
 
   // BPElement funcs
@@ -238,8 +238,8 @@ private:     // funcs
   BPBox *box() { return boxStack.top(); }
 
 public:      // funcs
-  BoxPrint(str::StoragePool &pool);
-  BoxPrint();
+  BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool);
+  BoxPrint(DBG_INFO_FORMAL);
   ~BoxPrint();
 
   // append another element to the current innermost box

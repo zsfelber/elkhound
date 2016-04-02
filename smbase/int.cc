@@ -3,8 +3,8 @@
 int Integer::ctorcount = 0;
 int Integer::dtorcount = 0;
 
-Integer::Integer(int ii)
-  : i(ii)
+Integer::Integer(DBG_INFO_FORMAL_FIRST  int ii)
+  : str::Storeable(DBG_INFO_ARG_FWD), i(ii)
 {
   ctorcount++;
 }
