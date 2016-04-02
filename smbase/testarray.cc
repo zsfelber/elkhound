@@ -16,7 +16,7 @@ int maxLength = 0;
 // one round of testing
 void round(int ops)
 {
-  str::StoragePool pool;
+  str::StoragePool pool(DBG_INFO_ARG0);
   // implementations to test
   ArrayStack<int> arrayStack;
   ArrayStackEmbed<int, 10> arrayStackEmbed;
@@ -34,9 +34,9 @@ void round(int ops)
       }
 
       int index = length-1;
-      FOREACH_OBJLIST(int, listStack, iter) {
-        xassert(iter.data()[0] == arrayStack[index]);
-        xassert(iter.data()[0] == arrayStackEmbed[index]);
+      FOREACH_OBJLIST(Integer, listStack, iter) {
+        xassert(iter.data()[0].i == arrayStack[index]);
+        xassert(iter.data()[0].i == arrayStackEmbed[index]);
         index--;
       }
       xassert(index == -1);
@@ -68,7 +68,7 @@ void round(int ops)
       int elt = rand() % 100;
       arrayStack.push(elt);
       arrayStackEmbed.push(elt);
-      listStack.prepend(new Integer(elt));
+      listStack.prepend(new Integer(DBG_INFO_ARG0_FIRST  elt));
     }
   }
 }

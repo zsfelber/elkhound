@@ -79,8 +79,8 @@ template <typename P> inline P& constcast(P const & p) {
 //STORE_NEW_REF(pool, SObjList<char const>, list);
 // ->
 //SObjList<char const> &list = *new (pool) SObjList<char const>(pool);
-#define STORE_NEW_REF0(pool, classname, var) classname & var = * new (pool) classname(pool)
-#define STORE_NEW_REF(pool, classname, var, ...) classname & var = * new (pool) classname(pool, __VA_ARGS__)
+#define STORE_NEW_REF0(pool, classname, var) classname & var = * new (pool) classname(DBG_INFO_ARG0_FIRST  pool)
+#define STORE_NEW_REF(pool, classname, var, ...) classname & var = * new (pool) classname(DBG_INFO_ARG0_FIRST  pool, __VA_ARGS__)
 
 //#define REG_CHILD
 

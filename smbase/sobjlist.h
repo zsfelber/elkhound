@@ -33,16 +33,20 @@ private:
 protected:
   VoidList list;                        // list itself
 
+#ifdef DEBUG
+SObjList(SObjList const &obj);
+#endif
+
   #define OWN
   #define NOWN
 public:
   // make shallow copies
-  SObjList(SObjList const &obj)         : list(obj.list) {     }
+  SObjList(DBG_INFO_FORMAL_FIRST SObjList const &obj)         : str::Storeable(DBG_INFO_ARG_FWD), list(DBG_INFO_ARG0_FIRST  obj.list) {     }
   SObjList& operator= (SObjList const &src)         { list = src.list; return *this; }
 
   public:
-  SObjList(str::StoragePool &pool)                            : str::Storeable(pool), list(*this,0,true) {}
-  SObjList(str::Storeable const &parent)                      : str::Storeable(parent, sizeof(SObjList)), list(*this,0,true) {}
+  SObjList(DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG0_FIRST  *this,0) {}
+  SObjList(DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(SObjList)), list(DBG_INFO_ARG0_FIRST  *this,0) {}
 
   ~SObjList()                           {}    /* all items removed */
 

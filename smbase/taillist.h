@@ -26,16 +26,16 @@ private:
   TailList(TailList const &obj); // not allowed
 
 public:
-  TailList()                             : list() {}
+  TailList()                             : list(DBG_INFO_ARG0) {}
   ~TailList()                            {  }
 
   // ctor to make singleton list; often quite useful
-  TailList(T *elt)                       : list() { prepend(elt); }
+  TailList(T *elt)                       : list(DBG_INFO_ARG0) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  TailList(TailList<T> *src)              : list(&src->list) {}
+  TailList(TailList<T> *src)              : list(DBG_INFO_ARG0_FIRST  &src->list) {}
   void assign(TailList<T> &src, bool move)           { list.assign(src.list, move); }
 
   // selectors

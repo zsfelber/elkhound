@@ -7,7 +7,11 @@
 
 void entry()
 {
-  Integer a = 2,b = 4,c = 8,d = 16, e = 42;
+  Integer a(DBG_INFO_ARG0_FIRST  2),
+            b(DBG_INFO_ARG0_FIRST  4),
+              c(DBG_INFO_ARG0_FIRST  8),
+                d(DBG_INFO_ARG0_FIRST  16),
+                  e(DBG_INFO_ARG0_FIRST  42);
 
   TailList<Integer> list;
 

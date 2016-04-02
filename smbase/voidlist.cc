@@ -428,8 +428,8 @@ void VoidList::mergeSort(VoidDiff diff, str::Storeable const *extra)
   }
 
   // half-lists
-  VoidList leftHalf(npool,  str::StoragePool::Cp_TmpDuplicate);
-  VoidList rightHalf(npool,  str::StoragePool::Cp_TmpDuplicate);
+  VoidList leftHalf(DBG_INFO_ARG0_FIRST  npool,  str::StoragePool::Cp_TmpDuplicate);
+  VoidList rightHalf(DBG_INFO_ARG0_FIRST  npool,  str::StoragePool::Cp_TmpDuplicate);
 
   // divide the list
   {
@@ -622,7 +622,7 @@ void VoidList::appendAll(VoidList const &tail)
 // TODO better using str::StoragePool impl based on buffer-copy
 void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 {
-  VoidList dest(npool);
+  VoidList dest(DBG_INFO_ARG0_FIRST  npool);
   VoidListIter srcIter(tail);
   for (; !srcIter.isDone(); srcIter.adv()) {
     str::Storeable *item = srcIter.data();
@@ -904,8 +904,8 @@ void testSorting()
 
   loopi(ITERS) {
     // construct a list (and do it again if it ends up already sorted)
-    VoidList list1;
-    VoidList list3;     // this one will be constructed sorted one at a time
+    VoidList list1(DBG_INFO_ARG0);
+    VoidList list3(DBG_INFO_ARG0);     // this one will be constructed sorted one at a time
     int numItems;
     do {
       list1.removeAll();    // clear them in case we have to build it more than once
@@ -923,7 +923,7 @@ void testSorting()
     verifySorted(list3);
 
     // duplicate it for use with other algorithm
-    VoidList list2;
+    VoidList list2(DBG_INFO_ARG0);
     list2 = list1;
 
     // sort them
@@ -968,7 +968,7 @@ void entry()
             *c=new Integer(DBG_INFO_ARG0_FIRST  12),
             *d=new Integer(DBG_INFO_ARG0_FIRST  16);
 
-    VoidList list;
+    VoidList list(DBG_INFO_ARG0);
 
     // test simple modifiers and info
     list.append(c);     PRINT(list);   // c
@@ -1040,7 +1040,7 @@ void entry()
     list.selfCheck();
 
     // test stealTailAt
-    VoidList thief;
+    VoidList thief(DBG_INFO_ARG0);
     thief.stealTailAt(1, list);
     thief.selfCheck();
     list.selfCheck();

@@ -49,8 +49,8 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-  ObjList(DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG0_FIRST  *this,0,true), owning(true) {}
-  ObjList(DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ObjList)), list(DBG_INFO_ARG0_FIRST  *this,0,true), owning(true) {}
+  ObjList(DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG0_FIRST  *this,0), owning(true) {}
+  ObjList(DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ObjList)), list(DBG_INFO_ARG0_FIRST  *this,0), owning(true) {}
 
   ~ObjList()                           { deleteAll(); }
 

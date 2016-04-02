@@ -15,7 +15,7 @@ static str::StoragePool pool(DBG_INFO_ARG0);
 // auto-init
 static bool inited = false;
 
-static ObjList<string>* _tracers = new (pool) ObjList<string>(pool);
+static ObjList<string>* _tracers = new (pool) ObjList<string>(DBG_INFO_ARG0_FIRST  pool);
 
 // list of active tracers, initially empty
 static ObjList<string>& tracers = *_tracers;

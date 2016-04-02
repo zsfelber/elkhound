@@ -230,7 +230,7 @@ void VoidTailList::selfCheck() const
 
 int main()
 {
-  VoidTailList list;
+  VoidTailList list(DBG_INFO_ARG0);
   Integer zero(DBG_INFO_ARG0_FIRST  0),
           one(DBG_INFO_ARG0_FIRST  1),
           two(DBG_INFO_ARG0_FIRST  2),

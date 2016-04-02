@@ -26,8 +26,8 @@ void round(int ops)
     // check that the array and list agree
     {
       int index = 0;
-      FOREACH_OBJLIST(int, listQueue, iter) {
-        xassert(iter.data()[0] == arrayQueue[index]);
+      FOREACH_OBJLIST(Integer, listQueue, iter) {
+        xassert(iter.data()[0].i == arrayQueue[index]);
         index++;
       }
       xassert(index == arrayQueue.length());
