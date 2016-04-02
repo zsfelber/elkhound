@@ -549,6 +549,7 @@ public:
        Cp_Move,
        Cp_Duplicate,
        Cp_TmpDuplicate,
+       Cp_StaticDuplicate,
    };
 
 private:
@@ -622,7 +623,7 @@ private:
            std::cout << "Warning  StoragePool.moveVariable : (old) pointer to external data : "
                      << (void*) variable  << " of " << (void*) oldmemFrom << " .. " << (void*) oldmemTo << std::endl;
            StoragePool const * parent = getPool();
-           if (parent && parent != this && !parent->contains(variable)) {
+           if (parent && !parent->contains(variable)) {
                std::cout << "Warning  StoragePool.moveVariable : (new) (parent) pointer to external data : "
                          << (void*) variable  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
            }
@@ -633,7 +634,7 @@ private:
        fixPoolPointer();
 
        size_t* chPoolsFrom = childpools;
-       size_t* chPoolsTo = childpools+intptrslength;
+       size_t* chPoolsTo = childpools+chplslength;
        for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
            PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
            if (ptr) {
@@ -646,9 +647,9 @@ private:
        xassert(ownerPool == this);
 
        size_t* chPoolsFrom = childpools;
-       size_t* chPoolsTo = childpools+intptrslength;
+       size_t* chPoolsTo = childpools+chplslength;
        size_t* src_chPoolsFrom = source.childpools;
-       size_t* src_chPoolsTo = source.childpools+source.intptrslength;
+       size_t* src_chPoolsTo = source.childpools+source.chplslength;
 
        xassert(chPoolsTo-chPoolsFrom == src_chPoolsTo-src_chPoolsFrom);
 
@@ -656,10 +657,12 @@ private:
            PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
            PtrToMe src_ptr = (PtrToMe)decodeDeltaPtr(source.memory, *src_chPoolsFrom);
 
-           if (ptr && src_ptr) {
+           xassert(bool(ptr)==bool(src_ptr));
+
+           if (ptr) {
                ptr->fixPoolPointer();
                ptr->clear();
-               *ptr = source;
+               *ptr = *src_ptr;
                ptr->copyChildPools(*src_ptr);
            }
        }
@@ -773,6 +776,12 @@ private:
 
            break;
        }
+       case Cp_StaticDuplicate:
+       {
+           xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
+
+           break;
+       }
        case Cp_TmpDuplicate:
        {
            xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
@@ -844,7 +853,9 @@ public:
            assignImpl(srcOrParentPool, copyMode);
        }
 
-       getPoolRef().addChildPool(this);
+       if (copyMode != Cp_StaticDuplicate) {
+           getPoolRef().addChildPool(this);
+       }
    }
 
    virtual ~StoragePool() {
@@ -875,7 +886,7 @@ public:
 
    inline void delChildPools() {
        size_t* chPoolsFrom = childpools;
-       size_t* chPoolsTo = childpools+intptrslength;
+       size_t* chPoolsTo = childpools+chplslength;
        for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
            PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
            if (ptr) {
@@ -1029,6 +1040,24 @@ public:
        return (memory<=pointer && pointer<memory+memlength);
    }
 
+   inline StoragePool const * findChild(void * pointer) const {
+       if (contains(pointer)) {
+           return this;
+       }
+       size_t* chPoolsFrom = childpools;
+       size_t* chPoolsTo = childpools+chplslength;
+       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           if (ptr) {
+               StoragePool const * result = ptr->findChild(pointer);
+               if (result) {
+                   return result;
+               }
+           }
+       }
+       return NULL;
+   }
+
    template<class ST>
    inline void addPointer(ST*& _externalPointer) {
        addPointer((DataPtr&)_externalPointer);
@@ -1045,21 +1074,28 @@ public:
            return;
        }
 
+       StoragePool const * child = dataPointer?findChild(dataPointer):NULL, * pchild = findChild(&dataPointer);
+
        if (dataPointer) {
-           if (contains(dataPointer)) {
+           if (child == this) {
                xassert(dataPointer->getPool() == this);
            } else {
-               std::cout << "Warning  StoragePool.addPointer : pointer to external data : "
-                         << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
-               StoragePool const * parent = getPool();
-               if (parent && parent != this && !parent->contains(dataPointer)) {
-                   std::cout << "Warning  StoragePool.addPointer : (parent) pointer to external data : "
-                             << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
+
+               if (!child) {
+                   std::cout << "Warning  StoragePool.addPointer : pointer to external data : "
+                             << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+                   StoragePool const * parent = getPool();
+                   if (parent && parent != this && !parent->contains(dataPointer)) {
+                       std::cout << "Warning  StoragePool.addPointer : (parent) pointer to external data : "
+                                 << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
+                   }
                }
            }
+       } else {
+           child = pchild;
        }
 
-       if (contains(&dataPointer)) {
+       if (pchild == this) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
            // to ensure it is ordered (binary search invariant)
            if (intptrslength) {
@@ -1070,6 +1106,15 @@ public:
                extendBuffer((uint8_t*&)intpointers, intptrslength, intptrscapacity, pbufsz, sizeof(size_t));
            }
            intpointers[intptrslength++] = dd;
+       } else if (pchild) {
+           if (child != pchild) {
+               std::cout << "Warning  StoragePool.addPointer : pointer pool mismatch:  (**) "
+                         << (void*) &dataPointer  << "  (*) " << (void*) dataPointer  << " of "
+                         << "child(**):" << (void*) pchild->memory << " .. " << (void*) (pchild->memory+pchild->memlength)
+                         << " child(*):" << (void*) child->memory << " .. " << (void*) (child->memory+child->memlength)
+                         << "   parent:" << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+           }
+           constcast(pchild)->addPointer(dataPointer);
        } else {
            ExternalPtr dd = &dataPointer;
            size_t pbufsz = getPtrBufSize(extptrslength);
@@ -1089,21 +1134,28 @@ public:
            return;
        }
 
+       StoragePool const * child = dataPointer?findChild(dataPointer):NULL, * pchild = findChild(&dataPointer);
+
        if (dataPointer) {
-           if (contains(dataPointer)) {
+           if (child == this) {
                xassert(dataPointer->getPool() == this);
            } else {
-               std::cout << "Warning  StoragePool.removePointer : pointer to external data : "
-                         << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
-               StoragePool const * parent = getPool();
-               if (parent && parent != this && !parent->contains(dataPointer)) {
-                   std::cout << "Warning  StoragePool.removePointer : (parent) pointer to external data : "
-                             << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
+
+               if (!child) {
+                   std::cout << "Warning  StoragePool.removePointer : pointer to external data : "
+                             << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+                   StoragePool const * parent = getPool();
+                   if (parent && parent != this && !parent->contains(dataPointer)) {
+                       std::cout << "Warning  StoragePool.removePointer : (parent) pointer to external data : "
+                                 << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
+                   }
                }
            }
+       } else {
+           child = pchild;
        }
 
-       if (contains(&dataPointer)) {
+       if (pchild == this) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
            size_t* last = intpointers+intptrslength;
            size_t* val = lower_bound(intpointers, last, dd, std::string::npos);
@@ -1119,6 +1171,15 @@ public:
                    *val = std::string::npos;
                }
            }
+       } else if (pchild) {
+           if (child != pchild) {
+               std::cout << "Warning  StoragePool.removePointer : pointer pool mismatch:  (**) "
+                         << (void*) &dataPointer  << "  (*) " << (void*) dataPointer  << " of "
+                         << "child(**):" << (void*) pchild->memory << " .. " << (void*) (pchild->memory+pchild->memlength)
+                         << " child(*):" << (void*) child->memory << " .. " << (void*) (child->memory+child->memlength)
+                         << "   parent:" << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+           }
+           constcast(pchild)->removePointer(dataPointer);
        } else {
            ExternalPtr dd = &dataPointer;
            ExternalPtr* last = extpointers+extptrslength;

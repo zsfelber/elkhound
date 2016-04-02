@@ -71,6 +71,11 @@ void VoidList::selfCheck() const
     return;
   }
 
+  VoidNode *n = top;
+  for (; n; n = n->next) {
+      xassert(npool.contains(n));
+  }
+
   // The technique here is the fast/slow list traversal to find loops (which
   // are the only way a singly-linked list can be bad). Basically, if there
   // is a loop then the fast ptr will catch up to and equal the slow one; if
@@ -563,7 +568,7 @@ void VoidList::stealTailAt(int index, VoidList &source)
     return;
   }
 
-  // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
+  // TODO top and tail externalpointer can be mixed of stealSP (child pool) and this->npool
 
   // TODO fixme : ownerPool == NULL is ok?  see StoragePool.assignImpl
   //StoragePool stealSP =
@@ -607,11 +612,10 @@ void VoidList::appendAll(VoidList const &tail)
   for(; n->next; n = n->next)
     {}
 
-  // TODO not verified
   if (n) {
       n->next = tail.top;
       npool.moveVariable(tail.npool.memory, tail.npool.memory+tail.npool.memlength,
-                         (DataPtr&)n->next, oldmemend-tail.npool.memory);
+                         (str::Storeable::DataPtr&)n->next, oldmemend-tail.npool.memory);
   }
 }
 
@@ -632,11 +636,12 @@ void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 
 
 // using str::StoragePool impl based on buffer-copy
-void VoidList::prependAll(VoidList const &tail)
+void VoidList::prependAll(VoidList const &head)
 {
-    xassert(tail.npool.getExtPtrsLength() == 1);
+    xassert(head.npool.getExtPtrsLength() == 1);
+    /*
     //glue the first to the second !
-    VoidList dup(tail.npool,  str::StoragePool::Cp_Duplicate);
+    VoidList dup(constcast(tail.npool),  str::StoragePool::Cp_StaticDuplicate);
 
     uint8_t * oldmemend = dup.npool.memory+dup.npool.memlength;
     dup.npool += npool;
@@ -650,10 +655,29 @@ void VoidList::prependAll(VoidList const &tail)
     if (n) {
         n->next = top;
         dup.npool.moveVariable(tail.npool.memory, tail.npool.memory+tail.npool.memlength,
-                               (DataPtr&)n->next, oldmemend-tail.npool.memory);
+                               (str::Storeable::DataPtr&)n->next, oldmemend-tail.npool.memory);
     }
 
     npool.swap(&dup.npool);
+    */
+
+    uint8_t * oldmemend = npool.memory+npool.memlength;
+    npool += head.npool;
+
+    // find the end of 'this' list
+    VoidNode *n = head.top;
+    for(; n->next; n = n->next)
+      {}
+
+    if (n) {
+        npool.moveVariable(head.npool.memory, head.npool.memory+head.npool.memlength,
+                           (str::Storeable::DataPtr&)n, oldmemend-head.npool.memory);
+        n->next = top;
+
+        top = head.top;
+        npool.moveVariable(head.npool.memory, head.npool.memory+head.npool.memlength,
+                           (str::Storeable::DataPtr&)top, oldmemend-head.npool.memory);
+    }
 }
 
 
