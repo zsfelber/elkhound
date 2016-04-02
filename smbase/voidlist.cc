@@ -129,7 +129,7 @@ void VoidList::checkUniqueDataPtrs() const
 // insert at front
 void VoidList::prepend(str::Storeable *newitem)
 {
-  top = new (npool) VoidNode(npool, newitem, top);
+  top = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem, top);
 }
 
 
@@ -144,7 +144,7 @@ VoidNode* VoidList::append(str::Storeable *newitem)
     VoidNode *p;
     for (p = top; p->next; p = p->next)
       {}
-    p->next = new (npool) VoidNode(npool, newitem);
+    p->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem);
     return p->next;
   }
 }
@@ -175,7 +175,7 @@ void VoidList::insertAt(str::Storeable *newitem, int index)
       // if index isn't 0, then index was greater than count()
 
     // put a node after p
-    VoidNode *n = new (npool) VoidNode(npool, newitem);
+    VoidNode *n = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem);
     n->next = p->next;
     p->next = n;
   }
@@ -199,7 +199,7 @@ void VoidList::insertSorted(str::Storeable *newitem, VoidDiff const diff, str::S
   }
   
   // insert 'newitem' after 'cursor'
-  VoidNode *newNode = new (npool) VoidNode(npool, newitem);
+  VoidNode *newNode = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem);
   newNode->next = cursor->next;
   cursor->next = newNode;
 }
@@ -269,7 +269,7 @@ bool VoidList::appendUnique(str::Storeable *newitem)
     return false;
   }
 
-  p->next = new (npool) VoidNode(npool, newitem);
+  p->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem);
   return true;
 }
 
@@ -828,7 +828,7 @@ void VoidListMutator::insertBefore(str::Storeable *item)
     reset();
   }
   else {
-    current = prev->next = new (list.npool) VoidNode(list.npool, item, current);
+    current = prev->next = new (list.npool) VoidNode(DBG_INFO_ARG0_FIRST  list.npool, item, current);
   }
 }
 
@@ -836,7 +836,7 @@ void VoidListMutator::insertBefore(str::Storeable *item)
 void VoidListMutator::insertAfter(str::Storeable *item)
 {
   xassert(!isDone());
-  current->next = new (list.npool) VoidNode(list.npool, item, current->next);
+  current->next = new (list.npool) VoidNode(DBG_INFO_ARG0_FIRST  list.npool, item, current->next);
 }
 
 

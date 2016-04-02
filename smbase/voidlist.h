@@ -21,7 +21,7 @@ public:
   VoidNode *next;           // (owner) next item in list, or NULL if last item
   str::Storeable *data;               // whatever it is the list is holding
 
-  VoidNode(str::StoragePool &pool, str::Storeable *aData=NULL, VoidNode *aNext=NULL) : str::Storeable(pool) {
+  VoidNode(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, str::Storeable *aData=NULL, VoidNode *aNext=NULL) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) {
       data=aData;
       next=aNext;
       pool.addPointer(next);

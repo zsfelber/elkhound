@@ -40,6 +40,18 @@ class VoidNode;
 #define DBG_INFO_ARG0_FIRST
 #endif
 
+#ifdef REG_CHILD
+#define REG_CHILD_COMMA ,
+#else
+#define REG_CHILD_COMMA
+#endif
+
+#ifdef DEBUG
+#define NDEBUG_COLON
+#else
+#define NDEBUG_COLON :
+#endif
+
 namespace str {
 
 
@@ -276,6 +288,9 @@ friend class ::VoidNode;
         ST_DELETED
     } __Kind;
 
+#ifdef DEBUG
+    const char* objectName;
+#endif
     uint8_t __kind;
     size_t __parentVector;
     size_t __store_size;
@@ -1286,9 +1301,12 @@ public:
 
 
 inline Storeable::Storeable(DBG_INFO_FORMAL)
- #ifdef REG_CHILD
-   , __next(0)
- #endif
+#ifdef DEBUG
+    : objectName(objectName)  REG_CHILD_COMMA
+#endif
+#ifdef REG_CHILD
+    NDEBUG_COLON __next(0)
+#endif
 {
 #if debug_this
     if (__kind == ST_PARENT && __parentVector && __parentVector != std::string::npos) {
@@ -1305,17 +1323,27 @@ inline Storeable::Storeable(DBG_INFO_FORMAL)
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool) {
+inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool)
+#ifdef DEBUG
+    : objectName(objectName)
+#endif
+{
     xassert(__kind == ST_PARENT && getPool() == &pool && pool.contains(this));
 }
 
 template<class ME>
 inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  ME const & srcOrParent, bool childOfParent)
+#ifdef DEBUG
+    : objectName(objectName)
+#endif
 {
     init(srcOrParent, sizeof(ME), childOfParent);
 }
 
 inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParent, size_t size_of, bool childOfParent)
+#ifdef DEBUG
+    : objectName(objectName)
+#endif
 {
     init(srcOrParent, size_of, childOfParent);
 }

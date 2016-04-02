@@ -39,7 +39,7 @@ void VoidTailList::append(str::Storeable *newitem)
   }
   else {
     // payoff: constant-time append
-    tail->next = new (npool) VoidNode(npool, newitem, NULL);
+    tail->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem, NULL);
     tail = tail->next;
   }
 }
