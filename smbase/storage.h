@@ -281,6 +281,10 @@ friend class ::VoidList;
 friend class ::VoidTailList;
 friend class ::VoidNode;
 
+#ifdef DEBUG
+    char const * objectName;
+#endif
+
     enum {
         ST_NONE = 0,
         ST_PARENT,
@@ -288,9 +292,6 @@ friend class ::VoidNode;
         ST_DELETED
     } __Kind;
 
-#ifdef DEBUG
-    const char* objectName;
-#endif
     uint8_t __kind;
     size_t __parentVector;
     size_t __store_size;
@@ -306,7 +307,11 @@ friend class ::VoidNode;
 #endif
 
     inline void clear(size_t size_of) {
+#ifdef DEBUG
+        memset(sizeof(char const *)+(uint8_t*)this, 0, size_of-sizeof(char const *));
+#else
         memset(this, 0, size_of);
+#endif
     }
 
 
@@ -934,7 +939,11 @@ public:
    }
 
    inline void clear() {
+#ifdef DEBUG
+       memset(sizeof(char const*)+(uint8_t*)this, 0, sizeof(StoragePool)-sizeof(char const*));
+#else
        memset(this, 0, sizeof(StoragePool));
+#endif
        __parentVector = std::string::npos;
         first_del_var = std::string::npos;
         ownerPool = this;
@@ -1384,7 +1393,11 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     // !
     xassert(src.__store_size == getStoreSize(size_of));
 
+#ifdef DEBUG
+    memcpy(sizeof(char const *)+(uint8_t*)this, sizeof(char const *)+(uint8_t*)&src, size_of-sizeof(char const *));
+#else
     memcpy(this, &src, size_of);
+#endif
 
     // transfer __parentVector (we keep parent)
     switch (__kind) {
