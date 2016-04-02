@@ -73,7 +73,7 @@ void VoidList::selfCheck() const
 
   VoidNode *n = top;
   for (; n; n = n->next) {
-      xassert(npool.contains(n));
+      xassert(npool.findChild(n));
   }
 
   // The technique here is the fast/slow list traversal to find loops (which
@@ -1011,6 +1011,7 @@ void entry()
 
       PRINT(list);
     }
+    list.selfCheck();
 
     // test appendUnique and prependUnique
     // list starts as (a c d)
@@ -1023,6 +1024,7 @@ void entry()
       // now it is (b c d)
     verifySorted(list);
     PRINT(list);
+    list.selfCheck();
 
     // test reverse
     list.reverse();
@@ -1031,10 +1033,13 @@ void entry()
             list.indexOf(c) == 1 &&
             list.indexOf(b) == 2);
     PRINT(list);
+    list.selfCheck();
 
     // test stealTailAt
     VoidList thief;
     thief.stealTailAt(1, list);
+    thief.selfCheck();
+    list.selfCheck();
       // list is now (d)
       // thief is now (c b)
     xassert(list.count() == 1 &&
@@ -1046,6 +1051,7 @@ void entry()
     // test appendAll
     list.appendAll(thief);      // list: (d c b)
     PRINT(list);
+    list.selfCheck();
     xassert(list.count() == 3 &&
             list.indexOf(d) == 0 &&
             list.indexOf(c) == 1 &&
@@ -1054,6 +1060,7 @@ void entry()
     // test prependAll
     list.prependAll(thief);     // list: (c b d c b)
     PRINT(list);
+    list.selfCheck();
     xassert(list.count() == 5 &&
             list.nth(0) == c &&
             list.nth(1) == b &&
@@ -1066,6 +1073,7 @@ void entry()
     // test removeDuplicatesAsMultiset
     list.removeDuplicatesAsPointerMultiset();     // list: (b c d)
     PRINT(list);
+    list.selfCheck();
     xassert(list.count() == 3 &&
             list.nth(0) == b &&
             list.nth(1) == c &&

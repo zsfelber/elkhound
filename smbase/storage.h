@@ -1,4 +1,4 @@
-#ifndef STORAGE_H
+﻿#ifndef STORAGE_H
 #define STORAGE_H
 
 #include <vector>
@@ -853,7 +853,7 @@ public:
            assignImpl(srcOrParentPool, copyMode);
        }
 
-       if (copyMode != Cp_StaticDuplicate) {
+       if (copyMode != Cp_StaticDuplicate && copyMode != Cp_TmpDuplicate) {
            getPoolRef().addChildPool(this);
        }
    }
@@ -1166,6 +1166,7 @@ public:
            } else {
                xassert (vval == dd);
                if (val == last) {
+               } else if (val == last-1) {
                    intptrslength--;
                } else {
                    *val = std::string::npos;
@@ -1188,6 +1189,7 @@ public:
            if (vval) {
                xassert (vval == dd);
                if (val == last) {
+               } else if (val == last-1) {
                    extptrslength--;
                } else {
                    *val = NULL;
@@ -1228,6 +1230,7 @@ public:
        size_t* val = lower_bound(childpools, last, dd, std::string::npos);
        xassert (*val == dd);
        if (val == last) {
+       } else if (val == last-1) {
            chplslength--;
        } else {
            *val = std::string::npos;
