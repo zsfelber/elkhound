@@ -675,8 +675,17 @@ private:
        }
    }
 
+   inline void fixAllPoolPointersAs(StoragePool & pool) {
+       fixPoolPointerAs(pool);
+       fixAllPoolPointersCyc();
+   }
+
    inline void fixAllPoolPointers() {
        fixPoolPointer();
+       fixAllPoolPointersCyc();
+   }
+
+   inline void fixAllPoolPointersCyc() {
 
        size_t* chPoolsFrom = childpools;
        size_t* chPoolsTo = childpools+chplslength;
@@ -719,6 +728,11 @@ private:
        (void*&)memory[0] = this;
    }
 
+   inline void fixPoolPointerAs(StoragePool & pool) {
+       xassert(ownerPool == pool);
+
+       (void*&)memory[0] = pool;
+   }
 
 
    inline void allocParentItem(void*& _data, size_t store_size) {
@@ -814,7 +828,7 @@ private:
        {
            xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
 
-           // keep it NULL!! ownerPool = (StoragePool*) &src;
+           // keep it 'this'!! ownerPool = (StoragePool*) &src;
            __kind = ST_PARENT;
            __parentVector = __parentVector0;
            xassert(getPoolRef().contains(this));
@@ -992,6 +1006,7 @@ public:
        memcpy(intpointers, src.intpointers, intptrslength = src.intptrslength);
        memcpy(childpools, src.childpools, chplslength = src.chplslength);
 
+       fixAllPoolPointers();
        copyChildPools(src);
        moveInternalPointers(src.memory, src.memory+memlength);
 
@@ -1035,6 +1050,7 @@ public:
        childView.chplslength = src.chplslength;
        childView.chplscapacity = src.chplscapacity;
 
+       childView.fixAllPoolPointersAs(*this);
        childView.copyChildPools(src);
        childView.moveInternalPointers(src.memory, src.memory+memlength, memory);
 
