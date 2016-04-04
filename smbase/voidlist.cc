@@ -601,7 +601,7 @@ void VoidList::appendAll(VoidList const &tail)
 {
   xassert(tail.npool.getExtPtrsLength() == 1);
 
-  //uint8_t * oldmemend = npool.memory+npool.memlength;
+  uint8_t * oldmemend = npool.memory+npool.memlength;
   npool += tail.npool;
 
   // find the end of 'this' list
@@ -611,7 +611,7 @@ void VoidList::appendAll(VoidList const &tail)
 
   if (n) {
       n->next = tail.top;
-      npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next);
+      npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next, oldmemend);
   }
 }
 
@@ -636,6 +636,7 @@ void VoidList::prependAll(VoidList const &head)
 {
     xassert(head.npool.getExtPtrsLength() == 1);
 
+    uint8_t * oldmemend = npool.memory+npool.memlength;
     npool += head.npool;
 
     // find the end of 'head' list
@@ -648,7 +649,7 @@ void VoidList::prependAll(VoidList const &head)
         n->next = top;
 
         top = head.top;
-        npool.moveFrom(head.npool, (str::Storeable::DataPtr&)top);
+        npool.moveFrom(head.npool, (str::Storeable::DataPtr&)top, oldmemend);
     }
 }
 
