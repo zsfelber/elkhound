@@ -667,16 +667,19 @@ private:
        }
    }
 
-   inline void moveVariable(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
-       moveVariable(oldmem.memory, oldmem.memory+oldmem.memlength, variable, d);
+   inline void moveFrom(StoragePool const & parent, DataPtr & child) {
+       StoragePool const * chpool = parent.findChild(child);
+       xassert(chpool);
+       moveVariable(*chpool, child, memory-chpool->memory);
    }
 
-   inline void moveVariable(uint8_t const * oldmemFrom, uint8_t const * oldmemTo, DataPtr& variable, std::ptrdiff_t d) const {
+   inline void moveVariable(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
        xassert(ownerPool == this);
 
        if (variable) {
            uint8_t* variable_addr = (uint8_t*)variable;
-           if (oldmemFrom<=variable_addr && variable_addr<oldmemTo) {
+           StoragePool const * pool0 = oldmem.findChild(variable_addr);
+           if (pool0 == &oldmem) {
 
                variable_addr += d;
                variable = (DataPtr)variable_addr;
@@ -1111,14 +1114,12 @@ public:
 
        ExternalPtr* extPointersFrom = extpointers + extptrslength;
        ExternalPtr* extPointersTo = extpointers + extptrslength + plen;
-       uint8_t* src_bg = src.memory;
-       uint8_t* src_end = src_bg + memlength;
-       std::ptrdiff_t d = memory - src_bg;
+       std::ptrdiff_t d = memory - src.memory;
        for (; extPointersFrom<extPointersTo; extPointersFrom++, convertExtPointersFrom++) {
            ExternalPtr srcPtr = *convertExtPointersFrom;
            if (srcPtr) {
                *extPointersFrom = srcPtr;
-               moveVariable(src_bg, src_end, *srcPtr, d);
+               moveVariable(src, *srcPtr, d);
            }
        }
 

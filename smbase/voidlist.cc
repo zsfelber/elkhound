@@ -71,11 +71,6 @@ void VoidList::selfCheck() const
     return;
   }
 
-  VoidNode *n = top;
-  for (; n; n = n->next) {
-      xassert(npool.findChild(n));
-  }
-
   // The technique here is the fast/slow list traversal to find loops (which
   // are the only way a singly-linked list can be bad). Basically, if there
   // is a loop then the fast ptr will catch up to and equal the slow one; if
@@ -84,6 +79,8 @@ void VoidList::selfCheck() const
 
   VoidNode *slow=top, *fast=top->next;
   while (fast && fast != slow) {
+    xassert(npool.findChild(slow));
+
     // check heap properties
     checkHeapNode(fast);
 
@@ -604,7 +601,7 @@ void VoidList::appendAll(VoidList const &tail)
 {
   xassert(tail.npool.getExtPtrsLength() == 1);
 
-  uint8_t * oldmemend = npool.memory+npool.memlength;
+  //uint8_t * oldmemend = npool.memory+npool.memlength;
   npool += tail.npool;
 
   // find the end of 'this' list
@@ -614,9 +611,7 @@ void VoidList::appendAll(VoidList const &tail)
 
   if (n) {
       n->next = tail.top;
-      str::StoragePool const * chpool = tail.npool.findChild(n->next);
-      xassert(chpool);
-      npool.moveVariable(*chpool, (str::Storeable::DataPtr&)n->next, oldmemend-chpool->memory);
+      npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next);
   }
 }
 
@@ -640,46 +635,20 @@ void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 void VoidList::prependAll(VoidList const &head)
 {
     xassert(head.npool.getExtPtrsLength() == 1);
-    /*
-    //glue the first to the second !
-    VoidList dup(constcast(tail.npool),  str::StoragePool::Cp_StaticDuplicate);
 
-    uint8_t * oldmemend = dup.npool.memory+dup.npool.memlength;
-    dup.npool += npool;
-
-    // find the end of 'sup' list
-    VoidNode *n = dup.top;
-    for(; n->next; n = n->next)
-      {}
-
-    // TODO not verified
-    if (n) {
-        n->next = top;
-        dup.npool.moveVariable(tail.npool.memory, tail.npool.memory+tail.npool.memlength,
-                               (str::Storeable::DataPtr&)n->next, oldmemend-tail.npool.memory);
-    }
-
-    npool.swap(&dup.npool);
-    */
-
-    uint8_t * oldmemend = npool.memory+npool.memlength;
     npool += head.npool;
 
-    // find the end of 'this' list
-    VoidNode *n = head.top;
-    for(; n->next; n = n->next)
-      {}
+    // find the end of 'head' list
+    VoidNode *n;
+    for(n = head.top; n->next; n = n->next) {
+        xassert(npool.findChild(n));
+    }
 
     if (n) {
-        str::StoragePool const * chpool = head.npool.findChild(n);
-        xassert(chpool);
-        npool.moveVariable(*chpool, (str::Storeable::DataPtr&)n, oldmemend-chpool->memory);
         n->next = top;
 
         top = head.top;
-        chpool = head.npool.findChild(top);
-        xassert(chpool);
-        npool.moveVariable(*chpool, (str::Storeable::DataPtr&)top, oldmemend-chpool->memory);
+        npool.moveFrom(head.npool, (str::Storeable::DataPtr&)top);
     }
 }
 
@@ -1019,9 +988,9 @@ void entry()
       iter.adv();
       xassert(iter.isDone()  &&  mut.data() == c);
 
+      list.selfCheck();
       PRINT(list);
     }
-    list.selfCheck();
 
     // test appendUnique and prependUnique
     // list starts as (a c d)
@@ -1033,8 +1002,8 @@ void entry()
     xassert(list.removeIfPresent(a) == false);
       // now it is (b c d)
     verifySorted<Integer>(list);
-    PRINT(list);
     list.selfCheck();
+    PRINT(list);
 
     // test reverse
     list.reverse();
@@ -1042,8 +1011,8 @@ void entry()
     xassert(list.indexOf(d) == 0 &&
             list.indexOf(c) == 1 &&
             list.indexOf(b) == 2);
-    PRINT(list);
     list.selfCheck();
+    PRINT(list);
 
     // test stealTailAt
     VoidList thief(DBG_INFO_ARG0);
@@ -1060,8 +1029,8 @@ void entry()
 
     // test appendAll
     list.appendAll(thief);      // list: (d c b)
-    PRINT(list);
     list.selfCheck();
+    PRINT(list);
     xassert(list.count() == 3 &&
             list.indexOf(d) == 0 &&
             list.indexOf(c) == 1 &&
@@ -1069,8 +1038,8 @@ void entry()
 
     // test prependAll
     list.prependAll(thief);     // list: (c b d c b)
-    PRINT(list);
     list.selfCheck();
+    PRINT(list);
     xassert(list.count() == 5 &&
             list.nth(0) == c &&
             list.nth(1) == b &&
@@ -1082,8 +1051,8 @@ void entry()
 
     // test removeDuplicatesAsMultiset
     list.removeDuplicatesAsPointerMultiset();     // list: (b c d)
-    PRINT(list);
     list.selfCheck();
+    PRINT(list);
     xassert(list.count() == 3 &&
             list.nth(0) == b &&
             list.nth(1) == c &&
