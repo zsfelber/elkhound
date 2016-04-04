@@ -614,8 +614,9 @@ void VoidList::appendAll(VoidList const &tail)
 
   if (n) {
       n->next = tail.top;
-      npool.moveVariable(tail.npool.memory, tail.npool.memory+tail.npool.memlength,
-                         (str::Storeable::DataPtr&)n->next, oldmemend-tail.npool.memory);
+      str::StoragePool const * chpool = tail.npool.findChild(n->next);
+      xassert(chpool);
+      npool.moveVariable(*chpool, (str::Storeable::DataPtr&)n->next, oldmemend-chpool->memory);
   }
 }
 
@@ -670,13 +671,15 @@ void VoidList::prependAll(VoidList const &head)
       {}
 
     if (n) {
-        npool.moveVariable(head.npool.memory, head.npool.memory+head.npool.memlength,
-                           (str::Storeable::DataPtr&)n, oldmemend-head.npool.memory);
+        str::StoragePool const * chpool = head.npool.findChild(n);
+        xassert(chpool);
+        npool.moveVariable(*chpool, (str::Storeable::DataPtr&)n, oldmemend-chpool->memory);
         n->next = top;
 
         top = head.top;
-        npool.moveVariable(head.npool.memory, head.npool.memory+head.npool.memlength,
-                           (str::Storeable::DataPtr&)top, oldmemend-head.npool.memory);
+        chpool = head.npool.findChild(top);
+        xassert(chpool);
+        npool.moveVariable(*chpool, (str::Storeable::DataPtr&)top, oldmemend-chpool->memory);
     }
 }
 
@@ -884,12 +887,13 @@ VoidListIter::VoidListIter(VoidList const &list, int pos)
 // assumes we're using pointerAddressDiff as the comparison fn
 // (I don't use isSorted because this fn will throw at the disequality,
 // whereas isSorted would forget that info)
+template<typename T>
 void verifySorted(VoidList const &list)
 {
-  int prev = 0;
+  T* prev = 0;
   VoidListIter iter(list);
   for (; !iter.isDone(); iter.adv()) {
-    int current = (int)iter.data();
+    T* current = (T*)iter.data();
     xassert(prev <= current);    // numeric address test
     prev = current;
   }
@@ -897,6 +901,7 @@ void verifySorted(VoidList const &list)
 
 
 #define PRINT(lst) printf("%s: ", #lst); lst.debugPrint(); printf("\n") /* user ; */
+
 
 void testSorting()
 {
@@ -912,7 +917,7 @@ void testSorting()
       list3.removeAll();
       numItems = rand()%ITEMS;
       loopj(numItems) {
-        str::Storeable *toInsert = (str::Storeable*)( (rand()%ITEMS) * 4 );
+        Integer *toInsert = new Integer(DBG_INFO_ARG0_FIRST  (rand()%ITEMS) * 4 );
 	list1.prepend(toInsert);
         list3.insertSorted(toInsert, VoidList::pointerAddressDiff);
       }
@@ -920,7 +925,7 @@ void testSorting()
 
     // list3 should be sorted already
     //PRINT(list3);
-    verifySorted(list3);
+    verifySorted<Integer>(list3);
 
     // duplicate it for use with other algorithm
     VoidList list2(DBG_INFO_ARG0);
@@ -941,8 +946,8 @@ void testSorting()
     xassert(list1.count() == numItems && list2.count() == numItems);
 
     // verify sortedness
-    verifySorted(list1);
-    verifySorted(list2);
+    verifySorted<Integer>(list1);
+    verifySorted<Integer>(list2);
 
     // verify equality
     xassert(list1.equalAsPointerLists(list2));
@@ -961,14 +966,15 @@ void entry()
 {
   // first set of tests
   {
-    // some sample items
-    str::Storeable
-            *a=new Integer(DBG_INFO_ARG0_FIRST  4),
-            *b=new Integer(DBG_INFO_ARG0_FIRST  8),
-            *c=new Integer(DBG_INFO_ARG0_FIRST  12),
-            *d=new Integer(DBG_INFO_ARG0_FIRST  16);
 
     VoidList list(DBG_INFO_ARG0);
+
+    // some sample items
+    str::Storeable
+            *a=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),4),
+            *b=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),8),
+            *c=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),12),
+            *d=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),16);
 
     // test simple modifiers and info
     list.append(c);     PRINT(list);   // c
@@ -996,7 +1002,7 @@ void entry()
 	// now it's pointing at b
       mut.insertAfter(c);
 	// now list is (a b c d) and mut points at b still
-      verifySorted(list);
+      verifySorted<Integer>(list);
       mut.remove();
 	// now list is (a c d) and mut points at c
       xassert(mut.data() == c);
@@ -1026,7 +1032,7 @@ void entry()
     list.removeItem(a);
     xassert(list.removeIfPresent(a) == false);
       // now it is (b c d)
-    verifySorted(list);
+    verifySorted<Integer>(list);
     PRINT(list);
     list.selfCheck();
 

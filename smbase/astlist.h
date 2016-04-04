@@ -28,18 +28,18 @@ private:
 public:
 
   ASTList(DBG_INFO_FORMAL) : str::Storeable(DBG_INFO_ARG_FWD), list() {}
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG0_FIRST  *this) {}
-  ASTList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ASTList)), list(DBG_INFO_ARG0_FIRST  *this) {}
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
+  ASTList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ASTList)), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
   ~ASTList()                            {  }
 
   // ctor to make singleton list; often quite useful
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, T *elt)                       : str::Storeable(pool), list(DBG_INFO_ARG0_FIRST  *this) { prepend(elt); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, T *elt)                       : str::Storeable(pool), list(DBG_INFO_ARG_FWD_FIRST  *this) { prepend(elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG0_FIRST  src.list,move) { }
-  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG0_FIRST  src->list,move) { }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  src.list,move) { }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,move) { }
 
   void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
