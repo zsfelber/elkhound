@@ -938,10 +938,12 @@ void testSorting()
 namespace str {
 void entry()
 {
+  str::StoragePool pool(DBG_INFO_ARG0);
   // first set of tests
   {
 
-    VoidList list(DBG_INFO_ARG0);
+    VoidList *_list = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    VoidList &list = *_list;
 
     // some sample items
     str::Storeable
@@ -1024,17 +1026,10 @@ void entry()
     PRINT(list);
 
     // test stealTailAt
-    VoidList *_thief = new (list.getPool()) VoidList(DBG_INFO_ARG0_FIRST  list.getPool());
+    VoidList *_thief = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
     VoidList &thief = *_thief;
 
-    str::StoragePool * p1 = (str::StoragePool*) str::decodeDeltaPtr(list.getPool().memory, list.getPool().childpools[0]);
-
     thief.stealTailAt(1, list);
-
-    str::StoragePool * p2 = (str::StoragePool*) str::decodeDeltaPtr(thief.getPool().memory, thief.getPool().childpools[0]);
-    str::StoragePool * p2a = (str::StoragePool*) str::decodeDeltaPtr(p2->memory, p2->childpools[0]);
-
-    str::StoragePool * p1a = (str::StoragePool*) str::decodeDeltaPtr(p1->memory, p1->childpools[0]);
 
     thief.selfCheck();
     list.selfCheck();
@@ -1085,7 +1080,10 @@ void entry()
   testSorting();
 
   printf("voidlist ok\n");
-}}
+}
+
+}
+
 inline void entry() {
     str::entry();
 }
