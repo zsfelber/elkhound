@@ -206,7 +206,7 @@ public:
   // the list structure (by inserting or removing), at which time all
   // other iterators might be in limbo
   VoidListMutator(VoidListMutator const &obj)
-    : list(obj.list), prev(obj.prev), current(obj.current) {}
+    : list(obj.list), prev(obj.prev), current(obj.current) { list.npool.addPointer(prev); list.npool.addPointer(current); }
   VoidListMutator& operator=(VoidListMutator const &obj);
     // requires that 'this' and 'obj' already refer to the same 'list'
 

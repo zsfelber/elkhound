@@ -71,6 +71,8 @@ void VoidList::selfCheck() const
     return;
   }
 
+  npool.selfCheck();
+
   // The technique here is the fast/slow list traversal to find loops (which
   // are the only way a singly-linked list can be bad). Basically, if there
   // is a loop then the fast ptr will catch up to and equal the slow one; if
@@ -968,14 +970,18 @@ void entry()
     // test mutator s
     {
       VoidListMutator mut(list);
+      list.selfCheck();
+
       mut.adv();
 	// now it's pointing at b
       mut.insertAfter(c);
-	// now list is (a b c d) and mut points at b still
+    // now list is (a b c d) and mut points at b still
       verifySorted<Integer>(list);
+      list.selfCheck();
       mut.remove();
 	// now list is (a c d) and mut points at c
       xassert(mut.data() == c);
+      list.selfCheck();
 
       // copy the mutator
       VoidListMutator mut2(mut);

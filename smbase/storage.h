@@ -115,54 +115,60 @@ extern const size_t STORAGE_POOL_SIZE;
 
 
 
-inline void copyBuffer(uint8_t* src, size_t srclen, size_t srccap,
-                       uint8_t*& dest, size_t &dstlen, size_t &dstcap, size_t size_of) {
+template<typename T>
+inline void copyBuffer(T* src, size_t srclen, size_t srccap,
+                       T*& dest, size_t &dstlen, size_t &dstcap) {
     xassert(srccap && !dest);
-    dest = new uint8_t[srccap*size_of];
+    dest = new T[srccap];
     if (!dest) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
     dstlen = srclen;
     dstcap = srccap;
-    memcpy(dest, src, srclen*size_of);
+    memcpy(dest, src, srclen*sizeof(T));
 }
 
-inline void copyBuffer(uint8_t* src, size_t srclen, size_t srccap, uint8_t*& dest, size_t size_of) {
+template<typename T>
+inline void copyBuffer(T* src, size_t srclen, size_t srccap, T*& dest) {
     xassert(!dest);
-    dest = new uint8_t[srccap*size_of];
-    memcpy(dest, src, srclen*size_of);
+    dest = new T[srccap];
+    memcpy(dest, src, srclen*sizeof(T));
 }
 
-inline void extendBuffer(uint8_t*& buf, size_t size, size_t& capacity, size_t newcap, size_t size_of) {
+template<typename T>
+inline void extendBuffer(T*& buf, size_t size, size_t& capacity, size_t newcap) {
     xassert(newcap);
-    uint8_t* old = buf;
-    buf = new uint8_t[newcap*size_of];
+    T* old = buf;
+    buf = new T[newcap];
     if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
     if (old) {
-        memcpy(buf, old, size*size_of);
+        memcpy(buf, old, size*sizeof(T));
         delete[] old;
     }
     capacity = newcap;
 }
 
-inline void extendBuffer(uint8_t*& buf, size_t size, size_t newcap, size_t size_of) {
+template<typename T>
+inline void extendBuffer(T*& buf, size_t size, size_t newcap) {
     xassert(newcap);
-    uint8_t* old = buf;
-    buf = new uint8_t[newcap*size_of];
+    T* old = buf;
+    buf = new T[newcap];
     if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
     if (old) {
-        memcpy(buf, old, size*size_of);
+        memcpy(buf, old, size*sizeof(T));
         delete[] old;
     }
 }
 
-inline void removeBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
+template<typename T>
+inline void removeBufferItem(T* buf, size_t& size, T* pos) {
     size--;
     // allow overlap
-    memmove(pos, pos+size_of, (size-(pos-buf))*size_of);
+    memmove(pos, pos+1, (size-(pos-buf))*sizeof(T));
 }
 
-inline void insertBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
+template<typename T>
+inline void insertBufferItem(T* buf, size_t& size, T* pos) {
     // allow overlap
-    memmove(pos+size_of, pos, (size-(pos-buf))*size_of);
+    memmove(pos+1, pos, (size-(pos-buf))*sizeof(T));
     size++;
 }
 
@@ -253,12 +259,13 @@ T* lower_bound(T* first, T* last,
 
     if (*middle < val) {
         if (nothingToTheRight) {
-            return last;
+            return middle;
         } else {
             first = middle+1;
         }
     } else if (*middle > val) {
-        last = middle-1;
+        // exclusive index  (no -1)
+        last = middle;
     } else {
         return middle;
     }
@@ -594,7 +601,6 @@ public:
        Cp_Move,
        Cp_Duplicate,
        Cp_TmpDuplicate,
-       Cp_StaticDuplicate,
    };
 
 private:
@@ -618,7 +624,7 @@ private:
        moveExternalPointers(oldmem, origin);
    }
 
-   inline void moveInternalPointers(StoragePool const & oldmem, uint8_t* origin = NULL, uint8_t* deltaOrigin = NULL) {
+   void moveInternalPointers(StoragePool const & oldmem, uint8_t* origin = NULL, uint8_t* deltaOrigin = NULL) {
        xassert(ownerPool == this);
        if (!origin) {
            origin = memory;
@@ -649,7 +655,7 @@ private:
        }
    }
 
-   inline void moveExternalPointers(StoragePool const & oldmem, uint8_t* origin = NULL) {
+   void moveExternalPointers(StoragePool const & oldmem, uint8_t* origin = NULL) {
        xassert(ownerPool == this);
        if (!origin) {
            origin = memory;
@@ -676,7 +682,7 @@ private:
        moveVariable(*chpool, child, origin-chpool->memory);
    }
 
-   inline void moveVariable(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
+   void moveVariable(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
        xassert(ownerPool == this);
 
        if (variable) {
@@ -703,7 +709,7 @@ private:
        }
    }
 
-   inline void fixAllPoolPointers() {
+   void fixAllPoolPointers() {
        fixPoolPointer();
 
        size_t* chPoolsFrom = childpools;
@@ -716,7 +722,7 @@ private:
        }
    }
 
-   inline void copyChildPools(StoragePool const & source, uint8_t* deltaOrigin = NULL) {
+   void copyChildPools(StoragePool const & source, uint8_t* deltaOrigin = NULL) {
        xassert(ownerPool == this);
 
        size_t* chPoolsFrom = childpools;
@@ -761,7 +767,7 @@ private:
    }
 
 
-   inline void allocParentItem(void const *& _data, size_t store_size) {
+   void allocParentItem(void const *& _data, size_t store_size) {
        if (ownerPool != this) {
            ownerPool->allocParentItem(_data, store_size);
            return;
@@ -814,7 +820,7 @@ private:
               StoragePool * child = new (*this)  StoragePool(DBG_INFO_ARG_FIRST("allocParentItem") *this, true);
               swap(child);
           } else {
-              extendBuffer(memory,           memlength,                       memcapacity, bufsz, 1/*sizeof(uint8_t)*/);
+              extendBuffer(memory,           memlength,                       memcapacity, bufsz);
               fixPoolPointer();
               oldmemlength += sizeof(void*);
               newmemlength += sizeof(void*);
@@ -834,7 +840,7 @@ private:
       data->__store_size = store_size;
    }
 
-   inline void freeParentItem(DataPtr data) {
+   void freeParentItem(DataPtr data) {
        if (ownerPool != this) {
            ownerPool->freeParentItem(data);
            return;
@@ -854,16 +860,11 @@ private:
        {
            xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
 
-           // keep it 'this'!! ownerPool = (StoragePool*) &src;
            __kind = ST_PARENT;
            __parentVector = __parentVector0;
+           //// keep it 'this'!! ownerPool = (StoragePool*) &src;
+           ownerPool = (StoragePool*) &src;
            xassert(getPoolRef().contains(this));
-
-           break;
-       }
-       case Cp_StaticDuplicate:
-       {
-           xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
 
            break;
        }
@@ -897,9 +898,9 @@ private:
            extptrslength = 0;
            extptrscapacity = 0;
 
-           copyBuffer(src.memory, memlength, memcapacity, memory, 1/*sizeof(uint8_t)*/);
-           copyBuffer((uint8_t*)src.intpointers, intptrslength, intptrscapacity, (uint8_t*&)intpointers, sizeof(size_t));
-           copyBuffer((uint8_t*)src.childpools, chplslength, chplscapacity, (uint8_t*&)childpools, sizeof(size_t));
+           copyBuffer(src.memory, memlength, memcapacity, memory);
+           copyBuffer(src.intpointers, intptrslength, intptrscapacity, intpointers);
+           copyBuffer(src.childpools, chplslength, chplscapacity, childpools);
 
            moveInternalPointers(src);
            fixAllPoolPointers();
@@ -975,7 +976,7 @@ public:
            assignImpl(srcOrParentPool, copyMode);
        }
 
-       if (copyMode != Cp_StaticDuplicate && copyMode != Cp_TmpDuplicate) {
+       if (copyMode != Cp_TmpDuplicate) {
            getPoolRef().addChildPool(this);
        }
    }
@@ -1037,13 +1038,13 @@ public:
         ownerPool = this;
    }
 
-   StoragePool& operator= (StoragePool const &src) {
+   inline StoragePool& operator= (StoragePool const &src) {
        reassign(src);
 
        return *this;
    }
 
-   StoragePool& operator+= (StoragePool const &src) {
+   inline StoragePool& operator+= (StoragePool const &src) {
        StoragePool childView(DBG_INFO_ARG0);
        append(src, childView);
        return *this;
@@ -1057,13 +1058,13 @@ public:
        uint8_t* soldorigin = src.memory + sizeof(void*);
 
        if (memcapacity<(c=getMemBufSize(memlength+snetmemlen))) {
-           extendBuffer(memory, memlength, c, 1);
+           extendBuffer(memory, memlength, c);
        }
        if (intptrscapacity<(c=getPtrBufSize(intptrslength+src.intptrslength))) {
-           extendBuffer((uint8_t*&)intpointers, intptrslength, c, sizeof(size_t));
+           extendBuffer(intpointers, intptrslength, c);
        }
        if (chplscapacity<(c=getPtrBufSize(chplslength+src.chplslength))) {
-           extendBuffer((uint8_t*&)childpools, chplslength, c, sizeof(size_t));
+           extendBuffer(childpools, chplslength, c);
        }
 
        memcpy(memory+memlength, soldorigin, snetmemlen);
@@ -1118,7 +1119,7 @@ public:
        size_t plen = (convertExtPointersTo-convertExtPointersFrom) / sizeof(std::ptrdiff_t);
        size_t c;
        if (extptrscapacity<(c=getPtrBufSize(extptrslength+plen))) {
-           extendBuffer((uint8_t*&)extpointers, extptrslength, c, sizeof(ExternalPtr));
+           extendBuffer(extpointers, extptrslength, c);
        }
 
        ExternalPtr* extPointersFrom = extpointers + extptrslength;
@@ -1173,7 +1174,7 @@ public:
        removePointer((DataPtr&)_externalPointer);
    }
 
-   inline void addPointer(DataPtr& dataPointer) {
+   void addPointer(DataPtr& dataPointer) {
        if (ownerPool != this) {
            ownerPool->addPointer(dataPointer);
            return;
@@ -1208,7 +1209,7 @@ public:
            }
            size_t pbufsz = getPtrBufSize(intptrslength);
            if (intptrscapacity < pbufsz) {
-               extendBuffer((uint8_t*&)intpointers, intptrslength, intptrscapacity, pbufsz, sizeof(size_t));
+               extendBuffer(intpointers, intptrslength, intptrscapacity, pbufsz);
            }
            intpointers[intptrslength++] = dd;
        } else if (pchild) {
@@ -1225,16 +1226,16 @@ public:
            ExternalPtr dd = &dataPointer;
            size_t pbufsz = getPtrBufSize(extptrslength);
            if (extptrscapacity < pbufsz) {
-               extendBuffer((uint8_t*&)extpointers, extptrslength, extptrscapacity, pbufsz, sizeof(ExternalPtr));
+               extendBuffer(extpointers, extptrslength, extptrscapacity, pbufsz);
            }
            // to ensure it is ordered (binary search invariant)
            ExternalPtr* val = lower_bound(extpointers, extpointers+extptrslength, dd, (ExternalPtr&)LNULL);
-           insertBufferItem((uint8_t*)extpointers, extptrslength, (uint8_t*)val, sizeof(ExternalPtr));
+           insertBufferItem(extpointers, extptrslength, val);
            *val = dd;
        }
    }
 
-   inline void removePointer(DataPtr& dataPointer) {
+   void removePointer(DataPtr& dataPointer) {
        if (ownerPool != this) {
            ownerPool->removePointer(dataPointer);
            return;
@@ -1323,7 +1324,7 @@ public:
        }
        size_t pbufsz = getPtrBufSize(chplslength);
        if (chplscapacity < pbufsz) {
-           extendBuffer((uint8_t*&)childpools, chplslength, chplscapacity, pbufsz, sizeof(size_t));
+           extendBuffer(childpools, chplslength, chplscapacity, pbufsz);
        }
        childpools[chplslength++] = dd;
    }
@@ -1340,6 +1341,69 @@ public:
            chplslength--;
        } else {
            *val = std::string::npos;
+       }
+   }
+
+   void selfCheck() const {
+       xassert(__store_size == getStoreSize(sizeof(StoragePool)));
+       xassert(__kind < ST_DELETED);
+       xassert((__kind == ST_NONE) == (__parentVector == std::string::npos));
+       xassert(ownerPool);
+       xassert(bool(memory) == bool(memlength));
+       xassert(bool(memcapacity) == bool(memlength));
+       xassert(bool(intpointers) == bool(intptrslength));
+       xassert(bool(intptrscapacity) == bool(intptrslength));
+       xassert(bool(extpointers) == bool(extptrslength));
+       xassert(bool(extptrscapacity) == bool(extptrslength));
+       xassert(bool(childpools) == bool(chplslength));
+       xassert(bool(chplscapacity) == bool(chplslength));
+
+       ExternalPtr last = NULL;
+       size_t* intPointersFrom = intpointers;
+       size_t* intPointersTo = intpointers+intptrslength;
+       for (; intPointersFrom<intPointersTo; intPointersFrom++) {
+           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
+           if (ptr) {
+               xassert(contains(ptr));
+               if (*ptr) {
+                   xassert(contains(*ptr));
+               }
+               xassert(ptr > last);
+               last = ptr;
+           }
+       }
+
+       last = NULL;
+       ExternalPtr* extPointersFrom = extpointers;
+       ExternalPtr* extPointersTo = extpointers + extptrslength;
+       for (; extPointersFrom<extPointersTo; extPointersFrom++) {
+           ExternalPtr ptr = *extPointersFrom;
+           if (ptr) {
+               xassert (!contains(ptr));
+               if (*ptr) {
+                   xassert (contains(*ptr));
+               }
+               xassert(ptr > last);
+               last = ptr;
+           }
+       }
+
+       PtrToMe lastm = NULL;
+       size_t* chPoolsFrom = childpools;
+       size_t* chPoolsTo = childpools+chplslength;
+       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           if (ptr) {
+               xassert(contains(ptr));
+               ptr->selfCheck();
+
+               xassert(ptr > lastm);
+               lastm = ptr;
+           }
+       }
+
+       if (ownerPool != this) {
+           ownerPool->selfCheck();
        }
    }
 
