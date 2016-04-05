@@ -2,6 +2,7 @@
 #define STORAGE_H
 
 #include <vector>
+#include <list>
 #include <memory.h>
 #include <malloc.h>
 #include <stdint.h>
@@ -596,6 +597,11 @@ public:
    };
 #endif
 
+   struct ChCh {
+       StoragePool * pool;
+       int index;
+   };
+
    enum CopyMode {
        Cp_All,
        Cp_Move,
@@ -677,9 +683,37 @@ private:
        if (!origin) {
            origin = memory;
        }
-       StoragePool const * chpool = parent.findChild(child);
-       xassert(chpool);
-       moveVariable(*chpool, child, origin-chpool->memory);
+
+       std::list<ChCh> chch;
+       parent.findChildChain(chch, child);
+       xassert(chch.size());
+
+       ChCh ch;
+       ch.index = 0;
+       StoragePool*  pool = this;
+       std::list<ChCh>::iterator it ;
+       for (it = chch.begin(); ; it++) {
+            ch = *it;
+            if (ch.index == -1) {
+                it++;
+                break;
+            } else {
+                xassert(pool->chplslength == ch.pool->chplslength);
+                StoragePool*  chpool = (StoragePool*) decodeDeltaPtr(pool->memory, pool->childpools[ch.index]);
+                pool = chpool;
+            }
+       }
+
+       xassert(it == chch.end());
+
+       std::ptrdiff_t d = pool->memory - ch.pool->memory;
+
+       uint8_t* variable_addr = (uint8_t*)child;
+       variable_addr += d;
+       child = (DataPtr)variable_addr;
+
+       StoragePool const * pool0 = findChild(variable_addr);
+       xassert(pool0 == pool);
    }
 
    void moveVariable(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
@@ -725,24 +759,31 @@ private:
    void copyChildPools(StoragePool const & source, uint8_t* deltaOrigin = NULL) {
        xassert(ownerPool == this);
 
-       size_t* chPoolsFrom = childpools;
-       size_t* chPoolsTo = childpools+chplslength;
+       size_t* tar_chPoolsFrom = childpools;
+       size_t* tar_chPoolsTo = childpools+chplslength;
        size_t* src_chPoolsFrom = source.childpools;
        size_t* src_chPoolsTo = source.childpools+source.chplslength;
        if (!deltaOrigin) {
            deltaOrigin = memory;
        }
+       std::ptrdiff_t d = deltaOrigin - source.memory;
 
-       xassert(chPoolsTo-chPoolsFrom == src_chPoolsTo-src_chPoolsFrom);
 
-       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++, src_chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(deltaOrigin, *chPoolsFrom);
+       xassert(tar_chPoolsTo-tar_chPoolsFrom == src_chPoolsTo-src_chPoolsFrom);
+
+       for (; tar_chPoolsFrom<tar_chPoolsTo; tar_chPoolsFrom++, src_chPoolsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(deltaOrigin, *tar_chPoolsFrom);
            PtrToMe src_ptr = (PtrToMe)decodeDeltaPtr(source.memory, *src_chPoolsFrom);
 
            xassert(bool(ptr)==bool(src_ptr));
+           xassert(ptr->__kind==src_ptr->__kind);
+           switch (ptr->__kind == ST_PARENT || ptr->__kind == ST_CHILD);
 
            if (ptr) {
-               ptr->fixPoolPointer(src_ptr);
+               xassert( src_ptr->ownerPool == ptr->ownerPool );
+               xassert( (d+(uint8_t*)src_ptr) == (uint8_t*)ptr);
+
+               ptr->fixPoolPointer(src_ptr, d);
                ptr->clear();
                *ptr = *src_ptr;
                ptr->copyChildPools(*src_ptr);
@@ -756,11 +797,13 @@ private:
        (void*&)memory[0] = this;
    }
 
-   inline void fixPoolPointer(StoragePool * src) {
+   inline void fixPoolPointer(StoragePool * src, std::ptrdiff_t d) {
        if (ownerPool == src) {
            ownerPool = this;
        } else {
-           xassert(ownerPool == this);
+           if (ownerPool != this) {
+               xassert(ownerPool->isParentOf(*this));
+           }
        }
 
        (void*&)memory[0] = this;
@@ -768,10 +811,11 @@ private:
 
 
    void allocParentItem(void const *& _data, size_t store_size) {
-       if (ownerPool != this) {
+       xassert(ownerPool == this);
+       /*if (ownerPool != this) {
            ownerPool->allocParentItem(_data, store_size);
            return;
-       }
+       }*/
 
        size_t oldmemlength, newmemlength, bufsz;
 
@@ -841,10 +885,11 @@ private:
    }
 
    void freeParentItem(DataPtr data) {
-       if (ownerPool != this) {
+       xassert(ownerPool == this);
+       /*if (ownerPool != this) {
            ownerPool->freeParentItem(data);
            return;
-       }
+       }*/
 
        data->__kind = ST_DELETED;
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)data);
@@ -1142,6 +1187,17 @@ public:
        return extptrslength;
    }
 
+   inline bool isParentOf(StoragePool const & chpool) {
+       StoragePool * par = chpool.getPool();
+       if (par == this) {
+           return true;
+       } else if (par) {
+           return isParentOf(*par);
+       } else {
+           return false;
+       }
+   }
+
    inline bool contains(void* pointer) const {
        return (memory<=pointer && pointer<memory+memlength);
    }
@@ -1164,6 +1220,41 @@ public:
        return NULL;
    }
 
+   inline void findChildChain(std::list<ChCh> & result, void * pointer) const {
+       if (contains(pointer)) {
+           ChCh ch;
+           ch.pool = constcast(this);
+           ch.index = -1;
+           result.push_back(ch);
+           return;
+       }
+       size_t* chPoolsFrom = childpools;
+       size_t* chPoolsTo = childpools+chplslength;
+       for (int i = 0; chPoolsFrom<chPoolsTo; i++, chPoolsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           if (ptr) {
+               ptr->findChildChain(result, pointer);
+               if (result.size()) {
+                   ChCh ch;
+                   ch.pool = constcast(this);
+                   ch.index = i;
+                   result.push_front(ch);
+                   return;
+               }
+           }
+       }
+   }
+
+   inline size_t* getChildPointer(StoragePool const * child) const {
+       size_t dd = encodeDeltaPtr(memory, (uint8_t*)child);
+       size_t* val = lower_bound(childpools, childpools+chplslength, dd, std::string::npos);
+       if (*val == dd) {
+           return val;
+       } else {
+           return NULL;
+       }
+   }
+
    template<class ST>
    inline void addPointer(ST*& _externalPointer) {
        addPointer((DataPtr&)_externalPointer);
@@ -1175,10 +1266,11 @@ public:
    }
 
    void addPointer(DataPtr& dataPointer) {
-       if (ownerPool != this) {
+       xassert(ownerPool == this);
+       /*if (ownerPool != this) {
            ownerPool->addPointer(dataPointer);
            return;
-       }
+       }*/
 
        StoragePool const * child = dataPointer?findChild(dataPointer):NULL, * pchild = findChild(&dataPointer);
 
@@ -1236,10 +1328,11 @@ public:
    }
 
    void removePointer(DataPtr& dataPointer) {
-       if (ownerPool != this) {
+       xassert(ownerPool == this);
+       /*if (ownerPool != this) {
            ownerPool->removePointer(dataPointer);
            return;
-       }
+       }*/
 
        StoragePool const * child = dataPointer?findChild(dataPointer):NULL, * pchild = findChild(&dataPointer);
 
@@ -1381,7 +1474,8 @@ public:
            if (ptr) {
                xassert (!contains(ptr));
                if (*ptr) {
-                   xassert (contains(*ptr));
+                   StoragePool const * chpool = findChild(*ptr);
+                   xassert (chpool);
                }
                xassert(ptr > last);
                last = ptr;
