@@ -121,11 +121,11 @@ private:
   T const *lastC() const                { return (T const*)list.last(); }
 
   // insertion
-  void prepend(T *newitem)              { OWN list.prepend(newitem); }
-  VoidNode* append(T *newitem)          { OWN return list.append(newitem); }
-  void insertAt(T *newitem, int index)  { OWN list.insertAt(newitem, index); }
-  void insertSorted(T *newitem, Diff diff, str::Storeable const *extra=NULL)
-    { OWN list.insertSorted(newitem, (VoidDiff)diff, extra); }
+  void prepend(DBG_INFO_FORMAL_FIRST  T *newitem)              { OWN list.prepend(DBG_INFO_ARG_FWD_FIRST  newitem); }
+  VoidNode* append(DBG_INFO_FORMAL_FIRST  T *newitem)          { OWN return list.append(DBG_INFO_ARG_FWD_FIRST  newitem); }
+  void insertAt(DBG_INFO_FORMAL_FIRST  T *newitem, int index)  { OWN list.insertAt(DBG_INFO_ARG_FWD_FIRST  newitem, index); }
+  void insertSorted(DBG_INFO_FORMAL_FIRST  T *newitem, Diff diff, str::Storeable const *extra=NULL)
+    { OWN list.insertSorted(DBG_INFO_ARG_FWD_FIRST  newitem, (VoidDiff)diff, extra); }
 
   // removal
   T *removeAt(int index)                { return (T*)list.removeAt(index); }
@@ -144,8 +144,8 @@ outputCond([[[m4_dnl     // sobjlist
   bool contains(T const *item) const    { return list.contains(item); }
 
   // list-as-set: mutators
-  bool prependUnique(T *newitem)        { OWN return list.prependUnique(newitem); }
-  bool appendUnique(T *newitem)         { OWN return list.appendUnique(newitem); }
+  bool prependUnique(DBG_INFO_FORMAL_FIRST  T *newitem)        { OWN return list.prependUnique(DBG_INFO_ARG_FWD_FIRST  newitem); }
+  bool appendUnique(DBG_INFO_FORMAL_FIRST  T *newitem)         { OWN return list.appendUnique(DBG_INFO_ARG_FWD_FIRST  newitem); }
   void removeItem(T const *item)        { list.removeItem(item); }    // whether the arg should be const is debatable..
   bool removeIfPresent(T const *item)   { return list.removeIfPresent(item); }
 
@@ -279,15 +279,15 @@ mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut), owning(obj
   T *&dataRef()                         { return (T*&)mut.dataRef(); }
 
   // insertion
-  void insertBefore(T *item)            { OWN mut.insertBefore(item); }
+  void insertBefore(DBG_INFO_FORMAL_FIRST  T *item)            { OWN mut.insertBefore(DBG_INFO_ARG_FWD_FIRST  item); }
     // 'item' becomes the new 'current', and the current 'current' is
     // pushed forward (so the next adv() will make it current again)
 
-  void insertAfter(T *item)             { OWN mut.insertAfter(item); }
+  void insertAfter(DBG_INFO_FORMAL_FIRST  T *item)             { OWN mut.insertAfter(DBG_INFO_ARG_FWD_FIRST  item); }
     // 'item' becomes what we reach with the next adv();
     // isDone() must be false
 
-  void append(T *item)                  { OWN mut.append(item); }
+  void append(DBG_INFO_FORMAL_FIRST  T *item)                  { OWN mut.append(DBG_INFO_ARG_FWD_FIRST  item); }
     // only valid while isDone() is true, it inserts 'item' at the end of
     // the list, and advances such that isDone() remains true; equivalent
     // to { xassert(isDone()); insertBefore(item); adv(); }

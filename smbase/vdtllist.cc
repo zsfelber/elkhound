@@ -24,22 +24,22 @@ void VoidTailList::steal(VoidTailList *src, bool deleteOrig)
 }
 */
 
-void VoidTailList::prepend(str::Storeable *newitem)
+void VoidTailList::prepend(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
 {
-  VoidList::prepend(newitem);
+  VoidList::prepend(DBG_INFO_ARG_FWD_FIRST  newitem);
   if (!tail) {
     tail = top;
   }
 }
 
-void VoidTailList::append(str::Storeable *newitem)
+void VoidTailList::append(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
 {
   if (isEmpty()) {
-    prepend(newitem);
+    prepend(DBG_INFO_ARG_FWD_FIRST  newitem);
   }
   else {
     // payoff: constant-time append
-    tail->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem, NULL);
+    tail->next = new (npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  npool, newitem, NULL);
     tail = tail->next;
   }
 }
@@ -82,9 +82,9 @@ void VoidTailList::reappendAll(VoidTailList const &tail, VoidEq eq)
   appendAll(tail);
 }
 
-void VoidTailList::insertAt(str::Storeable *newitem, int index)
+void VoidTailList::insertAt(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem, int index)
 {
-  VoidList::insertAt(newitem, index);
+  VoidList::insertAt(DBG_INFO_ARG_FWD_FIRST  newitem, index);
   adjustTail();
 }
 
@@ -191,14 +191,14 @@ void VoidTailList::removeAll()
 
 bool VoidTailList::prependUnique(str::Storeable *newitem)
 {
-  bool retval = VoidList::prependUnique(newitem);
+  bool retval = VoidList::prependUnique(DBG_INFO_ARG0_FIRST  newitem);
   adjustTail();
   return retval;
 }
 
 bool VoidTailList::appendUnique(str::Storeable *newitem)
 {
-  bool retval = VoidList::appendUnique(newitem);
+  bool retval = VoidList::appendUnique(DBG_INFO_ARG0_FIRST  newitem);
   adjustTail();
   return retval;
 }
@@ -241,10 +241,10 @@ int main()
 
   list.selfCheck();
 
-  list.append(&two);     list.selfCheck();
-  list.prepend(&one);    list.selfCheck();
-  list.append(&three);   list.selfCheck();
-  list.prepend(&zero);   list.selfCheck();
+  list.append(DBG_INFO_ARG0_FIRST  &two);     list.selfCheck();
+  list.prepend(DBG_INFO_ARG0_FIRST  &one);    list.selfCheck();
+  list.append(DBG_INFO_ARG0_FIRST  &three);   list.selfCheck();
+  list.prepend(DBG_INFO_ARG0_FIRST  &zero);   list.selfCheck();
 
   xassert(list.nth(0) == &zero);
   xassert(list.nth(1) == &one);

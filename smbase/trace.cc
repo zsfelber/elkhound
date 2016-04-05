@@ -46,7 +46,7 @@ void traceAddSys(char const *sysName)
 {
   init();
 
-  tracers.prepend(new (pool) string(DBG_INFO_ARG0_FIRST  pool, sysName));
+  tracers.prepend(DBG_INFO_ARG0_FIRST  new (pool) string(DBG_INFO_ARG0_FIRST  pool, sysName));
 }
 
 

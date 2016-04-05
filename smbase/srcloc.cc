@@ -469,7 +469,7 @@ SourceLocManager::File *SourceLocManager::getFile(char const *name)
   if (!f) {
     // read the file
     f = new (pool) File(DBG_INFO_ARG0_FIRST  pool, name, nextLoc);
-    files.append(f);
+    files.append(DBG_INFO_ARG0_FIRST  f);
 
     // bump 'nextLoc' according to how long that file was,
     // plus 1 so it can own the position equal to its length
@@ -529,7 +529,7 @@ SourceLoc SourceLocManager::encodeStatic(StaticLoc const &obj)
   }
 
   // save this location
-  statics.append(new (pool) StaticLoc(DBG_INFO_ARG0_FIRST  pool, obj));
+  statics.append(DBG_INFO_ARG0_FIRST  new (pool) StaticLoc(DBG_INFO_ARG0_FIRST  pool, obj));
 
   // return current index, yield next
   SourceLoc ret = nextStaticLoc;

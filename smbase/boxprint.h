@@ -243,7 +243,7 @@ public:      // funcs
   ~BoxPrint();
 
   // append another element to the current innermost box
-  void append(BPElement *elt);
+  void append(DBG_INFO_FORMAL_FIRST  BPElement *elt);
 
   // add BPText nodes to current box
   BoxPrint& operator<< (rostring s);

@@ -68,7 +68,7 @@ void round(int ops)
       int elt = rand() % 100;
       arrayStack.push(elt);
       arrayStackEmbed.push(elt);
-      listStack.prepend(new Integer(DBG_INFO_ARG0_FIRST  elt));
+      listStack.prepend(DBG_INFO_ARG0_FIRST  new Integer(DBG_INFO_ARG0_FIRST  elt));
     }
   }
 }

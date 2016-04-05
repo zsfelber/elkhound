@@ -56,12 +56,12 @@ public:
   T const *lastC() const                { return (T const*)list.last(); }
 
   // insertion
-  void prepend(T *newitem)              { list.prepend(newitem); }
-  void append(T *newitem)               { list.append(newitem); }
+  void prepend(DBG_INFO_FORMAL_FIRST  T *newitem)              { list.prepend(DBG_INFO_ARG_FWD_FIRST  newitem); }
+  void append(DBG_INFO_FORMAL_FIRST  T *newitem)               { list.append(DBG_INFO_ARG_FWD_FIRST  newitem); }
   void appendAll(ASTList<T> &tail)      { list.appendAll(tail.list); }
   void appendAllNew(ASTList<T> const &tail, VoidEq eq)    { list.appendAllNew(tail.list, eq); }
   void reappendAll(ASTList<T> const &tail, VoidEq eq)    { list.reappendAll(tail.list, eq); }
-  void insertAt(T *newitem, int index)  { list.insertAt(newitem, index); }
+  void insertAt(DBG_INFO_FORMAL_FIRST  T *newitem, int index)  { list.insertAt(DBG_INFO_ARG_FWD_FIRST  newitem, index); }
   void concat(ASTList<T> &tail)         { list.concat(tail.list); }
 
   // removal

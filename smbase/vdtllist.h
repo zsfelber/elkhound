@@ -64,12 +64,12 @@ public:
   str::Storeable *last() const                 { xassert(tail); return tail->data; }
 
   // insertion
-  void prepend(str::Storeable *newitem);
-  void append(str::Storeable *newitem);
+  void prepend(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem);
+  void append(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem);
   void appendAll(VoidTailList const &tail);
   void appendAllNew(VoidTailList const &tail, VoidEq eq);
   void reappendAll(VoidTailList const &tail, VoidEq eq);
-  void insertAt(str::Storeable *newitem, int index);
+  void insertAt(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem, int index);
   void concat(VoidTailList &tail);
 
   // removal

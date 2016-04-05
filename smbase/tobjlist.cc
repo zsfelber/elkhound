@@ -57,8 +57,8 @@ void testSorting()
     int items = rand()%ITEMS;
     loopj(items) {
       int it = rand()%ITEMS;
-      list1.prepend(new Integer(DBG_INFO_ARG0_FIRST  it));
-      list2.prepend(new Integer(DBG_INFO_ARG0_FIRST  it));     // two lists with identical contents
+      list1.prepend(DBG_INFO_ARG0_FIRST  new Integer(DBG_INFO_ARG0_FIRST  it));
+      list2.prepend(DBG_INFO_ARG0_FIRST  new Integer(DBG_INFO_ARG0_FIRST  it));     // two lists with identical contents
     }
     //PRINT(list1);
 
@@ -106,10 +106,10 @@ void entry()
     STORE_NEW_REF0(pool, ObjList<Integer>, list);
 
     // test simple modifiers and info
-    list.append(c);     PRINT(list);   // c
-    list.prepend(b);   	PRINT(list);   // b c
-    list.append(d);	PRINT(list);   // b c d
-    list.prepend(a);	PRINT(list);   // a b c d
+    list.append(DBG_INFO_ARG0_FIRST  c);     PRINT(list);   // c
+    list.prepend(DBG_INFO_ARG0_FIRST  b);   	PRINT(list);   // b c
+    list.append(DBG_INFO_ARG0_FIRST  d);	PRINT(list);   // b c d
+    list.prepend(DBG_INFO_ARG0_FIRST  a);	PRINT(list);   // a b c d
     list.deleteAt(2);	PRINT(list);   // a b d
 
     xassert( list.count() == 3 &&
@@ -127,12 +127,12 @@ void entry()
   {
     Integer *x = new Integer(DBG_INFO_ARG0_FIRST  1);
     STORE_NEW_REF0(pool, ObjList<Integer>, list);
-    list.prepend(x);
+    list.prepend(DBG_INFO_ARG0_FIRST  x);
     bool bad = false;
     try {
       // unspecified at interface level which of the
       // following two will detect the problem
-      list.prepend(x);
+      list.prepend(DBG_INFO_ARG0_FIRST  x);
       list.selfCheck();
       bad = true;
     }

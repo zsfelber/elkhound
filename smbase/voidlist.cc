@@ -126,36 +126,36 @@ void VoidList::checkUniqueDataPtrs() const
 
 
 // insert at front
-void VoidList::prepend(str::Storeable *newitem)
+void VoidList::prepend(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
 {
-  top = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem, top);
+  top = new (npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  npool, newitem, top);
 }
 
 
 // insert at rear
-VoidNode* VoidList::append(str::Storeable *newitem)
+VoidNode* VoidList::append(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
 {
   if (!top) {
-    prepend(newitem);
+    prepend(DBG_INFO_ARG_FWD_FIRST  newitem);
     return top;
   }
   else {
     VoidNode *p;
     for (p = top; p->next; p = p->next)
       {}
-    p->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem);
+    p->next = new (npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  npool, newitem);
     return p->next;
   }
 }
 
 
 // insert at particular point, index of new node becomes 'index'
-void VoidList::insertAt(str::Storeable *newitem, int index)
+void VoidList::insertAt(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem, int index)
 {
   if (index == 0 || isEmpty()) {
     // special case prepending or an empty list
     xassert(index == 0);     // if it's empty, index should be 0
-    prepend(newitem);
+    prepend(DBG_INFO_ARG_FWD_FIRST  newitem);
   }
 
   else {
@@ -174,19 +174,19 @@ void VoidList::insertAt(str::Storeable *newitem, int index)
       // if index isn't 0, then index was greater than count()
 
     // put a node after p
-    VoidNode *n = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem);
+    VoidNode *n = new (npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  npool, newitem);
     n->next = p->next;
     p->next = n;
   }
 }
 
 
-void VoidList::insertSorted(str::Storeable *newitem, VoidDiff const diff, str::Storeable const *extra)
+void VoidList::insertSorted(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem, VoidDiff const diff, str::Storeable const *extra)
 {
   // put it first?
   if (!top ||
       diff(newitem, top->data, extra) <= 0) {                // newitem <= top
-    prepend(newitem);
+    prepend(DBG_INFO_ARG_FWD_FIRST  newitem);
     return;
   }
 
@@ -198,7 +198,7 @@ void VoidList::insertSorted(str::Storeable *newitem, VoidDiff const diff, str::S
   }
   
   // insert 'newitem' after 'cursor'
-  VoidNode *newNode = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem);
+  VoidNode *newNode = new (npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  npool, newitem);
   newNode->next = cursor->next;
   cursor->next = newNode;
 }
@@ -237,10 +237,10 @@ int VoidList::indexOfF(str::Storeable const *item) const
 }
 
 
-bool VoidList::prependUnique(str::Storeable *newitem)
+bool VoidList::prependUnique(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
 {
   if (!contains(newitem)) {
-    prepend(newitem);
+    prepend(DBG_INFO_ARG_FWD_FIRST  newitem);
     return true;
   }
   else {
@@ -249,10 +249,10 @@ bool VoidList::prependUnique(str::Storeable *newitem)
 }
 
 
-bool VoidList::appendUnique(str::Storeable *newitem)
+bool VoidList::appendUnique(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
 {
   if (!top) {
-    prepend(newitem);
+    prepend(DBG_INFO_ARG_FWD_FIRST  newitem);
     return true;
   }
 
@@ -268,7 +268,7 @@ bool VoidList::appendUnique(str::Storeable *newitem)
     return false;
   }
 
-  p->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, newitem);
+  p->next = new (npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  npool, newitem);
   return true;
 }
 
@@ -626,7 +626,7 @@ void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
     str::Storeable *item = srcIter.data();
     int index = indexOf(item, eq);
     if (index == -1) {
-       dest.append(item);
+       dest.append(DBG_INFO_ARG0_FIRST  item);
     }
   }
   concat(dest);
@@ -795,30 +795,30 @@ VoidListMutator&
 }
 
 
-void VoidListMutator::insertBefore(str::Storeable *item)
+void VoidListMutator::insertBefore(DBG_INFO_FORMAL_FIRST  str::Storeable *item)
 {
   if (prev == NULL) {
     // insert at start of list
-    list.prepend(item);
+    list.prepend(DBG_INFO_ARG_FWD_FIRST  item);
     reset();
   }
   else {
-    current = prev->next = new (list.npool) VoidNode(DBG_INFO_ARG0_FIRST  list.npool, item, current);
+    current = prev->next = new (list.npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  list.npool, item, current);
   }
 }
 
 
-void VoidListMutator::insertAfter(str::Storeable *item)
+void VoidListMutator::insertAfter(DBG_INFO_FORMAL_FIRST  str::Storeable *item)
 {
   xassert(!isDone());
-  current->next = new (list.npool) VoidNode(DBG_INFO_ARG0_FIRST  list.npool, item, current->next);
+  current->next = new (list.npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  list.npool, item, current->next);
 }
 
 
-void VoidListMutator::append(str::Storeable *item)
+void VoidListMutator::append(DBG_INFO_FORMAL_FIRST  str::Storeable *item)
 {
   xassert(isDone());
-  insertBefore(item);
+  insertBefore(DBG_INFO_ARG_FWD_FIRST  item);
   adv();
 }
 
@@ -890,8 +890,8 @@ void testSorting()
       numItems = rand()%ITEMS;
       loopj(numItems) {
         Integer *toInsert = new Integer(DBG_INFO_ARG0_FIRST  (rand()%ITEMS) * 4 );
-	list1.prepend(toInsert);
-        list3.insertSorted(toInsert, VoidList::pointerAddressDiff);
+        list1.prepend(DBG_INFO_ARG0_FIRST  toInsert);
+        list3.insertSorted(DBG_INFO_ARG0_FIRST  toInsert, VoidList::pointerAddressDiff);
       }
     } while (list1.isSorted(VoidList::pointerAddressDiff));
 
@@ -933,7 +933,7 @@ void testSorting()
   }
 }
 
-
+namespace str {
 void entry()
 {
   // first set of tests
@@ -949,10 +949,10 @@ void entry()
             *d=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),16);
 
     // test simple modifiers and info
-    list.append(c);     PRINT(list);   // c
-    list.prepend(b);   	PRINT(list);   // b c
-    list.append(d);	PRINT(list);   // b c d
-    list.prepend(a);	PRINT(list);   // a b c d
+    list.append(DBG_INFO_ARG0_FIRST  c);     PRINT(list);   // c
+    list.prepend(DBG_INFO_ARG0_FIRST  b);   	PRINT(list);   // b c
+    list.append(DBG_INFO_ARG0_FIRST  d);	PRINT(list);   // b c d
+    list.prepend(DBG_INFO_ARG0_FIRST  a);	PRINT(list);   // a b c d
     list.removeAt(2);	PRINT(list);   // a b d
 
     xassert( list.count() == 3 &&
@@ -974,7 +974,7 @@ void entry()
 
       mut.adv();
 	// now it's pointing at b
-      mut.insertAfter(c);
+      mut.insertAfter(DBG_INFO_ARG0_FIRST  c);
     // now list is (a b c d) and mut points at b still
       verifySorted<Integer>(list);
       list.selfCheck();
@@ -1001,9 +1001,9 @@ void entry()
 
     // test appendUnique and prependUnique
     // list starts as (a c d)
-    xassert(list.appendUnique(c) == false &&
-            list.prependUnique(d) == false &&
-            list.prependUnique(b) == true);
+    xassert(list.appendUnique(DBG_INFO_ARG0_FIRST  c) == false &&
+            list.prependUnique(DBG_INFO_ARG0_FIRST  d) == false &&
+            list.prependUnique(DBG_INFO_ARG0_FIRST  b) == true);
       // now it is (b a c d)
     list.removeItem(a);
     xassert(list.removeIfPresent(a) == false);
@@ -1022,8 +1022,18 @@ void entry()
     PRINT(list);
 
     // test stealTailAt
-    VoidList thief(DBG_INFO_ARG0);
+    VoidList *_thief = new (list.getPool()) VoidList(DBG_INFO_ARG0_FIRST  list.getPool());
+    VoidList &thief = *_thief;
+
+    str::StoragePool * p1 = (str::StoragePool*) str::decodeDeltaPtr(list.getPool().memory, list.getPool().childpools[0]);
+
     thief.stealTailAt(1, list);
+
+    str::StoragePool * p2 = (str::StoragePool*) str::decodeDeltaPtr(thief.getPool().memory, thief.getPool().childpools[0]);
+    str::StoragePool * p2a = (str::StoragePool*) str::decodeDeltaPtr(p2->memory, p2->childpools[0]);
+
+    str::StoragePool * p1a = (str::StoragePool*) str::decodeDeltaPtr(p1->memory, p1->childpools[0]);
+
     thief.selfCheck();
     list.selfCheck();
       // list is now (d)
@@ -1036,6 +1046,7 @@ void entry()
 
     // test appendAll
     list.appendAll(thief);      // list: (d c b)
+    thief.selfCheck();
     list.selfCheck();
     PRINT(list);
     xassert(list.count() == 3 &&
@@ -1045,6 +1056,7 @@ void entry()
 
     // test prependAll
     list.prependAll(thief);     // list: (c b d c b)
+    thief.selfCheck();
     list.selfCheck();
     PRINT(list);
     xassert(list.count() == 5 &&
@@ -1071,7 +1083,11 @@ void entry()
   testSorting();
 
   printf("voidlist ok\n");
+}}
+inline void entry() {
+    str::entry();
 }
+
 
 USUAL_MAIN
 

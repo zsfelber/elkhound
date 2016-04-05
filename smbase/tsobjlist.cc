@@ -21,9 +21,9 @@ int main()
   // 'prepend' accepts a T*, which should become a char const *;
   // if it only becomes (e.g.) a char*, then this call should
   // trigger a compile error
-  list.prepend(&hi);
+  list.prepend(DBG_INFO_ARG0_FIRST  &hi);
 
-  list.append(&what);
+  list.append(DBG_INFO_ARG0_FIRST  &what);
   
   // 'indexOf' accepts a T const *, so here I'm essentially verifying
   // the compiler doesn't mind seeing 'const' twice

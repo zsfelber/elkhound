@@ -15,10 +15,10 @@ void entry()
 
   TailList<Integer> list;
 
-  list.append(&d);
-  list.prepend(&b);		// 4, 16
-  list.insertAt(&c,1); 		// 4, 8, 16
-  list.append(&e); 		// 4, 8, 16, 42
+  list.append(DBG_INFO_ARG0_FIRST  &d);
+  list.prepend(DBG_INFO_ARG0_FIRST  &b);		// 4, 16
+  list.insertAt(DBG_INFO_ARG0_FIRST  &c,1); 		// 4, 8, 16
+  list.append(DBG_INFO_ARG0_FIRST  &e); 		// 4, 8, 16, 42
   
   list.removeLast();		// 4, 8, 16
 
@@ -36,7 +36,7 @@ void entry()
   // FIX: the selfCheck routine in the VoidTailList superclass is broken. 
   // list.selfCheck();
   
-  list.prepend(&a);		// 2, 4, 8, 16
+  list.prepend(DBG_INFO_ARG0_FIRST  &a);		// 2, 4, 8, 16
   
   int count = 2;
   FOREACH_TAILLIST_NC(Integer, list, iter) {

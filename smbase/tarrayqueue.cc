@@ -62,7 +62,7 @@ void round(int ops)
       // enqueue
       int elt = rand() % 100;
       arrayQueue.enqueue(elt);
-      listQueue.append(new Integer(DBG_INFO_ARG0_FIRST  elt));
+      listQueue.append(DBG_INFO_ARG0_FIRST  new Integer(DBG_INFO_ARG0_FIRST  elt));
     }
   }
 }

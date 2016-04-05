@@ -335,7 +335,7 @@ BoxPrint::BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
 {         
   // initial vert box
   // TODO dummy, it is bad, if str::StoragePool autogrows
-  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG_FIRST("BoxPrint(pool)")  getPoolRef(), BP_vertical));
+  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG0_FIRST  getPoolRef(), BP_vertical));
 }
 
 BoxPrint::BoxPrint(DBG_INFO_FORMAL)
@@ -344,28 +344,28 @@ BoxPrint::BoxPrint(DBG_INFO_FORMAL)
 {
   // initial vert box
   // TODO dummy, it is bad, if str::StoragePool autogrows
-  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG_FIRST("BoxPrint()")  getPoolRef(), BP_vertical));
+  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG0_FIRST  getPoolRef(), BP_vertical));
 }
 
 BoxPrint::~BoxPrint()
 {}
 
 
-void BoxPrint::append(BPElement *elt)
+void BoxPrint::append(DBG_INFO_FORMAL_FIRST  BPElement *elt)
 {
-  box()->elts.append(elt);
+  box()->elts.append(DBG_INFO_ARG_FWD_FIRST  elt);
 }
 
 
 BoxPrint& BoxPrint::operator<< (rostring s)
 {
-  append(new BPText(DBG_INFO_ARG_FIRST("BoxPrint::<<rostring")  *this, s));
+  append(DBG_INFO_ARG0_FIRST  new BPText(DBG_INFO_ARG0_FIRST  *this, s));
   return *this;
 }
 
 BoxPrint& BoxPrint::operator<< (char const *s)
 {
-  append(new BPText(DBG_INFO_ARG_FIRST("BoxPrint::<<charconst*")  *this, s));
+  append(DBG_INFO_ARG0_FIRST  new BPText(DBG_INFO_ARG0_FIRST  *this, s));
   return *this;
 }
 
@@ -379,14 +379,14 @@ BoxPrint& BoxPrint::operator<< (BPKind k)
 {
   if (k == NUM_BPKINDS) {
     // close current box
-    append(boxStack.pop());
+    append(DBG_INFO_ARG0_FIRST  boxStack.pop());
   }
   else {
     // open new box
     str::StoragePool *pool = getPool();
     xassert(pool);
     // TODO dummy, it is bad, if str::StoragePool autogrows
-    boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG_FIRST("BoxPrint::<<BPKind")  getPoolRef(), k));
+    boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG0_FIRST  getPoolRef(), k));
   }
   return *this;
 }
@@ -396,12 +396,12 @@ BoxPrint& BoxPrint::operator<< (Cmd c)
 {
   switch (c) {
     default: xfailure("bad cmd");
-    case sp:        append(new BPBreak(DBG_INFO_ARG_FIRST("BoxPrint::<<Cmd")  getPoolRef(), BT_DISABLED, 0 /*indent*/)); break;
-    case br:        append(new BPBreak(DBG_INFO_ARG_FIRST("BoxPrint::<<Cmd")  getPoolRef(), BT_ENABLED, 0 /*indent*/)); break;
-    case fbr:       append(new BPBreak(DBG_INFO_ARG_FIRST("BoxPrint::<<Cmd")  getPoolRef(), BT_FORCED, 0 /*indent*/)); break;
-    case lineStart: append(new BPBreak(DBG_INFO_ARG_FIRST("BoxPrint::<<Cmd")  getPoolRef(), BT_LINE_START, 0 /*indent*/)); break;
-    case ind:       append(new BPBreak(DBG_INFO_ARG_FIRST("BoxPrint::<<Cmd")  getPoolRef(), BT_ENABLED, levelIndent)); break;
-    case und:       append(new BPBreak(DBG_INFO_ARG_FIRST("BoxPrint::<<Cmd")  getPoolRef(), BT_ENABLED, -levelIndent)); break;
+    case sp:        append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_DISABLED, 0 /*indent*/)); break;
+    case br:        append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_ENABLED, 0 /*indent*/)); break;
+    case fbr:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_FORCED, 0 /*indent*/)); break;
+    case lineStart: append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_LINE_START, 0 /*indent*/)); break;
+    case ind:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_ENABLED, levelIndent)); break;
+    case und:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_ENABLED, -levelIndent)); break;
   }
   return *this;
 }
@@ -409,7 +409,7 @@ BoxPrint& BoxPrint::operator<< (Cmd c)
 
 BoxPrint& BoxPrint::operator<< (IBreak b)
 {
-  append(new BPBreak(DBG_INFO_ARG_FIRST("BoxPrint::<<IBreak")  getPoolRef(), BT_ENABLED, b.indent /*indent*/));
+  append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_ENABLED, b.indent /*indent*/));
   return *this;
 }
 
@@ -430,7 +430,7 @@ BPBox* /*owner*/ BoxPrint::takeTree()
   // initialize the box stack again, in case the user wants
   // to build another tree
   // TODO dummy, it is bad, if str::StoragePool autogrows
-  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG_FIRST("BoxPrint::takeTree")  getPoolRef(), BP_vertical));
+  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG0_FIRST  getPoolRef(), BP_vertical));
 
   return ret;
 }
