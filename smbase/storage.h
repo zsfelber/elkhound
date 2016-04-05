@@ -1479,6 +1479,7 @@ public:
    }
 
    void selfCheck() const {
+#ifdef DEBUG
        xassert(__store_size == getStoreSize(sizeof(StoragePool)));
        xassert(__kind < ST_DELETED);
        xassert((__kind == ST_NONE) == (__parentVector == std::string::npos));
@@ -1543,7 +1544,16 @@ public:
            }
        }
 
-       xassert (ownerPool == this);
+#else
+       size_t* chPoolsFrom = childpools;
+       size_t* chPoolsTo = childpools+chplslength;
+       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           if (ptr) {
+               xassert(!ptr->isParentOf(*this));
+           }
+       }
+#endif
    }
 
    inline iterator begin(DataPtr variablePtr = 0) {

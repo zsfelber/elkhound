@@ -570,8 +570,10 @@ void VoidList::stealTailAt(int index, VoidList &source)
   // TODO top and tail externalpointer can be mixed of stealSP (child pool) and this->npool
 
   // TODO fixme : ownerPool == NULL is ok?  see StoragePool.assignImpl
-  //StoragePool stealSP =
+  str::StoragePool * stealSP =
   new (npool)  str::StoragePool(DBG_INFO_ARG0_FIRST  source.npool, false,  str::StoragePool::Cp_Duplicate);
+
+  stealSP->selfCheck();
 
   // find the node in 'source' just before the first one that
   // will be transferred
