@@ -1104,12 +1104,15 @@ public:
 
        if (memcapacity<(c=getMemBufSize(memlength+snetmemlen))) {
            extendBuffer(memory, memlength, c);
+           memcapacity = c;
        }
        if (intptrscapacity<(c=getPtrBufSize(intptrslength+src.intptrslength))) {
            extendBuffer(intpointers, intptrslength, c);
+           intptrscapacity = c;
        }
        if (chplscapacity<(c=getPtrBufSize(chplslength+src.chplslength))) {
            extendBuffer(childpools, chplslength, c);
+           chplscapacity = c;
        }
 
        memcpy(memory+memlength, soldorigin, snetmemlen);
