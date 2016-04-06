@@ -626,8 +626,12 @@ uint8_t* VoidList::glueNpools(VoidList const &tail) {
             std::list<str::StoragePool::ChCh> badChildren;
             tail.npool.findChildChain(badChildren, npool.memory);
             if (badChildren.size()) {
-                int ind = badChildren.front().index;
-                childView.removeChildPool(childView.childpools + ind);
+                str::StoragePool::ChCh c = badChildren.front();
+                xassert(c.pool->chplslength == childView.chplslength);
+                childView.removeChildPool(childView.childpools + c.index);
+                if (childView.chplslength < c.pool->chplslength) {
+                    npool.chplslength--;
+                }
             }
         }
     }
@@ -1011,6 +1015,7 @@ int debugEverything() {
         s<<"\n";
     }
 
+    rows2.clear();
     grind(s.str(), rows2);
     LCS::printDiff(std::cout, rows1, rows2);
     std::cout<<std::flush;
