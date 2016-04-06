@@ -1614,25 +1614,75 @@ public:
                  os<<"\n";
              }
          }
-         os<<indent<<"  values:";
-         for (iterator it=begin(); it != -1; it++) {
-             Storeable *cur = *it;
-             switch (cur->__kind) {
-             case ST_TREE_ITEM:
-                 cur->debugPrint(os);
-                 os<<" ";
-                 break;
-             case ST_STORAGE_POOL:
-                 os<<" poolx"<<(void*)cur;
-                 break;
-             case ST_DELETED:
-                 os<<" delx"<<(void*)cur;
-                 break;
-             default:
-                 break;
+
+         if (memlength) {
+             os<<indent<<"  values: ";
+             for (iterator it=begin(); it != -1; it++) {
+                 Storeable *cur = *it;
+                 switch (cur->__kind) {
+                 case ST_TREE_ITEM:
+                     cur->debugPrint(os);
+                     os<<" ";
+                     break;
+                 case ST_STORAGE_POOL:
+                     os<<" poolx"<<(void*)cur;
+                     break;
+                 case ST_DELETED:
+                     os<<" delx"<<(void*)cur;
+                     break;
+                 default:
+                     break;
+                 }
              }
+             os<<"\n";
          }
-         os<<"\n";
+
+         if (intptrslength) {
+             os<<indent<<"  intptrs:";
+             size_t* intPointersFrom = intpointers;
+             size_t* intPointersTo = intpointers+intptrslength;
+             for (; intPointersFrom<intPointersTo; intPointersFrom++) {
+                 ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
+                 if (ptr) {
+                     if (*ptr) {
+                         if (!findChild(*ptr)) {
+                             os<<"ou!";
+                         } else if (!contains(*ptr)) {
+                             os<<"ch!";
+                         }
+                         (*ptr)->debugPrint(os);
+                         os<<" ";
+                     } else {
+                         os<<"NULL ";
+                     }
+                 }
+             }
+             os<<"\n";
+         }
+
+         if (extptrslength) {
+             os<<indent<<"  extptrs:";
+             ExternalPtr* extPointersFrom = extpointers;
+             ExternalPtr* extPointersTo = extpointers+extptrslength;
+             for (; extPointersFrom<extPointersTo; extPointersFrom++) {
+                 ExternalPtr ptr = *extPointersFrom;
+                 if (ptr) {
+                     if (*ptr) {
+                         if (!findChild(*ptr)) {
+                             os<<"ou!";
+                         } else if (!contains(*ptr)) {
+                             os<<"ch!";
+                         }
+                         (*ptr)->debugPrint(os);
+                         os<<" ";
+                     } else {
+                         os<<"NULL ";
+                     }
+                 }
+             }
+             os<<"\n";
+         }
+
          os<<indent<< "}"<<std::flush<<std::dec;
      }
    }
