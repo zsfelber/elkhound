@@ -1585,18 +1585,32 @@ public:
      if (indent.length() > 100) {
          os<<std::hex<<indent<< "...";
      } else {
-         os<<std::hex<<indent<< "poolx"<<(void*)this<<":{\n";
+         os<<std::hex<<indent<< "poolx"<<(void*)this;
+#ifdef DEBUG
+         os<<":"<<objectName;
+#endif
+         os<<":memx"<<(void*)memory<<":"<<memlength;
+         os<<":intx"<<(void*)intpointers<<":"<<intptrslength;
+         os<<":extx"<<(void*)extpointers<<":"<<extptrslength;
+         os<<":chpx"<<(void*)childpools<<":"<<chplslength;
+         if (getParent()) {
+             os<<":parx"<<(void*)getParent();
+         }
+         if (this != ownerPool) {
+             os<<":ownx"<<(void*)ownerPool;
+         }
+
+         os<<":{\n";
          size_t* chPoolsFrom = childpools;
          size_t* chPoolsTo = childpools+chplslength;
          for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
              PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
              if (ptr) {
-                 os<<indent<<" ";
                  ptr->debugPrint(os, indent+"  ");
                  os<<"\n";
              }
          }
-         os<<indent<<" values:";
+         os<<indent<<"  values:";
          for (iterator it=begin(); it != -1; it++) {
              Storeable *cur = *it;
              switch (cur->__kind) {

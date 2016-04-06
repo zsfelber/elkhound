@@ -805,7 +805,11 @@ STATICDEF int VoidList::pointerAddressDiff(str::Storeable const *left, str::Stor
 
 void VoidList::debugPrint(std::ostream& os, std::string indent) const
 {
-  os<<std::hex<<indent<< "{ ";
+  os<<std::hex<<indent<< "vlstx"<<(void*)this;
+#ifdef DEBUG
+  os<<":"<<objectName;
+#endif
+  os << "{";
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {
     if (iter.data()) {
         os<<" "<< *iter.data();
