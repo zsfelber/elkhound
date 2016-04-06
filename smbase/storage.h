@@ -473,9 +473,7 @@ public:
        }
 
        inline void check() {
-           if (variablePtr > memend) {
-               x_assert_fail("Overindexed StoragePool.", __FILE__, __LINE__);
-           } else if (variablePtr == memend) {
+           if (variablePtr >= memend) {
                index = -1;
            } else {
                index++;

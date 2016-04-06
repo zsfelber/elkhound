@@ -1114,6 +1114,7 @@ void entry()
 
     // test stealTailAt
     _thief = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    _thief->getPool().debugPrint();
     VoidList &thief = *_thief;
     thief.selfCheck();
 
