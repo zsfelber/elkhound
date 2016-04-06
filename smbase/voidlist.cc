@@ -6,10 +6,12 @@
 #include "str.h"        // stringc
 #include "int.h"     // checkHeap
 #include "ckheap.h"     // checkHeap
+#include "diff.h"
 
 #include <stdlib.h>     // rand()
 #include <stdio.h>      // printf()
 #include <ios>
+#include <sstream>
 
 
 VoidList::VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &src, size_t size_of, bool move)
@@ -976,11 +978,49 @@ void testSorting()
 }
 
 namespace str {
+
+str::StoragePool pool(DBG_INFO_ARG0);
+VoidList *_list = NULL;
+VoidList *_thief = NULL;
+std::vector<std::string> rows1;
+std::vector<std::string> rows2;
+
+void grind(std::string const &s, std::vector<std::string> &rows) {
+    std::istringstream st(s);
+    std::string line;
+    while (std::getline(st, line)) {
+        rows.reserve((rows.size()+1)<<10>>10);
+        rows.push_back(line);
+    }
+}
+
+int debugEverything() {
+    std::stringstream s;
+    s<<"*****************************************************************************************************\n";
+    s<<"Pool:\n";
+    pool.debugPrint(s);
+    s<<"\n";
+    if (_list) {
+        s<<"list:\n";
+        _list->debugPrint(s);
+        s<<"\n";
+    }
+    if (_thief) {
+        s<<"thief:\n";
+        _thief->debugPrint(s);
+        s<<"\n";
+    }
+
+    grind(s.str(), rows2);
+    LCS::printDiff(std::cout, rows1, rows2);
+    std::cout<<std::flush;
+
+    rows1 = rows2;
+    return 0;
+}
+
 void entry()
 {
-  str::StoragePool pool(DBG_INFO_ARG0);
-  VoidList *_list = NULL;
-  VoidList *_thief = NULL;
   // first set of tests
   try {
 
@@ -1117,19 +1157,7 @@ void entry()
             list.nth(1) == c &&
             list.nth(2) == d);
   } catch (x_assert const & ex) {
-    std::cout<<"Pool:\n";
-    pool.debugPrint();
-    std::cout<<"\n";
-    if (_list) {
-        std::cout<<"list:\n";
-        _list->debugPrint();
-        std::cout<<"\n";
-    }
-    if (_thief) {
-        std::cout<<"thief:\n";
-        _thief->debugPrint();
-        std::cout<<"\n";
-    }
+        debugEverything();
   }
 
   // this hits most of the remaining code

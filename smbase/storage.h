@@ -117,6 +117,12 @@ extern const size_t STORAGE_POOL_SIZE;
 
 
 template<typename T>
+inline void memsetBuffer(T *buf, int32_t c, T n)
+{
+    for (uint32_t i = 0; i<n; i++, buf++) *buf = c;
+}
+
+template<typename T>
 inline void copyBuffer(T* src, size_t srclen, size_t srccap,
                        T*& dest, size_t &dstlen, size_t &dstcap) {
     xassert(srccap && !dest);

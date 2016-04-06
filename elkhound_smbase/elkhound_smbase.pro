@@ -56,7 +56,8 @@ SOURCES += main.cpp \
     ../smbase/tmalloc.c \
     ../smbase/unixutil.c \
     ../smbase/int.cc \
-    ../smbase/storage.cc
+    ../smbase/storage.cc \
+    ../smbase/diff.cpp
 
 DISTFILES += \
     ../smbase/SMBASE.IDE \
@@ -226,5 +227,6 @@ HEADERS += \
     ../smbase/xassert.h \
     ../smbase/xobjlist.h \
     ../smbase/storage.h \
-    ../smbase/int.h
+    ../smbase/int.h \
+    ../smbase/diff.h
 
