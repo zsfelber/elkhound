@@ -335,7 +335,7 @@ BoxPrint::BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
 {         
   // initial vert box
   // TODO dummy, it is bad, if str::StoragePool autogrows
-  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG0_FIRST  getPoolRef(), BP_vertical));
+  boxStack.push(new (getParentRef()) BPBox(DBG_INFO_ARG0_FIRST  getParentRef(), BP_vertical));
 }
 
 BoxPrint::BoxPrint(DBG_INFO_FORMAL)
@@ -344,7 +344,7 @@ BoxPrint::BoxPrint(DBG_INFO_FORMAL)
 {
   // initial vert box
   // TODO dummy, it is bad, if str::StoragePool autogrows
-  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG0_FIRST  getPoolRef(), BP_vertical));
+  boxStack.push(new (getParentRef()) BPBox(DBG_INFO_ARG0_FIRST  getParentRef(), BP_vertical));
 }
 
 BoxPrint::~BoxPrint()
@@ -383,10 +383,10 @@ BoxPrint& BoxPrint::operator<< (BPKind k)
   }
   else {
     // open new box
-    str::StoragePool *pool = getPool();
+    str::StoragePool *pool = getParent();
     xassert(pool);
     // TODO dummy, it is bad, if str::StoragePool autogrows
-    boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG0_FIRST  getPoolRef(), k));
+    boxStack.push(new (getParentRef()) BPBox(DBG_INFO_ARG0_FIRST  getParentRef(), k));
   }
   return *this;
 }
@@ -396,12 +396,12 @@ BoxPrint& BoxPrint::operator<< (Cmd c)
 {
   switch (c) {
     default: xfailure("bad cmd");
-    case sp:        append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_DISABLED, 0 /*indent*/)); break;
-    case br:        append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_ENABLED, 0 /*indent*/)); break;
-    case fbr:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_FORCED, 0 /*indent*/)); break;
-    case lineStart: append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_LINE_START, 0 /*indent*/)); break;
-    case ind:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_ENABLED, levelIndent)); break;
-    case und:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_ENABLED, -levelIndent)); break;
+    case sp:        append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getParentRef(), BT_DISABLED, 0 /*indent*/)); break;
+    case br:        append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getParentRef(), BT_ENABLED, 0 /*indent*/)); break;
+    case fbr:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getParentRef(), BT_FORCED, 0 /*indent*/)); break;
+    case lineStart: append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getParentRef(), BT_LINE_START, 0 /*indent*/)); break;
+    case ind:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getParentRef(), BT_ENABLED, levelIndent)); break;
+    case und:       append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getParentRef(), BT_ENABLED, -levelIndent)); break;
   }
   return *this;
 }
@@ -409,7 +409,7 @@ BoxPrint& BoxPrint::operator<< (Cmd c)
 
 BoxPrint& BoxPrint::operator<< (IBreak b)
 {
-  append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getPoolRef(), BT_ENABLED, b.indent /*indent*/));
+  append(DBG_INFO_ARG0_FIRST  new BPBreak(DBG_INFO_ARG0_FIRST  getParentRef(), BT_ENABLED, b.indent /*indent*/));
   return *this;
 }
 
@@ -430,7 +430,7 @@ BPBox* /*owner*/ BoxPrint::takeTree()
   // initialize the box stack again, in case the user wants
   // to build another tree
   // TODO dummy, it is bad, if str::StoragePool autogrows
-  boxStack.push(new (getPoolRef()) BPBox(DBG_INFO_ARG0_FIRST  getPoolRef(), BP_vertical));
+  boxStack.push(new (getParentRef()) BPBox(DBG_INFO_ARG0_FIRST  getParentRef(), BP_vertical));
 
   return ret;
 }

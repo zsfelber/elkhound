@@ -295,8 +295,7 @@ friend class ::VoidNode;
 
     enum {
         ST_NONE = 0,
-        ST_PARENT,
-        ST_CHILD,
+        ST_TREE_ITEM,
         ST_DELETED
     } __Kind;
 
@@ -380,62 +379,26 @@ public:
 
    void assign(Storeable const & srcOrParent, size_t size_of);
 
-   inline StoragePool & getPoolRef() const {
-       return NN(getPool());
+   inline StoragePool & getParentRef() const {
+       return NN(getParent());
    }
 
-   inline StoragePool * getPool() const {
+   inline StoragePool * getParent() const {
        switch (__kind) {
        case ST_NONE:
            return NULL;
-       case ST_PARENT:
+       case ST_TREE_ITEM:
        {
            StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
            xassert(the_first);
            return *the_first;
        }
-       case ST_CHILD:
-       {
-           Storeable * st = getParent();
-           xassert(st);
-           return st->getPool();
-       }
        default:
            x_assert_fail("Wrong kind.", __FILE__, __LINE__);
            break;
        }
    }
 
-   inline Storeable * getParent() const;
-
-   inline Storeable const * getRoot() const {
-       switch (__kind) {
-       case ST_NONE:
-           return NULL;
-       case ST_PARENT:
-           return this;
-       case ST_CHILD:
-       {
-           Storeable * st = getParent();
-           xassert(st);
-           return st->getRoot();
-       }
-       default:
-           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
-           break;
-       }
-   }
-
-   inline bool isParentOf(Storeable const & chpool) const {
-       Storeable * par = chpool.getParent();
-       if (par == this) {
-           return true;
-       } else if (par) {
-           return isParentOf(*par);
-       } else {
-           return false;
-       }
-   }
 };
 
 
@@ -783,7 +746,7 @@ private:
 
            xassert(bool(ptr)==bool(src_ptr));
            xassert(ptr->__kind==src_ptr->__kind);
-           xassert(ptr->__kind == ST_PARENT || ptr->__kind == ST_CHILD);
+           xassert(ptr->__kind == ST_TREE_ITEM);
 
            if (ptr) {
                xassert( src_ptr->ownerPool == ptr->ownerPool );
@@ -884,7 +847,7 @@ private:
       ok:
 
       DataPtr data = (DataPtr) _data;
-      data->__kind = ST_PARENT;
+      data->__kind = ST_TREE_ITEM;
       data->__parentVector = encodeDeltaPtr(memory, (uint8_t*)_data);
       if (store_size == STORAGE_POOL_SIZE) {
           ((StoragePool*)data)->__parentVector0 = data->__parentVector;
@@ -914,19 +877,19 @@ private:
        switch (copyMode) {
        case Cp_Duplicate:
        {
-           xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
+           xassert(__kind != ST_DELETED && __kind == src.__kind);
 
-           __kind = ST_PARENT;
+           __kind = ST_TREE_ITEM;
            __parentVector = __parentVector0;
            //// keep it 'this'!! ownerPool = (StoragePool*) &src;
            ownerPool = (StoragePool*) &src;
-           xassert(getPoolRef().contains(this));
+           xassert(getParentRef().contains(this));
 
            break;
        }
        case Cp_TmpDuplicate:
        {
-           xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
+           xassert(__kind != ST_DELETED && __kind == src.__kind);
 
            ownerPool = (StoragePool*) &src;
 
@@ -934,7 +897,7 @@ private:
        }
        case Cp_Move:
        {
-           xassert(__kind != ST_DELETED && __kind == src.__kind && getPool() == src.getPool());
+           xassert(__kind != ST_DELETED && __kind == src.__kind && getParent() == src.getParent());
 
            fixPoolPointer();
 
@@ -1006,14 +969,24 @@ private:
        moveInternalPointers(src);
    }
 
+   inline bool isParentOf(Storeable const & chpool) const {
+       StoragePool * par = chpool.getParent();
+       if (par == this) {
+           return true;
+       } else if (par) {
+           return isParentOf(*par);
+       } else {
+           return false;
+       }
+   }
+
    inline StoragePool * getRootPool() const {
        switch (__kind) {
        case ST_NONE:
            return constcast(this);
-       case ST_PARENT:
-       case ST_CHILD:
+       case ST_TREE_ITEM:
        {
-           return getPool()->getRootPool();
+           return getParent()->getRootPool();
        }
        default:
            x_assert_fail("Wrong kind.", __FILE__, __LINE__);
@@ -1047,7 +1020,7 @@ public:
 
        if (childOfParent) {
            memset(((uint8_t*)this)+sizeof(Storeable), 0, sizeof(StoragePool)-sizeof(Storeable));
-           xassert(__kind == ST_CHILD && copyMode == Cp_All);
+           xassert(__kind == ST_TREE_ITEM && copyMode == Cp_All);
            first_del_var = std::string::npos;
            ownerPool = this;
        } else {
@@ -1057,7 +1030,7 @@ public:
        }
 
        if (copyMode != Cp_TmpDuplicate) {
-           getPoolRef().addChildPool(this);
+           getParentRef().addChildPool(this);
        }
    }
 
@@ -1317,13 +1290,13 @@ public:
 
        if (dataPointer) {
            if (child == this) {
-               xassert(dataPointer->getPool() == this);
+               xassert(dataPointer->getParent() == this);
            } else {
 
                if (!child) {
                    std::cout << "Warning  StoragePool.addPointer : pointer to external data : "
                              << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
-                   StoragePool const * parent = getPool();
+                   StoragePool const * parent = getParent();
                    if (parent && parent != this && !parent->contains(dataPointer)) {
                        std::cout << "Warning  StoragePool.addPointer : (parent) pointer to external data : "
                                  << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
@@ -1379,13 +1352,13 @@ public:
 
        if (dataPointer) {
            if (child == this) {
-               xassert(dataPointer->getPool() == this);
+               xassert(dataPointer->getParent() == this);
            } else {
 
                if (!child) {
                    std::cout << "Warning  StoragePool.removePointer : pointer to external data : "
                              << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
-                   StoragePool const * parent = getPool();
+                   StoragePool const * parent = getParent();
                    if (parent && parent != this && !parent->contains(dataPointer)) {
                        std::cout << "Warning  StoragePool.removePointer : (parent) pointer to external data : "
                                  << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
@@ -1609,7 +1582,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool)
     : objectName(objectName)
 #endif
 {
-    xassert(__kind == ST_PARENT && getPool() == &pool && pool.contains(this));
+    xassert(__kind == ST_TREE_ITEM && getParent() == &pool && pool.contains(this));
 }
 
 template<class ME>
@@ -1631,8 +1604,8 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParen
 
 inline Storeable::~Storeable() {
     switch (__kind) {
-    case ST_PARENT:
-        getPool()->freeParentItem(this);
+    case ST_TREE_ITEM:
+        getParent()->freeParentItem(this);
         break;
     case ST_DELETED:
         x_assert_fail("Already deleted.", __FILE__, __LINE__);
@@ -1644,13 +1617,12 @@ inline Storeable::~Storeable() {
 
 inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent) {
     if (childOfParent) {
-        StoragePool * srcPool = srcOrParent.getPool();
+        StoragePool * srcPool = srcOrParent.getParent();
         xassert(srcPool && srcPool->contains(this));
-        __kind = ST_CHILD;
-        __parentVector = encodeDeltaPtr((uint8_t*)&srcOrParent, (uint8_t*)this);
+        __kind = ST_TREE_ITEM;
+        __parentVector = encodeDeltaPtr((uint8_t*)srcPool->memory, (uint8_t*)this);
         __store_size = getStoreSize(size_of);
-        xassert(&srcOrParent == getParent());
-        xassert(srcPool == getPool());
+        xassert(srcPool == getParent());
     #ifdef REG_CHILD
         __next = 0;
         getParent()->regChild(this);
@@ -1679,23 +1651,23 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     case ST_NONE:
         xassert(__parentVector == std::string::npos);
         break;
-    case ST_PARENT:
+    case ST_TREE_ITEM:
     {
-        StoragePool * srcPool = src.getPool();
-        xassert(srcPool->contains(this));
-        __parentVector = encodeDeltaPtr((uint8_t*)srcPool->memory, (uint8_t*)this);
-        xassert(srcPool == getPool());
+        StoragePool * srcPool = src.getParent();
+        StoragePool const * par = srcPool->findChild(this);
+        xassert(par);
+        __parentVector = encodeDeltaPtr((uint8_t*)par->memory, (uint8_t*)this);
+        xassert(par == getParent());
         break;
     }
-    case ST_CHILD:
+    /*case ST_CHILD:
     {
-        StoragePool * srcPool = src.getPool();
-        xassert(srcPool->contains(this));
-        Storeable * srcParent = src.getParent();
-        __parentVector = encodeDeltaPtr((uint8_t*)srcParent, (uint8_t*)this);
-        xassert(srcParent == getParent());
+        StoragePool const * par = src.getParentRef().getRootPoolRef().findChild(this);
+        __kind = ST_PARENT;
+        __parentVector = encodeDeltaPtr((uint8_t*)par->memory, (uint8_t*)this);
+        xassert(par == getParent());
         break;
-    }
+    }*/
     default:
         x_assert_fail("Invalid kind.", __FILE__, __LINE__);
     }
@@ -1761,20 +1733,6 @@ inline void Storeable::operator delete[] (void* _ptr) {
         break;
     default:
         // Nothing to do here, everything is in ~Storeable
-        break;
-    }
-}
-
-inline Storeable * Storeable::getParent() const {
-    switch (__kind) {
-    case ST_NONE:
-        return NULL;
-    case ST_PARENT:
-        return getPool();
-    case ST_CHILD:
-        return (Storeable*) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
-    default:
-        x_assert_fail("Wrong kind.", __FILE__, __LINE__);
         break;
     }
 }

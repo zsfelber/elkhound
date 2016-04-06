@@ -29,8 +29,8 @@ public:
   }
 
   virtual ~VoidNode() {
-      getPool()->removePointer(next);
-      getPool()->removePointer(data);
+      getParent()->removePointer(next);
+      getParent()->removePointer(data);
   }
 };
 

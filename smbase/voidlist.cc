@@ -538,7 +538,7 @@ void VoidList::concat(VoidList &tail)
 
   // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
 
-  tail.getPoolRef().removeChildPool(&tail.npool);
+  tail.getParentRef().removeChildPool(&tail.npool);
   tail.npool.removeAllExternalPointers();
 
   //StoragePool stealSP =
