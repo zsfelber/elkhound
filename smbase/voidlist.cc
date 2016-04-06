@@ -1115,13 +1115,16 @@ void entry()
   } catch (x_assert const & ex) {
     std::cout<<"Pool:\n";
     pool.debugPrint();
+    std::cout<<"\n";
     if (_list) {
         std::cout<<"list:\n";
         _list->debugPrint();
+        std::cout<<"\n";
     }
     if (_thief) {
         std::cout<<"thief:\n";
         _thief->debugPrint();
+        std::cout<<"\n";
     }
   }
 

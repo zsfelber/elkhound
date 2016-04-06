@@ -296,6 +296,7 @@ friend class ::VoidNode;
     enum {
         ST_NONE = 0,
         ST_TREE_ITEM,
+        ST_STORAGE_POOL,
         ST_DELETED
     } __Kind;
 
@@ -388,6 +389,7 @@ public:
        case ST_NONE:
            return NULL;
        case ST_TREE_ITEM:
+       case ST_STORAGE_POOL:
        {
            StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
            xassert(the_first);
@@ -477,7 +479,9 @@ public:
      public:
        inline void pp() {
            if (index>=0) {
-               variablePtr += (*this)->__store_size;
+               size_t st = (*this)->__store_size;
+               xassert(st);
+               variablePtr += st;
                check();
            } else {
                x_assert_fail("Overindexed Storageable iterator.", __FILE__, __LINE__);
@@ -762,7 +766,7 @@ private:
 
            xassert(bool(ptr)==bool(src_ptr));
            xassert(ptr->__kind==src_ptr->__kind);
-           xassert(ptr->__kind == ST_TREE_ITEM);
+           xassert(ptr->__kind == ST_TREE_ITEM || ptr->__kind == ST_STORAGE_POOL);
 
            if (ptr) {
                xassert( src_ptr->ownerPool == ptr->ownerPool );
@@ -893,9 +897,9 @@ private:
        switch (copyMode) {
        case Cp_Duplicate:
        {
-           xassert(__kind != ST_DELETED && __kind == src.__kind);
+           xassert(__kind == ST_STORAGE_POOL && __kind == src.__kind);
 
-           __kind = ST_TREE_ITEM;
+           __kind = ST_STORAGE_POOL;
            __parentVector = __parentVector0;
            //// keep it 'this'!! ownerPool = (StoragePool*) &src;
            ownerPool = (StoragePool*) &src;
@@ -905,7 +909,7 @@ private:
        }
        case Cp_TmpDuplicate:
        {
-           xassert(__kind != ST_DELETED && __kind == src.__kind);
+           xassert(__kind == ST_STORAGE_POOL && __kind == src.__kind);
 
            ownerPool = (StoragePool*) &src;
 
@@ -913,7 +917,7 @@ private:
        }
        case Cp_Move:
        {
-           xassert(__kind != ST_DELETED && __kind == src.__kind && getParent() == src.getParent());
+           xassert(__kind == ST_STORAGE_POOL && __kind == src.__kind && getParent() == src.getParent());
 
            fixPoolPointer();
 
@@ -923,7 +927,7 @@ private:
        case Cp_All:
        {
            size_t bufsz = getMemBufSize(memlength);
-           xassert(__kind != ST_DELETED && bufsz==memcapacity);
+           xassert(__kind == ST_STORAGE_POOL && bufsz==memcapacity);
 
            memory = NULL;
            intpointers = NULL;
@@ -1001,6 +1005,7 @@ private:
        case ST_NONE:
            return constcast(this);
        case ST_TREE_ITEM:
+       case ST_STORAGE_POOL:
        {
            return getParent()->getRootPool();
        }
@@ -1033,13 +1038,16 @@ public:
        Storeable(DBG_INFO_ARG_FWD_FIRST srcOrParent, sizeof(StoragePool)-sizeof(__parentVector0), childOfParent) {
 
        xassert(!isParentOf(srcOrParent));
+       xassert(__store_size == STORAGE_POOL_SIZE);
 
        if (childOfParent) {
            memset(((uint8_t*)this)+sizeof(Storeable), 0, sizeof(StoragePool)-sizeof(Storeable));
-           xassert(__kind == ST_TREE_ITEM && copyMode == Cp_All);
+           xassert((__kind == ST_TREE_ITEM||__kind == ST_STORAGE_POOL) && copyMode == Cp_All);
+           __kind = ST_STORAGE_POOL;
            first_del_var = std::string::npos;
            ownerPool = this;
        } else {
+           xassert(__kind == ST_STORAGE_POOL);
            ownerPool = this;
            StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
            assignImpl(srcOrParentPool, copyMode);
@@ -1108,6 +1116,7 @@ public:
        __parentVector = std::string::npos;
         first_del_var = std::string::npos;
         ownerPool = this;
+        __store_size = STORAGE_POOL_SIZE;
    }
 
    inline StoragePool& operator= (StoragePool const &src) {
@@ -1573,27 +1582,41 @@ public:
 
    void debugPrint(std::ostream& os, std::string indent = "") const
    {
-     os<<std::hex<<indent<< "{\n";
-     size_t* chPoolsFrom = childpools;
-     size_t* chPoolsTo = childpools+chplslength;
-     for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
-         PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
-         if (ptr) {
-             os<<indent<<" child:";
-             ptr->debugPrint(os, indent+"  ");
-             os<<"\n";
+     if (indent.length() > 100) {
+         os<<std::hex<<indent<< "...";
+     } else {
+         os<<std::hex<<indent<< "poolx"<<(void*)this<<":{\n";
+         size_t* chPoolsFrom = childpools;
+         size_t* chPoolsTo = childpools+chplslength;
+         for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
+             PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+             if (ptr) {
+                 os<<indent<<" ";
+                 ptr->debugPrint(os, indent+"  ");
+                 os<<"\n";
+             }
          }
-     }
-     os<<indent<<" values:";
-     for (iterator it=begin(); it != -1; it++) {
-         Storeable *cur = *it;
-         if (cur->__kind == ST_TREE_ITEM) {
-             cur->debugPrint(os);
-             os<<" ";
+         os<<indent<<" values:";
+         for (iterator it=begin(); it != -1; it++) {
+             Storeable *cur = *it;
+             switch (cur->__kind) {
+             case ST_TREE_ITEM:
+                 cur->debugPrint(os);
+                 os<<" ";
+                 break;
+             case ST_STORAGE_POOL:
+                 os<<" poolx"<<(void*)cur;
+                 break;
+             case ST_DELETED:
+                 os<<" delx"<<(void*)cur;
+                 break;
+             default:
+                 break;
+             }
          }
+         os<<"\n";
+         os<<indent<< "}"<<std::flush<<std::dec;
      }
-     os<<"\n";
-     os<<indent<< "}"<<std::flush<<std::dec;
    }
 
    inline iterator begin(DataPtr variablePtr = 0) const {
@@ -1649,7 +1672,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool)
     : objectName(objectName)
 #endif
 {
-    xassert(__kind == ST_TREE_ITEM && getParent() == &pool && pool.contains(this));
+    xassert((__kind == ST_TREE_ITEM||__kind == ST_STORAGE_POOL) && getParent() == &pool && pool.contains(this));
 }
 
 template<class ME>
@@ -1672,6 +1695,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParen
 inline Storeable::~Storeable() {
     switch (__kind) {
     case ST_TREE_ITEM:
+    case ST_STORAGE_POOL:
         getParent()->freeParentItem(this);
         break;
     case ST_DELETED:
@@ -1719,6 +1743,7 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
         xassert(__parentVector == std::string::npos);
         break;
     case ST_TREE_ITEM:
+    case ST_STORAGE_POOL:
     {
         StoragePool * srcPool = src.getParent();
         StoragePool const * par = srcPool->findChild(this);
