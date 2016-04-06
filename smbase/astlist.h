@@ -90,8 +90,7 @@ public:
 
   // debugging: two additional invariants
   void selfCheck() const                { list.selfCheck(); }
-  void debugPrint() const               { list.debugPrint(); }
-  void debugPrint(std::ostream& os) const        { list.debugPrint(os); }
+  void debugPrint(std::ostream& os, std::string indent="") const        { list.debugPrint(os, indent); }
 };
 
 

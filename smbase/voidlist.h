@@ -32,6 +32,15 @@ public:
       getParent()->removePointer(next);
       getParent()->removePointer(data);
   }
+  void debugPrint(std::ostream& os, std::string indent = "") const {
+      os<<std::hex<<indent<< " node:";
+      if (data) {
+          os<<" "<< *data;
+      } else {
+          os<<" NULL";
+      }
+      os<<std::flush<<std::dec;
+  }
 };
 
 
@@ -59,6 +68,7 @@ private:
   friend class VoidListMutator;
 
   void chk_assign(VoidList const &obj);
+  uint8_t* glueNpools(VoidList const &tail);
 
 public:
   inline str::StoragePool &getPool() {
@@ -176,8 +186,10 @@ public:
 
   // debugging
   void selfCheck() const;            // test this list; fail assertion if malformed
-  void debugPrint() const;           // print list contents to stdout
-  void debugPrint(std::ostream& os) const;     // print list contents to stdout
+
+  Storeable::debugPrint;
+
+  void debugPrint(std::ostream& os, std::string indent = "") const;     // print list contents to stdout
   void checkHeapDataPtrs() const;    // fail assertion if any 'data' ptr isn't valid heap ptr
   void checkUniqueDataPtrs() const;  // fail assertion if any 'data' ptr matches any other in this list
 };

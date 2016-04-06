@@ -15,6 +15,12 @@ public:
   Integer(DBG_INFO_FORMAL_FIRST  int ii);
   Integer(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int ii);
   ~Integer();
+
+  void debugPrint(std::ostream& os, std::string indent = "") const
+  {
+      os <<indent<< i;
+  }
+
 };
 
 

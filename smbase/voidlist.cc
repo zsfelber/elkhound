@@ -600,22 +600,60 @@ void VoidList::stealTailAt(int index, VoidList &source)
   }
 }
 
+uint8_t* VoidList::glueNpools(VoidList const &tail) {
+    xassert(tail.npool.getExtPtrsLength() == 1);
+
+    str::StoragePool const * chpool = npool.findChild(tail.npool.memory);
+
+    uint8_t * oldmemend = NULL;
+
+    if (chpool) {
+        if (chpool->contains(tail.npool.memory+tail.npool.memlength-1)) {
+            ;
+        } else {
+            chpool = NULL;
+        }
+    } else {
+        chpool = tail.npool.findChild(npool.memory);
+        if (chpool) {
+            oldmemend = npool.memory+npool.memlength;
+
+            str::StoragePool childView(DBG_INFO_ARG0);
+            npool.append(tail.npool, childView);
+
+            std::list<str::StoragePool::ChCh> badChildren;
+            tail.npool.findChildChain(badChildren, npool.memory);
+            if (badChildren.size()) {
+                int ind = badChildren.front().index;
+                childView.removeChildPool(childView.childpools + ind);
+            }
+        }
+    }
+
+    if (!chpool) {
+        oldmemend = npool.memory+npool.memlength;
+        npool += tail.npool;
+    }
+
+    return oldmemend;
+}
+
 // using str::StoragePool impl based on buffer-copy
 void VoidList::appendAll(VoidList const &tail)
 {
-  xassert(tail.npool.getExtPtrsLength() == 1);
-
-  uint8_t * oldmemend = npool.memory+npool.memlength;
-  npool += tail.npool;
+  uint8_t * oldmemend = glueNpools(tail);
 
   // find the end of 'this' list
   VoidNode *n = top;
   for(; n->next; n = n->next)
-    {}
+  {}
 
   if (n) {
       n->next = tail.top;
-      npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next, oldmemend);
+
+      if (oldmemend) {
+         npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next, oldmemend);
+      }
   }
 }
 
@@ -638,10 +676,7 @@ void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 // using str::StoragePool impl based on buffer-copy
 void VoidList::prependAll(VoidList const &head)
 {
-    xassert(head.npool.getExtPtrsLength() == 1);
-
-    uint8_t * oldmemend = npool.memory+npool.memlength;
-    npool += head.npool;
+    uint8_t * oldmemend = glueNpools(head);
 
     // find the end of 'head' list
     VoidNode *n;
@@ -652,8 +687,10 @@ void VoidList::prependAll(VoidList const &head)
     if (n) {
         n->next = top;
 
-        top = head.top;
-        npool.moveFrom(head.npool, (str::Storeable::DataPtr&)top, oldmemend);
+        if (oldmemend) {
+            top = head.top;
+            npool.moveFrom(head.npool, (str::Storeable::DataPtr&)top, oldmemend);
+        }
     }
 }
 
@@ -766,16 +803,15 @@ STATICDEF int VoidList::pointerAddressDiff(str::Storeable const *left, str::Stor
   return comparePointerAddresses(left, right);
 }
 
-void VoidList::debugPrint() const
+void VoidList::debugPrint(std::ostream& os, std::string indent) const
 {
-    debugPrint(std::cout);
-}
-
-void VoidList::debugPrint(std::ostream& os) const
-{
-  os<<std::hex<< "{ ";
+  os<<std::hex<<indent<< "{ ";
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {
-    os<<" "<< iter.data();
+    if (iter.data()) {
+        os<<" "<< *iter.data();
+    } else {
+        os<<" NULL";
+    }
   }
   os<< "}"<<std::flush<<std::dec;
 }
@@ -939,10 +975,12 @@ namespace str {
 void entry()
 {
   str::StoragePool pool(DBG_INFO_ARG0);
+  VoidList *_list = NULL;
+  VoidList *_thief = NULL;
   // first set of tests
-  {
+  try {
 
-    VoidList *_list = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    _list = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
     VoidList &list = *_list;
 
     // some sample items
@@ -1026,8 +1064,9 @@ void entry()
     PRINT(list);
 
     // test stealTailAt
-    VoidList *_thief = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    _thief = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
     VoidList &thief = *_thief;
+    thief.selfCheck();
 
     thief.stealTailAt(1, list);
 
@@ -1073,6 +1112,17 @@ void entry()
             list.nth(0) == b &&
             list.nth(1) == c &&
             list.nth(2) == d);
+  } catch (x_assert const & ex) {
+    std::cout<<"Pool:\n";
+    pool.debugPrint();
+    if (_list) {
+        std::cout<<"list:\n";
+        _list->debugPrint();
+    }
+    if (_thief) {
+        std::cout<<"thief:\n";
+        _thief->debugPrint();
+    }
   }
 
   // this hits most of the remaining code
