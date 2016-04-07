@@ -741,8 +741,10 @@ VoidNode* VoidList::prependAll(VoidList const &head, VoidNode *headTail)
 VoidList& VoidList::operator= (VoidList const &src)
 {
   xassert(__kind == src.__kind);
-  xassert(__parentVector == src.__parentVector);
   npool = src.npool;
+  top = src.top;
+  npool.moveFrom(src.npool, (str::Storeable::DataPtr&)top);
+
   /*xassert(__pool == src.__pool);
   if (this != &src) {
     removeAll();
@@ -1025,14 +1027,15 @@ void verifySorted(VoidList const &list)
 
 void testSorting()
 {
-  pool.del();
 
   enum { ITERS=100, ITEMS=20 };
 
   loopi(ITERS) {
     // construct a list (and do it again if it ends up already sorted)
     _list1 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    _list2 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
     _list3 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+
     VoidList &list1 = *_list1;
     VoidList &list3 = *_list3;     // this one will be constructed sorted one at a time
     int numItems;
@@ -1052,7 +1055,6 @@ void testSorting()
     verifySorted<Integer>(list3);
 
     // duplicate it for use with other algorithm
-    _list2 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
     VoidList &list2 = *_list2;
     list2 = list1;
 
@@ -1083,6 +1085,10 @@ void testSorting()
     while (list1.removeIfPresent(first))
       {}     // remove all occurrances of 'first'
     xassert(!list1.equalAsPointerSets(list2));
+
+    delete _list1;
+    delete _list2;
+    delete _list3;
   }
 }
 
@@ -1228,8 +1234,12 @@ void entry()
             list.nth(0) == b &&
             list.nth(1) == c &&
             list.nth(2) == d);
+
+    _list = NULL;
+    _thief = NULL;
+    pool.del();
   } catch (x_assert const & ex) {
-        debugEverything();
+    debugEverything();
   }
 
   // this hits most of the remaining code

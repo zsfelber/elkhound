@@ -636,14 +636,13 @@ private:
            ExternalPtr ptr0 = (ExternalPtr)decodeDeltaPtr(oldmem.memory, *intPointersFrom);
            if (ptr0) {
                xassert(oldmem.contains(ptr0));
-               if (*ptr0) {
-                   xassert(oldmem.contains(*ptr0));
-               }
 #endif
                ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(deltaOrigin, *intPointersFrom);
                xassert(ptr);
 
-               moveVariable(oldmem, *ptr, d);
+               if (*ptr0 && oldmem.contains(*ptr0)) {
+                   moveVariable(oldmem, *ptr, d);
+               }
                size_t dpt = encodeDeltaPtr(origin, (uint8_t*)ptr);
                *intPointersFrom = dpt;
 #ifdef DEBUG
@@ -1107,7 +1106,7 @@ public:
        size_t* chPoolsTo = childpools+chplslength;
        for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
            PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
-           if (ptr) {
+           if (ptr && ptr->ownerPool == ptr) {
                ptr->del();
            }
        }
