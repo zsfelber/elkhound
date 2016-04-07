@@ -848,7 +848,7 @@ STATICDEF int VoidList::pointerAddressDiff(str::Storeable const *left, str::Stor
 
 void VoidList::debugPrint(std::ostream& os, std::string indent) const
 {
-  os<<std::hex<<indent<< "vlstx"<<(void*)this<<std::dec;
+  os/*<<std::hex*/<<indent<< "vlstx"<<(void*)this/*<<std::dec*/;
 #ifdef DEBUG
   os<<":"<<objectName;
 #endif
@@ -1055,10 +1055,12 @@ int debugEverything() {
 
     rows2.clear();
     grind(s.str(), rows2);
-    LCS::printDiff(std::cout, rows1, rows2);
-    std::cout<<std::flush;
-
-    rows1 = rows2;
+    std::stringstream sd;
+    if (LCS::printDiff(sd, rows1, rows2)) {
+        std::cout << sd.str();
+        std::cout<<std::flush;
+        rows1 = rows2;
+    }
     return 0;
 }
 

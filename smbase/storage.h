@@ -109,6 +109,7 @@ static const int STORE_BUF_SZ = 1 << STORE_BUF_BITS;
 static const int STORE_BUF_VAR_SH = 5;
 static const int STORE_BUF_ADDR_SZ = 1 << STORE_BUF_VAR_SH;
 
+static const size_t npos = std::string::npos;
 
 static void const * const LNULL = NULL;
 
@@ -195,7 +196,7 @@ inline size_t getPtrBufSize(size_t ptrslength) {
 
 inline size_t encodeDeltaPtr(uint8_t const * origin, uint8_t const * address) {
     if (!address || !origin) {
-        return std::string::npos;
+        return npos;
     } else {
        xassert(origin <= address);
         return (size_t)(address - origin);
@@ -211,11 +212,11 @@ inline std::ptrdiff_t encodeSignedDeltaPtr(uint8_t const * origin, uint8_t const
 }
 
 inline uint8_t const * decodeDeltaPtr(uint8_t const * origin, size_t delta) {
-    return delta == std::string::npos ? NULL : origin + delta;
+    return delta == npos ? NULL : origin + delta;
 }
 
 inline uint8_t const * decodeDeltaBackPtr(uint8_t const * origin, size_t delta) {
-    return delta == std::string::npos ? NULL : origin - delta;
+    return delta == npos ? NULL : origin - delta;
 }
 
 inline uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin, std::ptrdiff_t delta) {
@@ -266,10 +267,9 @@ T* lower_bound(T* first, T* last,
     }
 
     if (*middle < val) {
+        first = middle+1;
         if (nothingToTheRight) {
-            return middle;
-        } else {
-            first = middle+1;
+            return first;
         }
     } else if (*middle > val) {
         // exclusive index  (no -1)
@@ -300,12 +300,12 @@ friend class ::VoidNode;
     char const * objectName;
 #endif
 
-    enum {
+    enum __Kind {
         ST_NONE = 0,
         ST_VALUE,
         ST_STORAGE_POOL,
         ST_DELETED
-    } __Kind;
+    };
 
     uint8_t __kind;
     size_t __parentVector;
@@ -386,6 +386,10 @@ public:
    virtual ~Storeable();
 
    void assign(Storeable const & srcOrParent, size_t size_of);
+
+   inline __Kind getKind() const {
+       return (__Kind)__kind;
+   }
 
    inline StoragePool & getParentRef() const {
        return NN(getParent());
@@ -832,7 +836,7 @@ private:
                       deleted_vars -= continous;
 
                       if (first == da) {
-                          first_del_var = std::string::npos;
+                          first_del_var = npos;
                           if (deleted_vars) {
                               for (it++; it != -1; it++) {
                                   if (it->__kind == ST_DELETED) {
@@ -902,7 +906,7 @@ private:
        switch (copyMode) {
        case Cp_Duplicate:
        {
-           xassert(__kind == ST_STORAGE_POOL && __kind == src.__kind);
+           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
 
            __parentVector = __parentVector0;
            //// keep it 'this'!! ownerPool = (StoragePool*) &src;
@@ -913,7 +917,7 @@ private:
        }
        case Cp_TmpDuplicate:
        {
-           xassert(__kind == ST_STORAGE_POOL && __kind == src.__kind);
+           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
 
            ownerPool = (StoragePool*) &src;
 
@@ -921,7 +925,7 @@ private:
        }
        case Cp_Move:
        {
-           xassert(__kind == ST_STORAGE_POOL && __kind == src.__kind && getParent() == src.getParent());
+           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL) && src.__kind == ST_STORAGE_POOL && getParent() == src.getParent());
 
            fixPoolPointer();
 
@@ -931,7 +935,7 @@ private:
        case Cp_All:
        {
            size_t bufsz = getMemBufSize(memlength);
-           xassert(__kind == ST_STORAGE_POOL && bufsz==memcapacity);
+           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL) && bufsz==memcapacity);
 
            memory = NULL;
            intpointers = NULL;
@@ -1048,10 +1052,10 @@ public:
            memset(((uint8_t*)this)+sizeof(Storeable), 0, sizeof(StoragePool)-sizeof(Storeable));
            xassert((__kind == ST_VALUE||__kind == ST_STORAGE_POOL) && copyMode == Cp_All);
            __kind = ST_STORAGE_POOL;
-           first_del_var = std::string::npos;
+           first_del_var = npos;
            ownerPool = this;
        } else {
-           xassert(__kind == ST_STORAGE_POOL);
+           xassert(__kind == ST_NONE || __kind == ST_STORAGE_POOL);
            ownerPool = this;
            StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
            assignImpl(srcOrParentPool, copyMode);
@@ -1117,8 +1121,8 @@ public:
 #else
        memset(this, 0, sizeof(StoragePool));
 #endif
-       __parentVector = std::string::npos;
-        first_del_var = std::string::npos;
+       __parentVector = npos;
+        first_del_var = npos;
         ownerPool = this;
         __store_size = STORAGE_POOL_SIZE;
    }
@@ -1300,7 +1304,7 @@ public:
 
    inline size_t* getChildPointer(StoragePool const * child) const {
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)child);
-       size_t* val = lower_bound(childpools, childpools+chplslength, dd, std::string::npos);
+       size_t* val = lower_bound(childpools, childpools+chplslength, dd, npos);
        if (*val == dd) {
            return val;
        } else {
@@ -1411,9 +1415,9 @@ public:
        if (pchild == this) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
            size_t* last = intpointers+intptrslength;
-           size_t* val = lower_bound(intpointers, last, dd, std::string::npos);
+           size_t* val = lower_bound(intpointers, last, dd, npos);
            size_t vval = *val;
-           if (vval == std::string::npos) {
+           if (vval == npos) {
                std::cout << "Warning  StoragePool.removePointer : internal poinrer already removed : " << (void*) &dataPointer
                          << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
            } else {
@@ -1422,7 +1426,7 @@ public:
                } else if (val == last-1) {
                    intptrslength--;
                } else {
-                   *val = std::string::npos;
+                   *val = npos;
                }
            }
        } else if (pchild) {
@@ -1480,13 +1484,13 @@ public:
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
        size_t* last = childpools+chplslength;
-       size_t* val = lower_bound(childpools, last, dd, std::string::npos);
+       size_t* val = lower_bound(childpools, last, dd, npos);
        xassert (*val == dd);
        if (val == last) {
        } else if (val == last-1) {
            chplslength--;
        } else {
-           *val = std::string::npos;
+           *val = npos;
        }
    }
 
@@ -1497,7 +1501,7 @@ public:
        } else if (val == last-1) {
            chplslength--;
        } else {
-           *val = std::string::npos;
+           *val = npos;
        }
    }
 
@@ -1505,7 +1509,7 @@ public:
 #ifdef DEBUG
        xassert(__store_size == getStoreSize(sizeof(StoragePool)));
        xassert(__kind < ST_DELETED);
-       xassert((__kind == ST_NONE) == (__parentVector == std::string::npos));
+       xassert((__kind == ST_NONE) == (__parentVector == npos));
        xassert(ownerPool);
        xassert(bool(memory) == bool(memlength));
        xassert(bool(memcapacity) == bool(memlength));
@@ -1589,26 +1593,56 @@ public:
 
    Storeable::debugPrint;
 
+   void debugPtr(std::ostream& os, ExternalPtr ptr) const {
+       if (*ptr) {
+           os<<" ";
+           StoragePool const *p;
+           if (contains(*ptr)) {
+           } else if (ownerPool!=this) {
+               if (!(p=ownerPool->findChild(*ptr))) {
+                   os<<"out!";
+               } else if (!findChild(*ptr)) {
+                   if (p == ownerPool)
+                       os<<"own!";
+                   else
+                       os<<"och!";
+               } else {
+                   os<<"chi!";
+               }
+           } else if (!findChild(*ptr)) {
+               os<<"out!";
+           } else {
+               os<<"chi!";
+           }
+           os<<(void*)ptr<<":";
+           os<<(void*)*ptr<<":";
+           (*ptr)->debugPrint(os);
+       } else {
+           os<<" ";
+           os<<(void*)ptr<<":NULL";
+       }
+   }
+
    void debugPrint(std::ostream& os, std::string indent = "") const
    {
      if (indent.length() > 100) {
          os<<indent<< "...";
      } else {
-         os<<std::hex<<indent<< "poolx"<<(void*)this;
+         os/*<<std::hex*/<<indent<< "pool:"<<(void*)this;
 #ifdef DEBUG
          os<<":"<<objectName;
 #endif
-         os<<":memx"<<(void*)memory<<":"<<memlength;
-         os<<":intx"<<(void*)intpointers<<":"<<intptrslength;
-         os<<":extx"<<(void*)extpointers<<":"<<extptrslength;
-         os<<":chpx"<<(void*)childpools<<":"<<chplslength;
+         os<<":mem:"<<(void*)memory<<":"<<memlength;
+         os<<":int:"<<(void*)intpointers<<":"<<intptrslength;
+         os<<":ext:"<<(void*)extpointers<<":"<<extptrslength;
+         os<<":chp:"<<(void*)childpools<<":"<<chplslength;
          if (getParent()) {
-             os<<":parx"<<(void*)getParent();
+             os<<":par:"<<(void*)getParent();
          }
          if (this != ownerPool) {
-             os<<":ownx"<<(void*)ownerPool;
+             os<<":own:"<<(void*)ownerPool;
          }
-         os<<std::dec;
+         //os<<std::dec;
 
          os<<":{\n";
          size_t* chPoolsFrom = childpools;
@@ -1626,19 +1660,18 @@ public:
              for (iterator it=begin(); it != -1; it++) {
                  Storeable *cur = *it;
                  switch (cur->__kind) {
+                 case ST_NONE:
+                     os<<" stack:"<<(void*)cur;
+                     break;
                  case ST_VALUE:
+                     os<<" "<<(void*)cur<<":";
                      cur->debugPrint(os);
-                     os<<" ";
                      break;
                  case ST_STORAGE_POOL:
-                     os<<std::hex;
-                     os<<" poolx"<<(void*)cur;
-                     os<<std::dec;
+                     os<<" pool:"<<(void*)cur;
                      break;
                  case ST_DELETED:
-                     os<<std::hex;
-                     os<<" delx"<<(void*)cur;
-                     os<<std::dec;
+                     os<<" del:"<<(void*)cur;
                      break;
                  default:
                      break;
@@ -1654,23 +1687,7 @@ public:
              for (; intPointersFrom<intPointersTo; intPointersFrom++) {
                  ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
                  if (ptr) {
-                     if (*ptr) {
-                         if (ownerPool!=this) {
-                             if (!ownerPool->findChild(*ptr)) {
-                                 os<<"out!";
-                             } else if (!findChild(*ptr)) {
-                                 os<<"own!";
-                             }
-                         } else if (!findChild(*ptr)) {
-                             os<<"out!";
-                         } else if (!contains(*ptr)) {
-                             os<<"chi!";
-                         }
-                         (*ptr)->debugPrint(os);
-                         os<<" ";
-                     } else {
-                         os<<"NULL ";
-                     }
+                     debugPtr(os, ptr);
                  }
              }
              os<<"\n";
@@ -1683,23 +1700,7 @@ public:
              for (; extPointersFrom<extPointersTo; extPointersFrom++) {
                  ExternalPtr ptr = *extPointersFrom;
                  if (ptr) {
-                     if (*ptr) {
-                         if (ownerPool!=this) {
-                             if (!ownerPool->findChild(*ptr)) {
-                                 os<<"out!";
-                             } else if (!findChild(*ptr)) {
-                                 os<<"own!";
-                             }
-                         } else if (!findChild(*ptr)) {
-                             os<<"ou!";
-                         } else if (!contains(*ptr)) {
-                             os<<"ch!";
-                         }
-                         (*ptr)->debugPrint(os);
-                         os<<" ";
-                     } else {
-                         os<<"NULL ";
-                     }
+                     debugPtr(os, ptr);
                  }
              }
              os<<"\n";
@@ -1743,7 +1744,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL)
 #endif
 {
 #if debug_this
-    if (__kind == ST_PARENT && __parentVector && __parentVector != std::string::npos) {
+    if (__kind == ST_PARENT && __parentVector && __parentVector != npos) {
         StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
         StoragePool* pool = *the_first;
         if (pool->contains(this)) {
@@ -1755,7 +1756,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL)
     lastObjName = objectName;
 #endif
     __kind = ST_NONE;
-    __parentVector = std::string::npos;
+    __parentVector = npos;
     __store_size  = 0;
 }
 
@@ -1842,16 +1843,26 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     // transfer __parentVector (we keep parent)
     switch (__kind) {
     case ST_NONE:
-        xassert(__parentVector == std::string::npos);
+        xassert(__parentVector == npos);
         break;
     case ST_VALUE:
     case ST_STORAGE_POOL:
     {
         StoragePool * srcPool = src.getParent();
         StoragePool const * par = srcPool->findChild(this);
-        xassert(par);
-        __parentVector = encodeDeltaPtr((uint8_t*)par->memory, (uint8_t*)this);
-        xassert(par == getParent());
+        if (par) {
+            __parentVector = encodeDeltaPtr((uint8_t*)par->memory, (uint8_t*)this);
+            xassert(par == getParent());
+        } else {
+            std::cout << "Warning  Storeable.assign(" << getKind()
+#ifdef DEBUG
+                      << " " << objectName
+#endif
+                      << ")  copy to stack : "
+                      << (void*) &src << " -> " << (void*) this << std::endl;
+            __parentVector = npos;
+            __kind = ST_NONE;
+        }
         break;
     }
     /*case ST_CHILD:

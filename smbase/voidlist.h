@@ -83,19 +83,19 @@ protected:
 
 public:
   VoidList(DBG_INFO_FORMAL)  : str::Storeable(DBG_INFO_ARG_FWD), npool(DBG_INFO_ARG_FWD)
-  { top=NULL;   npool.addPointer(top); }
+  { top=NULL;   if (getKind()==ST_VALUE) npool.addPointer(top); }
 
   VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, str::StoragePool::CopyMode copy)  : str::Storeable(DBG_INFO_ARG_FWD), npool(DBG_INFO_ARG_FWD_FIRST  pool, false, copy)
-  { top=NULL;   npool.addPointer(top); }
+  { top=NULL;   if (getKind()==ST_VALUE) npool.addPointer(top); }
 
   VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)  : str::Storeable(DBG_INFO_ARG_FWD_FIRST pool), npool(DBG_INFO_ARG_FWD_FIRST  *this, true)
-  { top=NULL;   npool.addPointer(top); }
+  { top=NULL;   if (getKind()==ST_VALUE) npool.addPointer(top); }
 
   VoidList(DBG_INFO_FORMAL_FIRST  str::Storeable const &parent, size_t size_of=0) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, size_of?size_of:sizeof(VoidList), true), npool(DBG_INFO_ARG_FWD_FIRST  *this, true)
-  { top=NULL;   npool.addPointer(top); }
+  { top=NULL;   if (getKind()==ST_VALUE) npool.addPointer(top); }
 
   VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
-  virtual ~VoidList()                { npool.removePointer(top);/*npool clears it completely*/  }
+  virtual ~VoidList()                { if (getKind()==ST_VALUE) npool.removePointer(top);/*npool clears it completely*/  }
 
   void assign(VoidList const &src, size_t size_of=0, bool move=false);
 

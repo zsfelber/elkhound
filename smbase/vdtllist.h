@@ -31,13 +31,13 @@ private:
 
 public:
   VoidTailList(DBG_INFO_FORMAL) : VoidList(DBG_INFO_ARG_FWD)
-  { tail = NULL;  npool.addPointer(tail); }
+  { tail = NULL;  if (getKind()==ST_VALUE) npool.addPointer(tail); }
 
   VoidTailList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : VoidList(DBG_INFO_ARG_FWD_FIRST  pool)
-  { tail = NULL;  npool.addPointer(tail); }
+  { tail = NULL;  if (getKind()==ST_VALUE) npool.addPointer(tail); }
   VoidTailList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : VoidList(DBG_INFO_ARG_FWD_FIRST  parent,sizeof(VoidTailList))
-  { tail = NULL;  npool.addPointer(tail); }
-  ~VoidTailList()                    { npool.removePointer(tail); }
+  { tail = NULL;  if (getKind()==ST_VALUE) npool.addPointer(tail); }
+  ~VoidTailList()                    { if (getKind()==ST_VALUE) npool.removePointer(tail); }
   
   // move:true  special ctor which steals the list. NOTE invoker should always deallocate the header
   VoidTailList(DBG_INFO_FORMAL_FIRST  VoidTailList const &src, bool move) : VoidList(DBG_INFO_ARG_FWD_FIRST  src, sizeof(VoidTailList), move)

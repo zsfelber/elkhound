@@ -71,8 +71,8 @@ class LCS
             backtrackOne(m_, n_);
         }
 
-        void printDiff() {
-            printDiff(m_, n_);
+        bool printDiff() {
+            return  printDiff(m_, n_);
         }
 
 
@@ -115,17 +115,22 @@ class LCS
                 backtrackOne(i - 1, j);
         }
 
-        void printDiff(size_t i, size_t j) {
+        bool printDiff(size_t i, size_t j) {
             if (i > 0 && j > 0 && X[i-1] == Y[j-1]) {
-                printDiff(i-1, j-1);
+                bool result = printDiff(i-1, j-1);
                 *os << both << X[i-1] << newline;
+                return result;
             } else {
                 if (j > 0 && (i == 0 || getAt(i,j-1) >= getAt(i-1,j))) {
                     printDiff(i, j-1);
                     *os << second << Y[j-1] << newline;
+                    return true;
                 } else if (i > 0 && (j == 0 or getAt(i,j-1) < getAt(i-1,j))) {
                     printDiff(i-1, j);
                     *os << first << X[i-1] << newline;
+                    return true;
+                } else {
+                    return false;
                 }
             }
         }
@@ -140,12 +145,12 @@ public:
     }
 
     template<typename T>
-    static void printDiff(std::ostream & os, std::vector<T>& X, std::vector<T>& Y,
+    static bool printDiff(std::ostream & os, std::vector<T>& X, std::vector<T>& Y,
                           std::string both="   ", std::string first="-  ",
                           std::string second="+  ", std::string newline="\n") {
         LCSTable<T> table(X.size(), Y.size(), &*X.begin(), &*Y.begin(),
                        both, first, second, newline, os);
-        table.printDiff();
+        return table.printDiff();
     }
 
 
