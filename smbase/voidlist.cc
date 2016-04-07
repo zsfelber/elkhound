@@ -941,6 +941,69 @@ VoidListIter::VoidListIter(VoidList const &list, int pos)
 #ifdef TEST_VOIDLIST
 #include "test.h"     // USUAL_MAIN
 
+
+namespace str {
+
+str::StoragePool pool(DBG_INFO_ARG0);
+VoidList *_list = NULL;
+VoidList *_thief = NULL;
+VoidList *_list1 = NULL, *_list2 = NULL, *_list3 = NULL;
+std::vector<std::string> rows1;
+std::vector<std::string> rows2;
+
+void grind(std::string const &s, std::vector<std::string> &rows) {
+    std::istringstream st(s);
+    std::string line;
+    while (std::getline(st, line)) {
+        rows.reserve((rows.size()+1)<<10>>10);
+        rows.push_back(line);
+    }
+}
+
+int debugEverything() {
+    std::stringstream s;
+    s<<"*****************************************************************************************************\n";
+    s<<lastObjName<<"..\n";
+    s<<"Pool:\n";
+    pool.debugPrint(s);
+    s<<"\n";
+    if (_list) {
+        s<<"list:\n";
+        _list->debugPrint(s);
+        s<<"\n";
+    }
+    if (_thief) {
+        s<<"thief:\n";
+        _thief->debugPrint(s);
+        s<<"\n";
+    }
+    if (_list1) {
+        s<<"list1:\n";
+        _list1->debugPrint(s);
+        s<<"\n";
+    }
+    if (_list2) {
+        s<<"list2:\n";
+        _list2->debugPrint(s);
+        s<<"\n";
+    }
+    if (_list3) {
+        s<<"list3:\n";
+        _list3->debugPrint(s);
+        s<<"\n";
+    }
+
+    rows2.clear();
+    grind(s.str(), rows2);
+    std::stringstream sd;
+    if (LCS::printDiff(sd, rows1, rows2)) {
+        std::cout << sd.str();
+        std::cout<<std::flush;
+        rows1 = rows2;
+    }
+    return 0;
+}
+
 // assumes we're using pointerAddressDiff as the comparison fn
 // (I don't use isSorted because this fn will throw at the disequality,
 // whereas isSorted would forget that info)
@@ -962,12 +1025,16 @@ void verifySorted(VoidList const &list)
 
 void testSorting()
 {
+  pool.del();
+
   enum { ITERS=100, ITEMS=20 };
 
   loopi(ITERS) {
     // construct a list (and do it again if it ends up already sorted)
-    VoidList list1(DBG_INFO_ARG0);
-    VoidList list3(DBG_INFO_ARG0);     // this one will be constructed sorted one at a time
+    _list1 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    _list3 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    VoidList &list1 = *_list1;
+    VoidList &list3 = *_list3;     // this one will be constructed sorted one at a time
     int numItems;
     do {
       list1.removeAll();    // clear them in case we have to build it more than once
@@ -985,7 +1052,8 @@ void testSorting()
     verifySorted<Integer>(list3);
 
     // duplicate it for use with other algorithm
-    VoidList list2(DBG_INFO_ARG0);
+    _list2 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    VoidList &list2 = *_list2;
     list2 = list1;
 
     // sort them
@@ -1016,52 +1084,6 @@ void testSorting()
       {}     // remove all occurrances of 'first'
     xassert(!list1.equalAsPointerSets(list2));
   }
-}
-
-namespace str {
-
-str::StoragePool pool(DBG_INFO_ARG0);
-VoidList *_list = NULL;
-VoidList *_thief = NULL;
-std::vector<std::string> rows1;
-std::vector<std::string> rows2;
-
-void grind(std::string const &s, std::vector<std::string> &rows) {
-    std::istringstream st(s);
-    std::string line;
-    while (std::getline(st, line)) {
-        rows.reserve((rows.size()+1)<<10>>10);
-        rows.push_back(line);
-    }
-}
-
-int debugEverything() {
-    std::stringstream s;
-    s<<"*****************************************************************************************************\n";
-    s<<lastObjName<<"..\n";
-    s<<"Pool:\n";
-    pool.debugPrint(s);
-    s<<"\n";
-    if (_list) {
-        s<<"list:\n";
-        _list->debugPrint(s);
-        s<<"\n";
-    }
-    if (_thief) {
-        s<<"thief:\n";
-        _thief->debugPrint(s);
-        s<<"\n";
-    }
-
-    rows2.clear();
-    grind(s.str(), rows2);
-    std::stringstream sd;
-    if (LCS::printDiff(sd, rows1, rows2)) {
-        std::cout << sd.str();
-        std::cout<<std::flush;
-        rows1 = rows2;
-    }
-    return 0;
 }
 
 void entry()
