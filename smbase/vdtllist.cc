@@ -46,26 +46,15 @@ void VoidTailList::append(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
 
 void VoidTailList::appendAll(VoidTailList const &tail)
 {
-  xassert(tail.npool.getExtPtrsLength() == 2);
+  this->tail = VoidList::appendAll(tail, this->tail, tail.tail);
+}
 
-  if (this->tail) {
-      this->tail->next = tail.top;
+void VoidTailList::prependAll(VoidTailList const &head)
+{
+  VoidNode *newTail = VoidList::prependAll(head, head.tail);
+  if (newTail) {
+      this->tail = newTail;
   }
-  if (tail.tail) {
-      npool.removePointer(this->tail);
-      this->tail = tail.tail;
-  }
-  ExternalPtr ptrs[] = { (ExternalPtr)&this->tail };
-  str::StoragePool childView(DBG_INFO_ARG0  );
-  npool.append(tail.npool, childView, ptrs, ptrs+1);
-
-  /*VoidList::appendAll(src);
-  if (!tail) {
-      tail = top;
-  }
-  if (tail) {
-      while (tail->next) tail = tail->next;
-  }*/
 }
 
 void VoidTailList::appendAllNew(VoidTailList const &tail, VoidEq eq)

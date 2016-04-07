@@ -67,6 +67,7 @@ public:
   void prepend(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem);
   void append(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem);
   void appendAll(VoidTailList const &tail);
+  void prependAll(VoidTailList const &head);
   void appendAllNew(VoidTailList const &tail, VoidEq eq);
   void reappendAll(VoidTailList const &tail, VoidEq eq);
   void insertAt(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem, int index);

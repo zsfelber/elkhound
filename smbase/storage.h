@@ -114,6 +114,7 @@ static void const * const LNULL = NULL;
 
 extern const size_t STORAGE_POOL_SIZE;
 
+extern const char* lastObjName;
 
 
 template<typename T>
@@ -301,7 +302,7 @@ friend class ::VoidNode;
 
     enum {
         ST_NONE = 0,
-        ST_TREE_ITEM,
+        ST_VALUE,
         ST_STORAGE_POOL,
         ST_DELETED
     } __Kind;
@@ -394,7 +395,7 @@ public:
        switch (__kind) {
        case ST_NONE:
            return NULL;
-       case ST_TREE_ITEM:
+       case ST_VALUE:
        case ST_STORAGE_POOL:
        {
            StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
@@ -770,7 +771,7 @@ private:
 
            xassert(bool(ptr)==bool(src_ptr));
            xassert(ptr->__kind==src_ptr->__kind);
-           xassert(ptr->__kind == ST_TREE_ITEM || ptr->__kind == ST_STORAGE_POOL);
+           xassert(ptr->__kind == ST_VALUE || ptr->__kind == ST_STORAGE_POOL);
 
            if (ptr) {
                xassert( src_ptr->ownerPool == ptr->ownerPool );
@@ -871,7 +872,7 @@ private:
       ok:
 
       DataPtr data = (DataPtr) _data;
-      data->__kind = ST_TREE_ITEM;
+      data->__kind = ST_VALUE;
       data->__parentVector = encodeDeltaPtr(memory, (uint8_t*)_data);
       if (store_size == STORAGE_POOL_SIZE) {
           ((StoragePool*)data)->__parentVector0 = data->__parentVector;
@@ -903,7 +904,6 @@ private:
        {
            xassert(__kind == ST_STORAGE_POOL && __kind == src.__kind);
 
-           __kind = ST_STORAGE_POOL;
            __parentVector = __parentVector0;
            //// keep it 'this'!! ownerPool = (StoragePool*) &src;
            ownerPool = (StoragePool*) &src;
@@ -1008,7 +1008,7 @@ private:
        switch (__kind) {
        case ST_NONE:
            return constcast(this);
-       case ST_TREE_ITEM:
+       case ST_VALUE:
        case ST_STORAGE_POOL:
        {
            return getParent()->getRootPool();
@@ -1046,7 +1046,7 @@ public:
 
        if (childOfParent) {
            memset(((uint8_t*)this)+sizeof(Storeable), 0, sizeof(StoragePool)-sizeof(Storeable));
-           xassert((__kind == ST_TREE_ITEM||__kind == ST_STORAGE_POOL) && copyMode == Cp_All);
+           xassert((__kind == ST_VALUE||__kind == ST_STORAGE_POOL) && copyMode == Cp_All);
            __kind = ST_STORAGE_POOL;
            first_del_var = std::string::npos;
            ownerPool = this;
@@ -1546,8 +1546,13 @@ public:
            if (ptr) {
                xassert (!contains(ptr));
                if (*ptr) {
-                   StoragePool const * chpool = findChild(*ptr);
-                   xassert (chpool);
+                   StoragePool const * chpool;
+                   if (ownerPool!=this) {
+                       chpool = ownerPool->findChild(*ptr);
+                   } else {
+                       chpool = findChild(*ptr);
+                   }
+                   xassert(chpool);
                }
                xassert(ptr > last);
                last = ptr;
@@ -1587,7 +1592,7 @@ public:
    void debugPrint(std::ostream& os, std::string indent = "") const
    {
      if (indent.length() > 100) {
-         os<<std::hex<<indent<< "...";
+         os<<indent<< "...";
      } else {
          os<<std::hex<<indent<< "poolx"<<(void*)this;
 #ifdef DEBUG
@@ -1603,6 +1608,7 @@ public:
          if (this != ownerPool) {
              os<<":ownx"<<(void*)ownerPool;
          }
+         os<<std::dec;
 
          os<<":{\n";
          size_t* chPoolsFrom = childpools;
@@ -1620,15 +1626,19 @@ public:
              for (iterator it=begin(); it != -1; it++) {
                  Storeable *cur = *it;
                  switch (cur->__kind) {
-                 case ST_TREE_ITEM:
+                 case ST_VALUE:
                      cur->debugPrint(os);
                      os<<" ";
                      break;
                  case ST_STORAGE_POOL:
+                     os<<std::hex;
                      os<<" poolx"<<(void*)cur;
+                     os<<std::dec;
                      break;
                  case ST_DELETED:
+                     os<<std::hex;
                      os<<" delx"<<(void*)cur;
+                     os<<std::dec;
                      break;
                  default:
                      break;
@@ -1645,10 +1655,16 @@ public:
                  ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
                  if (ptr) {
                      if (*ptr) {
-                         if (!findChild(*ptr)) {
-                             os<<"ou!";
+                         if (ownerPool!=this) {
+                             if (!ownerPool->findChild(*ptr)) {
+                                 os<<"out!";
+                             } else if (!findChild(*ptr)) {
+                                 os<<"own!";
+                             }
+                         } else if (!findChild(*ptr)) {
+                             os<<"out!";
                          } else if (!contains(*ptr)) {
-                             os<<"ch!";
+                             os<<"chi!";
                          }
                          (*ptr)->debugPrint(os);
                          os<<" ";
@@ -1668,7 +1684,13 @@ public:
                  ExternalPtr ptr = *extPointersFrom;
                  if (ptr) {
                      if (*ptr) {
-                         if (!findChild(*ptr)) {
+                         if (ownerPool!=this) {
+                             if (!ownerPool->findChild(*ptr)) {
+                                 os<<"out!";
+                             } else if (!findChild(*ptr)) {
+                                 os<<"own!";
+                             }
+                         } else if (!findChild(*ptr)) {
                              os<<"ou!";
                          } else if (!contains(*ptr)) {
                              os<<"ch!";
@@ -1683,7 +1705,7 @@ public:
              os<<"\n";
          }
 
-         os<<indent<< "}"<<std::flush<<std::dec;
+         os<<indent<< "}"<<std::flush;
      }
    }
 
@@ -1729,6 +1751,9 @@ inline Storeable::Storeable(DBG_INFO_FORMAL)
         }
     }
 #endif
+#ifdef DEBUG
+    lastObjName = objectName;
+#endif
     __kind = ST_NONE;
     __parentVector = std::string::npos;
     __store_size  = 0;
@@ -1740,7 +1765,10 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool)
     : objectName(objectName)
 #endif
 {
-    xassert((__kind == ST_TREE_ITEM||__kind == ST_STORAGE_POOL) && getParent() == &pool && pool.contains(this));
+#ifdef DEBUG
+    lastObjName = objectName;
+#endif
+    xassert((__kind == ST_VALUE||__kind == ST_STORAGE_POOL) && getParent() == &pool && pool.contains(this));
 }
 
 template<class ME>
@@ -1749,6 +1777,9 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  ME const & srcOrParent, bool 
     : objectName(objectName)
 #endif
 {
+#ifdef DEBUG
+    lastObjName = objectName;
+#endif
     init(srcOrParent, sizeof(ME), childOfParent);
 }
 
@@ -1757,12 +1788,15 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParen
     : objectName(objectName)
 #endif
 {
+#ifdef DEBUG
+    lastObjName = objectName;
+#endif
     init(srcOrParent, size_of, childOfParent);
 }
 
 inline Storeable::~Storeable() {
     switch (__kind) {
-    case ST_TREE_ITEM:
+    case ST_VALUE:
     case ST_STORAGE_POOL:
         getParent()->freeParentItem(this);
         break;
@@ -1778,7 +1812,7 @@ inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool 
     if (childOfParent) {
         StoragePool * srcPool = srcOrParent.getParent();
         xassert(srcPool && srcPool->contains(this));
-        __kind = ST_TREE_ITEM;
+        __kind = ST_VALUE;
         __parentVector = encodeDeltaPtr((uint8_t*)srcPool->memory, (uint8_t*)this);
         __store_size = getStoreSize(size_of);
         xassert(srcPool == getParent());
@@ -1810,7 +1844,7 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     case ST_NONE:
         xassert(__parentVector == std::string::npos);
         break;
-    case ST_TREE_ITEM:
+    case ST_VALUE:
     case ST_STORAGE_POOL:
     {
         StoragePool * srcPool = src.getParent();

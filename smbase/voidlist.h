@@ -33,13 +33,13 @@ public:
       getParent()->removePointer(data);
   }
   void debugPrint(std::ostream& os, std::string indent = "") const {
-      os<<std::hex<<indent<< " node:";
+      os<<indent<< " node:";
       if (data) {
           os<<" "<< *data;
       } else {
           os<<" NULL";
       }
-      os<<std::flush<<std::dec;
+      os<<std::flush;
   }
 };
 
@@ -146,9 +146,9 @@ public:
 
   // multiple lists
   void concat(VoidList &tail);           // tail is emptied, nodes appended to this
-  void appendAll(VoidList const &tail);  // tail is untouched.. but its contents are now exposed to non-constness... ug... oh well
+  VoidNode* appendAll(VoidList const &tail, VoidNode *myTail = NULL, VoidNode *tailTail = NULL);  // tail is untouched.. but its contents are now exposed to non-constness... ug... oh well
   void appendAllNew(VoidList const &tail, VoidEq eq);
-  void prependAll(VoidList const &head);
+  VoidNode* prependAll(VoidList const &head, VoidNode *headTail = NULL);
   VoidList& operator= (VoidList const &src);  // afterwards, 'this' and 'src' have same contents
 
   // steal (become the container for) the tail of a source list at any

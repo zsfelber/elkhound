@@ -540,7 +540,7 @@ void VoidList::concat(VoidList &tail)
 
   // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
 
-  tail.getParentRef().removeChildPool(&tail.npool);
+  tail.getPool().removeChildPool(&tail.npool);
   tail.npool.removeAllExternalPointers();
 
   //StoragePool stealSP =
@@ -559,7 +559,6 @@ void VoidList::concat(VoidList &tail)
   tail.top = NULL;
 
 }
-
 
 // attach some of source's nodes to this, removing them from 'source'
 void VoidList::stealTailAt(int index, VoidList &source)
@@ -603,40 +602,14 @@ void VoidList::stealTailAt(int index, VoidList &source)
 }
 
 uint8_t* VoidList::glueNpools(VoidList const &tail) {
-    xassert(tail.npool.getExtPtrsLength() == 1);
+    size_t l = tail.npool.getExtPtrsLength();
+    xassert(l == 1 || l == 2);
 
-    str::StoragePool const * chpool = npool.findChild(tail.npool.memory);
+    uint8_t * oldmemend;
 
-    uint8_t * oldmemend = NULL;
-
-    if (chpool) {
-        if (chpool->contains(tail.npool.memory+tail.npool.memlength-1)) {
-            ;
-        } else {
-            chpool = NULL;
-        }
+    if (npool.findChild(tail.npool.memory) || tail.npool.findChild(npool.memory)) {
+        oldmemend = NULL;
     } else {
-        chpool = tail.npool.findChild(npool.memory);
-        if (chpool) {
-            oldmemend = npool.memory+npool.memlength;
-
-            str::StoragePool childView(DBG_INFO_ARG0);
-            npool.append(tail.npool, childView);
-
-            std::list<str::StoragePool::ChCh> badChildren;
-            tail.npool.findChildChain(badChildren, npool.memory);
-            if (badChildren.size()) {
-                str::StoragePool::ChCh c = badChildren.front();
-                xassert(c.pool->chplslength == childView.chplslength);
-                childView.removeChildPool(childView.childpools + c.index);
-                if (childView.chplslength < c.pool->chplslength) {
-                    npool.chplslength--;
-                }
-            }
-        }
-    }
-
-    if (!chpool) {
         oldmemend = npool.memory+npool.memlength;
         npool += tail.npool;
     }
@@ -645,22 +618,51 @@ uint8_t* VoidList::glueNpools(VoidList const &tail) {
 }
 
 // using str::StoragePool impl based on buffer-copy
-void VoidList::appendAll(VoidList const &tail)
+VoidNode *VoidList::appendAll(VoidList const &tail, VoidNode *myTail, VoidNode *tailTail)
 {
   uint8_t * oldmemend = glueNpools(tail);
 
   // find the end of 'this' list
-  VoidNode *n = top;
-  for(; n->next; n = n->next)
-  {}
-
-  if (n) {
-      n->next = tail.top;
-
-      if (oldmemend) {
-         npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next, oldmemend);
+  VoidNode *n;
+  if (!myTail) {
+      n = top;
+      if (n) {
+          for(; n->next; n = n->next);
       }
+  } else {
+      n = myTail;
   }
+  xassert(bool(top) == bool(n));
+
+  if (oldmemend) {
+
+      if (n) {
+          n->next = tail.top;
+          npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next, oldmemend);
+      } else {
+          top = tail.top;
+          npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)top, oldmemend);
+      }
+
+      if (tailTail) {
+          npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)tailTail, oldmemend);
+      }
+  } else {
+
+      VoidNode *tn = tail.top;
+      if (tn) {
+          for(; tn; tn = tn->next) {
+              if (n) {
+                  n = n->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, tn->data);
+              } else {
+                  n = top = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, tn->data);
+              }
+          }
+      }
+      tailTail = n;
+  }
+
+  return tailTail;
 }
 
 // TODO better using str::StoragePool impl based on buffer-copy
@@ -680,24 +682,59 @@ void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 
 
 // using str::StoragePool impl based on buffer-copy
-void VoidList::prependAll(VoidList const &head)
+VoidNode* VoidList::prependAll(VoidList const &head, VoidNode *headTail)
 {
+    VoidNode *myTail = NULL;
+
     uint8_t * oldmemend = glueNpools(head);
 
-    // find the end of 'head' list
+    // find the end of 'this' list
     VoidNode *n;
-    for(n = head.top; n->next; n = n->next) {
-        xassert(npool.findChild(n));
+    if (!headTail) {
+        n = head.top;
+        if (n) {
+            for(; n->next; n = n->next);
+        }
+    } else {
+        n = headTail;
     }
+    xassert(bool(head.top) == bool(n));
 
     if (n) {
-        n->next = top;
-
         if (oldmemend) {
+
+            npool.moveFrom(head.npool, (str::Storeable::DataPtr&)n, oldmemend);
+            n->next = /*old*/top;
+
             top = head.top;
             npool.moveFrom(head.npool, (str::Storeable::DataPtr&)top, oldmemend);
+
+        } else {
+
+            VoidNode * n0 = NULL;
+
+            VoidNode *tn = head.top;
+            for(; tn; tn = tn->next)
+            {
+                if (n0) {
+                    n = n->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, tn->data);
+                } else {
+                    n0 = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, tn->data);
+                    n = n0;
+                }
+            }
+
+            n->next = /*old*/top;
+            top = n0;
+        }
+
+        /*old top*/
+        if (!n->next) {
+            myTail = n;
         }
     }
+
+    return myTail;
 }
 
 
@@ -811,7 +848,7 @@ STATICDEF int VoidList::pointerAddressDiff(str::Storeable const *left, str::Stor
 
 void VoidList::debugPrint(std::ostream& os, std::string indent) const
 {
-  os<<std::hex<<indent<< "vlstx"<<(void*)this;
+  os<<std::hex<<indent<< "vlstx"<<(void*)this<<std::dec;
 #ifdef DEBUG
   os<<":"<<objectName;
 #endif
@@ -823,7 +860,7 @@ void VoidList::debugPrint(std::ostream& os, std::string indent) const
         os<<" NULL";
     }
   }
-  os<< "}"<<std::flush<<std::dec;
+  os<< "}"<<std::flush;
 }
 
 
@@ -1001,6 +1038,7 @@ void grind(std::string const &s, std::vector<std::string> &rows) {
 int debugEverything() {
     std::stringstream s;
     s<<"*****************************************************************************************************\n";
+    s<<lastObjName<<"..\n";
     s<<"Pool:\n";
     pool.debugPrint(s);
     s<<"\n";
@@ -1118,7 +1156,9 @@ void entry()
     VoidList &thief = *_thief;
     thief.selfCheck();
 
+    lastObjName = "thief";
     thief.stealTailAt(1, list);
+    lastObjName = "thief.stealTailAt(1, list)";
 
     thief.selfCheck();
     list.selfCheck();
@@ -1132,6 +1172,7 @@ void entry()
 
     // test appendAll
     list.appendAll(thief);      // list: (d c b)
+    lastObjName = "list.appendAll(thief)";
     thief.selfCheck();
     list.selfCheck();
     PRINT(list);
@@ -1142,6 +1183,7 @@ void entry()
 
     // test prependAll
     list.prependAll(thief);     // list: (c b d c b)
+    lastObjName = "list.prependAll(thief)";
     thief.selfCheck();
     list.selfCheck();
     PRINT(list);

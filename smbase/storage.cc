@@ -3,3 +3,4 @@
 
 const size_t str::STORAGE_POOL_SIZE = str::getStoreSize(sizeof(str::StoragePool));
 
+const char* str::lastObjName = "";
