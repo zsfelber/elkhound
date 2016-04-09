@@ -1437,7 +1437,7 @@ public:
                          << "   parent:" << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
            }
            constcast(pchild)->removePointer(dataPointer);
-       } else {
+       } else if (extpointers) {
            ExternalPtr dd = &dataPointer;
            ExternalPtr* last = extpointers+extptrslength;
            ExternalPtr* val = lower_bound(extpointers, last, dd, (ExternalPtr&)LNULL);
@@ -1454,6 +1454,13 @@ public:
                std::cout << "Warning  StoragePool.removePointer : external poinrer already removed : " << (void*) &dataPointer
                          << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
            }
+       } else {
+           std::cout << "Warning  StoragePool.removePointer : not external poinrers but not in : " << (void*) &dataPointer
+                     << " of " << (void*) memory << " .. " << (void*) (memory+memlength);
+           if (child) {
+               std::cout <<  " (though pointing to inside *:" << (void*) dataPointer << ")";
+           }
+           std::cout << std::endl;
        }
    }
 
@@ -1518,49 +1525,6 @@ public:
        xassert(bool(extptrscapacity) == bool(extptrslength));
        xassert(bool(childpools) == bool(chplslength));
        xassert(bool(chplscapacity) == bool(chplslength));
-
-       ExternalPtr last = NULL;
-       size_t* intPointersFrom = intpointers;
-       size_t* intPointersTo = intpointers+intptrslength;
-       for (; intPointersFrom<intPointersTo; intPointersFrom++) {
-           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
-           if (ptr) {
-               xassert(contains(ptr));
-               if (*ptr) {
-#ifdef DEBUG2
-                   StoragePool const * chpool1 = findChild(*ptr);
-                   StoragePool const * chpool2 = getRootPoolRef().findChild(*ptr);
-#endif
-                   if (!contains(*ptr)) {
-                       xassert(this != ownerPool);
-                       xassert(ownerPool->contains(*ptr));
-                   }
-               }
-               xassert(ptr > last);
-               last = ptr;
-           }
-       }
-
-       last = NULL;
-       ExternalPtr* extPointersFrom = extpointers;
-       ExternalPtr* extPointersTo = extpointers + extptrslength;
-       for (; extPointersFrom<extPointersTo; extPointersFrom++) {
-           ExternalPtr ptr = *extPointersFrom;
-           if (ptr) {
-               xassert (!contains(ptr));
-               if (*ptr) {
-                   StoragePool const * chpool;
-                   if (ownerPool!=this) {
-                       chpool = ownerPool->findChild(*ptr);
-                   } else {
-                       chpool = findChild(*ptr);
-                   }
-                   xassert(chpool);
-               }
-               xassert(ptr > last);
-               last = ptr;
-           }
-       }
 
        PtrToMe lastm = NULL;
        size_t* chPoolsFrom = childpools;
