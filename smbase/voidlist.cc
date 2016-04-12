@@ -1033,10 +1033,12 @@ void testSorting()
   enum { ITERS=100, ITEMS=20 };
 
   loopi(ITERS) {
+    str::StoragePool *_p2 = new (pool) str::StoragePool(DBG_INFO_ARG0_FIRST  pool, true);
+    str::StoragePool &p2 = *_p2;
     // construct a list (and do it again if it ends up already sorted)
-    _list1 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
-    _list2 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
-    _list3 = new (pool) VoidList(DBG_INFO_ARG0_FIRST  pool);
+    _list1 = new (p2) VoidList(DBG_INFO_ARG0_FIRST  p2);
+    _list2 = new (p2) VoidList(DBG_INFO_ARG0_FIRST  p2);
+    _list3 = new (p2) VoidList(DBG_INFO_ARG0_FIRST  p2);
 
     VoidList &list1 = *_list1;
     VoidList &list3 = *_list3;     // this one will be constructed sorted one at a time
@@ -1046,7 +1048,7 @@ void testSorting()
       list3.removeAll();
       numItems = rand()%ITEMS;
       loopj(numItems) {
-        Integer *toInsert = new Integer(DBG_INFO_ARG0_FIRST  (rand()%ITEMS) * 4 );
+        Integer *toInsert = new (p2) Integer(DBG_INFO_ARG0_FIRST  p2, (rand()%ITEMS) * 4 );
         list1.prepend(DBG_INFO_ARG0_FIRST  toInsert);
         list3.insertSorted(DBG_INFO_ARG0_FIRST  toInsert, VoidList::pointerAddressDiff);
       }
@@ -1088,9 +1090,7 @@ void testSorting()
       {}     // remove all occurrances of 'first'
     xassert(!list1.equalAsPointerSets(list2));
 
-    delete _list1;
-    delete _list2;
-    delete _list3;
+    delete _p2;
   }
 }
 

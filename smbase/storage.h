@@ -424,6 +424,28 @@ public:
        }
    }
 
+   inline StoragePool const * getPool() const {
+       switch (__kind) {
+       case ST_NONE:
+           return asPool();
+       case ST_STORAGE_POOL:
+           return (StoragePool*)this;
+       case ST_VALUE:
+           return getParent();
+       default:
+           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
+           break;
+       }
+   }
+
+   inline StoragePool const & getPoolRef() const {
+       return NN(getPool());
+   }
+
+   inline virtual StoragePool const * asPool() const {
+       return NULL;
+   }
+
    inline void debugPrint(std::string indent = "") const
    {
        debugPrint(std::cout, indent);
@@ -1038,6 +1060,10 @@ private:
        return NN(getRootPool());
    }
 
+   inline StoragePool const * asPool() const {
+       return this;
+   }
+
 
 
    /*...................................................................................................
@@ -1130,6 +1156,7 @@ public:
    }
 
    inline void clear() {
+       __Kind k = getKind();
 #ifdef DEBUG
        uint8_t * bg = sizeof(objectName)+(uint8_t*)&objectName;
        uint8_t * th = (uint8_t*)this;
@@ -1137,6 +1164,7 @@ public:
 #else
        memset(this, 0, sizeof(StoragePool));
 #endif
+       __kind = k;
        __parentVector = npos;
         first_del_var = npos;
         ownerPool = this;
@@ -1353,10 +1381,10 @@ public:
            } else {
 
                if (!child) {
-                   std::cout << "Warning  StoragePool.addPointer : pointer to external data : "
-                             << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
                    StoragePool const * parent = getParent();
                    if (parent && parent != this && !parent->contains(dataPointer)) {
+                       std::cout << "Warning  StoragePool.addPointer : pointer to external data : "
+                                 << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
                        std::cout << "Warning  StoragePool.addPointer : (parent) pointer to external data : "
                                  << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
                    }
@@ -1415,10 +1443,10 @@ public:
            } else {
 
                if (!child) {
-                   std::cout << "Warning  StoragePool.removePointer : pointer to external data : "
-                             << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
                    StoragePool const * parent = getParent();
                    if (parent && parent != this && !parent->contains(dataPointer)) {
+                       std::cout << "Warning  StoragePool.removePointer : pointer to external data : "
+                                 << (void*) dataPointer  << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
                        std::cout << "Warning  StoragePool.removePointer : (parent) pointer to external data : "
                                  << (void*) dataPointer  << " of " << (void*) parent->memory << " .. " << (void*) (parent->memory+parent->memlength) << std::endl;
                    }
@@ -1779,7 +1807,7 @@ inline Storeable::~Storeable() {
     switch (__kind) {
     case ST_VALUE:
     case ST_STORAGE_POOL:
-        getParent()->freeParentItem(this);
+        constcast(getPoolRef()).freeParentItem(this);
         break;
     case ST_DELETED:
         x_assert_fail("Already deleted.", __FILE__, __LINE__);
@@ -1791,12 +1819,12 @@ inline Storeable::~Storeable() {
 
 inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent) {
     if (childOfParent) {
-        StoragePool * srcPool = srcOrParent.getParent();
-        xassert(srcPool && srcPool->contains(this));
+        StoragePool const & srcPool = srcOrParent.getPoolRef();
+        xassert(srcPool.contains(this));
         __kind = ST_VALUE;
-        __parentVector = encodeDeltaPtr((uint8_t*)srcPool->memory, (uint8_t*)this);
+        __parentVector = encodeDeltaPtr((uint8_t*)srcPool.memory, (uint8_t*)this);
         __store_size = getStoreSize(size_of);
-        xassert(srcPool == getParent());
+        xassert(&srcPool == getParent());
     #ifdef REG_CHILD
         __next = 0;
         getParent()->regChild(this);
