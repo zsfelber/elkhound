@@ -113,7 +113,8 @@ static const size_t npos = std::string::npos;
 
 static void const * const LNULL = NULL;
 
-extern const size_t STORAGE_POOL_SIZE;
+//extern const size_t STORAGE_POOL_SIZE;
+static const size_t STORAGE_POOL_SIZE = 96;//str::getStoreSize(sizeof(str::StoragePool));
 
 extern const char* lastObjName;
 
