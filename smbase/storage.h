@@ -281,6 +281,18 @@ T* lower_bound(T* first, T* last,
   return first;
 }
 
+template<typename T>
+inline void shrinkTail(size_t& length, T* vect, T nullitm) {
+    length--;
+    while (length>0) {
+        size_t chl = length-1;
+        if (vect[chl] == nullitm) {
+            length = chl;
+        } else {
+            break;
+        }
+    }
+}
 
 
 /****************************************************************************************************
@@ -1066,6 +1078,11 @@ public:
    }
 
    virtual ~StoragePool() {
+       StoragePool * p = getParent();
+       if (p) {
+           p->removeChildPool(this);
+       }
+
        if (ownerPool != this) {
            clear();
        } else {
@@ -1423,7 +1440,7 @@ public:
                xassert (vval == dd);
                if (val == last) {
                } else if (val == last-1) {
-                   intptrslength--;
+                   shrinkTail(intptrslength, intpointers, npos);
                } else {
                    *val = npos;
                }
@@ -1446,7 +1463,7 @@ public:
                xassert (vval == dd);
                if (val == last) {
                } else if (val == last-1) {
-                   extptrslength--;
+                   shrinkTail(extptrslength, extpointers, (ExternalPtr) NULL);
                } else {
                    *val = NULL;
                }
@@ -1494,7 +1511,7 @@ public:
        xassert (*val == dd);
        if (val == last) {
        } else if (val == last-1) {
-           chplslength--;
+           shrinkTail(chplslength, childpools, npos);
        } else {
            *val = npos;
        }
@@ -1505,7 +1522,7 @@ public:
 
        if (val == last) {
        } else if (val == last-1) {
-           chplslength--;
+           shrinkTail(chplslength, childpools, npos);
        } else {
            *val = npos;
        }

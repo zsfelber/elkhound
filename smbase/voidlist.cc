@@ -745,6 +745,7 @@ VoidList& VoidList::operator= (VoidList const &src)
   npool = src.npool;
   top = src.top;
   npool.moveFrom(src.npool, (str::Storeable::DataPtr&)top);
+  if (getKind()==ST_VALUE) npool.addPointer(top);
 
   /*xassert(__pool == src.__pool);
   if (this != &src) {
