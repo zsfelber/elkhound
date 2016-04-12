@@ -34,31 +34,31 @@ class BaseClass;
   #define GENERATED_AST_PRESENT
 
 // *** DO NOT EDIT ***
-class ASTSpecFile : public Storeable {
+class ASTSpecFile : public str::Storeable {
 public:      // data
   ASTList <ToplevelForm > forms;
 
 public:      // funcs
-  ASTSpecFile(StoragePool &pool, ASTList <ToplevelForm > *_forms) : Storeable(pool), forms(_forms, true/*move*/) {
+  ASTSpecFile(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ASTList <ToplevelForm > *_forms) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), forms(DBG_INFO_ARG_FWD_FIRST  _forms, true/*move*/) {
   }
   ~ASTSpecFile();
 
   char const *kindName() const { return "ASTSpecFile"; }
 
-  ASTSpecFile *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  ASTSpecFile *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
-  void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
 };
 
 
 
 // *** DO NOT EDIT ***
-class ToplevelForm : public Storeable {
+class ToplevelForm : public str::Storeable {
 public:      // data
 
 public:      // funcs
-  ToplevelForm(StoragePool &pool) : Storeable(pool) {
+  ToplevelForm(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool) {
   }
   virtual ~ToplevelForm();
 
@@ -75,9 +75,9 @@ public:      // funcs
   DECL_AST_DOWNCASTS(TF_custom, TF_CUSTOM)
   DECL_AST_DOWNCASTS(TF_enum, TF_ENUM)
 
-  virtual ToplevelForm* clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const=0;
+  virtual ToplevelForm* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const=0;
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
 };
 
@@ -86,16 +86,16 @@ public:      // data
   string code;
 
 public:      // funcs
-  TF_verbatim(StoragePool &pool, string _code) : ToplevelForm(pool), code(_code) {
+  TF_verbatim(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _code) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), code(_code) {
   }
   virtual ~TF_verbatim();
 
   virtual Kind kind() const { return TF_VERBATIM; }
   enum { TYPE_TAG = TF_VERBATIM };
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_verbatim *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_verbatim *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -104,16 +104,16 @@ public:      // data
   string code;
 
 public:      // funcs
-  TF_impl_verbatim(StoragePool &pool, string _code) : ToplevelForm(pool), code(_code) {
+  TF_impl_verbatim(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _code) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), code(_code) {
   }
   virtual ~TF_impl_verbatim();
 
   virtual Kind kind() const { return TF_IMPL_VERBATIM; }
   enum { TYPE_TAG = TF_IMPL_VERBATIM };
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_impl_verbatim *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_impl_verbatim *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -123,16 +123,16 @@ public:      // data
   ASTList <ASTClass > ctors;
 
 public:      // funcs
-  TF_class(StoragePool &pool, ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(pool), super(_super), ctors(_ctors, true/*move*/) {
+  TF_class(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), super(_super), ctors(DBG_INFO_ARG_FWD_FIRST  _ctors, true/*move*/) {
   }
   virtual ~TF_class();
 
   virtual Kind kind() const { return TF_CLASS; }
   enum { TYPE_TAG = TF_CLASS };
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_class *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_class *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   public:  bool hasChildren() const { return ctors.isNotEmpty(); };
 };
@@ -143,16 +143,16 @@ public:      // data
   ASTList <string > args;
 
 public:      // funcs
-  TF_option(StoragePool &pool, string _name, ASTList <string > *_args) : ToplevelForm(pool), name(_name), args(_args, true/*move*/) {
+  TF_option(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, ASTList <string > *_args) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD_FIRST  _args, true/*move*/) {
   }
   virtual ~TF_option();
 
   virtual Kind kind() const { return TF_OPTION; }
   enum { TYPE_TAG = TF_OPTION };
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_option *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_option *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -161,16 +161,16 @@ public:      // data
   CustomCode *cust;
 
 public:      // funcs
-  TF_custom(StoragePool &pool, CustomCode *_cust) : ToplevelForm(pool), cust(_cust) {
+  TF_custom(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, CustomCode *_cust) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), cust(_cust) {
   }
   virtual ~TF_custom();
 
   virtual Kind kind() const { return TF_CUSTOM; }
   enum { TYPE_TAG = TF_CUSTOM };
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_custom *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_custom *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
@@ -180,23 +180,23 @@ public:      // data
   ASTList <string > enumerators;
 
 public:      // funcs
-  TF_enum(StoragePool &pool, string _name, ASTList <string > *_enumerators) : ToplevelForm(pool), name(_name), enumerators(_enumerators, true/*move*/) {
+  TF_enum(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, ASTList <string > *_enumerators) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), enumerators(DBG_INFO_ARG_FWD_FIRST  _enumerators, true/*move*/) {
   }
   virtual ~TF_enum();
 
   virtual Kind kind() const { return TF_ENUM; }
   enum { TYPE_TAG = TF_ENUM };
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual TF_enum *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual TF_enum *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
 };
 
 
 
 // *** DO NOT EDIT ***
-class ASTClass : public Storeable {
+class ASTClass : public str::Storeable {
 public:      // data
   string name;
   ASTList <CtorArg > args;
@@ -211,16 +211,16 @@ public:      // data
   ASTList <CtorArg > totLastArgs;
 
 public:      // funcs
-  ASTClass(StoragePool &pool, string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : Storeable(pool), name(_name), args(_args, true/*move*/), lastArgs(_lastArgs, true/*move*/), bases(_bases, true/*move*/), decls(_decls, true/*move*/),
-    level(0), consumed(0), parent(0), totArgs(), totLastArgs(){
+  ASTClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD_FIRST  _args, true/*move*/), lastArgs(DBG_INFO_ARG_FWD_FIRST  _lastArgs, true/*move*/), bases(DBG_INFO_ARG_FWD_FIRST  _bases, true/*move*/), decls(DBG_INFO_ARG_FWD_FIRST  _decls, true/*move*/),
+    level(0), consumed(0), parent(0), totArgs(DBG_INFO_ARG_FWD), totLastArgs(DBG_INFO_ARG_FWD){
   }
   ~ASTClass();
 
   char const *kindName() const { return "ASTClass"; }
 
-  ASTClass *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  ASTClass *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
-  void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
   public:  string classKindName() const;
 
@@ -251,21 +251,21 @@ public:      // funcs
   string toString(AccessCtl acc);      // defined in ast.cc
 
 // *** DO NOT EDIT ***
-class AccessMod : public Storeable {
+class AccessMod : public str::Storeable {
 public:      // data
   AccessCtl acc;
   ASTList <string > mods;
 
 public:      // funcs
-  AccessMod(StoragePool &pool, AccessCtl _acc, ASTList <string > *_mods) : Storeable(pool), acc(_acc), mods(_mods, true/*move*/) {
+  AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc, ASTList <string > *_mods) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD_FIRST  _mods, true/*move*/) {
   }
   ~AccessMod();
 
   char const *kindName() const { return "AccessMod"; }
 
-  AccessMod *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  AccessMod *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
-  void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
   public:  bool hasMod(char const *mod) const;
   public:  bool hasModPrefix(char const *mod) const;
@@ -275,11 +275,11 @@ public:      // funcs
 
 
 // *** DO NOT EDIT ***
-class Annotation : public Storeable {
+class Annotation : public str::Storeable {
 public:      // data
 
 public:      // funcs
-  Annotation(StoragePool &pool) : Storeable(pool) {
+  Annotation(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : Storeable(pool) {
   }
   virtual ~Annotation();
 
@@ -292,9 +292,9 @@ public:      // funcs
   DECL_AST_DOWNCASTS(UserDecl, USERDECL)
   DECL_AST_DOWNCASTS(CustomCode, CUSTOMCODE)
 
-  virtual Annotation* clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const=0;
+  virtual Annotation* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const=0;
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
 };
 
@@ -305,16 +305,16 @@ public:      // data
   string init;
 
 public:      // funcs
-  UserDecl(StoragePool &pool, AccessMod *_amod, string _code, string _init) : Annotation(pool), amod(_amod), code(_code), init(_init) {
+  UserDecl(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessMod *_amod, string _code, string _init) : Annotation(DBG_INFO_ARG_FWD_FIRST  pool), amod(_amod), code(_code), init(_init) {
   }
   virtual ~UserDecl();
 
   virtual Kind kind() const { return USERDECL; }
   enum { TYPE_TAG = USERDECL };
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual UserDecl *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual UserDecl *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   public:  AccessCtl access() const { return amod->acc; };
 };
@@ -325,7 +325,7 @@ public:      // data
   string code;
 
 public:      // funcs
-  CustomCode(StoragePool &pool, string _qualifier, string _code) : Annotation(pool), qualifier(_qualifier), code(_code) {
+  CustomCode(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _qualifier, string _code) : Annotation(DBG_INFO_ARG_FWD_FIRST  pool), qualifier(_qualifier), code(_code) {
      used=false;
   }
   virtual ~CustomCode();
@@ -333,9 +333,9 @@ public:      // funcs
   virtual Kind kind() const { return CUSTOMCODE; }
   enum { TYPE_TAG = CUSTOMCODE };
 
-  virtual void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  virtual void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
-  virtual CustomCode *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  virtual CustomCode *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
   public:  bool used;
 };
@@ -343,7 +343,7 @@ public:      // funcs
 
 
 // *** DO NOT EDIT ***
-class CtorArg : public Storeable {
+class CtorArg : public str::Storeable {
 public:      // data
   bool isOwner;
   string type;
@@ -351,36 +351,36 @@ public:      // data
   string defaultValue;
 
 public:      // funcs
-  CtorArg(StoragePool &pool, bool _isOwner, string _type, string _name, string _defaultValue) : Storeable(pool), isOwner(_isOwner), type(_type), name(_name), defaultValue(_defaultValue) {
+  CtorArg(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, bool _isOwner, string _type, string _name, string _defaultValue) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), isOwner(_isOwner), type(_type), name(_name), defaultValue(_defaultValue) {
   }
   ~CtorArg();
 
   char const *kindName() const { return "CtorArg"; }
 
-  CtorArg *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  CtorArg *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
-  void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
 };
 
 
 
 // *** DO NOT EDIT ***
-class BaseClass : public Storeable {
+class BaseClass : public str::Storeable {
 public:      // data
   AccessCtl access;
   string name;
 
 public:      // funcs
-  BaseClass(StoragePool &pool, AccessCtl _access, string _name) : Storeable(pool), access(_access), name(_name) {
+  BaseClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _access, string _name) : Storeable(pool), access(_access), name(_name) {
   }
   ~BaseClass();
 
   char const *kindName() const { return "BaseClass"; }
 
-  BaseClass *clone(StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
+  BaseClass *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=INT_MAX, int listDeepness=INT_MAX) const;
 
-  void debugPrint(std::ostream &os, int indent, char const *subtreeName = "tree") const;
+  void debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName = "tree") const;
 
 };
 

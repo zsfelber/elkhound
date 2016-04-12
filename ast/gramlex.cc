@@ -35,13 +35,13 @@ void GrammarLexer::AltReportError::reportWarning(rostring msg)
 
 
 // ----------------- GrammarLexer::FileState --------------------
-GrammarLexer::FileState::FileState(rostring filename, std::istream *src)
-  : loc(sourceLocManager->encodeBegin(toCStr(filename))),
+GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  rostring filename, std::istream *src)
+  : Storeable(DBG_INFO_ARG_FWD ), loc(sourceLocManager->encodeBegin(toCStr(filename))),
     source(src),
     bufstate(NULL)
 {}
-GrammarLexer::FileState::FileState(StoragePool &pool, rostring filename, std::istream *src)
-  : Storeable(pool), loc(sourceLocManager->encodeBegin(toCStr(filename))),
+GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, rostring filename, std::istream *src)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST pool), loc(sourceLocManager->encodeBegin(toCStr(filename))),
     source(src),
     bufstate(NULL)
 {}
@@ -55,13 +55,14 @@ GrammarLexer::FileState::~FileState()
 }
 
 
-GrammarLexer::FileState::FileState(FileState const &obj)
+GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  FileState const &obj)
+: Storeable(DBG_INFO_ARG_FWD )
 {
   *this = obj;
 }
 
-GrammarLexer::FileState::FileState(StoragePool &pool, FileState const &obj)
-    : Storeable(pool)
+GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, FileState const &obj)
+    : Storeable(DBG_INFO_ARG_FWD_FIRST  pool)
 {
   *this = obj;
 }
@@ -83,10 +84,11 @@ GrammarLexer::FileState &GrammarLexer::FileState::
 GrammarLexer::GrammarLexer(isEmbedTok test, StringTable &strtbl,
                            char const *fname, std::istream *source,
                            EmbeddedLang *userEmb)
-  : yyFlexLexer(source),
+  : pool(DBG_INFO_ARG0 ),
+    yyFlexLexer(source),
     altReporter(*this),
-    fileState(fname, source),
-    fileStack(pool),
+    fileState(DBG_INFO_ARG0_FIRST fname, source),
+    fileStack(DBG_INFO_ARG0_FIRST pool),
     tokenStartLoc(SL_UNKNOWN),
     embedStart(0),
     embedFinish(0),
@@ -288,10 +290,10 @@ void GrammarLexer::recursivelyProcess(rostring fname, std::istream *source)
   xassert(fileState.bufstate);
 
   // push current state
-  fileStack.prepend(new (pool) FileState(pool, fileState));
+  fileStack.prepend(DBG_INFO_ARG0_FIRST  new (pool) FileState(DBG_INFO_ARG0_FIRST  pool, fileState));
 
   // reset current state
-  fileState = FileState(fname, source);
+  fileState = FileState(DBG_INFO_ARG0_FIRST  fname, source);
 
   // storing this in 'bufstate' is redundant because of the
   // assignment above, but no big deal

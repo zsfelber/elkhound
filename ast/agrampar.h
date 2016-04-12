@@ -10,7 +10,7 @@
 
 class GrammarLexer;
 
-extern StoragePool y_pool;
+extern str::StoragePool y_pool;
 
 // ---------------- agrampar's view of the parser --------------------
 // name of extra parameter to yyparse (i.e. the context in

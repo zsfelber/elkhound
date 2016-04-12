@@ -209,7 +209,7 @@ LRItem::LRItem(Flatten &flat)
     lookahead(flat)
 {}
 
-void LRItem::xfer(StoragePool &pool, Flatten &flat)
+void LRItem::xfer(str::StoragePool &pool, Flatten &flat)
 {
   lookahead.xfer(pool, flat);
 }
@@ -365,7 +365,7 @@ DottedProduction *getNthDottedProduction(Production *p, int n)
 #endif // 0
 
 
-void ItemSet::xfer(StoragePool &pool, Flatten &flat)
+void ItemSet::xfer(str::StoragePool &pool, Flatten &flat)
 {
   xferObjList(pool, flat, kernelItems);
   xferObjList(pool, flat, nonkernelItems);

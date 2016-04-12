@@ -116,17 +116,17 @@
 /* start symbol */
 /* yields ASTSpecFile, though really $$ isn't used.. */
 StartSymbol: Input
-               { $$ = *((ASTSpecFile**)parseParam) = new (y_pool) ASTSpecFile(y_pool,$1); }
+               { $$ = *((ASTSpecFile**)parseParam) = new (y_pool) ASTSpecFile(DBG_INFO_ARG0_FIRST  y_pool,$1); }
            ;
 
 /* sequence of toplevel forms */
 /* yields ASTList<ToplevelForm> */
-Input: /* empty */           { $$ = new (y_pool) ASTList<ToplevelForm>(y_pool); }
-     | Input Class           { ($$=$1)->append($2); }
-     | Input Verbatim        { ($$=$1)->append($2); }
-     | Input Option          { ($$=$1)->append($2); }
-     | Input Enum            { ($$=$1)->append($2); }
-     | Input CustomCode      { ($$=$1)->append(new (y_pool) TF_custom(y_pool,$2)); }
+Input: /* empty */           { $$ = new (y_pool) ASTList<ToplevelForm>(DBG_INFO_ARG0_FIRST  y_pool); }
+     | Input Class           { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
+     | Input Verbatim        { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
+     | Input Option          { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
+     | Input Enum            { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
+     | Input CustomCode      { ($$=$1)->append(DBG_INFO_ARG0_FIRST  new (y_pool) TF_custom(DBG_INFO_ARG0_FIRST  y_pool,$2)); }
      | Input ";"             { $$=$1; }     /* ignore extraneous semis */
      ;
 
@@ -160,27 +160,27 @@ NewOpt: /* empty */          {}
 ClassBody: "{" ClassMembersOpt "}" /* no ";", see above */
              { $$=$2; }
          | ";"
-             { $$ = new (y_pool) TF_class(y_pool,new (y_pool) ASTClass(y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+             { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
          ;
 
 /* yields TF_class */
 /* does this by making an empty one initially, and then adding to it */
 ClassMembersOpt
   : /* empty */
-      { $$ = new (y_pool) TF_class(y_pool,new (y_pool) ASTClass(y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+      { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
   | ClassMembersOpt "->" TOK_NAME CtorArgsOpt BaseClassesOpt ";"
-      { ($$=$1)->ctors.append(new (y_pool) ASTClass(y_pool,unbox($3), $4, NULL, $5, NULL)); }
+      { ($$=$1)->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox($3), $4, NULL, $5, NULL)); }
   | ClassMembersOpt "->" TOK_NAME CtorArgsOpt BaseClassesOpt "{" CtorMembersOpt "}"
-      { ($$=$1)->ctors.append(new (y_pool) ASTClass(y_pool,unbox($3), $4, NULL, $5, $7)); }
+      { ($$=$1)->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox($3), $4, NULL, $5, $7)); }
   | ClassMembersOpt Annotation
-      { ($$=$1)->super->decls.append($2); }
+      { ($$=$1)->super->decls.append(DBG_INFO_ARG0_FIRST  $2); }
   ;
 
 /* empty ctor args can have parens or not, at user's discretion */  
 /* yields ASTList<CtorArg> */
 CtorArgsOpt
   : /* empty */
-      { $$ = new (y_pool) ASTList<CtorArg>(y_pool); }
+      { $$ = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool); }
   | CtorArgs
       { $$ = $1; }
   ;
@@ -188,21 +188,21 @@ CtorArgsOpt
 /* yields ASTList<CtorArg> */
 CtorArgs
   : "(" ")"
-      { $$ = new (y_pool) ASTList<CtorArg>(y_pool); }
+      { $$ = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool); }
   | "(" CtorArgList ")"
       { $$ = $2; }
   ;
 
 /* yields ASTList<CtorArg> */
 CtorArgList: Arg
-               { $$ = new (y_pool) ASTList<CtorArg>(y_pool);
+               { $$ = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool);
                  {
                    string tmp = unbox($1);
-                   $$->append(parseCtorArg(tmp));
+                   $$->append(DBG_INFO_ARG0_FIRST  parseCtorArg(tmp));
                  }
                }
            | CtorArgList "," Arg
-               { ($$=$1)->append(parseCtorArg(unbox($3))); }
+               { ($$=$1)->append(DBG_INFO_ARG0_FIRST  parseCtorArg(unbox($3))); }
            ;
 
 /* yields string */
@@ -233,17 +233,17 @@ ArgList: Arg
 /* yields ASTList<Annotation> */
 CtorMembersOpt
   : /* empty */
-      { $$ = new (y_pool) ASTList<Annotation>(y_pool); }
+      { $$ = new (y_pool) ASTList<Annotation>(DBG_INFO_ARG0_FIRST  y_pool); }
   | CtorMembersOpt Annotation
-      { ($$=$1)->append($2); }
+      { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
   ;
 
 /* yields Annotation */
 Annotation
   : AccessMod Embedded
-      { $$ = new (y_pool) UserDecl(y_pool,$1, unbox($2), ""); }
+      { $$ = new (y_pool) UserDecl(DBG_INFO_ARG0_FIRST  y_pool,$1, unbox($2), ""); }
   | AccessMod TOK_EMBEDDED_CODE "=" TOK_EMBEDDED_CODE ";"
-      { $$ = new (y_pool) UserDecl(y_pool,$1, unbox($2), unbox($4)); }
+      { $$ = new (y_pool) UserDecl(DBG_INFO_ARG0_FIRST  y_pool,$1, unbox($2), unbox($4)); }
   | CustomCode
       { $$ = $1; }
   ;
@@ -251,7 +251,7 @@ Annotation
 /* yields CustomCode */
 CustomCode
   : "custom" TOK_NAME Embedded
-      { $$ = new (y_pool) CustomCode(y_pool,unbox($2), unbox($3)); }
+      { $$ = new (y_pool) CustomCode(DBG_INFO_ARG0_FIRST  y_pool,unbox($2), unbox($3)); }
   ;
 
 /* yields string */
@@ -274,49 +274,49 @@ Public
 
 /* yield AccessMod */
 AccessMod: Public
-             { $$ = new (y_pool) AccessMod(y_pool,$1, NULL); }
+             { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, NULL); }
          | Public "(" StringList ")"
-             { $$ = new (y_pool) AccessMod(y_pool,$1, $3); }
+             { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, $3); }
          ;
 
 /* yield ASTList<string> */
 StringList: TOK_NAME
-              { $$ = new (y_pool) ASTList<string>(y_pool,$1); }
+              { $$ = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool,$1); }
           | StringList "," TOK_NAME
-              { ($$=$1)->append($3); }
+              { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $3); }
           ;
 
 /* yields TF_verbatim */
 Verbatim: "verbatim" Embedded
-            { $$ = new (y_pool) TF_verbatim(y_pool,unbox($2)); }
+            { $$ = new (y_pool) TF_verbatim(DBG_INFO_ARG0_FIRST  y_pool,unbox($2)); }
         | "impl_verbatim" Embedded
-            { $$ = new (y_pool) TF_impl_verbatim(y_pool,unbox($2)); }
+            { $$ = new (y_pool) TF_impl_verbatim(DBG_INFO_ARG0_FIRST  y_pool,unbox($2)); }
         ;
 
 /* yields TF_option */
 Option: "option" TOK_NAME OptionArgs ";"
-      { $$ = new (y_pool) TF_option(y_pool,unbox($2), $3); }
+      { $$ = new (y_pool) TF_option(DBG_INFO_ARG0_FIRST  y_pool,unbox($2), $3); }
       ;
       
 /* yields ASTList<string> */
 OptionArgs: /*empty*/
-              { $$ = new (y_pool) ASTList<string>(y_pool); }
+              { $$ = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool); }
           | OptionArgs TOK_NAME
-              { ($$=$1)->append($2); }
+              { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
           ;
 
 /* yields TF_enum */
 Enum: "enum" TOK_NAME "{" EnumeratorSeq "}"
-        { $$ = new (y_pool) TF_enum(y_pool,unbox($2), $4); }
+        { $$ = new (y_pool) TF_enum(DBG_INFO_ARG0_FIRST  y_pool,unbox($2), $4); }
     | "enum" TOK_NAME "{" EnumeratorSeq "," "}"
-        { $$ = new (y_pool) TF_enum(y_pool,unbox($2), $4); }
+        { $$ = new (y_pool) TF_enum(DBG_INFO_ARG0_FIRST  y_pool,unbox($2), $4); }
     ;
 
 /* yields ASTList<string> */
 EnumeratorSeq: Enumerator
-                 { $$ = new (y_pool) ASTList<string>(y_pool,$1); }
+                 { $$ = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool,$1); }
              | EnumeratorSeq "," Enumerator
-                 { ($$=$1)->append($3); }
+                 { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $3); }
              ;
 
 /* yields string */
@@ -326,16 +326,16 @@ Enumerator: TOK_NAME
 
 /* yields ASTList<BaseClass> */
 BaseClassesOpt: /* empty */
-                  { $$ = new (y_pool) ASTList<BaseClass>(y_pool); }
+                  { $$ = new (y_pool) ASTList<BaseClass>(DBG_INFO_ARG0_FIRST  y_pool); }
               | ":" BaseClassSeq
                   { $$ = $2; }
               ;
 
 /* yields ASTList<BaseClass> */
 BaseClassSeq: BaseClass
-                { $$ = new (y_pool) ASTList<BaseClass>(y_pool,$1); }
+                { $$ = new (y_pool) ASTList<BaseClass>(DBG_INFO_ARG0_FIRST  y_pool,$1); }
             | BaseClassSeq "," BaseClass
-                { ($$=$1)->append($3); }
+                { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $3); }
             ;
 
 /* yields AccessCtl */
@@ -347,7 +347,7 @@ BaseAccess
 
 /* yields BaseClass */
 BaseClass: BaseAccess TOK_NAME
-             { $$ = new (y_pool) BaseClass(y_pool,$1, unbox($2)); }
+             { $$ = new (y_pool) BaseClass(DBG_INFO_ARG0_FIRST  y_pool,$1, unbox($2)); }
          ;
 
 %%

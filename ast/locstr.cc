@@ -4,34 +4,34 @@
 #include "locstr.h"     // this module
 #include "exc.h"        // LocString
 
-LocString::LocString(StoragePool &pool)
-  : Storeable(pool), loc(SL_UNKNOWN),
+LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), loc(SL_UNKNOWN),
     str(NULL)           // problem with "" is we don't have the string table here..
 {}
 
-LocString::LocString(LocString const &obj)
-  : Storeable(obj,false)
+LocString::LocString(DBG_INFO_FORMAL_FIRST  LocString const &obj)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  obj,false)
 {}
 
-LocString::LocString(Storeable const &parent)
-  : Storeable(parent, true)
+LocString::LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, true)
 {}
 
-LocString::LocString(StoragePool &pool, SourceLoc L, StringRef s)
-  : Storeable(pool), loc(L),
+LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, SourceLoc L, StringRef s)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), loc(L),
     str(s)
 {}
 
 
-LocString::LocString(StoragePool &pool, Flatten&)
-  : Storeable(pool), loc(SL_UNKNOWN), str(NULL)
+LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), loc(SL_UNKNOWN), str(NULL)
 {}
 
-LocString::LocString(Storeable const &parent, Flatten&)
-  : Storeable(parent), loc(SL_UNKNOWN), str(NULL)
+LocString::LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent, Flatten&)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(LocString), true), loc(SL_UNKNOWN), str(NULL)
 {}
 
-void LocString::xfer(StoragePool &pool, Flatten &flat)
+void LocString::xfer(str::StoragePool &pool, Flatten &flat)
 {
   // doh.. flattening locs is hard.  I wasn't even doing
   // it before.  issues:
@@ -52,12 +52,12 @@ void LocString::xfer(StoragePool &pool, Flatten &flat)
   delete obj;
 }*/
 
-LocString *LocString::clone(StoragePool &pool) const
+LocString *LocString::clone(str::StoragePool &pool) const
 {
   return new (pool) LocString(*this);
 }
 
-LocString *LocString::clone(StoragePool &pool, int deepness, int listDeepness) const
+LocString *LocString::clone(str::StoragePool &pool, int deepness, int listDeepness) const
 {
   return new (pool) LocString(*this);
 }

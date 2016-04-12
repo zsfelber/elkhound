@@ -424,7 +424,7 @@ public:
        }
    }
 
-   inline StoragePool const * getPool() const {
+   inline StoragePool * getPool() const {
        switch (__kind) {
        case ST_NONE:
            return asPool();
@@ -438,11 +438,11 @@ public:
        }
    }
 
-   inline StoragePool const & getPoolRef() const {
+   inline StoragePool & getPoolRef() const {
        return NN(getPool());
    }
 
-   inline virtual StoragePool const * asPool() const {
+   inline virtual StoragePool * asPool() const {
        return NULL;
    }
 
@@ -1060,8 +1060,8 @@ private:
        return NN(getRootPool());
    }
 
-   inline StoragePool const * asPool() const {
-       return this;
+   inline StoragePool * asPool() const {
+       return constcast(this);
    }
 
 

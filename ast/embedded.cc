@@ -5,7 +5,7 @@
 
 EmbeddedLang::EmbeddedLang(ReportError *e)
   : err(e? e : &simpleReportError),
-    text(),
+    text(DBG_INFO_ARG0 ),
     exprOnly(false),
     isDeclaration(false)
 {}

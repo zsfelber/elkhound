@@ -11,11 +11,11 @@
 
 // ------------- xfer of owners -----------------
 template <class T>
-void xferOwnerPtr(StoragePool &pool, Flatten &flat, T *&ptr)
+void xferOwnerPtr(str::StoragePool &pool, Flatten &flat, T *&ptr)
 {
   if (flat.reading()) {
     // construct a new, empty object
-    ptr = new (pool) T(pool, flat);
+    ptr = new (pool) T(DBG_INFO_ARG0_FIRST  pool, flat);
   }
 
   // read/write it
@@ -27,7 +27,7 @@ void xferOwnerPtr(StoragePool &pool, Flatten &flat, T *&ptr)
 
 
 template <class T>
-void xferNullableOwnerPtr(StoragePool &pool, Flatten &flat, T *&ptr)
+void xferNullableOwnerPtr(str::StoragePool &pool, Flatten &flat, T *&ptr)
 {
   bool present = false;     // initial value not used
   if (flat.reading()) {
@@ -61,7 +61,7 @@ void xferOwnerPtr_readObj(Flatten &flat, T *&ptr)
 
 
 template <class T>
-void xferObjList(StoragePool& pool, Flatten &flat, ObjList <T> &list)
+void xferObjList(str::StoragePool& pool, Flatten &flat, ObjList <T> &list)
 {
   if (flat.writing()) {
     flat.writeInt(list.count());
@@ -77,20 +77,20 @@ void xferObjList(StoragePool& pool, Flatten &flat, ObjList <T> &list)
     ObjListMutator<T> mut(list);
     while (listLen--) {
       // construct a new, empty object
-      T *obj = new (pool) T(pool, flat);
+      T *obj = new (pool) T(DBG_INFO_ARG0_FIRST  pool, flat);
 
       // read it
       obj->xfer(pool, flat);
       flat.noteOwner(obj);
 
       // add it to the list
-      mut.append(obj);
+      mut.append(DBG_INFO_ARG0_FIRST  obj);
     }
   }
 }
 
 template <class T>
-void xferSObjList(StoragePool& pool, Flatten &flat, SObjList <T> &list)
+void xferSObjList(str::StoragePool& pool, Flatten &flat, SObjList <T> &list)
 {
   if (flat.writing()) {
     flat.writeInt(list.count());
@@ -106,14 +106,14 @@ void xferSObjList(StoragePool& pool, Flatten &flat, SObjList <T> &list)
     SObjListMutator<T> mut(list);
     while (listLen--) {
       // construct a new, empty object
-      T *obj = new (pool) T(pool, flat);
+      T *obj = new (pool) T(DBG_INFO_ARG0_FIRST  pool, flat);
 
       // read it
       obj->xfer(pool, flat);
       flat.noteOwner(obj);
 
       // add it to the list
-      mut.append(obj);
+      mut.append(DBG_INFO_ARG0_FIRST   obj);
     }
   }
 }

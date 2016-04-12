@@ -12,18 +12,18 @@ ASTSpecFile::~ASTSpecFile()
   //forms.deleteAllOwning();
 }
 
-void ASTSpecFile::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void ASTSpecFile::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, ASTSpecFile);
 
   PRINT_LIST(ToplevelForm, forms);
 }
 
-ASTSpecFile *ASTSpecFile::clone(StoragePool &pool, int deepness, int listDeepness) const
+ASTSpecFile *ASTSpecFile::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
   deepness--; listDeepness--;
   ASTSpecFile *ret = new (pool) ASTSpecFile(
-    pool, cloneASTList(pool, forms, deepness, listDeepness)
+    DBG_INFO_ARG_FWD_FIRST  pool, cloneASTList(pool, forms, deepness, listDeepness)
   );
   return ret;
 }
@@ -44,7 +44,7 @@ char const * const ToplevelForm::kindNames[ToplevelForm::NUM_KINDS] = {
   "TF_enum",
 };
 
-void ToplevelForm::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void ToplevelForm::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
 }
 
@@ -54,20 +54,20 @@ TF_verbatim::~TF_verbatim()
 {
 }
 
-void TF_verbatim::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void TF_verbatim::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, TF_verbatim);
 
-  ToplevelForm::debugPrint(os, indent, subtreeName);
+  ToplevelForm::debugPrint(DBG_INFO_ARG_FWD_FIRST  os, indent, subtreeName);
 
   PRINT_STRING(code);
 }
 
-TF_verbatim *TF_verbatim::clone(StoragePool &pool, int deepness, int listDeepness) const
+TF_verbatim *TF_verbatim::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_verbatim *ret = new (pool) TF_verbatim(
-    pool, code
+    DBG_INFO_ARG_FWD_FIRST  pool, code
   );
   return ret;
 }
@@ -78,20 +78,20 @@ TF_impl_verbatim::~TF_impl_verbatim()
 {
 }
 
-void TF_impl_verbatim::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void TF_impl_verbatim::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, TF_impl_verbatim);
 
-  ToplevelForm::debugPrint(os, indent, subtreeName);
+  ToplevelForm::debugPrint(DBG_INFO_ARG_FWD_FIRST  os, indent, subtreeName);
 
   PRINT_STRING(code);
 }
 
-TF_impl_verbatim *TF_impl_verbatim::clone(StoragePool &pool, int deepness, int listDeepness) const
+TF_impl_verbatim *TF_impl_verbatim::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_impl_verbatim *ret = new (pool) TF_impl_verbatim(
-    pool, code
+    DBG_INFO_ARG_FWD_FIRST  pool, code
   );
   return ret;
 }
@@ -104,22 +104,22 @@ TF_class::~TF_class()
   //ctors.deleteAllOwning();
 }
 
-void TF_class::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void TF_class::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, TF_class);
 
-  ToplevelForm::debugPrint(os, indent, subtreeName);
+  ToplevelForm::debugPrint(DBG_INFO_ARG_FWD_FIRST  os, indent, subtreeName);
 
   PRINT_SUBTREE(super);
   PRINT_LIST(ASTClass, ctors);
 }
 
-TF_class *TF_class::clone(StoragePool &pool, int deepness, int listDeepness) const
+TF_class *TF_class::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_class *ret = new (pool) TF_class(
-              pool,
-    ((deepness>=0)&&super)? super->clone(pool, deepness, listDeepness) : super,
+    DBG_INFO_ARG_FWD_FIRST  pool,
+    ((deepness>=0)&&super)? super->clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness, listDeepness) : super,
     cloneASTList(pool, ctors, deepness, listDeepness)
   );
   return ret;
@@ -134,21 +134,21 @@ TF_option::~TF_option()
   }
 }
 
-void TF_option::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void TF_option::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, TF_option);
 
-  ToplevelForm::debugPrint(os, indent, subtreeName);
+  ToplevelForm::debugPrint(DBG_INFO_ARG_FWD_FIRST  os, indent, subtreeName);
 
   PRINT_STRING(name);
   PRINT_LIST(string, args);
 }
 
-TF_option *TF_option::clone(StoragePool &pool, int deepness, int listDeepness) const
+TF_option *TF_option::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_option *ret = new (pool) TF_option(
-    pool, name,
+    DBG_INFO_ARG_FWD_FIRST  pool, name,
     shallowCloneASTList(pool, args)
   );
   return ret;
@@ -161,20 +161,20 @@ TF_custom::~TF_custom()
   delete cust;
 }
 
-void TF_custom::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void TF_custom::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, TF_custom);
 
-  ToplevelForm::debugPrint(os, indent, subtreeName);
+  ToplevelForm::debugPrint(DBG_INFO_ARG_FWD_FIRST  os, indent, subtreeName);
 
   PRINT_SUBTREE(cust);
 }
 
-TF_custom *TF_custom::clone(StoragePool &pool, int deepness, int listDeepness) const
+TF_custom *TF_custom::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_custom *ret = new (pool) TF_custom(
-    pool, ((deepness>=0)&&cust)? cust->clone(pool, deepness, listDeepness) : cust
+    DBG_INFO_ARG_FWD_FIRST  pool, ((deepness>=0)&&cust)? cust->clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness, listDeepness) : cust
   );
   return ret;
 }
@@ -188,20 +188,20 @@ TF_enum::~TF_enum()
   }
 }
 
-void TF_enum::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void TF_enum::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, TF_enum);
 
-  ToplevelForm::debugPrint(os, indent, subtreeName);
+  ToplevelForm::debugPrint(DBG_INFO_ARG_FWD_FIRST  os, indent, subtreeName);
 
   PRINT_STRING(name);
   PRINT_LIST(string, enumerators);
 }
 
-TF_enum *TF_enum::clone(StoragePool &pool, int deepness, int listDeepness) const
+TF_enum *TF_enum::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
   TF_enum *ret = new (pool) TF_enum(
-    pool, name,
+    DBG_INFO_ARG_FWD_FIRST  pool, name,
     shallowCloneASTList(pool, enumerators)
   );
   return ret;
@@ -218,7 +218,7 @@ ASTClass::~ASTClass()
   //decls.deleteAllOwning();
 }
 
-void ASTClass::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void ASTClass::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, ASTClass);
 
@@ -229,10 +229,10 @@ void ASTClass::debugPrint(std::ostream &os, int indent, char const *subtreeName)
   PRINT_LIST(Annotation, decls);
 }
 
-ASTClass *ASTClass::clone(StoragePool &pool, int deepness, int listDeepness) const
+ASTClass *ASTClass::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
   ASTClass *ret = new (pool) ASTClass(
-    pool, name,
+    DBG_INFO_ARG_FWD_FIRST  pool, name,
     cloneASTList(pool, args, deepness, listDeepness),
     cloneASTList(pool, lastArgs, deepness, listDeepness),
     cloneASTList(pool, bases, deepness, listDeepness),
@@ -251,7 +251,7 @@ AccessMod::~AccessMod()
   }
 }
 
-void AccessMod::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void AccessMod::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, AccessMod);
 
@@ -259,10 +259,10 @@ void AccessMod::debugPrint(std::ostream &os, int indent, char const *subtreeName
   PRINT_LIST(string, mods);
 }
 
-AccessMod *AccessMod::clone(StoragePool &pool, int deepness, int listDeepness) const
+AccessMod *AccessMod::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
   AccessMod *ret = new (pool) AccessMod(
-    pool, acc,
+    DBG_INFO_ARG_FWD_FIRST  pool, acc,
     shallowCloneASTList(pool, mods)
   );
   return ret;
@@ -280,7 +280,7 @@ char const * const Annotation::kindNames[Annotation::NUM_KINDS] = {
   "CustomCode",
 };
 
-void Annotation::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void Annotation::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
 }
 
@@ -291,21 +291,21 @@ UserDecl::~UserDecl()
   delete amod;
 }
 
-void UserDecl::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void UserDecl::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, UserDecl);
 
-  Annotation::debugPrint(os, indent, subtreeName);
+  Annotation::debugPrint(DBG_INFO_ARG_FWD_FIRST  os, indent, subtreeName);
 
   PRINT_SUBTREE(amod);
   PRINT_STRING(code);
   PRINT_STRING(init);
 }
 
-UserDecl *UserDecl::clone(StoragePool &pool, int deepness, int listDeepness) const
+UserDecl *UserDecl::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
   UserDecl *ret = new (pool) UserDecl(
-    pool, ((deepness>=0)&&amod)? amod->clone(pool, deepness, listDeepness) : amod,
+    DBG_INFO_ARG_FWD_FIRST  pool, ((deepness>=0)&&amod)? amod->clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness, listDeepness) : amod,
     code,
     init
   );
@@ -318,20 +318,20 @@ CustomCode::~CustomCode()
 {
 }
 
-void CustomCode::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void CustomCode::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, CustomCode);
 
-  Annotation::debugPrint(os, indent, subtreeName);
+  Annotation::debugPrint(DBG_INFO_ARG_FWD_FIRST  os, indent, subtreeName);
 
   PRINT_STRING(qualifier);
   PRINT_STRING(code);
 }
 
-CustomCode *CustomCode::clone(StoragePool &pool, int deepness, int listDeepness) const
+CustomCode *CustomCode::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
   CustomCode *ret = new (pool) CustomCode(
-    pool, qualifier,
+    DBG_INFO_ARG_FWD_FIRST  pool, qualifier,
     code
   );
   return ret;
@@ -344,7 +344,7 @@ CtorArg::~CtorArg()
 {
 }
 
-void CtorArg::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void CtorArg::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, CtorArg);
 
@@ -354,10 +354,10 @@ void CtorArg::debugPrint(std::ostream &os, int indent, char const *subtreeName) 
   PRINT_STRING(defaultValue);
 }
 
-CtorArg *CtorArg::clone(StoragePool &pool, int deepness, int listDeepness) const
+CtorArg *CtorArg::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
   CtorArg *ret = new (pool) CtorArg(
-    pool, isOwner,
+    DBG_INFO_ARG_FWD_FIRST  pool, isOwner,
     type,
     name,
     defaultValue
@@ -372,7 +372,7 @@ BaseClass::~BaseClass()
 {
 }
 
-void BaseClass::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
+void BaseClass::debugPrint(DBG_INFO_FORMAL_FIRST  std::ostream &os, int indent, char const *subtreeName) const
 {
   PRINT_HEADER(subtreeName, BaseClass);
 
@@ -380,10 +380,10 @@ void BaseClass::debugPrint(std::ostream &os, int indent, char const *subtreeName
   PRINT_STRING(name);
 }
 
-BaseClass *BaseClass::clone(StoragePool &pool, int deepness, int listDeepness) const
+BaseClass *BaseClass::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
 {
   BaseClass *ret = new (pool) BaseClass(
-    pool, access,
+    DBG_INFO_ARG_FWD_FIRST  pool, access,
     name
   );
   return ret;
@@ -447,8 +447,8 @@ bool AccessMod::hasModPrefix(char const *mod) const
 
 string AccessMod::getModSuffixFromPrefix(char const *mod) const
 {
-  string mod0(mod);
-  string ret;
+  string mod0(DBG_INFO_ARG0_FIRST mod);
+  string ret(DBG_INFO_ARG0);
   bool found = false;
   FOREACH_ASTLIST(string, mods, iter) {
     rostring s = *iter.data();

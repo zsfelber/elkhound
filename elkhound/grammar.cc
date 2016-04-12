@@ -26,15 +26,15 @@ StringTable grammarStringTable;
 
 
 // ---------------------- Symbol --------------------
-Symbol::Symbol(StoragePool &pool, LocString const &n, bool t, bool e)
-  : Storeable(pool), name(n),
+Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &n, bool t, bool e)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(DBG_INFO_ARG_FWD_FIRST  n),
     isTerm(t),
     isEmptyString(e),
     type(NULL),
     dupParam(NULL),
-    dupCode(pool),
+    dupCode(DBG_INFO_ARG_FWD_FIRST  pool),
     delParam(NULL),
-    delCode(pool),
+    delCode(DBG_INFO_ARG_FWD_FIRST  pool),
     reachable(false)
 {}
 
@@ -42,18 +42,18 @@ Symbol::~Symbol()
 {}
 
 
-Symbol::Symbol(StoragePool &pool, Flatten &flat)
-  : Storeable(pool), name(pool, flat),
+Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(DBG_INFO_ARG_FWD_FIRST  pool, flat),
     isTerm(false),
     isEmptyString(false),
     type(NULL),
     dupParam(NULL),
-    dupCode(pool),
+    dupCode(DBG_INFO_ARG_FWD_FIRST  pool),
     delParam(NULL),
-    delCode(pool)
+    delCode(DBG_INFO_ARG_FWD_FIRST  pool)
 {}
 
-void Symbol::xfer(StoragePool &pool, Flatten &flat)
+void Symbol::xfer(str::StoragePool &pool, Flatten &flat)
 {
   // have to break constness to unflatten
   const_cast<LocString&>(name).xfer(pool, flat);
@@ -157,14 +157,14 @@ Nonterminal const *Symbol::ifNonterminalC() const
 
 
 // -------------------- Terminal ------------------------
-Terminal::Terminal(StoragePool &pool, Flatten &flat)
-  : Symbol(pool, flat),
-    alias(pool, flat),
+Terminal::Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat)
+  : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, flat),
+    alias(DBG_INFO_ARG_FWD_FIRST  pool, flat),
     classifyParam(NULL),
-    classifyCode(pool)
+    classifyCode(DBG_INFO_ARG_FWD_FIRST  pool)
 {}
 
-void Terminal::xfer(StoragePool &pool, Flatten &flat)
+void Terminal::xfer(str::StoragePool &pool, Flatten &flat)
 {
   Symbol::xfer(pool, flat);
 
@@ -225,20 +225,20 @@ string Terminal::toString(bool quoteAliases) const
 
 
 // ----------------- Nonterminal ------------------------
-Nonterminal::Nonterminal(StoragePool &pool, LocString const &name, bool isEmpty)
-  : Symbol(pool, name, false /*terminal*/, isEmpty),
+Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &name, bool isEmpty)
+  : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, name, false /*terminal*/, isEmpty),
     mergeParam1(NULL),
     mergeParam2(NULL),
-    mergeCode(pool),
+    mergeCode(DBG_INFO_ARG_FWD_FIRST  pool),
     keepParam(NULL),
-    keepCode(pool),
+    keepCode(DBG_INFO_ARG_FWD_FIRST  pool),
     maximal(false),
-    subsets(pool),
+    subsets(DBG_INFO_ARG_FWD_FIRST  pool),
     ntIndex(-1),
     cyclic(false),
-    first(pool,0),
-    follow(pool,0),
-    productions(pool),
+    first(DBG_INFO_ARG_FWD_FIRST  pool,0),
+    follow(DBG_INFO_ARG_FWD_FIRST  pool,0),
+    productions(DBG_INFO_ARG_FWD_FIRST  pool),
     superset(NULL)
 {}
 
@@ -246,21 +246,21 @@ Nonterminal::~Nonterminal()
 {}
 
 
-Nonterminal::Nonterminal(StoragePool &pool, Flatten &flat)
-  : Symbol(pool, flat),
+Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat)
+  : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, flat),
     mergeParam1(NULL),
     mergeParam2(NULL),
-    mergeCode(pool),
+    mergeCode(DBG_INFO_ARG_FWD_FIRST  pool),
     keepParam(NULL),
-    keepCode(pool),
-    first(pool,flat),
-    follow(pool,flat),
-    subsets(pool),
-    productions(pool),
+    keepCode(DBG_INFO_ARG_FWD_FIRST  pool),
+    first(DBG_INFO_ARG_FWD_FIRST  pool,flat),
+    follow(DBG_INFO_ARG_FWD_FIRST  pool,flat),
+    subsets(DBG_INFO_ARG_FWD_FIRST  pool),
+    productions(DBG_INFO_ARG_FWD_FIRST  pool),
     superset(NULL)
 {}
 
-void Nonterminal::xfer(StoragePool &pool, Flatten &flat)
+void Nonterminal::xfer(str::StoragePool &pool, Flatten &flat)
 {
   Symbol::xfer(pool, flat);
 
@@ -272,7 +272,7 @@ void Nonterminal::xfer(StoragePool &pool, Flatten &flat)
   keepCode.xfer(pool, flat);
 }
 
-void Nonterminal::xferSerfs(StoragePool &pool, Flatten &flat, Grammar &g)
+void Nonterminal::xferSerfs(str::StoragePool &pool, Flatten &flat, Grammar &g)
 {
   // annotation
   flat.xferInt(ntIndex);
@@ -332,12 +332,12 @@ bool Nonterminal::anyDDM() const
 // -------------------- TerminalSet ------------------------
 STATICDEF Terminal const *TerminalSet::suppressExcept = NULL;
 
-TerminalSet::TerminalSet(StoragePool &pool, int numTerms) : Storeable(pool)
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int numTerms) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool)
 {
   init(numTerms);
 }
 
-TerminalSet::TerminalSet(Storeable const &parent, int numTerms) : Storeable(parent, sizeof(TerminalSet), true)
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, int numTerms) : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(TerminalSet), true)
 {
   init(numTerms);
 }
@@ -427,15 +427,15 @@ TerminalSet::~TerminalSet()
 }
 
 
-TerminalSet::TerminalSet(StoragePool &pool, Flatten&) : Storeable(pool)
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool)
   , bitmap(NULL)
 {}
 
-TerminalSet::TerminalSet(Storeable const &parent, Flatten&) : Storeable(parent, sizeof(TerminalSet), true)
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, Flatten&) : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(TerminalSet), true)
   , bitmap(NULL)
 {}
 
-void TerminalSet::xfer(StoragePool &pool, Flatten &flat)
+void TerminalSet::xfer(str::StoragePool &pool, Flatten &flat)
 {
   flat.xferInt(bitmapLen);
 
@@ -579,12 +579,12 @@ Production::RHSElt::~RHSElt()
 {}
 
 
-Production::RHSElt::RHSElt(StoragePool &pool, Flatten &flat)
-  : Storeable(pool), sym(NULL),
-    tag(pool, flat)
+Production::RHSElt::RHSElt(DBG_INFO_FORMAL_FIRST str::StoragePool &pool, Flatten &flat)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sym(NULL),
+    tag(DBG_INFO_ARG_FWD_FIRST  pool, flat)
 {}
 
-void Production::RHSElt::xfer(StoragePool &pool, Flatten &flat)
+void Production::RHSElt::xfer(str::StoragePool &pool, Flatten &flat)
 {
   tag.xfer(pool, flat);
 }
@@ -597,16 +597,16 @@ void Production::RHSElt::xferSerfs(Flatten &flat, Grammar &g)
 
 
 // -------------------- Production -------------------------
-Production::Production(StoragePool &pool, Nonterminal *L, char const *Ltag)
-  : Storeable(pool), left(L),
-    right(*this),
+Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Nonterminal *L, char const *Ltag)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), left(L),
+    right(DBG_INFO_ARG_FWD_FIRST  *this),
     precedence(0),
     forbid(NULL),
     forbid_owned(false),
     rhsLen(-1),
     prodIndex(-1),
-    action(*this),
-    firstSet(*this)       // don't allocate bitmap yet
+    action(DBG_INFO_ARG_FWD_FIRST  *this),
+    firstSet(DBG_INFO_ARG_FWD_FIRST  *this)       // don't allocate bitmap yet
 {
     pool.addPointer(forbid);
 }
@@ -620,15 +620,15 @@ Production::~Production()
 }
 
 
-Production::Production(StoragePool &pool, Flatten &flat)
-  : Storeable(pool), left(NULL), right(*this),
+Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), left(NULL), right(DBG_INFO_ARG_FWD_FIRST  *this),
     forbid(NULL),
     forbid_owned(false),
-    action(*this,flat),
-    firstSet(*this,flat)
+    action(DBG_INFO_ARG_FWD_FIRST  *this,flat),
+    firstSet(DBG_INFO_ARG_FWD_FIRST  *this,flat)
 {}
 
-void Production::xfer(StoragePool &pool, Flatten &flat)
+void Production::xfer(str::StoragePool &pool, Flatten &flat)
 {
   xferObjList(pool, flat, right);
   action.xfer(pool, flat);
@@ -705,28 +705,28 @@ bool Production::rhsHasSymbol(Symbol const *sym) const
 }
 
 
-void Production::getRHSSymbols(SymbolList &output) const
+void Production::getRHSSymbols(DBG_INFO_FORMAL_FIRST SymbolList &output) const
 {
   FOREACH_OBJLIST(RHSElt, right, iter) {
-    output.append(iter.data()->sym);
+    output.append(DBG_INFO_ARG_FWD_FIRST  iter.data()->sym);
   }
 }
 
 
-Production::RHSElt* Production::append(Grammar &g, Symbol *sym, LocString const &tag)
+Production::RHSElt* Production::append(DBG_INFO_FORMAL_FIRST  Grammar &g, Symbol *sym, LocString const &tag)
 {
   // my new design decision (6/26/00 14:24) is to disallow the
   // emptyString nonterminal from explicitly appearing in the
   // productions
   xassert(!sym->isEmptyString);
 
-  RHSElt *r = new (g.pool) RHSElt(g.pool, sym, tag);
-  right.append(r);
+  RHSElt *r = new (g.pool) RHSElt(DBG_INFO_ARG_FWD_FIRST  g.pool, sym, tag);
+  right.append(DBG_INFO_ARG_FWD_FIRST  r);
   return r;
 }
 
-void Nonterminal::appendProd(Production *prod) {
-  productions.append(prod);
+void Nonterminal::appendProd(DBG_INFO_FORMAL_FIRST  Production *prod) {
+  productions.append(DBG_INFO_ARG_FWD_FIRST  prod);
 }
 
 
@@ -814,14 +814,14 @@ DottedProduction const *Production::getDProdC(int dotPlace) const
 
 // it's somewhat unfortunate that I have to be told the
 // total number of terminals, but oh well
-void Production::addForbid(Grammar &g, Terminal *t, int numTerminals)
+void Production::addForbid(DBG_INFO_FORMAL_FIRST  Grammar &g, Terminal *t, int numTerminals)
 {
   if (forbid) {
      if (!forbid_owned) {
         throw std::exception();
      }
   } else {
-     forbid = new (g.pool) TerminalSet(g.pool, numTerminals);
+     forbid = new (g.pool) TerminalSet(DBG_INFO_ARG_FWD_FIRST  g.pool, numTerminals);
 
      forbid_owned = true;
   }
@@ -829,7 +829,7 @@ void Production::addForbid(Grammar &g, Terminal *t, int numTerminals)
   forbid->add(t->termIndex);
 }
 
-void Production::addForbid(Grammar &g, TerminalSet *s)
+void Production::addForbid(DBG_INFO_FORMAL_FIRST  Grammar &g, TerminalSet *s)
 {
   if (forbid) {
     if (forbid_owned) {
@@ -853,7 +853,7 @@ void Production::print(ostream &os) const
 string Production::toString(bool printType, bool printIndex) const
 {
   // LHS "->" RHS
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
   if (printIndex) {
     sb << "[" << prodIndex << "] ";
   }
@@ -874,7 +874,7 @@ string Production::toString(bool printType, bool printIndex) const
 
 string Production::rhsString(bool printTags, bool quoteAliases) const
 {
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
 
   if (right.isNotEmpty()) {
     // print the RHS symbols
@@ -886,7 +886,7 @@ string Production::rhsString(bool printTags, bool quoteAliases) const
         sb << " ";
       }
 
-      string symName;
+      string symName(DBG_INFO_ARG0);
       if (elt.sym->isNonterminal()) {
         symName = elt.sym->name;
       }
@@ -916,7 +916,7 @@ string Production::rhsString(bool printTags, bool quoteAliases) const
 
 string Production::toStringMore(bool printCode) const
 {
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
   sb << toString();
 
   if (printCode && !action.isNull()) {
@@ -930,13 +930,15 @@ string Production::toStringMore(bool printCode) const
 
 
 // ------------------ Grammar -----------------
-Grammar::Grammar()
+Grammar::Grammar(DBG_INFO_FORMAL)
   :
-    nonterminals(pool),
-    terminals(pool),
-    productions(pool),
+    pool(DBG_INFO_ARG_FWD),
+    nonterminals(DBG_INFO_ARG_FWD_FIRST  pool),
+    terminals(DBG_INFO_ARG_FWD_FIRST  pool),
+    productions(DBG_INFO_ARG_FWD_FIRST  pool),
+    prefix0(DBG_INFO_ARG_FWD), pref(DBG_INFO_ARG_FWD),
     startSymbol(NULL),
-    targetLang("C++"),
+    targetLang(DBG_INFO_ARG_FWD_FIRST  "C++"),
     useGCDefaults(false),
     defaultMergeAborts(false),
     expectedSR(-1),
@@ -945,13 +947,13 @@ Grammar::Grammar()
     expectedUNRTerms(-1),
     terminalCodeMapped(0),
     maxCode(0),
-    verbatim(pool),
-    actionClassName(pool),
-    actionClasses(pool),
-    implVerbatim(pool)
+    verbatim(DBG_INFO_ARG_FWD_FIRST  pool),
+    actionClassName(DBG_INFO_ARG_FWD_FIRST  pool),
+    actionClasses(DBG_INFO_ARG_FWD_FIRST  pool),
+    implVerbatim(DBG_INFO_ARG_FWD_FIRST  pool)
 {
     emptyString = new (pool)
-      Nonterminal(pool, LocString(pool, HERE_SOURCELOC, "empty"),
+      Nonterminal(DBG_INFO_ARG_FWD_FIRST  pool, LocString(DBG_INFO_ARG_FWD_FIRST  pool, HERE_SOURCELOC, "empty"),
                 true /*isEmptyString*/);
     pool.addPointer(emptyString);
 }
@@ -1066,13 +1068,13 @@ void Grammar::addProduction(Nonterminal *lhs, Symbol *firstRhs, ...)
 #endif // 0
 
 
-void Grammar::addProduction(Production *prod)
+void Grammar::addProduction(DBG_INFO_FORMAL_FIRST  Production *prod)
 {
   // I used to add emptyString if there were 0 RHS symbols,
   // but I've now switched to not explicitly saying that
 
   prod->prodIndex = productions.count();
-  productions.append(prod);
+  productions.append(DBG_INFO_ARG_FWD_FIRST  prod);
 
   // if the start symbol isn't defined yet, we can here
   // implement the convention that the LHS of the first
@@ -1085,7 +1087,7 @@ void Grammar::addProduction(Production *prod)
 
 
 // add a token to those we know about
-bool Grammar::declareToken(LocString const &symbolName, int code, 
+bool Grammar::declareToken(DBG_INFO_FORMAL_FIRST  LocString const &symbolName, int code,
                            LocString const &alias)
 {
   // verify that this token hasn't been declared already
@@ -1097,7 +1099,7 @@ bool Grammar::declareToken(LocString const &symbolName, int code,
   int index = terminals.count();
 
   // create a new terminal class
-  Terminal *term = getOrMakeTerminal(symbolName);
+  Terminal *term = getOrMakeTerminal(DBG_INFO_ARG_FWD_FIRST  symbolName);
 
   // assign fields specified in %token declaration
   term->termIndex = index;
@@ -1309,31 +1311,31 @@ Symbol const *Grammar::findSymbolC(char const *name) const
 
 
 
-Nonterminal *Grammar::getOrMakeNonterminal(LocString const &name)
+Nonterminal *Grammar::getOrMakeNonterminal(DBG_INFO_FORMAL_FIRST  LocString const &name)
 {
   Nonterminal *nt = findNonterminal(name);
   if (nt != NULL) {
     return nt;
   }
 
-  nt = new (pool) Nonterminal(pool, name);
-  nonterminals.append(nt);
+  nt = new (pool) Nonterminal(DBG_INFO_ARG_FWD_FIRST  pool, name);
+  nonterminals.append(DBG_INFO_ARG_FWD_FIRST  nt);
   return nt;
 }
 
-Terminal *Grammar::getOrMakeTerminal(LocString const &name)
+Terminal *Grammar::getOrMakeTerminal(DBG_INFO_FORMAL_FIRST  LocString const &name)
 {
   Terminal *term = findTerminal(name);
   if (term != NULL) {
     return term;
   }
 
-  term = new (pool) Terminal(pool, name);
-  terminals.append(term);
+  term = new (pool) Terminal(DBG_INFO_ARG_FWD_FIRST  pool, name);
+  terminals.append(DBG_INFO_ARG_FWD_FIRST  term);
   return term;
 }
 
-Symbol *Grammar::getOrMakeSymbol(LocString const &name)
+Symbol *Grammar::getOrMakeSymbol(DBG_INFO_FORMAL_FIRST  LocString const &name)
 {
   Symbol *sym = findSymbol(name);
   if (sym != NULL) {
@@ -1345,10 +1347,10 @@ Symbol *Grammar::getOrMakeSymbol(LocString const &name)
   // use the lexical convention that nonterminals are
   // capitalized and terminals are not.
   if (isupper(name[0])) {
-    return getOrMakeNonterminal(name);
+    return getOrMakeNonterminal(DBG_INFO_ARG_FWD_FIRST  name);
   }
   else {
-    return getOrMakeTerminal(name);
+    return getOrMakeTerminal(DBG_INFO_ARG_FWD_FIRST  name);
   }
 }
 
@@ -1363,7 +1365,7 @@ int Grammar::getProductionIndex(Production const *prod) const
 
 string symbolSequenceToString(SymbolList const &list)
 {
-  stringBuilder sb;   // collects output
+  stringBuilder sb(DBG_INFO_ARG0);   // collects output
 
   bool first = true;
   SFOREACH_SYMBOL(list, sym) {

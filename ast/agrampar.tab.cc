@@ -1352,43 +1352,43 @@ yyreduce:
     {
         case 2:
 #line 119 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.file) = *((ASTSpecFile**)parseParam) = new (y_pool) ASTSpecFile(y_pool,(yyvsp[0].formList)); }
+    { (yyval.file) = *((ASTSpecFile**)parseParam) = new (y_pool) ASTSpecFile(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].formList)); }
 #line 1357 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
 #line 124 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.formList) = new (y_pool) ASTList<ToplevelForm>(y_pool); }
+    { (yyval.formList) = new (y_pool) ASTList<ToplevelForm>(DBG_INFO_ARG0_FIRST  y_pool); }
 #line 1363 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
 #line 125 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.formList)=(yyvsp[-1].formList))->append((yyvsp[0].tfClass)); }
+    { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].tfClass)); }
 #line 1369 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
 #line 126 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.formList)=(yyvsp[-1].formList))->append((yyvsp[0].verbatim)); }
+    { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].verbatim)); }
 #line 1375 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
 #line 127 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.formList)=(yyvsp[-1].formList))->append((yyvsp[0].tfOption)); }
+    { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].tfOption)); }
 #line 1381 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
 #line 128 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.formList)=(yyvsp[-1].formList))->append((yyvsp[0].tfEnum)); }
+    { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].tfEnum)); }
 #line 1387 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
 #line 129 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.formList)=(yyvsp[-1].formList))->append(new (y_pool) TF_custom(y_pool,(yyvsp[0].customCode))); }
+    { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  new (y_pool) TF_custom(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].customCode))); }
 #line 1393 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1435,37 +1435,37 @@ yyreduce:
 
   case 15:
 #line 163 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.tfClass) = new (y_pool) TF_class(y_pool,new (y_pool) ASTClass(y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+    { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
 #line 1440 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
 #line 170 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.tfClass) = new (y_pool) TF_class(y_pool,new (y_pool) ASTClass(y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+    { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
 #line 1446 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
 #line 172 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.tfClass)=(yyvsp[-5].tfClass))->ctors.append(new (y_pool) ASTClass(y_pool,unbox((yyvsp[-3].str)), (yyvsp[-2].ctorArgList), NULL, (yyvsp[-1].baseClassList), NULL)); }
+    { ((yyval.tfClass)=(yyvsp[-5].tfClass))->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-3].str)), (yyvsp[-2].ctorArgList), NULL, (yyvsp[-1].baseClassList), NULL)); }
 #line 1452 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
 #line 174 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.tfClass)=(yyvsp[-7].tfClass))->ctors.append(new (y_pool) ASTClass(y_pool,unbox((yyvsp[-5].str)), (yyvsp[-4].ctorArgList), NULL, (yyvsp[-3].baseClassList), (yyvsp[-1].userDeclList))); }
+    { ((yyval.tfClass)=(yyvsp[-7].tfClass))->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-5].str)), (yyvsp[-4].ctorArgList), NULL, (yyvsp[-3].baseClassList), (yyvsp[-1].userDeclList))); }
 #line 1458 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
 #line 176 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.tfClass)=(yyvsp[-1].tfClass))->super->decls.append((yyvsp[0].annotation)); }
+    { ((yyval.tfClass)=(yyvsp[-1].tfClass))->super->decls.append(DBG_INFO_ARG0_FIRST  (yyvsp[0].annotation)); }
 #line 1464 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
 #line 183 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(y_pool); }
+    { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool); }
 #line 1470 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1477,7 +1477,7 @@ yyreduce:
 
   case 22:
 #line 191 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(y_pool); }
+    { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool); }
 #line 1482 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1489,10 +1489,10 @@ yyreduce:
 
   case 24:
 #line 198 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(y_pool);
+    { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool);
                  {
                    string tmp = unbox((yyvsp[0].str));
-                   (yyval.ctorArgList)->append(parseCtorArg(tmp));
+                   (yyval.ctorArgList)->append(DBG_INFO_ARG0_FIRST  parseCtorArg(tmp));
                  }
                }
 #line 1499 "agrampar.tab.c" /* yacc.c:1646  */
@@ -1500,7 +1500,7 @@ yyreduce:
 
   case 25:
 #line 205 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.ctorArgList)=(yyvsp[-2].ctorArgList))->append(parseCtorArg(unbox((yyvsp[0].str)))); }
+    { ((yyval.ctorArgList)=(yyvsp[-2].ctorArgList))->append(DBG_INFO_ARG0_FIRST  parseCtorArg(unbox((yyvsp[0].str)))); }
 #line 1505 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1572,25 +1572,25 @@ yyreduce:
 
   case 37:
 #line 236 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.userDeclList) = new (y_pool) ASTList<Annotation>(y_pool); }
+    { (yyval.userDeclList) = new (y_pool) ASTList<Annotation>(DBG_INFO_ARG0_FIRST  y_pool); }
 #line 1577 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
 #line 238 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.userDeclList)=(yyvsp[-1].userDeclList))->append((yyvsp[0].annotation)); }
+    { ((yyval.userDeclList)=(yyvsp[-1].userDeclList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].annotation)); }
 #line 1583 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
 #line 244 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.annotation) = new (y_pool) UserDecl(y_pool,(yyvsp[-1].accessMod), unbox((yyvsp[0].str)), ""); }
+    { (yyval.annotation) = new (y_pool) UserDecl(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[-1].accessMod), unbox((yyvsp[0].str)), ""); }
 #line 1589 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
 #line 246 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.annotation) = new (y_pool) UserDecl(y_pool,(yyvsp[-4].accessMod), unbox((yyvsp[-3].str)), unbox((yyvsp[-1].str))); }
+    { (yyval.annotation) = new (y_pool) UserDecl(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[-4].accessMod), unbox((yyvsp[-3].str)), unbox((yyvsp[-1].str))); }
 #line 1595 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1602,7 +1602,7 @@ yyreduce:
 
   case 42:
 #line 254 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.customCode) = new (y_pool) CustomCode(y_pool,unbox((yyvsp[-1].str)), unbox((yyvsp[0].str))); }
+    { (yyval.customCode) = new (y_pool) CustomCode(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-1].str)), unbox((yyvsp[0].str))); }
 #line 1607 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1656,79 +1656,79 @@ yyreduce:
 
   case 51:
 #line 277 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.accessMod) = new (y_pool) AccessMod(y_pool,(yyvsp[0].accessCtl), NULL); }
+    { (yyval.accessMod) = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].accessCtl), NULL); }
 #line 1661 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 52:
 #line 279 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.accessMod) = new (y_pool) AccessMod(y_pool,(yyvsp[-3].accessCtl), (yyvsp[-1].stringList)); }
+    { (yyval.accessMod) = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[-3].accessCtl), (yyvsp[-1].stringList)); }
 #line 1667 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 53:
 #line 284 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.stringList) = new (y_pool) ASTList<string>(y_pool,(yyvsp[0].str)); }
+    { (yyval.stringList) = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].str)); }
 #line 1673 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 54:
 #line 286 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.stringList)=(yyvsp[-2].stringList))->append((yyvsp[0].str)); }
+    { ((yyval.stringList)=(yyvsp[-2].stringList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].str)); }
 #line 1679 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 55:
 #line 291 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.verbatim) = new (y_pool) TF_verbatim(y_pool,unbox((yyvsp[0].str))); }
+    { (yyval.verbatim) = new (y_pool) TF_verbatim(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[0].str))); }
 #line 1685 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 56:
 #line 293 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.verbatim) = new (y_pool) TF_impl_verbatim(y_pool,unbox((yyvsp[0].str))); }
+    { (yyval.verbatim) = new (y_pool) TF_impl_verbatim(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[0].str))); }
 #line 1691 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 57:
 #line 298 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.tfOption) = new (y_pool) TF_option(y_pool,unbox((yyvsp[-2].str)), (yyvsp[-1].stringList)); }
+    { (yyval.tfOption) = new (y_pool) TF_option(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-2].str)), (yyvsp[-1].stringList)); }
 #line 1697 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 58:
 #line 303 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.stringList) = new (y_pool) ASTList<string>(y_pool); }
+    { (yyval.stringList) = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool); }
 #line 1703 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 59:
 #line 305 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.stringList)=(yyvsp[-1].stringList))->append((yyvsp[0].str)); }
+    { ((yyval.stringList)=(yyvsp[-1].stringList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].str)); }
 #line 1709 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 60:
 #line 310 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.tfEnum) = new (y_pool) TF_enum(y_pool,unbox((yyvsp[-3].str)), (yyvsp[-1].enumeratorList)); }
+    { (yyval.tfEnum) = new (y_pool) TF_enum(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-3].str)), (yyvsp[-1].enumeratorList)); }
 #line 1715 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 61:
 #line 312 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.tfEnum) = new (y_pool) TF_enum(y_pool,unbox((yyvsp[-4].str)), (yyvsp[-2].enumeratorList)); }
+    { (yyval.tfEnum) = new (y_pool) TF_enum(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-4].str)), (yyvsp[-2].enumeratorList)); }
 #line 1721 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 62:
 #line 317 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.enumeratorList) = new (y_pool) ASTList<string>(y_pool,(yyvsp[0].enumerator)); }
+    { (yyval.enumeratorList) = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].enumerator)); }
 #line 1727 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 63:
 #line 319 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.enumeratorList)=(yyvsp[-2].enumeratorList))->append((yyvsp[0].enumerator)); }
+    { ((yyval.enumeratorList)=(yyvsp[-2].enumeratorList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].enumerator)); }
 #line 1733 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1740,7 +1740,7 @@ yyreduce:
 
   case 65:
 #line 329 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.baseClassList) = new (y_pool) ASTList<BaseClass>(y_pool); }
+    { (yyval.baseClassList) = new (y_pool) ASTList<BaseClass>(DBG_INFO_ARG0_FIRST  y_pool); }
 #line 1745 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1752,13 +1752,13 @@ yyreduce:
 
   case 67:
 #line 336 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.baseClassList) = new (y_pool) ASTList<BaseClass>(y_pool,(yyvsp[0].baseClass)); }
+    { (yyval.baseClassList) = new (y_pool) ASTList<BaseClass>(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].baseClass)); }
 #line 1757 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 68:
 #line 338 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.baseClassList)=(yyvsp[-2].baseClassList))->append((yyvsp[0].baseClass)); }
+    { ((yyval.baseClassList)=(yyvsp[-2].baseClassList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].baseClass)); }
 #line 1763 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1782,7 +1782,7 @@ yyreduce:
 
   case 72:
 #line 350 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.baseClass) = new (y_pool) BaseClass(y_pool,(yyvsp[-1].accessCtl), unbox((yyvsp[0].str))); }
+    { (yyval.baseClass) = new (y_pool) BaseClass(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[-1].accessCtl), unbox((yyvsp[0].str))); }
 #line 1787 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 

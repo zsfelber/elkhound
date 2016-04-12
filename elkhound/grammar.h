@@ -69,7 +69,7 @@ extern StringTable grammarStringTable;
 
 // ---------------- Symbol --------------------
 // either a nonterminal or terminal symbol
-class Symbol : public Storeable {
+class Symbol : public str::Storeable {
 // ------ representation ------
 public:
   LocString const name;     // symbol's name in grammar
@@ -93,11 +93,11 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:      // funcs
-  Symbol(StoragePool &pool, LocString const &n, bool t, bool e = false);
+  Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &n, bool t, bool e = false);
   virtual ~Symbol();
 
-  Symbol(StoragePool &pool, Flatten&);
-  void xfer(StoragePool &pool, Flatten &flat);
+  Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
+  void xfer(str::StoragePool &pool, Flatten &flat);
 
   // symmetric selectors
   bool isTerminal() const { return isTerm; }
@@ -194,19 +194,19 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:     // funcs
-  Terminal(StoragePool &pool, LocString const &name)        // canonical name for terminal class
-    : Symbol(pool, name, true /*terminal*/),
-      alias(*this),
+  Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &name)        // canonical name for terminal class
+    : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, name, true /*terminal*/),
+      alias(DBG_INFO_ARG_FWD_FIRST  *this),
       precedence(0),
       associativity(AK_NONASSOC),
       classifyParam(NULL),
-      classifyCode(*this),
+      classifyCode(DBG_INFO_ARG_FWD_FIRST  *this),
       termCode(-1),
       termIndex(-1)
   {}
 
-  Terminal(StoragePool &pool, Flatten &flat);
-  void xfer(StoragePool &pool, Flatten &flat);
+  Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat);
+  void xfer(str::StoragePool &pool, Flatten &flat);
 
   virtual void print(ostream &os) const;
   OSTREAM_OPERATOR(Terminal)
@@ -250,7 +250,7 @@ class GrammarAnalysis;
 // ----------------- TerminalSet -------------------
 // used for the lookahead sets of LR items, and for the First()
 // sets of production RHSs
-class TerminalSet : public Storeable {
+class TerminalSet : public str::Storeable {
 
 private:    // data
   unsigned char *bitmap;      // (owner) bitmap of terminals, indexed by
@@ -269,8 +269,8 @@ private:    // funcs
     { return ((unsigned)terminalIndex & 7); }
 
 public:     // funcs
-  TerminalSet(StoragePool &pool, int numTerms=0);                   // allocate new set, initially empty
-  TerminalSet(Storeable const &parent, int numTerms=0);                   // allocate new set, initially empty
+  TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int numTerms=0);                   // allocate new set, initially empty
+  TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, int numTerms=0);                   // allocate new set, initially empty
   TerminalSet(TerminalSet const &obj);
   ~TerminalSet();
 
@@ -279,9 +279,9 @@ public:     // funcs
 
   void convert(GrammarAnalysis& g);
 
-  TerminalSet(StoragePool &pool, Flatten&);
-  TerminalSet(Storeable const &parent, Flatten&);
-  void xfer(StoragePool &pool, Flatten &flat);
+  TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
+  TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, Flatten&);
+  void xfer(str::StoragePool &pool, Flatten &flat);
 
   // call this to re-allocate at a new size; set is emptied
   void reset(int numTerms);
@@ -335,19 +335,19 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:     // funcs
-  Nonterminal(StoragePool &pool, LocString const &name, bool isEmptyString=false);
+  Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &name, bool isEmptyString=false);
   virtual ~Nonterminal();
 
-  Nonterminal(StoragePool &pool, Flatten &flat);
-  void xfer(StoragePool &pool, Flatten &flat);
-  void xferSerfs(StoragePool &pool, Flatten &flat, Grammar &g);
+  Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat);
+  void xfer(str::StoragePool &pool, Flatten &flat);
+  void xferSerfs(str::StoragePool &pool, Flatten &flat, Grammar &g);
 
   virtual void print(ostream &os, Grammar const *grammer = NULL) const;
   OSTREAM_OPERATOR(Nonterminal)
 
   virtual bool anyDDM() const;
 
-  void appendProd(Production *prod);
+  void appendProd(DBG_INFO_FORMAL_FIRST  Production *prod);
 
 // ------ annotation ------
 public:     // data
@@ -375,10 +375,10 @@ inline SObjList<Symbol> const &toSObjList(SObjList<Nonterminal> const &list)
 
 // ---------------- Production --------------------
 // a rewrite rule
-class Production : public Storeable {
+class Production : public str::Storeable {
 // ------ representation ------
 public:     // types
-  class RHSElt : public Storeable {
+  class RHSElt : public str::Storeable {
   public:
     Symbol *sym;                // (serf) rhs element symbol
 
@@ -388,11 +388,11 @@ public:     // types
     LocString tag;             // tag for this symbol; can be ""
 
   public:
-    RHSElt(StoragePool &pool, Symbol *s, LocString const &t) : Storeable(pool), sym(s), tag(t) {}
+    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Symbol *s, LocString const &t) : Storeable(pool), sym(s), tag(t) {}
     ~RHSElt();
 
-    RHSElt(StoragePool &pool, Flatten&);
-    void xfer(StoragePool &pool, Flatten &flat);
+    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
+    void xfer(str::StoragePool &pool, Flatten &flat);
     void xferSerfs(Flatten &flat, Grammar &g);
 
   };
@@ -417,11 +417,11 @@ private:    // funcs
   void computeDerived();
 
 public:	    // funcs
-  Production(StoragePool &pool, Nonterminal *left, char const *leftTag);
+  Production(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Nonterminal *left, char const *leftTag);
   ~Production();
 
-  Production(StoragePool &pool, Flatten &flat);
-  void xfer(StoragePool &pool, Flatten &flat);
+  Production(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat);
+  void xfer(str::StoragePool &pool, Flatten &flat);
   void xferSerfs(Flatten &flat, Grammar &g);
 
   // length *not* including emptySymbol, if present
@@ -435,10 +435,10 @@ public:	    // funcs
   bool rhsHasSymbol(Symbol const *sym) const;
 
   // retrieve the RHS as a list of symbols, rather than as a list of RHSElts
-  void getRHSSymbols(SymbolList &output) const;
+  void getRHSSymbols(DBG_INFO_FORMAL_FIRST  SymbolList &output) const;
 
   // append a RHS symbol
-  RHSElt* append(Grammar &g, Symbol *sym, LocString const &tag);
+  RHSElt* append(DBG_INFO_FORMAL_FIRST  Grammar &g, Symbol *sym, LocString const &tag);
 
   // call this when production is built, so it can compute annotations
   // (this is called by GrammarAnalysis::initializeAuxData, from
@@ -466,8 +466,8 @@ public:	    // funcs
   #endif // 0
 
   // add a terminal to the 'forbid' set
-  void addForbid(Grammar &g, Terminal *t, int totalNumTerminals);
-  void addForbid(Grammar &g, TerminalSet *s);
+  void addForbid(DBG_INFO_FORMAL_FIRST  Grammar &g, Terminal *t, int totalNumTerminals);
+  void addForbid(DBG_INFO_FORMAL_FIRST  Grammar &g, TerminalSet *s);
 
   // print 'A -> B c D' (no newline)
   string toString(bool printType = true, bool printIndex = true) const;
@@ -518,7 +518,7 @@ public:	    // data
   virtual void thisIsAbstract() = 0;
 
   // ! the first !
-  StoragePool pool;
+  str::StoragePool pool;
 
   SObjList<Nonterminal> nonterminals;
   SObjList<Terminal> terminals;
@@ -575,7 +575,7 @@ public:	    // data
   int expectedUNRTerms;                 // # unreachable terminals
 
 public:     // funcs
-  Grammar();                            // set everything manually
+  Grammar(DBG_INFO_FORMAL);                            // set everything manually
   ~Grammar();
 
   // read/write as binary file
@@ -589,14 +589,14 @@ public:     // funcs
   // ---- building a grammar ----
   // declare a new token exists, with name and optional alias;
   // return false if it's already declared
-  bool declareToken(LocString const &symbolName, int code, 
+  bool declareToken(DBG_INFO_FORMAL_FIRST   LocString const &symbolName, int code,
                     LocString const &alias);
 
   // add a new production; the rhs arg list must be terminated with a NULL
   //void addProduction(Nonterminal *lhs, Symbol *rhs, ...);
 
   // add a pre-constructed production
-  void addProduction(Production *prod);
+  void addProduction(DBG_INFO_FORMAL_FIRST  Production *prod);
 
   // ---------- outputting a grammar --------------
   // print the list of symbols with type annotations
@@ -628,7 +628,7 @@ public:     // funcs
       { return const_cast<Thing*>(find##Thing##C(name)); }  \
                                                             \
     /* retrieve, or create it if not already there */       \
-    Thing *getOrMake##Thing(LocString const &name);
+    Thing *getOrMake##Thing(DBG_INFO_FORMAL_FIRST  LocString const &name);
 
   SYMBOL_ACCESS(Symbol)        // findSymbolC, findSymbol, getOrMakeSymbol
   SYMBOL_ACCESS(Terminal)      // findTerminal{C,}, getOrMakeTerminal

@@ -27,13 +27,13 @@ private:
 
 public:
 
-  ASTList(DBG_INFO_FORMAL) : str::Storeable(DBG_INFO_ARG_FWD), list() {}
+  ASTList(DBG_INFO_FORMAL) : str::Storeable(DBG_INFO_ARG_FWD), list(DBG_INFO_ARG_FWD) {}
   ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
   ASTList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ASTList)), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
   ~ASTList()                            {  }
 
   // ctor to make singleton list; often quite useful
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, T *elt)                       : str::Storeable(pool), list(DBG_INFO_ARG_FWD_FIRST  *this) { prepend(elt); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, T *elt)                       : str::Storeable(pool), list(DBG_INFO_ARG_FWD_FIRST  *this) { prepend(DBG_INFO_ARG_FWD_FIRST  elt); }
 
   // stealing ctor; among other things, since &src->list is assumed to
   // point at 'src', this class can't have virtual functions;
@@ -59,6 +59,7 @@ public:
   void prepend(DBG_INFO_FORMAL_FIRST  T *newitem)              { list.prepend(DBG_INFO_ARG_FWD_FIRST  newitem); }
   void append(DBG_INFO_FORMAL_FIRST  T *newitem)               { list.append(DBG_INFO_ARG_FWD_FIRST  newitem); }
   void appendAll(ASTList<T> &tail)      { list.appendAll(tail.list); }
+  void prependAll(ASTList<T> &tail)      { list.prependAll(tail.list); }
   void appendAllNew(ASTList<T> const &tail, VoidEq eq)    { list.appendAllNew(tail.list, eq); }
   void reappendAll(ASTList<T> const &tail, VoidEq eq)    { list.reappendAll(tail.list, eq); }
   void insertAt(DBG_INFO_FORMAL_FIRST  T *newitem, int index)  { list.insertAt(DBG_INFO_ARG_FWD_FIRST  newitem, index); }

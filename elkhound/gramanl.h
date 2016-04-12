@@ -139,7 +139,7 @@ typedef SObjListIter<DottedProduction> SDProductionListIter;
 // can be lots of items, because of the differing lookahead sets
 // (I prefer the name "LRItem" to simply "Item" because the latter
 // easily collides with other uses)
-class LRItem : public Storeable {
+class LRItem : public str::Storeable {
 public:    // data
   DottedProduction const *dprod;  // (serf) production and dot position
   TerminalSet lookahead;          // lookahead symbols
@@ -152,7 +152,7 @@ public:    // funcs
   LRItem(int numTerms, DottedProduction const *dp);
 
   LRItem(Flatten&);
-  void xfer(StoragePool &pool, Flatten &flat);
+  void xfer(str::StoragePool &pool, Flatten &flat);
   void xferSerfs(Flatten &flat, GrammarAnalysis &g);
 
   // comparison
@@ -208,7 +208,7 @@ public:    // funcs
 // ---------------- ItemSet -------------------
 // a set of dotted productions, and the transitions between
 // item sets, as in LR(0) set-of-items construction
-class ItemSet : public Storeable {
+class ItemSet : public str::Storeable {
 public:     // intended to be read-only public
   // kernel items: the items that define the set; except for
   // the special case of the initial item in the initial state,
@@ -276,7 +276,7 @@ public:     // funcs
   ~ItemSet();
 
   ItemSet(Flatten&);
-  void xfer(StoragePool &pool, Flatten &flat);
+  void xfer(str::StoragePool &pool, Flatten &flat);
   void xferSerfs(Flatten &flat, GrammarAnalysis &g);
 
   // ---- item queries ----

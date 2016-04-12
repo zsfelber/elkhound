@@ -37,7 +37,7 @@
 // (and therefore, among other things, re-entrant)
 class GrammarLexer : public yyFlexLexer, public ReportError {
 
-  StoragePool pool;
+  str::StoragePool pool;
 
 public:      // types
   enum Constants {
@@ -66,18 +66,18 @@ public:      // data
 
 private:     // data
   // state of a file we were or are lexing
-  struct FileState : public Storeable {
+  struct FileState : public str::Storeable {
     SourceLoc loc;                 // location in the file
     std::istream *source;               // (owner?) source stream
     yy_buffer_state *bufstate;     // (owner?) flex's internal buffer state
 
   public:
-    FileState(rostring filename, std::istream *source);
-    FileState(StoragePool &pool, rostring filename, std::istream *source);
+    FileState(DBG_INFO_FORMAL_FIRST  rostring filename, std::istream *source);
+    FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, rostring filename, std::istream *source);
     ~FileState();
 
-    FileState(FileState const &obj);
-    FileState(StoragePool &pool, FileState const &obj);
+    FileState(DBG_INFO_FORMAL_FIRST  FileState const &obj);
+    FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, FileState const &obj);
     FileState& operator= (FileState const &obj);
   };
 

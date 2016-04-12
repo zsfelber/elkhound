@@ -15,7 +15,7 @@
 #include <fstream>         // std::ifstream
 
 //extern
-StoragePool y_pool;
+str::StoragePool y_pool(DBG_INFO_ARG0);
 
 string unbox(string *s)
 {
@@ -26,12 +26,12 @@ string unbox(string *s)
 
 string *box(char const *s)
 {
-  return new (y_pool) string(y_pool, s);
+  return new (y_pool) string(DBG_INFO_ARG0_FIRST  y_pool, s);
 }
 
 string *appendStr(string *left, string *right)
 {
-  string *ret = new (y_pool) string(y_pool, *left & *right);
+  string *ret = new (y_pool) string(DBG_INFO_ARG0_FIRST  y_pool, *left & *right);
   delete left;
   delete right;
   return ret;
@@ -40,7 +40,7 @@ string *appendStr(string *left, string *right)
 
 CtorArg *parseCtorArg(rostring origStr)
 {
-  CtorArg *ret = new (y_pool) CtorArg(y_pool, false, "", "", "");
+  CtorArg *ret = new (y_pool) CtorArg(DBG_INFO_ARG0_FIRST  y_pool, false, "", "", "");
 
   // strip leading and trailing whitespace
   string str = trimWhitespace(origStr);

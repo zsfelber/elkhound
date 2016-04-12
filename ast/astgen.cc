@@ -33,17 +33,17 @@ enum ListKind {
 // a product type of the information relevant to a list member of a
 // class; used to construct the traverse calls and visitors to the
 // fictional list classes
-struct ListClass : public Storeable {
+struct ListClass : public str::Storeable {
   ListKind lkind;
   string classAndMemberName;
   string elementClassName;
-  explicit ListClass(ListKind lkind0, rostring classAndMemberName0, rostring elementClassName0)
-    : lkind(lkind0)
+  explicit ListClass(DBG_INFO_FORMAL_FIRST  ListKind lkind0, rostring classAndMemberName0, rostring elementClassName0)
+    : Storeable(DBG_INFO_ARG_FWD), lkind(lkind0)
     , classAndMemberName(classAndMemberName0)
     , elementClassName(elementClassName0)
   {}
-  ListClass(StoragePool &pool, ListKind lkind0, rostring classAndMemberName0, rostring elementClassName0)
-    : Storeable(pool), lkind(lkind0)
+  ListClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ListKind lkind0, rostring classAndMemberName0, rostring elementClassName0)
+    : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), lkind(lkind0)
     , classAndMemberName(classAndMemberName0)
     , elementClassName(elementClassName0)
   {}
@@ -58,35 +58,35 @@ char const * ListClass::kindName() const {
 
 // this is the name of the visitor interface class, or ""
 // if the user does not want a visitor
-string visitorName;
+string visitorName(DBG_INFO_ARG0);
 inline bool wantVisitor() { return visitorName.length() != 0; }
 
 // this is the name of the delegator-visitor, or ""
 // if the user does not want a delegator-visitor
-string dvisitorName;
+string dvisitorName(DBG_INFO_ARG0);
 inline bool wantDVisitor() { return dvisitorName.length() != 0; }
 
 // this is the name of the xml-visitor, or ""
 // if the user does not want a delegator-visitor
-string xmlVisitorName;
+string xmlVisitorName(DBG_INFO_ARG0);
 inline bool wantXmlVisitor() { return xmlVisitorName.length() != 0; }
 
 // this is the prefix of the filenames rendered for xml lexing and
 // parsing
-string xmlParserName;
+string xmlParserName(DBG_INFO_ARG0);
 inline bool wantXmlParser() { return xmlParserName.length() != 0; }
 
 // similar for the modification visitor ("mvisitor")
-string mvisitorName;
+string mvisitorName(DBG_INFO_ARG0);
 inline bool wantMVisitor() { return mvisitorName.length() != 0; }
 
 // entire input
 ASTSpecFile *wholeAST = NULL;
 
-StoragePool astgen_pool;
+str::StoragePool astgen_pool(DBG_INFO_ARG0);
 
-SObjList<TF_class> *_allClasses = new (astgen_pool) SObjList<TF_class>(astgen_pool);
-ASTList<ListClass> *_listClasses = new (astgen_pool) ASTList<ListClass>(astgen_pool);
+SObjList<TF_class> *_allClasses = new (astgen_pool) SObjList<TF_class>(DBG_INFO_ARG0_FIRST  astgen_pool);
+ASTList<ListClass> *_listClasses = new (astgen_pool) ASTList<ListClass>(DBG_INFO_ARG0_FIRST astgen_pool);
 
 // list of all TF_classes in the input, useful for certain
 // applications which don't care about other forms
@@ -106,10 +106,10 @@ bool wantGDB = false;
 // support for covariant return types in MSVC; see
 //   http://support.microsoft.com/kb/240862/EN-US/
 // The approach is to use
-//   virtual Super *nocvr_clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;
-//   Sub *clone(StoragePool &pool, int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(pool, deepness,listDeepness)); }
+//   virtual Super *nocvr_clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
+//   Sub *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(pool, deepness,listDeepness)); }
 // in place of
-//   virtual Sub *clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;
+//   virtual Sub *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
 bool nocvr = false;
 
 
@@ -315,14 +315,14 @@ void parseFieldDecl(string &type, string &name, rostring decl)
 
 string extractFieldType(rostring decl)
 {
-  string t, n;
+  string t(DBG_INFO_ARG0), n(DBG_INFO_ARG0);
   parseFieldDecl(t, n, decl);
   return t;
 }
 
 string extractFieldName(rostring decl)
 {
-  string t, n;
+  string t(DBG_INFO_ARG0), n(DBG_INFO_ARG0);
   parseFieldDecl(t, n, decl);
   return n;
 }
@@ -623,17 +623,17 @@ void HGen::emitTFClass(TF_class const &cls)
   if (cls.hasChildren()) {
     if (!nocvr) {
       // normal case
-      out << "  virtual " << cls.super->name << "* clone(StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  virtual " << cls.super->name << "* clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
     }
     else {
       // msvc hack case
-      out << "  virtual " << cls.super->name << "* nocvr_clone(StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
-      out << "  " << cls.super->name << "* clone(StoragePool &pool, int deepness=0,int listDeepness=1) const { return nocvr_clone(pool, deepness,listDeepness); }\n";
+      out << "  virtual " << cls.super->name << "* nocvr_clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  " << cls.super->name << "* clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const { return nocvr_clone(pool, deepness,listDeepness); }\n";
     }
   }
   else {
     // not pure or virtual
-    out << "  " << cls.super->name << " *clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << cls.super->name << " *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
   }
   out << "\n";
 
@@ -774,10 +774,10 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
   if (parent) {
       da = true;
 
-      args = new (astgen_pool) ASTList<CtorArg>(constcast(&parent->getArgs()), false);
+      args = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  constcast(&parent->getArgs()), false);
       args->reappendAll(cls.args, (VoidEq)&cmpCtorArgs);
 
-      lastArgs = new (astgen_pool) ASTList<CtorArg>(constcast(&cls.lastArgs), false);
+      lastArgs = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  constcast(&cls.lastArgs), false);
       lastArgs->appendAllNew(parent->getLastArgs(), (VoidEq)&cmpCtorArgs);
   }
   // declare the constructor
@@ -980,12 +980,12 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   // clone function (take advantage of covariant return types)
   if (!nocvr) {
     // normal case
-    out << "  virtual " << ctor.name << " *clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  virtual " << ctor.name << " *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
   }
   else {
     // msvc hack case
-    out << "  virtual " << parent.name << "* nocvr_clone(StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
-    out << "  " << ctor.name << "* clone(StoragePool &pool, int deepness=0,int listDeepness=1) const\n"
+    out << "  virtual " << parent.name << "* nocvr_clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << ctor.name << "* clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const\n"
         << "    { return static_cast<" << ctor.name << "*>(nocvr_clone(pool, deepness,listDeepness)); }\n";
   }
 
@@ -1589,11 +1589,11 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
   if (!nocvr || !sub) {
     // normal case, or childless superclass case
-    out << name << " *" << name << "::clone(StoragePool &pool, int deepness,int listDeepness) const\n";
+    out << name << " *" << name << "::clone(str::StoragePool &pool, int deepness,int listDeepness) const\n";
   }
   else {
     // msvc hack case
-    out << super->name << " *" << name << "::nocvr_clone(StoragePool &pool, int deepness,int listDeepness) const\n";
+    out << super->name << " *" << name << "::nocvr_clone(str::StoragePool &pool, int deepness,int listDeepness) const\n";
   }
   out << "{\n";
 
@@ -2168,7 +2168,7 @@ void CGen::emitXmlField(rostring type, rostring name, char const *baseName,
            || (amod && amod->hasModPrefix("xml_"))
            ) {
     // catch-all for xml objects
-    string idPrefix;
+    string idPrefix(DBG_INFO_ARG0);
     if (amod) {
       idPrefix = amod->getModSuffixFromPrefix("xml_");
     } else {
@@ -3133,12 +3133,12 @@ void mergeClass(ASTClass *base, ASTClass *ext)
 
   // move all ctor args to the base
   while (ext->args.isNotEmpty()) {
-    base->args.append(ext->args.removeFirst());
+    base->args.append(DBG_INFO_ARG0_FIRST  ext->args.removeFirst());
   }
 
   // and same for annotations
   while (ext->decls.isNotEmpty()) {
-    base->decls.append(ext->decls.removeFirst());
+    base->decls.append(DBG_INFO_ARG0_FIRST  ext->decls.removeFirst());
   }
 }
 
@@ -3149,7 +3149,7 @@ void mergeEnum(TF_enum *base, TF_enum *ext)
   trace("merge") << "merging enum: " << ext->name << std::endl;
 
   while (ext->enumerators.isNotEmpty()) {
-    base->enumerators.append(ext->enumerators.removeFirst());
+    base->enumerators.append(DBG_INFO_ARG0_FIRST  ext->enumerators.removeFirst());
   }
 }
 
@@ -3185,7 +3185,7 @@ void mergeSuperclass(TF_class *base, TF_class *ext)
     else {
       // add it wholesale
       trace("merge") << "adding subclass: " << c->name << std::endl;
-      base->ctors.append(c);
+      base->ctors.append(DBG_INFO_ARG0_FIRST  c);
     }
   }
 }
@@ -3247,16 +3247,16 @@ void mergeItself(ASTSpecFile *base)
                   }
               }
               if (!mergedChild) {
-                  mergedChild = new (astgen_pool) ASTClass(astgen_pool, c->super->name, 0,0,0,0);
-                  s->ctors.append(mergedChild);
+                  mergedChild = new (astgen_pool) ASTClass(DBG_INFO_ARG0_FIRST  astgen_pool, c->super->name, 0,0,0,0);
+                  s->ctors.append(DBG_INFO_ARG0_FIRST  mergedChild);
                   o << "Merged child not found, created an empty one." << std::endl;
               }
 
               o << "Merge This:" << std::endl;
-              mergedChild->debugPrint(o, 0);
+              mergedChild->debugPrint(DBG_INFO_ARG0_FIRST  o, 0);
               o << std::endl;
               o << "Into freeform child:" << std::endl;
-              c->super->debugPrint(o, 0);
+              c->super->debugPrint(DBG_INFO_ARG0_FIRST  o, 0);
               mergeClass(c->super, mergedChild);
               mergedChild->consumed = true;
 
@@ -3276,12 +3276,12 @@ void mergeItself(ASTSpecFile *base)
               c->super->totLastArgs.debugPrint(o);
               o<<std::endl;
               o << "freeform result:" << std::endl;
-              c->super->debugPrint(o, 0);
+              c->super->debugPrint(DBG_INFO_ARG0_FIRST  o, 0);
           } else {
-              c->super->bases.prepend(new (astgen_pool) BaseClass(astgen_pool, AC_PUBLIC, "Storeable"));
+              c->super->bases.prepend(DBG_INFO_ARG0_FIRST  new (astgen_pool) BaseClass(DBG_INFO_ARG0_FIRST  astgen_pool, AC_PUBLIC, "Storeable"));
           }
 
-          c->super->args.prepend(parseCtorArg("public StoragePool &pool"));
+          c->super->args.prepend(DBG_INFO_ARG0_FIRST  parseCtorArg("public str::StoragePool &pool"));
       }
     }
 }
@@ -3306,7 +3306,7 @@ void mergeExtension(ASTSpecFile *base, ASTSpecFile *ext)
       else {
         // add the whole class
         trace("merge") << "adding new superclass: " << c->super->name << std::endl;
-        base->forms.append(c);
+        base->forms.append(DBG_INFO_ARG0_FIRST  c);
       }
     }
 
@@ -3322,7 +3322,7 @@ void mergeExtension(ASTSpecFile *base, ASTSpecFile *ext)
       else {
         // add the whole enum
         trace("merge") << "adding new enum: " << e->name << std::endl;
-        base->forms.append(e);
+        base->forms.append(DBG_INFO_ARG0_FIRST  e);
       }
     }
 
@@ -3346,13 +3346,13 @@ void mergeExtension(ASTSpecFile *base, ASTSpecFile *ext)
 
         // insert the base so it becomes position 'i'
         trace("merge") << "inserting extension verbatim near top\n";
-        base->forms.insertAt(tf, i);
+        base->forms.insertAt(DBG_INFO_ARG0_FIRST  tf, i);
       }
 
       else {
         // normal processing: append everything
         trace("merge") << "appending extension verbatim/option section\n";
-        base->forms.append(tf);
+        base->forms.append(DBG_INFO_ARG0_FIRST  tf);
       }
     }
 
@@ -3366,10 +3366,10 @@ void mergeExtension(ASTSpecFile *base, ASTSpecFile *ext)
 void recordListClass(ListKind lkind, rostring className, CtorArg const *arg) {
   rostring argName = arg->name;
   ListClass *cls = new (astgen_pool) ListClass
-    (astgen_pool, lkind, stringc << className << "_" << argName, extractListType(arg->type));
+    (DBG_INFO_ARG0_FIRST  astgen_pool, lkind, stringc << className << "_" << argName, extractListType(arg->type));
   if (!listClassesSet.contains(cls->classAndMemberName)) {
     listClassesSet.add(cls->classAndMemberName);
-    listClasses.append(cls);
+    listClasses.append(DBG_INFO_ARG0_FIRST  cls);
   } else {
     delete cls;
   }
@@ -3504,12 +3504,12 @@ void entry(int argc, char **argv)
   wholeAST = ast;
 
   // parse and merge extension modules
-  ObjList<string> modules(astgen_pool);
+  ObjList<string> modules(DBG_INFO_ARG0_FIRST  astgen_pool);
   while (*argv) {
     char const *fname = *argv;
     argv++;
     
-    modules.append(new (astgen_pool) string(fname));
+    modules.append(DBG_INFO_ARG0_FIRST  new (astgen_pool) string(DBG_INFO_ARG0_FIRST  fname));
 
     Owner<ASTSpecFile> extension;
     extension = readAbstractGrammar(fname);
@@ -3552,7 +3552,7 @@ void entry(int argc, char **argv)
       }
 
       else if (iter.data()->isTF_class()) {
-        allClasses.prepend(iter.data()->asTF_class());
+        allClasses.prepend(DBG_INFO_ARG0_FIRST  iter.data()->asTF_class());
       }
     }
   }

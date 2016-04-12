@@ -11,28 +11,28 @@
 #include "srcloc.h"      // SourceLoc
 #include "storage.h"      // SourceLoc
 
-class LocString : public Storeable {
+class LocString : public str::Storeable {
 public:    // data
   SourceLoc loc;
   StringRef str;
 
 public:    // funcs
-  LocString(StoragePool &pool);
-  LocString(LocString const &obj);
-  LocString(Storeable const &parent);
-  LocString(StoragePool &pool, SourceLoc loc, StringRef str);
+  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool);
+  LocString(DBG_INFO_FORMAL_FIRST  LocString const &obj);
+  LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent);
+  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, SourceLoc loc, StringRef str);
 
-  LocString(StoragePool &pool, Flatten&);
-  LocString(Storeable const &parent, Flatten&);
-  void xfer(StoragePool &pool, Flatten &flat);
+  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
+  LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent, Flatten&);
+  void xfer(str::StoragePool &pool, Flatten &flat);
 
   // deallocates its argument; intended for convenient use in bison grammar files
   //EXPLICIT LocString(LocString *obj) : Storeable(obj) { copyAndDel(obj); }
   //void copyAndDel(LocString *obj);
 
   // sometimes useful for generating arguments to the above ctor
-  LocString *clone(StoragePool &pool) const;
-  LocString *clone(StoragePool &pool, int deepness, int listDeepness) const;
+  LocString *clone(str::StoragePool &pool) const;
+  LocString *clone(str::StoragePool &pool, int deepness, int listDeepness) const;
 
   LocString& operator= (LocString const &obj)
     { loc = obj.loc; str = obj.str; return *this; }

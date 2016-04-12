@@ -8,7 +8,7 @@
 #include <string.h>        // memcpy
 
 EmitCode::EmitCode(rostring f)
-  : stringBuilder(),
+  : stringBuilder(DBG_INFO_ARG0),
     os(f.c_str()),
     fname(f),
     line(1)
