@@ -854,7 +854,7 @@ void VoidList::debugPrint(std::ostream& os, std::string indent) const
 {
   os/*<<std::hex*/<<indent<< "vlstx"<<(void*)this/*<<std::dec*/;
 #ifdef DEBUG
-  os<<":"<<objectName;
+  os<<":"<<objectName.str;
 #endif
   os << "{";
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {

@@ -407,17 +407,18 @@ SourceLocManager *sourceLocManager = NULL;
 
 SourceLocManager::SourceLocManager()
   : pool(DBG_INFO_ARG0),
-    files(DBG_INFO_ARG0_FIRST  pool),
+    files(DBG_INFO_ARG0),
     recent(NULL),
-    statics(DBG_INFO_ARG0_FIRST  pool),
+    statics(DBG_INFO_ARG0),
     nextLoc(toLoc(1)),
     nextStaticLoc(toLoc(0)),
     maxStaticLocs(100),
     useHashLines(true)
 {
-  if (!sourceLocManager) {
+  xassert(!sourceLocManager);
+  //if (!sourceLocManager) {
     sourceLocManager = this;
-  }
+  //}
 
   // slightly clever: treat SL_UNKNOWN as a static
   SourceLoc u = encodeStatic(StaticLoc(DBG_INFO_ARG0_FIRST  "<noloc>", 0,1,1));

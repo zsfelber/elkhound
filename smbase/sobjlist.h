@@ -45,6 +45,7 @@ public:
   SObjList& operator= (SObjList const &src)         { list = src.list; return *this; }
 
   public:
+  SObjList(DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD), list(DBG_INFO_ARG_FWD) {}
   SObjList(DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this,0) {}
   SObjList(DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(SObjList)), list(DBG_INFO_ARG_FWD_FIRST  *this,0) {}
 

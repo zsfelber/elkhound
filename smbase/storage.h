@@ -12,6 +12,10 @@
 #include "xassert.h"
 
 
+struct __DbgStr {
+    char const * str;
+    __DbgStr(char const * str) : str(str) {}
+};
 
 class VoidList;
 class VoidTailList;
@@ -22,8 +26,8 @@ class VoidNode;
 #define __FILE_LINE__ __FILE__ " : " S2(__LINE__)
 
 #ifdef DEBUG
-#define DBG_INFO_FORMAL char const * objectName
-#define DBG_INFO_FORMAL_FIRST char const * objectName,
+#define DBG_INFO_FORMAL __DbgStr const & objectName
+#define DBG_INFO_FORMAL_FIRST __DbgStr const & objectName,
 #define DBG_INFO_ARG(str) str
 #define DBG_INFO_ARG_FIRST(str) str,
 #define DBG_INFO_ARG_FWD objectName
@@ -310,7 +314,7 @@ friend class ::VoidTailList;
 friend class ::VoidNode;
 
 #ifdef DEBUG
-    char const * objectName;
+    __DbgStr objectName;
 #endif
 
     enum __Kind {
@@ -1639,7 +1643,7 @@ public:
      } else {
          os/*<<std::hex*/<<indent<< "pool:"<<(void*)this;
 #ifdef DEBUG
-         os<<":"<<objectName;
+         os<<":"<<objectName.str;
 #endif
          os<<":mem:"<<(void*)memory<<":"<<memlength;
          os<<":int:"<<(void*)intpointers<<":"<<intptrslength;
@@ -1762,7 +1766,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL)
     }
 #endif
 #ifdef DEBUG
-    lastObjName = objectName;
+    lastObjName = objectName.str;
 #endif
     __kind = ST_NONE;
     __parentVector = npos;
@@ -1776,7 +1780,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool)
 #endif
 {
 #ifdef DEBUG
-    lastObjName = objectName;
+    lastObjName = objectName.str;
 #endif
     xassert((__kind == ST_VALUE||__kind == ST_STORAGE_POOL) && getParent() == &pool && pool.contains(this));
 }
@@ -1788,7 +1792,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  ME const & srcOrParent, bool 
 #endif
 {
 #ifdef DEBUG
-    lastObjName = objectName;
+    lastObjName = objectName.str;
 #endif
     init(srcOrParent, sizeof(ME), childOfParent);
 }
@@ -1799,7 +1803,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParen
 #endif
 {
 #ifdef DEBUG
-    lastObjName = objectName;
+    lastObjName = objectName.str;
 #endif
     init(srcOrParent, size_of, childOfParent);
 }
@@ -1865,7 +1869,7 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
         } else {
             std::cout << "Warning  Storeable.assign(" << getKind()
 #ifdef DEBUG
-                      << " " << objectName
+                      << " " << objectName.str
 #endif
                       << ")  copy to stack : "
                       << (void*) &src << " -> " << (void*) this << std::endl;
