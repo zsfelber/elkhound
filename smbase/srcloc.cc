@@ -691,7 +691,9 @@ string SourceLocManager::getString(SourceLoc loc)
   int line, col;
   decodeLineCol(loc, name, line, col);
 
-  return stringc << name << ":" << line << ":" << col;
+  stringBuilder result(DBG_INFO_ARG0);
+  result << name << ":" << line << ":" << col;
+  return result;
 }
 
 string SourceLocManager::getLCString(SourceLoc loc)
@@ -700,7 +702,9 @@ string SourceLocManager::getLCString(SourceLoc loc)
   int line, col;
   decodeLineCol(loc, name, line, col);
 
-  return stringc << line << ":" << col;
+  stringBuilder result(DBG_INFO_ARG0);
+  result << line << ":" << col;
+  return result;
 }
 
 

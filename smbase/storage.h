@@ -26,19 +26,15 @@ class VoidNode;
 #define __FILE_LINE__ __FILE__ " : " S2(__LINE__)
 
 #ifdef DEBUG
-#define DBG_INFO_FORMAL __DbgStr const & objectName
-#define DBG_INFO_FORMAL_FIRST __DbgStr const & objectName,
-#define DBG_INFO_ARG(str) str
-#define DBG_INFO_ARG_FIRST(str) str,
+#define DBG_INFO_FORMAL __DbgStr const objectName
+#define DBG_INFO_FORMAL_FIRST __DbgStr const objectName,
 #define DBG_INFO_ARG_FWD objectName
 #define DBG_INFO_ARG_FWD_FIRST objectName,
-#define DBG_INFO_ARG0 DBG_INFO_ARG(__FILE_LINE__)
-#define DBG_INFO_ARG0_FIRST DBG_INFO_ARG_FIRST(__FILE_LINE__)
+#define DBG_INFO_ARG0 __FILE_LINE__
+#define DBG_INFO_ARG0_FIRST __FILE_LINE__,
 #else
 #define DBG_INFO_FORMAL
 #define DBG_INFO_FORMAL_FIRST
-#define DBG_INFO_ARG(str)
-#define DBG_INFO_ARG_FIRST(str)
 #define DBG_INFO_ARG_FWD
 #define DBG_INFO_ARG_FWD_FIRST
 #define DBG_INFO_ARG0
@@ -899,7 +895,7 @@ private:
       if (memcapacity < bufsz) {
           if (oldmemlength) {
               // FIXME insert child pool instead of large block memcpy
-              StoragePool * child = new (*this)  StoragePool(DBG_INFO_ARG_FIRST("allocParentItem") *this, true);
+              StoragePool * child = new (*this)  StoragePool(DBG_INFO_ARG0_FIRST  *this, true);
               swap(child);
           } else {
               extendBuffer(memory,           memlength,                       memcapacity, bufsz);

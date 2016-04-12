@@ -182,7 +182,7 @@ public:      // types
     string name;      // file name
     int offset;       // char offset
     int line, col;    // line,col
-              
+
   public:
     StaticLoc(DBG_INFO_FORMAL_FIRST  char const *n, int o, int L, int c)
       : str::Storeable(DBG_INFO_ARG_FWD), name(n), offset(o), line(L), col(c) {}
