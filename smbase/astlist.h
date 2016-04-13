@@ -91,7 +91,7 @@ public:
 
   // debugging: two additional invariants
   void selfCheck() const                { list.selfCheck(); }
-  void debugPrint(std::ostream& os, std::string indent="") const        { list.debugPrint(os, indent); }
+  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { list.debugPrint(os, indent, subtreeName); }
 };
 
 

@@ -13,6 +13,8 @@
 #include "strtokp.h"       // StrtokParse
 #include "exc.h"           // xfatal
 #include "strdict.h"       // StringDict
+#include "ast.h"
+#include "diff.h"
 
 #include <string.h>        // strncmp
 #include <fstream>       // std::ofstream
@@ -109,10 +111,10 @@ bool wantGDB = false;
 // support for covariant return types in MSVC; see
 //   http://support.microsoft.com/kb/240862/EN-US/
 // The approach is to use
-//   virtual Super *nocvr_clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
-//   Sub *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(pool, deepness,listDeepness)); }
+//   virtual Super *nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
+//   Sub *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(pool, deepness,listDeepness)); }
 // in place of
-//   virtual Sub *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
+//   virtual Sub *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
 bool nocvr = false;
 
 int debugEverything() {
@@ -127,7 +129,7 @@ int debugEverything() {
         s<<"wholeAST:\n";
         wholeAST->debugPrint(s);
         s<<"\n";
-    }
+    });
     return 0;
 }
 
@@ -642,17 +644,17 @@ void HGen::emitTFClass(TF_class const &cls)
   if (cls.hasChildren()) {
     if (!nocvr) {
       // normal case
-      out << "  virtual " << cls.super->name << "* clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  virtual " << cls.super->name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
     }
     else {
       // msvc hack case
-      out << "  virtual " << cls.super->name << "* nocvr_clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
-      out << "  " << cls.super->name << "* clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const { return nocvr_clone(pool, deepness,listDeepness); }\n";
+      out << "  virtual " << cls.super->name << "* nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  " << cls.super->name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const { return nocvr_clone(pool, deepness,listDeepness); }\n";
     }
   }
   else {
     // not pure or virtual
-    out << "  " << cls.super->name << " *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << cls.super->name << " *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
   }
   out << "\n";
 
@@ -803,6 +805,7 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
   {
     out << "public:      // funcs\n";
     out << "  " << cls.name << "(";
+    out << "DBG_INFO_FORMAL_FIRST  ";
 
     // list of formal parameters to the constructor
     {
@@ -818,10 +821,13 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
 
       if (parent) {
         out << " : " << parent->name << "(";
+        out << "DBG_INFO_ARG_FWD_FIRST  ";
         passParentCtorArgs(ct, parent->getArgs());
         passParentCtorArgs(ct, parent->getLastArgs());
         ct++;     // make sure we print a comma, below
         out << ")";
+      } else {
+          out << " : Storeable(DBG_INFO_ARG_FWD_FIRST  pool, true)  ";
       }
 
       initializeMyCtorArgs(ct, cls.args);
@@ -891,9 +897,9 @@ void HGen::initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args)
 void HGen::emitCommonFuncs(rostring virt)
 {
   // declare the functions they all have
-  out << "  " << virt << "void debugPrint(std::ostream &os, int indent, char const *subtreeName = \"tree\") const;\n";
+  out << "  " << virt << "void debugPrint(std::ostream &os, int indent = 0, char const *subtreeName = \"tree\") const;\n";
   if (wantXMLPrint) {
-    out << "  " << virt << "void xmlPrint(std::ostream &os, int indent) const;\n";
+    out << "  " << virt << "void xmlPrint(std::ostream &os, int indent = 0) const;\n";
   }
 
   if (wantVisitor()) {
@@ -999,13 +1005,13 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   // clone function (take advantage of covariant return types)
   if (!nocvr) {
     // normal case
-    out << "  virtual " << ctor.name << " *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  virtual " << ctor.name << " *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
   }
   else {
     // msvc hack case
-    out << "  virtual " << parent.name << "* nocvr_clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
-    out << "  " << ctor.name << "* clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const\n"
-        << "    { return static_cast<" << ctor.name << "*>(nocvr_clone(pool, deepness,listDeepness)); }\n";
+    out << "  virtual " << parent.name << "* nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << ctor.name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const\n"
+        << "    { return static_cast<" << ctor.name << "*>(nocvr_clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness,listDeepness)); }\n";
   }
 
   out << "\n";
@@ -1581,11 +1587,11 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
   }
   else if (isTreeNode(arg->type)) {
     // clone a tree node
-    out << "((deepness>=0)&&"<<argName << ")? " << argName << "->clone(pool, deepness, listDeepness) : " << argName ;
+    out << "((deepness>=0)&&"<<argName << ")? " << argName << "->clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness, listDeepness) : " << argName ;
   }
   else if (streq(arg->type, "LocString")) {
     // clone a LocString; we store objects, but pass pointers
-    out << "(deepness>=0)? " << argName << ".clone(pool) : constcast(&" << argName<<")" ;
+    out << "(deepness>=0)? " << argName << ".clone(DBG_INFO_ARG_FWD_FIRST  pool) : constcast(&" << argName<<")" ;
   }
   else {
     // pass the non-tree node's value directly
@@ -1608,7 +1614,7 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
   if (!nocvr || !sub) {
     // normal case, or childless superclass case
-    out << name << " *" << name << "::clone(str::StoragePool &pool, int deepness,int listDeepness) const\n";
+    out << name << " *" << name << "::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness,int listDeepness) const\n";
   }
   else {
     // msvc hack case
@@ -3272,10 +3278,10 @@ void mergeItself(ASTSpecFile *base)
               }
 
               o << "Merge This:" << std::endl;
-              mergedChild->debugPrint(DBG_INFO_ARG0_FIRST  o, 0);
+              mergedChild->debugPrint(o, 0);
               o << std::endl;
               o << "Into freeform child:" << std::endl;
-              c->super->debugPrint(DBG_INFO_ARG0_FIRST  o, 0);
+              c->super->debugPrint(o, 0);
               mergeClass(c->super, mergedChild);
               mergedChild->consumed = true;
 
@@ -3295,7 +3301,7 @@ void mergeItself(ASTSpecFile *base)
               c->super->totLastArgs.debugPrint(o);
               o<<std::endl;
               o << "freeform result:" << std::endl;
-              c->super->debugPrint(DBG_INFO_ARG0_FIRST  o, 0);
+              c->super->debugPrint(o, 0);
           } else {
               c->super->bases.prepend(DBG_INFO_ARG0_FIRST  new (astgen_pool) BaseClass(DBG_INFO_ARG0_FIRST  astgen_pool, AC_PUBLIC, "Storeable"));
           }
@@ -3533,14 +3539,14 @@ void entry(int argc, char **argv)
     Owner<ASTSpecFile> extension;
     extension = readAbstractGrammar(fname);
 
-    mergeExtension(ast, extension);
+    mergeExtension(wholeAST, extension);
   }
 
-  mergeItself(ast);
+  mergeItself(wholeAST);
 
   // scan options, and fill 'allClasses'
   {
-    FOREACH_ASTLIST_NC(ToplevelForm, ast->forms, iter) {
+    FOREACH_ASTLIST_NC(ToplevelForm, wholeAST->forms, iter) {
       if (iter.data()->isTF_option()) {
         TF_option const *op = iter.data()->asTF_optionC();
 
@@ -3594,13 +3600,13 @@ void entry(int argc, char **argv)
   // into two parts
   if (!tracingSys("no_ast.gen")) {
     string hdrFname = base & ".h";
-    HGen hg(srcFname, modules, hdrFname, *ast);
+    HGen hg(srcFname, modules, hdrFname, *wholeAST);
     std::cout << "writing " << hdrFname << "...\n";
     hg.emitFile();
 
     // generated the c++ code
     string codeFname = base & ".cc";
-    CGen cg(srcFname, modules, codeFname, *ast, hdrFname);
+    CGen cg(srcFname, modules, codeFname, *wholeAST, hdrFname);
     std::cout << "writing " << codeFname << "...\n";
     cg.emitFile();
 
@@ -3621,7 +3627,7 @@ void entry(int argc, char **argv)
         }
       }
       
-      FOREACH_ASTLIST(ToplevelForm, ast->forms, iter2) {
+      FOREACH_ASTLIST(ToplevelForm, wholeAST->forms, iter2) {
         if (iter2.data()->isTF_custom()) {
           CustomCode const *cc = iter2.data()->asTF_customC()->cust;
           if (cc->used == false) {

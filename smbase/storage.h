@@ -224,6 +224,14 @@ inline uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin, std::ptrdiff
     return delta == 0 ? NULL : origin + delta;
 }
 
+inline std::ostream &ind(std::ostream &os, int indent)
+{
+  while (indent--) {
+    os << " ";
+  }
+  return os;
+}
+
 /**
  * std::lower_bound  with  null item (we ignore null items)
  *  @brief Finds the first position in which @a val could be inserted
@@ -447,12 +455,12 @@ public:
        return NULL;
    }
 
-   inline void debugPrint(std::string indent = "") const
+   inline void debugPrint(int indent = 0) const
    {
        debugPrint(std::cout, indent);
    }
 
-   virtual inline void debugPrint(std::ostream& os, std::string indent = "") const
+   virtual inline void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const
    {
    }
 };
@@ -1632,10 +1640,10 @@ public:
        }
    }
 
-   void debugPrint(std::ostream& os, std::string indent = "") const
+   void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const
    {
-     if (indent.length() > 100) {
-         os<<indent<< "...";
+     if (indent > 100) {
+         ind(os,indent)<< "...";
      } else {
          os/*<<std::hex*/<<indent<< "pool:"<<(void*)this;
 #ifdef DEBUG
@@ -1659,13 +1667,13 @@ public:
          for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
              PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
              if (ptr) {
-                 ptr->debugPrint(os, indent+"  ");
+                 ptr->debugPrint(os, indent+2);
                  os<<"\n";
              }
          }
 
          if (memlength) {
-             os<<indent<<"  values: ";
+             ind(os,indent)<<"  values: ";
              for (iterator it=begin(); it != -1; it++) {
                  Storeable *cur = *it;
                  switch (cur->__kind) {
@@ -1690,7 +1698,7 @@ public:
          }
 
          if (intptrslength) {
-             os<<indent<<"  intptrs:";
+             ind(os,indent)<<"  intptrs:";
              size_t* intPointersFrom = intpointers;
              size_t* intPointersTo = intpointers+intptrslength;
              for (; intPointersFrom<intPointersTo; intPointersFrom++) {
@@ -1703,7 +1711,7 @@ public:
          }
 
          if (extptrslength) {
-             os<<indent<<"  extptrs:";
+             ind(os,indent)<<"  extptrs:";
              ExternalPtr* extPointersFrom = extpointers;
              ExternalPtr* extPointersTo = extpointers+extptrslength;
              for (; extPointersFrom<extPointersTo; extPointersFrom++) {
@@ -1715,7 +1723,7 @@ public:
              os<<"\n";
          }
 
-         os<<indent<< "}"<<std::flush;
+         ind(os,indent)<< "}"<<std::flush;
      }
    }
 

@@ -182,12 +182,12 @@ std::ostream &ind(std::ostream &os, int indent);
 #if 1
   // headers w/o addresses
   #define PRINT_HEADER(subtreeName, clsname)                 \
-    ind(os, indent) << subtreeName << " = " #clsname ":\n";  \
+    str::ind(os, indent) << subtreeName << " = " #clsname ":\n";  \
     indent += 2   /* user ; */
 #else
   // headers w/ addresses
   #define PRINT_HEADER(subtreeName, clsname)                                           \
-    ind(os, indent) << subtreeName << " = " #clsname " (" << ((void*)this) << "):\n";  \
+    str::ind(os, indent) << subtreeName << " = " #clsname " (" << ((void*)this) << "):\n";  \
     indent += 2   /* user ; */
 #endif
 
@@ -215,11 +215,11 @@ template <class T>
 void debugPrintList(ASTList<T> const &list, char const *name,
                     std::ostream &os, int indent)
 {
-  ind(os, indent) << name << ":\n";
+  str::ind(os, indent) << name << ":\n";
   int ct=0;
   {
     FOREACH_ASTLIST(T, list, iter) {
-      iter.data()->debugPrint(DBG_INFO_ARG0_FIRST  os, indent+2,
+      iter.data()->debugPrint(os, indent+2,
         stringc << name << "[" << ct++ << "]");
     }
   }
@@ -239,7 +239,7 @@ template <class T>
 void debugPrintFakeList(FakeList<T> const *list, char const *name,
                         std::ostream &os, int indent)
 {
-  ind(os, indent) << name << ":\n";
+  str::ind(os, indent) << name << ":\n";
   int ct=0;
   {
     FAKELIST_FOREACH(T, list, iter) {
@@ -255,19 +255,19 @@ void debugPrintFakeList(FakeList<T> const *list, char const *name,
 
 #define PRINT_SUBTREE(tree)                     \
   if (tree) {                                   \
-    (tree)->debugPrint(DBG_INFO_ARG0_FIRST  os, indent, #tree);      \
+    (tree)->debugPrint(os, indent, #tree);      \
   }                                             \
   else {                                        \
-    ind(os, indent) << #tree << " is null\n";   \
+    str::ind(os, indent) << #tree << " is null\n";   \
   } /* user ; (optional) */
 
 
 #define PRINT_GENERIC(var) \
-  ind(os, indent) << #var << " = " << ::toString(var) << "\n"   /* user ; */
+  str::ind(os, indent) << #var << " = " << ::toString(var) << "\n"   /* user ; */
 
 
 #define PRINT_BOOL(var) \
-  ind(os, indent) << #var << " = " << (var? "true" : "false") << "\n"   /* user ; */
+  str::ind(os, indent) << #var << " = " << (var? "true" : "false") << "\n"   /* user ; */
 
 
 // ------------------- xml print helpers -----------------
@@ -275,12 +275,12 @@ void debugPrintFakeList(FakeList<T> const *list, char const *name,
 //  std::ostream &ind(std::ostream &os, int indent);
 
 #define XMLPRINT_HEADER(clsname)                            \
-  ind(os, indent) << "<object type=\"" << #clsname "\">\n"; \
+  str::ind(os, indent) << "<object type=\"" << #clsname "\">\n"; \
   indent += 2   /* user ; */                                \
 
 #define XMLPRINT_FOOTER(clsname)                            \
   indent -= 2;                                              \
-  ind(os, indent) << "</object>\n" /* user ; */ 
+  str::ind(os, indent) << "</object>\n" /* user ; */
 
 #define XMLPRINT_STRING(var)                                \
   xmlPrintStr(var, #var, os, indent) /* user ; */

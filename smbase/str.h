@@ -177,7 +177,7 @@ public:	       // funcs
   void* operator new (size_t size);
   void* operator new (size_t size, str::StoragePool &pool);
 
-  inline void debugPrint(std::ostream& os, std::string indent = "") const
+  inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
       os <<indent<< s;
   }

@@ -32,8 +32,8 @@ public:
       getParent()->removePointer(next);
       getParent()->removePointer(data);
   }
-  void debugPrint(std::ostream& os, std::string indent = "") const {
-      os<<indent<< " node:";
+  void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const {
+      str::ind(os,indent)<< " node:";
       if (data) {
           os<<" "<< *data;
       } else {
@@ -192,7 +192,7 @@ public:
 
   Storeable::debugPrint;
 
-  void debugPrint(std::ostream& os, std::string indent = "") const;     // print list contents to stdout
+  void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const;     // print list contents to stdout
   void checkHeapDataPtrs() const;    // fail assertion if any 'data' ptr isn't valid heap ptr
   void checkUniqueDataPtrs() const;  // fail assertion if any 'data' ptr matches any other in this list
 };

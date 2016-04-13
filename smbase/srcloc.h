@@ -169,7 +169,7 @@ public:      // types
     void addHashLine(int ppLine, int origLine, char const *origFname);
     void doneAdding();
 
-    inline void debugPrint(std::ostream& os, std::string indent = "") const
+    inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
     {
         os <<indent<< "File{"<<name<<":"<<startLoc<<"/"<<numChars<<"}";
     }
@@ -200,7 +200,7 @@ public:      // types
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
 
-    inline void debugPrint(std::ostream& os, std::string indent = "") const
+    inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
     {
         os <<indent<< "StaticLoc{"<<name<<":"<<offset<<":"<<line<<":"<<col<<"}";
     }
@@ -319,7 +319,7 @@ public:      // funcs
   string getLCString(SourceLoc loc);
 
 
-  inline void debugPrint(std::ostream& os, std::string indent = "") const
+  inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
       os <<indent<< "SourceLocManager{"<<std::endl;
       os <<indent<< "files:";

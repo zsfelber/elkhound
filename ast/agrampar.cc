@@ -9,6 +9,7 @@
 #include "owner.h"           // Owner
 #include "strutil.h"         // trimWhitespace
 #include "strtable.h"        // StringTable
+#include "ast.h"
 
 #include <string>          // strncmp
 #include <ctype.h>           // isalnum
@@ -149,7 +150,7 @@ ASTSpecFile *readAbstractGrammar(char const *fname)
       throw_XOpen(fname);
     }
     trace("tmp") << "in is " << in.get() << std::endl;
-    lexer = new GrammarLexer(isAGramlexEmbed, stringTable, fname, in.xfr());
+    lexer = new (astgen_pool) GrammarLexer(astgen_pool, isAGramlexEmbed, stringTable, fname, in.xfr());
   }
 
   ASTParseParams params(*lexer);

@@ -58,6 +58,7 @@ HEADERS += \
     ../ast/strtable.h \
     ../ast/xmlhelp.h \
     ../ast/example.h \
-    ../ast/ext1.h
+    ../ast/ext1.h \
+    ../ast/ast.h
 
 INCLUDEPATH += ../smbase

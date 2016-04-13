@@ -5,13 +5,6 @@
 #include "strutil.h"       // quoted
 
 // ----------- debugPrint helpers -----------------------
-std::ostream &ind(std::ostream &os, int indent)
-{
-  while (indent--) {
-    os << " ";
-  }
-  return os;
-}
 
 
 void debugPrintStr(string const &s, char const *name,
@@ -24,14 +17,14 @@ void debugPrintStr(char const *s, char const *name,
                    std::ostream &os, int indent)
 {
   string s1((s) ? string(s) : string("NULL"));
-  ind(os, indent) << name << " = " << quoted(s1) << "\n";
+  str::ind(os, indent) << name << " = " << quoted(s1) << "\n";
 }
 
 
 void debugPrintCStr(char const *s, char const *name,
                     std::ostream &os, int indent)
 {
-  ind(os, indent) << name << " = ";
+  str::ind(os, indent) << name << " = ";
   if (s) {
     os << quoted(s);
   }
@@ -46,7 +39,7 @@ template <class STR>
 void debugPrintStringList(ASTList<STR> const &list, char const *name,
                           std::ostream &os, int indent)
 {
-  ind(os, indent) << name << ": ";
+  str::ind(os, indent) << name << ": ";
   {
     int ct=0;
     FOREACH_ASTLIST(STR, list, iter) {
@@ -77,10 +70,10 @@ void debugPrintList(ASTList<LocString> const &list, char const *name,
 void xmlPrintStr(string const &s, char const *name,
                  std::ostream &os, int indent)
 {
-  ind(os, indent) << "<member type=string name = \"" << name << "\">\n";
+  str::ind(os, indent) << "<member type=string name = \"" << name << "\">\n";
   // dsw: quoted might add another layer of quotes.
-  ind(os, indent+2) << "<value type=string val=\"" << quoted(s) << "\" />\n";
-  ind(os, indent) << "</member>\n";
+  str::ind(os, indent+2) << "<value type=string val=\"" << quoted(s) << "\" />\n";
+  str::ind(os, indent) << "</member>\n";
 }
 
 
@@ -88,15 +81,15 @@ template <class STR>
 void xmlPrintStringList(ASTList<STR> const &list, char const *name,
                         std::ostream &os, int indent)
 {
-  ind(os, indent) << "<member type=stringList name = \"" << name << "\">\n";
+  str::ind(os, indent) << "<member type=stringList name = \"" << name << "\">\n";
   {
     FOREACH_ASTLIST(STR, list, iter) {
       // dsw: quoted might add another layer of quotes.
-      ind(os, indent+2) << "<object type=string val=\"" 
+      str::ind(os, indent+2) << "<object type=string val=\""
                         << quoted(string(*( iter.data() ))) << "\" />\n";
     }
   }
-  ind(os, indent) << "</member>\n";
+  str::ind(os, indent) << "</member>\n";
 }
 
 

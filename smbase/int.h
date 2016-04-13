@@ -16,7 +16,7 @@ public:
   Integer(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int ii);
   ~Integer();
 
-  void debugPrint(std::ostream& os, std::string indent = "") const
+  void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
       os <<indent<< i;
   }

@@ -35,7 +35,7 @@
 
 // this class just holds the lexer state so it is properly encapsulated
 // (and therefore, among other things, re-entrant)
-class GrammarLexer : public yyFlexLexer, public ReportError {
+class GrammarLexer : public str::Storeable, public yyFlexLexer, public ReportError {
 
   str::StoragePool pool;
 

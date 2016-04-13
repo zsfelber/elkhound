@@ -85,7 +85,7 @@ GrammarLexer::GrammarLexer(str::StoragePool &parent,
                            isEmbedTok test, StringTable &strtbl,
                            char const *fname, std::istream *source,
                            EmbeddedLang *userEmb)
-  : pool(DBG_INFO_ARG0_FIRST  parent),
+  : Storeable(DBG_INFO_ARG0_FIRST  parent), pool(DBG_INFO_ARG0_FIRST  *this, true),
     yyFlexLexer(source),
     altReporter(*this),
     fileState(DBG_INFO_ARG0_FIRST fname, source),
