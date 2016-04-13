@@ -61,6 +61,9 @@ protected:     // funcs
   void kill();                         // dealloc if str != 0
 
 public:	       // funcs
+#ifdef DEBUG
+  string(string const &src) : str::Storeable(DBG_INFO_ARG0) { if (src.s) dup(src.s); else s = nullString; }
+#endif
   string(DBG_INFO_FORMAL_FIRST string const &src) : str::Storeable(DBG_INFO_ARG_FWD) { if (src.s) dup(src.s); else s = nullString; }
   string(DBG_INFO_FORMAL_FIRST char const *src) : str::Storeable(DBG_INFO_ARG_FWD) { if (src) dup(src); else s = nullString; }
   string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
