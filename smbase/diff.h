@@ -18,6 +18,8 @@ public:
 
 #include <stdio.h>
 #include <string.h>
+#include <sstream>
+#include "storage.h"
 
 // https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Longest_common_subsequence
 // See http://www-igm.univ-mlv.fr/~lecroq/seqcomp/node4.html.
@@ -155,5 +157,41 @@ public:
 
 
 };
+
+
+
+
+extern std::vector<std::string> rows1;
+extern std::vector<std::string> rows2;
+
+inline void splitMemoryTreeLines(std::string const &s, std::vector<std::string> &rows) {
+    std::istringstream st(s);
+    std::string line;
+    while (std::getline(st, line)) {
+        rows.reserve((rows.size()+1)<<10>>10);
+        rows.push_back(line);
+    }
+}
+
+#define DEBUG_MEMORY_TREE(pool, DEBUG_BLOCK) \
+{ \
+    std::stringstream s; \
+    s<<"*****************************************************************************************************\n"; \
+    s<<str::lastObjName<<"..\n"; \
+    s<<"Pool:\n"; \
+    pool.debugPrint(s); \
+    s<<"\n"; \
+    DEBUG_BLOCK\
+    rows2.clear(); \
+    splitMemoryTreeLines(s.str(), rows2); \
+    std::stringstream sd; \
+    if (LCS::printDiff(sd, rows1, rows2)) { \
+        std::cout << sd.str(); \
+        std::cout<<std::flush; \
+        rows1 = rows2; \
+    } \
+    return 0; \
+}
+
 
 #endif // DIFF_H

@@ -84,9 +84,12 @@ inline bool wantMVisitor() { return mvisitorName.length() != 0; }
 ASTSpecFile *wholeAST = NULL;
 
 str::StoragePool astgen_pool(DBG_INFO_ARG0);
+SourceLocManager *_mgr = NULL;
 
 SObjList<TF_class> *_allClasses = new (astgen_pool) SObjList<TF_class>(DBG_INFO_ARG0_FIRST  astgen_pool);
 ASTList<ListClass> *_listClasses = new (astgen_pool) ASTList<ListClass>(DBG_INFO_ARG0_FIRST astgen_pool);
+
+GrammarLexer *lexer = NULL;
 
 // list of all TF_classes in the input, useful for certain
 // applications which don't care about other forms
@@ -111,6 +114,22 @@ bool wantGDB = false;
 // in place of
 //   virtual Sub *clone(str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
 bool nocvr = false;
+
+int debugEverything() {
+    DEBUG_MEMORY_TREE(astgen_pool,
+    s<<"allClasses:\n";
+    allClasses.debugPrint(s);
+    s<<"\n";
+    s<<"listClasses:\n";
+    listClasses.debugPrint(s);
+    s<<"\n";
+    if (wholeAST) {
+        s<<"wholeAST:\n";
+        wholeAST->debugPrint(s);
+        s<<"\n";
+    }
+    return 0;
+}
 
 
 // ------------------ shared gen functions ----------------------
@@ -3450,7 +3469,8 @@ void entry(int argc, char **argv)
 {
   TRACE_ARGS();
   checkHeap();
-  SourceLocManager mgr;
+  _mgr = new (astgen_pool) SourceLocManager(astgen_pool);
+  SourceLocManager &mgr = *_mgr;
 
   if (argc < 2) {
     std::cout << "usage: " << argv[0] << " [options] file.ast [extension.ast [...]]\n"
@@ -3499,9 +3519,8 @@ void entry(int argc, char **argv)
   argv++;
 
   // parse the grammar spec
-  Owner<ASTSpecFile> ast;
-  ast = readAbstractGrammar(srcFname);
-  wholeAST = ast;
+  //Owner<ASTSpecFile> ast;
+  wholeAST = readAbstractGrammar(srcFname);
 
   // parse and merge extension modules
   ObjList<string> modules(DBG_INFO_ARG0_FIRST  astgen_pool);

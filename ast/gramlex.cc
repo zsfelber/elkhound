@@ -81,10 +81,11 @@ GrammarLexer::FileState &GrammarLexer::FileState::
 
 
 // ---------------------- GrammarLexer --------------------------
-GrammarLexer::GrammarLexer(isEmbedTok test, StringTable &strtbl,
+GrammarLexer::GrammarLexer(str::StoragePool &parent,
+                           isEmbedTok test, StringTable &strtbl,
                            char const *fname, std::istream *source,
                            EmbeddedLang *userEmb)
-  : pool(DBG_INFO_ARG0 ),
+  : pool(DBG_INFO_ARG0_FIRST  parent),
     yyFlexLexer(source),
     altReporter(*this),
     fileState(DBG_INFO_ARG0_FIRST fname, source),

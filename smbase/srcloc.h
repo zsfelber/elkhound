@@ -58,7 +58,7 @@ enum SourceLoc {
 // interpreting SourceLocs.  It's expected to be a singleton in the
 // program, though within this module that assumption is confined to
 // the 'toString' function at the end.
-class SourceLocManager {
+class SourceLocManager : public str::Storeable {
 private:     // types
 
   // ! first !
@@ -253,7 +253,7 @@ private:     // funcs
   StaticLoc const *getStatic(SourceLoc loc);
 
 public:      // funcs
-  SourceLocManager();
+  SourceLocManager(str::StoragePool &parent);
   ~SourceLocManager();
 
   // origins:

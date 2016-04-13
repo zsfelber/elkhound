@@ -7,6 +7,7 @@
 #include "syserr.h"     // xsyserror
 #include "trace.h"      // traceProgress
 #include "hashline.h"   // HashLineMap
+#include "diff.h"
 
 #include <stdio.h>      // fprintf
 #include <string.h>     // memcpy
@@ -405,8 +406,8 @@ int SourceLocManager::shortLineCount = 0;
 SourceLocManager *sourceLocManager = NULL;
 
 
-SourceLocManager::SourceLocManager()
-  : pool(DBG_INFO_ARG0),
+SourceLocManager::SourceLocManager(str::StoragePool &parent)
+  : Storeable(DBG_INFO_ARG0_FIRST  parent), pool(DBG_INFO_ARG0_FIRST  *this, true),
     files(DBG_INFO_ARG0),
     recent(NULL),
     statics(DBG_INFO_ARG0),
@@ -730,13 +731,26 @@ void fromXml(SourceLoc &out, string str) {
 
 #include <stdlib.h>      // rand, exit, system
 
-SourceLocManager mgr;
+str::StoragePool pool(DBG_INFO_ARG0);
+SourceLocManager *_mgr = NULL;
 int longestLen=0;
+
+int debugEverything() {
+    DEBUG_MEMORY_TREE(pool,
+    /*if (_mgr) {
+        s<<"mgr:\n";
+        _mgr->debugPrint(s);
+        s<<"\n";
+    }*/
+    );
+    return 0;
+}
 
 // given a location, decode it into line/col and then re-encode,
 // and check that the new encoding matches the old
 void testRoundTrip(SourceLoc loc)
 {
+  SourceLocManager &mgr = *_mgr;
   char const *fname;
   int line, col;
   mgr.decodeLineCol(loc, fname, line, col);
@@ -763,6 +777,7 @@ public:
 // that round-trip encoding works
 void testFile(char const *fname)
 {
+  SourceLocManager &mgr = *_mgr;
   // find the file's length
   int len;
   {
@@ -836,6 +851,7 @@ void testFile(char const *fname)
 // decode with given expectation, complain if it doesn't match
 void expect(SourceLoc loc, char const *expFname, int expLine, int expCol)
 {
+  SourceLocManager &mgr = *_mgr;
   char const *fname;
   int line, col;
   mgr.decodeLineCol(loc, fname, line, col);
@@ -894,6 +910,7 @@ void buildHashMap(SourceLocManager::File *pp, char const *fname, int &expanderLi
 
 void testHashMap()
 {
+  SourceLocManager &mgr = *_mgr;
   // run the preprocessor
   if (0!=system("cpp -DTEST_SRCLOC srcloc.test.cc >srcloc.tmp 2>/dev/null")) {
     xbase("failed to preprocess srcloc.test.cc; the command that failed was:\n"
@@ -962,6 +979,7 @@ void testHashMap()
 
 void testHashMap2()
 {
+  SourceLocManager &mgr = *_mgr;
   SourceLocManager::File *pp = mgr.getInternalFile("srcloc.test2.cc");
 
   int expanderLine=0;
@@ -976,6 +994,9 @@ void testHashMap2()
 
 void entry(int argc, char ** /*argv*/)
 {
+  _mgr = new (pool) SourceLocManager(pool);
+  SourceLocManager &mgr = *_mgr;
+
   xBase::logExceptions = false;
   traceAddSys("progress");
   traceProgress() << "begin" << std::endl;

@@ -952,25 +952,9 @@ str::StoragePool pool(DBG_INFO_ARG0);
 VoidList *_list = NULL;
 VoidList *_thief = NULL;
 VoidList *_list1 = NULL, *_list2 = NULL, *_list3 = NULL;
-std::vector<std::string> rows1;
-std::vector<std::string> rows2;
-
-void grind(std::string const &s, std::vector<std::string> &rows) {
-    std::istringstream st(s);
-    std::string line;
-    while (std::getline(st, line)) {
-        rows.reserve((rows.size()+1)<<10>>10);
-        rows.push_back(line);
-    }
-}
 
 int debugEverything() {
-    std::stringstream s;
-    s<<"*****************************************************************************************************\n";
-    s<<lastObjName<<"..\n";
-    s<<"Pool:\n";
-    pool.debugPrint(s);
-    s<<"\n";
+    DEBUG_MEMORY_TREE(pool,
     if (_list) {
         s<<"list:\n";
         _list->debugPrint(s);
@@ -995,18 +979,10 @@ int debugEverything() {
         s<<"list3:\n";
         _list3->debugPrint(s);
         s<<"\n";
-    }
-
-    rows2.clear();
-    grind(s.str(), rows2);
-    std::stringstream sd;
-    if (LCS::printDiff(sd, rows1, rows2)) {
-        std::cout << sd.str();
-        std::cout<<std::flush;
-        rows1 = rows2;
-    }
+    });
     return 0;
 }
+
 
 // assumes we're using pointerAddressDiff as the comparison fn
 // (I don't use isSorted because this fn will throw at the disequality,

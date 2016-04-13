@@ -129,6 +129,7 @@ OBJS := \
   crc.o \
   cycles.o \
   datablok.o \
+  diff.o \
   exc.o \
   flatten.o \
   gprintf.o \

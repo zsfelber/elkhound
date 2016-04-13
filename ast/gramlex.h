@@ -140,7 +140,8 @@ private:     // funcs
 public:      // funcs
   // create a new lexer that will read from to named stream,
   // or stdin if it is NULL
-  GrammarLexer(isEmbedTok embedTokTest,
+  GrammarLexer(str::StoragePool &parent,
+               isEmbedTok embedTokTest,
                StringTable &strtable,
                char const *fname = "<stdin>",
                std::istream * /*owner*/ source = NULL,

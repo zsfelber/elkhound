@@ -136,11 +136,11 @@ ASTSpecFile *readAbstractGrammar(char const *fname)
     #endif
   }
 
-  Owner<GrammarLexer> lexer;
+  //Owner<GrammarLexer> lexer;
   Owner<std::ifstream> in;
   if (fname == NULL) {
     // stdin
-    lexer = new GrammarLexer(isAGramlexEmbed, stringTable);
+    lexer = new (astgen_pool) GrammarLexer(astgen_pool, isAGramlexEmbed, stringTable);
   }
   else {
     // file
@@ -165,6 +165,10 @@ ASTSpecFile *readAbstractGrammar(char const *fname)
   }
 
   if (retval == 0) {
+
+    delete lexer;
+    lexer = NULL;
+
     return params.treeTop;
   }
   else {
@@ -189,11 +193,11 @@ void entry(int argc, char **argv)
   }
 
   // parse the grammar spec
-  Owner<ASTSpecFile> ast;
   ast = readAbstractGrammar(argv[1]);
 
   // print it out
-  ast->debugPrint(std::cout, 0);
+  //ast->debugPrint(std::cout, 0);
+  debugEverything();
 }
 
 ARGS_MAIN
