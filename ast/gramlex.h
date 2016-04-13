@@ -77,6 +77,9 @@ private:     // data
     ~FileState();
 
     FileState(DBG_INFO_FORMAL_FIRST  FileState const &obj);
+#ifdef DEBUG
+    FileState(FileState const &obj);//undefined
+#endif
     FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, FileState const &obj);
     FileState& operator= (FileState const &obj);
   };

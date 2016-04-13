@@ -10,12 +10,12 @@
 #include <fstream>   // std::ofstream
 #include <stdlib.h>    // getenv
 
-static str::StoragePool pool(DBG_INFO_ARG0);
+str::StoragePool trace_pool(DBG_INFO_ARG0);
 
 // auto-init
 static bool inited = false;
 
-static ObjList<string>* _tracers = new (pool) ObjList<string>(DBG_INFO_ARG0_FIRST  pool);
+static ObjList<string>* _tracers = new (trace_pool) ObjList<string>(DBG_INFO_ARG0_FIRST  trace_pool);
 
 // list of active tracers, initially empty
 static ObjList<string>& tracers = *_tracers;
@@ -46,7 +46,7 @@ void traceAddSys(char const *sysName)
 {
   init();
 
-  tracers.prepend(DBG_INFO_ARG0_FIRST  new (pool) string(DBG_INFO_ARG0_FIRST  pool, sysName));
+  tracers.prepend(DBG_INFO_ARG0_FIRST  new (trace_pool) string(DBG_INFO_ARG0_FIRST  trace_pool, sysName));
 }
 
 

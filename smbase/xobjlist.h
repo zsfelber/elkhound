@@ -66,12 +66,13 @@ outputCond([[[m4_dnl      // sobjlist
   friend class SObjList<T>;
 ]]])m4_dnl
 
+#ifdef DEBUG
+  className[[[]]](className const &obj);//undefined
+#endif
+
 protected:
   VoidList list;                        // list itself
 
-#ifdef DEBUG
-className[[[]]](className const &obj);
-#endif
 
 outputCond([[[m4_dnl    // sobjlist
   #define OWN
@@ -218,6 +219,9 @@ outputCond([[[m4_dnl    // sobjlist
     list.checkUniqueDataPtrs();
   }
 ]]])m4_dnl
+
+  Storeable::debugPrint;
+  void debugPrint(std::ostream& os, std::string indent="") const        { list.debugPrint(os, indent); }
 };
 
 

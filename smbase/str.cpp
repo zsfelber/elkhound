@@ -19,7 +19,7 @@
 #include "nonport.h"        // vnprintf
 #include "array.h"          // Array
 
-static str::StoragePool pool(DBG_INFO_ARG0);
+str::StoragePool str_pool(DBG_INFO_ARG0);
 
 // ----------------------- string ---------------------
 
@@ -40,7 +40,7 @@ string::string(DBG_INFO_FORMAL_FIRST  char const *src, int length, SmbaseStringF
 }
 
 void* string::operator new (size_t size) {
-    return str::Storeable::operator new(size, pool);
+    return str::Storeable::operator new(size, str_pool);
 }
 void* string::operator new (size_t size, str::StoragePool &pool) {
     return str::Storeable::operator new(size, pool);
@@ -191,7 +191,7 @@ int atoi(rostring s)
 
 string substring(char const *p, int n)
 {
-  return string(p, n, SMBASE_STRING_FUNC);
+  return string(DBG_INFO_ARG0_FIRST  p, n, SMBASE_STRING_FUNC);
 }
 
 

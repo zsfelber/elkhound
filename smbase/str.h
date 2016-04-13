@@ -49,6 +49,8 @@ class Flatten;           // flatten.h
 // marked as incompatible.
 enum SmbaseStringFunc { SMBASE_STRING_FUNC };
 
+extern str::StoragePool str_pool;
+
 class string : public str::Storeable {
 protected:     // data
   // 10/12/00: switching to never letting s be NULL
@@ -62,14 +64,14 @@ protected:     // funcs
 
 public:	       // funcs
 #ifdef DEBUG
-  string(string const &src) : str::Storeable(DBG_INFO_ARG0) { if (src.s) dup(src.s); else s = nullString; }
+  string(string const &src) : str::Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
 #endif
-  string(DBG_INFO_FORMAL_FIRST string const &src) : str::Storeable(DBG_INFO_ARG_FWD) { if (src.s) dup(src.s); else s = nullString; }
-  string(DBG_INFO_FORMAL_FIRST char const *src) : str::Storeable(DBG_INFO_ARG_FWD) { if (src) dup(src); else s = nullString; }
+  string(DBG_INFO_FORMAL_FIRST string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
+  string(DBG_INFO_FORMAL_FIRST char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
   string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
   string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
-  string(char const *src) : str::Storeable(DBG_INFO_ARG0) { if (src) dup(src); else s = nullString; }
-  string(DBG_INFO_FORMAL ) : str::Storeable(DBG_INFO_ARG_FWD) { s=emptyString; }
+  string(char const *src) : str::Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
+  string(DBG_INFO_FORMAL ) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { s=emptyString; }
   ~string() { kill(); }
 
   // for this one, use ::substring instead

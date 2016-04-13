@@ -342,7 +342,7 @@ TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, int num
   init(numTerms);
 }
 
-TerminalSet::TerminalSet(TerminalSet const &obj) : Storeable(obj)
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  TerminalSet const &obj) : Storeable(DBG_INFO_ARG_FWD_FIRST  obj)
 {
   init(obj.bitmapLen * 8);    // close enough; same # of bytes at least
   if (bitmapLen) {

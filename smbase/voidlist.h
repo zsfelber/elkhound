@@ -70,6 +70,9 @@ private:
   void chk_assign(VoidList const &obj);
   uint8_t* glueNpools(VoidList const &tail);
 
+#ifdef DEBUG
+  VoidList(VoidList const &obj);     // undefined
+#endif
 public:
   inline str::StoragePool &getPool() {
       return npool;

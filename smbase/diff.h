@@ -20,6 +20,8 @@ public:
 #include <string.h>
 #include <sstream>
 #include "storage.h"
+#include "str.h"
+#include "trace.h"
 
 // https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Longest_common_subsequence
 // See http://www-igm.univ-mlv.fr/~lecroq/seqcomp/node4.html.
@@ -180,6 +182,12 @@ inline void splitMemoryTreeLines(std::string const &s, std::vector<std::string> 
     s<<str::lastObjName<<"..\n"; \
     s<<"Pool:\n"; \
     pool.debugPrint(s); \
+    s<<"\n"; \
+    s<<"String Pool:\n"; \
+    str_pool.debugPrint(s); \
+    s<<"\n"; \
+    s<<"Trace Pool:\n"; \
+    trace_pool.debugPrint(s); \
     s<<"\n"; \
     DEBUG_BLOCK\
     rows2.clear(); \

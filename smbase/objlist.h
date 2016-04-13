@@ -31,12 +31,13 @@ private:
   friend class Grammar;
   friend class SObjList<T>;
 
+#ifdef DEBUG
+  ObjList(ObjList const &obj);//undefined
+#endif
+
 protected:
   VoidList list;                        // list itself
 
-#ifdef DEBUG
-ObjList(ObjList const &obj);
-#endif
 
   #define OWN xassert(owning);
   #define NOWN xassert(!owning);
@@ -146,6 +147,9 @@ private:
     list.checkHeapDataPtrs();
     list.checkUniqueDataPtrs();
   }
+
+  Storeable::debugPrint;
+  void debugPrint(std::ostream& os, std::string indent="") const        { list.debugPrint(os, indent); }
 };
 
 

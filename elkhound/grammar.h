@@ -256,6 +256,9 @@ private:    // data
   unsigned char *bitmap;      // (owner) bitmap of terminals, indexed by
                               // terminal id; lsb of byte 0 is index 0
   int bitmapLen;              // # of bytes in 'bitmap'
+#ifdef DEBUG
+  TerminalSet(TerminalSet const &obj);//undefined
+#endif
 
 public:     // data
   // printing customization: when non-NULL only print tokens if
@@ -271,7 +274,7 @@ private:    // funcs
 public:     // funcs
   TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int numTerms=0);                   // allocate new set, initially empty
   TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, int numTerms=0);                   // allocate new set, initially empty
-  TerminalSet(TerminalSet const &obj);
+  TerminalSet(DBG_INFO_FORMAL_FIRST  TerminalSet const &obj);
   ~TerminalSet();
 
   TerminalSet& operator= (TerminalSet const &obj)

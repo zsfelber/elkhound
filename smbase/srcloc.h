@@ -168,6 +168,12 @@ public:      // types
     // same semantics as HashLineMap::addHashLine
     void addHashLine(int ppLine, int origLine, char const *origFname);
     void doneAdding();
+
+    inline void debugPrint(std::ostream& os, std::string indent = "") const
+    {
+        os <<indent<< "File{"<<name<<":"<<startLoc<<"/"<<numChars<<"}";
+    }
+
   };
 
   // this is used for SourceLocs where the file isn't reliably
@@ -176,7 +182,7 @@ public:      // types
   // information stored, and incremental update is impossible
   class StaticLoc : public str::Storeable {
 #ifdef DEBUG
-      StaticLoc(StaticLoc const &obj);
+    StaticLoc(StaticLoc const &obj);//undefined
 #endif
   public:
     string name;      // file name
@@ -193,6 +199,11 @@ public:      // types
     StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, StaticLoc const &obj)
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
+
+    inline void debugPrint(std::ostream& os, std::string indent = "") const
+    {
+        os <<indent<< "StaticLoc{"<<name<<":"<<offset<<":"<<line<<":"<<col<<"}";
+    }
   };
 
 private:     // data
@@ -312,10 +323,10 @@ public:      // funcs
   {
       os <<indent<< "SourceLocManager{"<<std::endl;
       os <<indent<< "files:";
-      files.debugPrint();
+      files.debugPrint(os);
       os <<std::endl;
       os <<indent<< "statics:";
-      statics.debugPrint();
+      statics.debugPrint(os);
       os <<std::endl;
       os <<indent<< "nextLoc:"<<nextLoc<<" nextStaticLoc:"<<nextStaticLoc;
       os <<"}"<<std::endl;

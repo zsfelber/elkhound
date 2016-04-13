@@ -143,6 +143,9 @@ class LRItem : public str::Storeable {
 public:    // data
   DottedProduction const *dprod;  // (serf) production and dot position
   TerminalSet lookahead;          // lookahead symbols
+#ifdef DEBUG
+  //LRItem(LRItem const &obj);//undefined
+#endif
 
 public:    // funcs
   LRItem(LRItem const &obj);
@@ -270,6 +273,9 @@ private:    // funcs
   Symbol const *computeStateSymbolC() const;
 
   void deleteNonReductions(ObjList<LRItem> &list);
+#ifdef DEBUG
+  //ItemSet(ItemSet const &obj);//undefined
+#endif
 
 public:     // funcs
   ItemSet(StateId id, int numTerms, int numNonterms);

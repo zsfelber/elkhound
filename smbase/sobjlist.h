@@ -30,12 +30,13 @@ private:
   friend class Grammar;
   friend class ObjList<T>;
 
+#ifdef DEBUG
+  SObjList(SObjList const &obj);//undefined
+#endif
+
 protected:
   VoidList list;                        // list itself
 
-#ifdef DEBUG
-SObjList(SObjList const &obj);
-#endif
 
   #define OWN
   #define NOWN
@@ -146,6 +147,9 @@ public:
   // but export the additional checks for cases where they apply anyway
   void checkHeapDataPtrs() const        { list.checkHeapDataPtrs(); }
   void checkUniqueDataPtrs() const      { list.checkUniqueDataPtrs(); }
+
+  Storeable::debugPrint;
+  void debugPrint(std::ostream& os, std::string indent="") const        { list.debugPrint(os, indent); }
 };
 
 

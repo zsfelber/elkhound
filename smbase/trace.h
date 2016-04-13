@@ -6,7 +6,9 @@
 #define TRACE_H
 
 #include <iostream>     // std::ostream
+#include "storage.h"
 
+extern str::StoragePool trace_pool;
 
 // add a subsystem to the list of those being traced
 void traceAddSys(char const *sysName);

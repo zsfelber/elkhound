@@ -14,7 +14,7 @@
 
 struct __DbgStr {
     char const * str;
-    __DbgStr(char const * str) : str(str) {}
+    explicit __DbgStr(char const * str) : str(str) {}
 };
 
 class VoidList;
@@ -30,8 +30,8 @@ class VoidNode;
 #define DBG_INFO_FORMAL_FIRST __DbgStr const objectName,
 #define DBG_INFO_ARG_FWD objectName
 #define DBG_INFO_ARG_FWD_FIRST objectName,
-#define DBG_INFO_ARG0 __FILE_LINE__
-#define DBG_INFO_ARG0_FIRST __FILE_LINE__,
+#define DBG_INFO_ARG0 __DbgStr(__FILE_LINE__)
+#define DBG_INFO_ARG0_FIRST __DbgStr(__FILE_LINE__),
 #else
 #define DBG_INFO_FORMAL
 #define DBG_INFO_FORMAL_FIRST
@@ -1778,7 +1778,13 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool)
 #ifdef DEBUG
     lastObjName = objectName.str;
 #endif
-    xassert((__kind == ST_VALUE||__kind == ST_STORAGE_POOL) && getParent() == &pool && pool.contains(this));
+    if (pool.contains(this)) {
+        xassert((__kind == ST_VALUE||__kind == ST_STORAGE_POOL) && getParent() == &pool);
+    } else {
+        __kind = ST_NONE;
+        __parentVector = npos;
+        __store_size  = 0;
+    }
 }
 
 template<class ME>

@@ -19,6 +19,9 @@ public:    // data
 public:    // funcs
   LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool);
   LocString(DBG_INFO_FORMAL_FIRST  LocString const &obj);
+#ifdef DEBUG
+  LocString(LocString const &obj);//undefined
+#endif
   LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent);
   LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, SourceLoc loc, StringRef str);
 
