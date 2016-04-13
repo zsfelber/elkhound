@@ -172,7 +172,7 @@ public:	       // funcs
   void* operator new (size_t size);
   void* operator new (size_t size, str::StoragePool &pool);
 
-  void debugPrint(std::ostream& os, std::string indent = "") const
+  inline void debugPrint(std::ostream& os, std::string indent = "") const
   {
       os <<indent<< s;
   }

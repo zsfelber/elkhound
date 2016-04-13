@@ -306,6 +306,20 @@ public:      // funcs
 
   // "line:col" format
   string getLCString(SourceLoc loc);
+
+
+  inline void debugPrint(std::ostream& os, std::string indent = "") const
+  {
+      os <<indent<< "SourceLocManager{"<<std::endl;
+      os <<indent<< "files:";
+      files.debugPrint();
+      os <<std::endl;
+      os <<indent<< "statics:";
+      statics.debugPrint();
+      os <<std::endl;
+      os <<indent<< "nextLoc:"<<nextLoc<<" nextStaticLoc:"<<nextStaticLoc;
+      os <<"}"<<std::endl;
+  }
 };
 
 
