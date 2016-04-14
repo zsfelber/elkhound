@@ -28,12 +28,12 @@ string unbox(string *s)
 
 string *box(char const *s)
 {
-  return new (y_pool) string(DBG_INFO_ARG0_FIRST  y_pool, s);
+  return new string(DBG_INFO_ARG0_FIRST  s);
 }
 
 string *appendStr(string *left, string *right)
 {
-  string *ret = new (y_pool) string(DBG_INFO_ARG0_FIRST  y_pool, *left & *right);
+  string *ret = new string(DBG_INFO_ARG0_FIRST  *left & *right);
   delete left;
   delete right;
   return ret;
