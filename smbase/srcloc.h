@@ -171,7 +171,7 @@ public:      // types
 
     inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
     {
-        os <<indent<< "File{"<<name<<":"<<startLoc<<"/"<<numChars<<"}";
+        str::ind(os,indent)<< "File{"<<name<<":"<<startLoc<<"/"<<numChars<<"}";
     }
 
   };
@@ -202,7 +202,7 @@ public:      // types
 
     inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
     {
-        os <<indent<< "StaticLoc{"<<name<<":"<<offset<<":"<<line<<":"<<col<<"}";
+        str::ind(os,indent)<< "StaticLoc{"<<name<<":"<<offset<<":"<<line<<":"<<col<<"}";
     }
   };
 
@@ -321,14 +321,14 @@ public:      // funcs
 
   inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
-      os <<indent<< "SourceLocManager{"<<std::endl;
-      os <<indent<< "files:";
+      str::ind(os,indent)<< "SourceLocManager{"<<std::endl;
+      str::ind(os,indent)<< "files:";
       files.debugPrint(os);
       os <<std::endl;
-      os <<indent<< "statics:";
+      str::ind(os,indent)<< "statics:";
       statics.debugPrint(os);
       os <<std::endl;
-      os <<indent<< "nextLoc:"<<nextLoc<<" nextStaticLoc:"<<nextStaticLoc;
+      str::ind(os,indent)<< "nextLoc:"<<nextLoc<<" nextStaticLoc:"<<nextStaticLoc;
       os <<"}"<<std::endl;
   }
 };

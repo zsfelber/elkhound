@@ -18,7 +18,7 @@ public:
 
   void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
-      os <<indent<< i;
+      str::ind(os,indent)<< i;
   }
 
 };

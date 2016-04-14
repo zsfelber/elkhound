@@ -1645,7 +1645,7 @@ public:
      if (indent > 100) {
          ind(os,indent)<< "...";
      } else {
-         os/*<<std::hex*/<<indent<< "pool:"<<(void*)this;
+         ind(os,indent) << "pool:"<<(void*)this;
 #ifdef DEBUG
          os<<":"<<objectName.str;
 #endif
