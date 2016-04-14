@@ -4,13 +4,13 @@
 #ifndef AGRAMPAR_H
 #define AGRAMPAR_H
 
+#include "ast.h"       // AST node class declarations
 #include "ast.hand.h"       // AST node class declarations
 #include "str.h"            // string
 #include "storage.h"
 
 class GrammarLexer;
 
-extern str::StoragePool y_pool;
 
 // ---------------- agrampar's view of the parser --------------------
 // name of extra parameter to yyparse (i.e. the context in

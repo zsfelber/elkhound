@@ -10,12 +10,15 @@ class TF_class;
 class ListClass;
 
 extern str::StoragePool astgen_pool;
+extern str::StoragePool y_pool;
 extern SourceLocManager *_mgr;
 
 extern SObjList<TF_class> *_allClasses;
 extern ASTList<ListClass> *_listClasses;
 
 extern GrammarLexer *lexer;
+
+int debugEverything();
 
 #endif // AST_H
 

@@ -1,6 +1,7 @@
 // astgen.cc            see license.txt for copyright and terms of use
 // program to generate C++ code from an AST specification
 
+#include "ast.h"
 #include "agrampar.h"      // readAbstractGrammar
 #include "test.h"          // ARGS_MAIN
 #include "trace.h"         // TRACE_ARGS
@@ -13,7 +14,6 @@
 #include "strtokp.h"       // StrtokParse
 #include "exc.h"           // xfatal
 #include "strdict.h"       // StringDict
-#include "ast.h"
 #include "diff.h"
 
 #include <string.h>        // strncmp
@@ -119,6 +119,9 @@ bool nocvr = false;
 
 int debugEverything() {
     DEBUG_MEMORY_TREE(astgen_pool,
+    s<<"y_pool:\n";
+    y_pool.debugPrint(s);
+    s<<"\n";
     s<<"allClasses:\n";
     allClasses.debugPrint(s);
     s<<"\n";
@@ -876,6 +879,7 @@ void HGen::passParentCtorArgs(int &ct, ASTList<CtorArg> const &args)
 
 void HGen::initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args)
 {
+
   FOREACH_ASTLIST(CtorArg, args, arg) {
     if (ct++ > 0) {
       out << ", ";

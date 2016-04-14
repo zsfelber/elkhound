@@ -5,6 +5,7 @@
 /* C declarations */
 %{
 
+#include "ast.h"       // AST node class declarations
 #include "agrampar.h"       // agrampar_yylex, etc.
 
 #include <stdlib.h>         // malloc, free

@@ -82,7 +82,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 71 "agrampar.y" /* yacc.c:1909  */
+#line 72 "agrampar.y" /* yacc.c:1909  */
 
   ASTSpecFile *file;
   ASTList<ToplevelForm> *formList;

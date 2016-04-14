@@ -65,6 +65,7 @@
 #line 6 "agrampar.y" /* yacc.c:339  */
 
 
+#include "ast.h"       // AST node class declarations
 #include "agrampar.h"       // agrampar_yylex, etc.
 
 #include <stdlib.h>         // malloc, free
@@ -79,7 +80,7 @@
 #define yyparse agrampar_yyparse
 
 
-#line 83 "agrampar.tab.c" /* yacc.c:339  */
+#line 84 "agrampar.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -151,7 +152,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 71 "agrampar.y" /* yacc.c:355  */
+#line 72 "agrampar.y" /* yacc.c:355  */
 
   ASTSpecFile *file;
   ASTList<ToplevelForm> *formList;
@@ -172,7 +173,7 @@ union YYSTYPE
   BaseClass *baseClass;
   CustomCode *customCode;
 
-#line 176 "agrampar.tab.c" /* yacc.c:355  */
+#line 177 "agrampar.tab.c" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -186,7 +187,7 @@ int yyparse (void* parseParam);
 
 /* Copy the second part of user declarations.  */
 
-#line 190 "agrampar.tab.c" /* yacc.c:358  */
+#line 191 "agrampar.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -486,14 +487,14 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   118,   118,   124,   125,   126,   127,   128,   129,   130,
-     135,   139,   147,   148,   160,   162,   170,   171,   173,   175,
-     183,   184,   190,   192,   197,   204,   209,   211,   217,   218,
-     219,   220,   221,   222,   223,   227,   229,   236,   237,   243,
-     245,   247,   253,   259,   261,   267,   268,   269,   270,   271,
-     272,   276,   278,   283,   285,   290,   292,   297,   303,   304,
-     309,   311,   316,   318,   323,   329,   330,   335,   337,   343,
-     344,   345,   349
+       0,   119,   119,   125,   126,   127,   128,   129,   130,   131,
+     136,   140,   148,   149,   161,   163,   171,   172,   174,   176,
+     184,   185,   191,   193,   198,   205,   210,   212,   218,   219,
+     220,   221,   222,   223,   224,   228,   230,   237,   238,   244,
+     246,   248,   254,   260,   262,   268,   269,   270,   271,   272,
+     273,   277,   279,   284,   286,   291,   293,   298,   304,   305,
+     310,   312,   317,   319,   324,   330,   331,   336,   338,   344,
+     345,   346,   350
 };
 #endif
 
@@ -1351,443 +1352,443 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 119 "agrampar.y" /* yacc.c:1646  */
+#line 120 "agrampar.y" /* yacc.c:1646  */
     { (yyval.file) = *((ASTSpecFile**)parseParam) = new (y_pool) ASTSpecFile(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].formList)); }
-#line 1357 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1358 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 124 "agrampar.y" /* yacc.c:1646  */
+#line 125 "agrampar.y" /* yacc.c:1646  */
     { (yyval.formList) = new (y_pool) ASTList<ToplevelForm>(DBG_INFO_ARG0_FIRST  y_pool); }
-#line 1363 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1364 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 125 "agrampar.y" /* yacc.c:1646  */
+#line 126 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].tfClass)); }
-#line 1369 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1370 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 126 "agrampar.y" /* yacc.c:1646  */
+#line 127 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].verbatim)); }
-#line 1375 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1376 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 127 "agrampar.y" /* yacc.c:1646  */
+#line 128 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].tfOption)); }
-#line 1381 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1382 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 128 "agrampar.y" /* yacc.c:1646  */
+#line 129 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].tfEnum)); }
-#line 1387 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1388 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 129 "agrampar.y" /* yacc.c:1646  */
+#line 130 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.formList)=(yyvsp[-1].formList))->append(DBG_INFO_ARG0_FIRST  new (y_pool) TF_custom(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].customCode))); }
-#line 1393 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1394 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 130 "agrampar.y" /* yacc.c:1646  */
+#line 131 "agrampar.y" /* yacc.c:1646  */
     { (yyval.formList)=(yyvsp[-1].formList); }
-#line 1399 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1400 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 136 "agrampar.y" /* yacc.c:1646  */
+#line 137 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.tfClass)=(yyvsp[0].tfClass))->super->name = unbox((yyvsp[-3].str)); 
            (yyval.tfClass)->super->args.assign((yyvsp[-2].ctorArgList), true);
            (yyval.tfClass)->super->bases.assign((yyvsp[-1].baseClassList), true); }
-#line 1407 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1408 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 140 "agrampar.y" /* yacc.c:1646  */
+#line 141 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.tfClass)=(yyvsp[0].tfClass))->super->name = unbox((yyvsp[-4].str));
            (yyval.tfClass)->super->args.assign((yyvsp[-3].ctorArgList), true);
            (yyval.tfClass)->super->lastArgs.assign((yyvsp[-2].ctorArgList), true);
            (yyval.tfClass)->super->bases.assign((yyvsp[-1].baseClassList), true); }
-#line 1416 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1417 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 147 "agrampar.y" /* yacc.c:1646  */
+#line 148 "agrampar.y" /* yacc.c:1646  */
     {}
-#line 1422 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1423 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 148 "agrampar.y" /* yacc.c:1646  */
+#line 149 "agrampar.y" /* yacc.c:1646  */
     {}
-#line 1428 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1429 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 161 "agrampar.y" /* yacc.c:1646  */
+#line 162 "agrampar.y" /* yacc.c:1646  */
     { (yyval.tfClass)=(yyvsp[-1].tfClass); }
-#line 1434 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1435 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 163 "agrampar.y" /* yacc.c:1646  */
+#line 164 "agrampar.y" /* yacc.c:1646  */
     { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
-#line 1440 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1441 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 170 "agrampar.y" /* yacc.c:1646  */
+#line 171 "agrampar.y" /* yacc.c:1646  */
     { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
-#line 1446 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1447 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 172 "agrampar.y" /* yacc.c:1646  */
+#line 173 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.tfClass)=(yyvsp[-5].tfClass))->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-3].str)), (yyvsp[-2].ctorArgList), NULL, (yyvsp[-1].baseClassList), NULL)); }
-#line 1452 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1453 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 174 "agrampar.y" /* yacc.c:1646  */
+#line 175 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.tfClass)=(yyvsp[-7].tfClass))->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-5].str)), (yyvsp[-4].ctorArgList), NULL, (yyvsp[-3].baseClassList), (yyvsp[-1].userDeclList))); }
-#line 1458 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1459 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 176 "agrampar.y" /* yacc.c:1646  */
+#line 177 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.tfClass)=(yyvsp[-1].tfClass))->super->decls.append(DBG_INFO_ARG0_FIRST  (yyvsp[0].annotation)); }
-#line 1464 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1465 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 183 "agrampar.y" /* yacc.c:1646  */
+#line 184 "agrampar.y" /* yacc.c:1646  */
     { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool); }
-#line 1470 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1471 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 185 "agrampar.y" /* yacc.c:1646  */
+#line 186 "agrampar.y" /* yacc.c:1646  */
     { (yyval.ctorArgList) = (yyvsp[0].ctorArgList); }
-#line 1476 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1477 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 191 "agrampar.y" /* yacc.c:1646  */
+#line 192 "agrampar.y" /* yacc.c:1646  */
     { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool); }
-#line 1482 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1483 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 193 "agrampar.y" /* yacc.c:1646  */
+#line 194 "agrampar.y" /* yacc.c:1646  */
     { (yyval.ctorArgList) = (yyvsp[-1].ctorArgList); }
-#line 1488 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1489 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 198 "agrampar.y" /* yacc.c:1646  */
+#line 199 "agrampar.y" /* yacc.c:1646  */
     { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool);
                  {
                    string tmp = unbox((yyvsp[0].str));
                    (yyval.ctorArgList)->append(DBG_INFO_ARG0_FIRST  parseCtorArg(tmp));
                  }
                }
-#line 1499 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1500 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 205 "agrampar.y" /* yacc.c:1646  */
+#line 206 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.ctorArgList)=(yyvsp[-2].ctorArgList))->append(DBG_INFO_ARG0_FIRST  parseCtorArg(unbox((yyvsp[0].str)))); }
-#line 1505 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1506 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 210 "agrampar.y" /* yacc.c:1646  */
+#line 211 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 1511 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1512 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 212 "agrampar.y" /* yacc.c:1646  */
+#line 213 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = appendStr((yyvsp[-1].str), (yyvsp[0].str)); }
-#line 1517 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1518 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 217 "agrampar.y" /* yacc.c:1646  */
+#line 218 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = appendStr((yyvsp[0].str), box(" ")); }
-#line 1523 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1524 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 218 "agrampar.y" /* yacc.c:1646  */
+#line 219 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = appendStr((yyvsp[0].str), box(" ")); }
-#line 1529 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1530 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 219 "agrampar.y" /* yacc.c:1646  */
+#line 220 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = appendStr(box("<"), appendStr((yyvsp[-1].str), box(">"))); }
-#line 1535 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1536 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 220 "agrampar.y" /* yacc.c:1646  */
+#line 221 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = box("*"); }
-#line 1541 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1542 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 221 "agrampar.y" /* yacc.c:1646  */
+#line 222 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = box("&"); }
-#line 1547 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1548 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 222 "agrampar.y" /* yacc.c:1646  */
+#line 223 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = box("="); }
-#line 1553 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1554 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 223 "agrampar.y" /* yacc.c:1646  */
+#line 224 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = box("class "); }
-#line 1559 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1560 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 228 "agrampar.y" /* yacc.c:1646  */
+#line 229 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 1565 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1566 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 230 "agrampar.y" /* yacc.c:1646  */
+#line 231 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = appendStr((yyvsp[-2].str), appendStr(box(","), (yyvsp[0].str))); }
-#line 1571 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1572 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 236 "agrampar.y" /* yacc.c:1646  */
+#line 237 "agrampar.y" /* yacc.c:1646  */
     { (yyval.userDeclList) = new (y_pool) ASTList<Annotation>(DBG_INFO_ARG0_FIRST  y_pool); }
-#line 1577 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1578 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 238 "agrampar.y" /* yacc.c:1646  */
+#line 239 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.userDeclList)=(yyvsp[-1].userDeclList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].annotation)); }
-#line 1583 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1584 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 244 "agrampar.y" /* yacc.c:1646  */
+#line 245 "agrampar.y" /* yacc.c:1646  */
     { (yyval.annotation) = new (y_pool) UserDecl(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[-1].accessMod), unbox((yyvsp[0].str)), ""); }
-#line 1589 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1590 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 246 "agrampar.y" /* yacc.c:1646  */
+#line 247 "agrampar.y" /* yacc.c:1646  */
     { (yyval.annotation) = new (y_pool) UserDecl(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[-4].accessMod), unbox((yyvsp[-3].str)), unbox((yyvsp[-1].str))); }
-#line 1595 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1596 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 248 "agrampar.y" /* yacc.c:1646  */
+#line 249 "agrampar.y" /* yacc.c:1646  */
     { (yyval.annotation) = (yyvsp[0].customCode); }
-#line 1601 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1602 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 254 "agrampar.y" /* yacc.c:1646  */
+#line 255 "agrampar.y" /* yacc.c:1646  */
     { (yyval.customCode) = new (y_pool) CustomCode(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-1].str)), unbox((yyvsp[0].str))); }
-#line 1607 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1608 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 260 "agrampar.y" /* yacc.c:1646  */
+#line 261 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[-1].str); }
-#line 1613 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1614 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 262 "agrampar.y" /* yacc.c:1646  */
+#line 263 "agrampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[-1].str); }
-#line 1619 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1620 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 267 "agrampar.y" /* yacc.c:1646  */
+#line 268 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_PUBLIC; }
-#line 1625 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1626 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 268 "agrampar.y" /* yacc.c:1646  */
+#line 269 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_PRIVATE; }
-#line 1631 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1632 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 269 "agrampar.y" /* yacc.c:1646  */
+#line 270 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_PROTECTED; }
-#line 1637 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1638 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 270 "agrampar.y" /* yacc.c:1646  */
+#line 271 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_CTOR; }
-#line 1643 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1644 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 271 "agrampar.y" /* yacc.c:1646  */
+#line 272 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_DTOR; }
-#line 1649 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1650 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 272 "agrampar.y" /* yacc.c:1646  */
+#line 273 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_PUREVIRT; }
-#line 1655 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1656 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 277 "agrampar.y" /* yacc.c:1646  */
+#line 278 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessMod) = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].accessCtl), NULL); }
-#line 1661 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1662 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 279 "agrampar.y" /* yacc.c:1646  */
+#line 280 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessMod) = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[-3].accessCtl), (yyvsp[-1].stringList)); }
-#line 1667 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1668 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 284 "agrampar.y" /* yacc.c:1646  */
+#line 285 "agrampar.y" /* yacc.c:1646  */
     { (yyval.stringList) = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].str)); }
-#line 1673 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1674 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 286 "agrampar.y" /* yacc.c:1646  */
+#line 287 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.stringList)=(yyvsp[-2].stringList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].str)); }
-#line 1679 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1680 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 291 "agrampar.y" /* yacc.c:1646  */
+#line 292 "agrampar.y" /* yacc.c:1646  */
     { (yyval.verbatim) = new (y_pool) TF_verbatim(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[0].str))); }
-#line 1685 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1686 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 56:
-#line 293 "agrampar.y" /* yacc.c:1646  */
+#line 294 "agrampar.y" /* yacc.c:1646  */
     { (yyval.verbatim) = new (y_pool) TF_impl_verbatim(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[0].str))); }
-#line 1691 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1692 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 298 "agrampar.y" /* yacc.c:1646  */
+#line 299 "agrampar.y" /* yacc.c:1646  */
     { (yyval.tfOption) = new (y_pool) TF_option(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-2].str)), (yyvsp[-1].stringList)); }
-#line 1697 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1698 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 303 "agrampar.y" /* yacc.c:1646  */
+#line 304 "agrampar.y" /* yacc.c:1646  */
     { (yyval.stringList) = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool); }
-#line 1703 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1704 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 305 "agrampar.y" /* yacc.c:1646  */
+#line 306 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.stringList)=(yyvsp[-1].stringList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].str)); }
-#line 1709 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1710 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 310 "agrampar.y" /* yacc.c:1646  */
+#line 311 "agrampar.y" /* yacc.c:1646  */
     { (yyval.tfEnum) = new (y_pool) TF_enum(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-3].str)), (yyvsp[-1].enumeratorList)); }
-#line 1715 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1716 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 312 "agrampar.y" /* yacc.c:1646  */
+#line 313 "agrampar.y" /* yacc.c:1646  */
     { (yyval.tfEnum) = new (y_pool) TF_enum(DBG_INFO_ARG0_FIRST  y_pool,unbox((yyvsp[-4].str)), (yyvsp[-2].enumeratorList)); }
-#line 1721 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1722 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 317 "agrampar.y" /* yacc.c:1646  */
+#line 318 "agrampar.y" /* yacc.c:1646  */
     { (yyval.enumeratorList) = new (y_pool) ASTList<string>(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].enumerator)); }
-#line 1727 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1728 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 63:
-#line 319 "agrampar.y" /* yacc.c:1646  */
+#line 320 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.enumeratorList)=(yyvsp[-2].enumeratorList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].enumerator)); }
-#line 1733 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1734 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 324 "agrampar.y" /* yacc.c:1646  */
+#line 325 "agrampar.y" /* yacc.c:1646  */
     { (yyval.enumerator) = (yyvsp[0].str); }
-#line 1739 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1740 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 329 "agrampar.y" /* yacc.c:1646  */
+#line 330 "agrampar.y" /* yacc.c:1646  */
     { (yyval.baseClassList) = new (y_pool) ASTList<BaseClass>(DBG_INFO_ARG0_FIRST  y_pool); }
-#line 1745 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1746 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 331 "agrampar.y" /* yacc.c:1646  */
+#line 332 "agrampar.y" /* yacc.c:1646  */
     { (yyval.baseClassList) = (yyvsp[0].baseClassList); }
-#line 1751 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1752 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 336 "agrampar.y" /* yacc.c:1646  */
+#line 337 "agrampar.y" /* yacc.c:1646  */
     { (yyval.baseClassList) = new (y_pool) ASTList<BaseClass>(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].baseClass)); }
-#line 1757 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1758 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 338 "agrampar.y" /* yacc.c:1646  */
+#line 339 "agrampar.y" /* yacc.c:1646  */
     { ((yyval.baseClassList)=(yyvsp[-2].baseClassList))->append(DBG_INFO_ARG0_FIRST  (yyvsp[0].baseClass)); }
-#line 1763 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1764 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 343 "agrampar.y" /* yacc.c:1646  */
+#line 344 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_PUBLIC; }
-#line 1769 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1770 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 344 "agrampar.y" /* yacc.c:1646  */
+#line 345 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_PRIVATE; }
-#line 1775 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1776 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 345 "agrampar.y" /* yacc.c:1646  */
+#line 346 "agrampar.y" /* yacc.c:1646  */
     { (yyval.accessCtl) = AC_PROTECTED; }
-#line 1781 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1782 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 350 "agrampar.y" /* yacc.c:1646  */
+#line 351 "agrampar.y" /* yacc.c:1646  */
     { (yyval.baseClass) = new (y_pool) BaseClass(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[-1].accessCtl), unbox((yyvsp[0].str))); }
-#line 1787 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1788 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1791 "agrampar.tab.c" /* yacc.c:1646  */
+#line 1792 "agrampar.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2015,7 +2016,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 353 "agrampar.y" /* yacc.c:1906  */
+#line 354 "agrampar.y" /* yacc.c:1906  */
 
 
 /* ----------------- extra C code ------------------- */
