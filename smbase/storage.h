@@ -382,7 +382,7 @@ public:
    void operator delete[] (void* ptr, size_t size);
 
 
-   Storeable(DBG_INFO_FORMAL);
+   Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of = 0);
 
    /* new operator filled __pool and __store_size previously, we use passed argument to double check */
    Storeable(DBG_INFO_FORMAL_FIRST StoragePool & pool);
@@ -1771,7 +1771,7 @@ public:
  */
 
 
-inline Storeable::Storeable(DBG_INFO_FORMAL)
+inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
 #ifdef DEBUG
     : objectName(objectName)  REG_CHILD_COMMA
 #endif
@@ -1793,7 +1793,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL)
 #endif
     __kind = ST_NONE;
     __parentVector = npos;
-    __store_size  = 0;
+    __store_size  = getStoreSize(size_of);
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */

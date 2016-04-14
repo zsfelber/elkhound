@@ -30,7 +30,7 @@ private:
   void adjustTails();
 
 public:
-  VoidTailList(DBG_INFO_FORMAL) : VoidList(DBG_INFO_ARG_FWD)
+  VoidTailList(DBG_INFO_FORMAL) : VoidList(DBG_INFO_ARG_FWD_FIRST  sizeof(VoidTailList))
   { tail = NULL;  if (getKind()==ST_VALUE) npool.addPointer(tail); }
 
   VoidTailList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : VoidList(DBG_INFO_ARG_FWD_FIRST  pool)

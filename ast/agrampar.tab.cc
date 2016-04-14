@@ -1436,13 +1436,13 @@ yyreduce:
 
   case 15:
 #line 164 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+    { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)"), NULL); }
 #line 1441 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
 #line 171 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+    { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)")); }
 #line 1447 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1657,7 +1657,7 @@ yyreduce:
 
   case 51:
 #line 278 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.accessMod) = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].accessCtl), NULL); }
+    { (yyval.accessMod) = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].accessCtl), &ASTList<string>::EMPTY); }
 #line 1662 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 

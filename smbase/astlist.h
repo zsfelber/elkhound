@@ -27,8 +27,9 @@ private:
   ASTList(ASTList const &obj);          // not allowed
 
 public:
+  static ASTList<T> const EMPTY;
 
-  ASTList(DBG_INFO_FORMAL) : str::Storeable(DBG_INFO_ARG_FWD), list(DBG_INFO_ARG_FWD) {}
+  ASTList(DBG_INFO_FORMAL) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  sizeof(ASTList<T>)), list(DBG_INFO_ARG_FWD) {}
   ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
   ASTList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ASTList)), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
   ~ASTList()                            {  }
@@ -36,13 +37,15 @@ public:
   // ctor to make singleton list; often quite useful
   ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, T *elt)                       : str::Storeable(pool), list(DBG_INFO_ARG_FWD_FIRST  *this) { prepend(DBG_INFO_ARG_FWD_FIRST  elt); }
 
-  // stealing ctor; among other things, since &src->list is assumed to
+  // stealing ctor; among other things, since &*this is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  src.list,move) { }
-  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,move) { }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  *this,move) { }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  *this,move) { }
+  // making ast tree generation easy
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> const *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  *this,false) { xassert(!move); }
 
-  void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
+  void assign(ASTList<T> const &src, bool move)           { list.assign(*this, move); }
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
 
   // selectors
@@ -95,6 +98,13 @@ public:
   void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { str::ind(os,indent)<<"ast<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os); }
 };
 
+
+template <class T>
+#ifdef DEBUG
+ASTList<T> const ASTList<T>::EMPTY(DBG_INFO_ARG0);
+#else
+ASTList<T> const ASTList<T>::EMPTY;
+#endif
 
 /*
 template <class T>

@@ -85,7 +85,7 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
-  VoidList(DBG_INFO_FORMAL)  : str::Storeable(DBG_INFO_ARG_FWD), npool(DBG_INFO_ARG_FWD)
+  VoidList(DBG_INFO_FORMAL_FIRST  size_t size_of=0)  : str::Storeable(DBG_INFO_ARG_FWD_FIRST  size_of?size_of:sizeof(VoidList)), npool(DBG_INFO_ARG_FWD)
   { top=NULL;   if (getKind()==ST_VALUE) npool.addPointer(top); }
 
   VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, str::StoragePool::CopyMode copy)  : str::Storeable(DBG_INFO_ARG_FWD), npool(DBG_INFO_ARG_FWD_FIRST  pool, false, copy)

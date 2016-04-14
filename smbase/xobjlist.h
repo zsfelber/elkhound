@@ -84,7 +84,7 @@ public:
   className& operator= (className const &src)         { list = src.list; return *this; }
 
   public:
-  className[[[]]](DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD), list(DBG_INFO_ARG_FWD) {}
+  className[[[]]](DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  sizeof(className[[[]]])), list(DBG_INFO_ARG_FWD) {}
   className[[[]]](DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this,0) {}
   className[[[]]](DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(className)), list(DBG_INFO_ARG_FWD_FIRST  *this,0) {}
 ]]], [[[m4_dnl          // objlist
@@ -99,7 +99,7 @@ private:
   inline void del_itm(T* itm) { if (owning) delete itm; }
 
   public:
-  className[[[]]](DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD), list(DBG_INFO_ARG_FWD), owning(true) {}
+  className[[[]]](DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  sizeof(className[[[]]])), list(DBG_INFO_ARG_FWD), owning(true) {}
   className[[[]]](DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this,0), owning(true) {}
   className[[[]]](DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(className)), list(DBG_INFO_ARG_FWD_FIRST  *this,0), owning(true) {}
 ]]])m4_dnl

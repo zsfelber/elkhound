@@ -161,14 +161,14 @@ NewOpt: /* empty */          {}
 ClassBody: "{" ClassMembersOpt "}" /* no ";", see above */
              { $$=$2; }
          | ";"
-             { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+             { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)"), NULL); }
          ;
 
 /* yields TF_class */
 /* does this by making an empty one initially, and then adding to it */
 ClassMembersOpt
   : /* empty */
-      { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", NULL, NULL, NULL, NULL), NULL); }
+      { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)")); }
   | ClassMembersOpt "->" TOK_NAME CtorArgsOpt BaseClassesOpt ";"
       { ($$=$1)->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox($3), $4, NULL, $5, NULL)); }
   | ClassMembersOpt "->" TOK_NAME CtorArgsOpt BaseClassesOpt "{" CtorMembersOpt "}"
@@ -275,7 +275,7 @@ Public
 
 /* yield AccessMod */
 AccessMod: Public
-             { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, NULL); }
+             { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, &ASTList<string>::EMPTY); }
          | Public "(" StringList ")"
              { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, $3); }
          ;

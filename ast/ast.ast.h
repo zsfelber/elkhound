@@ -125,6 +125,8 @@ public:      // data
 public:      // funcs
   TF_class(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), super(_super), ctors(DBG_INFO_ARG_FWD_FIRST  _ctors, true/*move*/) {
   }
+  TF_class(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ASTClass *_super) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), super(_super), ctors(DBG_INFO_ARG_FWD) {
+  }
   virtual ~TF_class();
 
   virtual Kind kind() const { return TF_CLASS; }
@@ -214,6 +216,9 @@ public:      // funcs
   ASTClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD_FIRST  _args, true/*move*/), lastArgs(DBG_INFO_ARG_FWD_FIRST  _lastArgs, true/*move*/), bases(DBG_INFO_ARG_FWD_FIRST  _bases, true/*move*/), decls(DBG_INFO_ARG_FWD_FIRST  _decls, true/*move*/),
     level(0), consumed(0), parent(0), totArgs(DBG_INFO_ARG_FWD), totLastArgs(DBG_INFO_ARG_FWD){
   }
+  ASTClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD), lastArgs(DBG_INFO_ARG_FWD), bases(DBG_INFO_ARG_FWD), decls(DBG_INFO_ARG_FWD),
+    level(0), consumed(0), parent(0), totArgs(DBG_INFO_ARG_FWD), totLastArgs(DBG_INFO_ARG_FWD){
+  }
   ~ASTClass();
 
   char const *kindName() const { return "ASTClass"; }
@@ -258,6 +263,8 @@ public:      // data
 
 public:      // funcs
   AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc, ASTList <string > *_mods) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD_FIRST  _mods, true/*move*/) {
+  }
+  AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc, ASTList <string > const *_mods) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD_FIRST  _mods, false/*move*/) {
   }
   ~AccessMod();
 
