@@ -1657,7 +1657,7 @@ yyreduce:
 
   case 51:
 #line 278 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.accessMod) = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].accessCtl), &ASTList<string>::EMPTY); }
+    { (yyval.accessMod) = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,(yyvsp[0].accessCtl)); }
 #line 1662 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 

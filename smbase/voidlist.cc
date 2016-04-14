@@ -742,7 +742,7 @@ VoidNode* VoidList::prependAll(VoidList const &head, VoidNode *headTail)
 VoidList& VoidList::operator= (VoidList const &src)
 {
   xassert(__kind == src.__kind);
-  npool = src.npool;
+  npool.reassign(src.npool);
   top = src.top;
   npool.moveFrom(src.npool, (str::Storeable::DataPtr&)top);
   if (getKind()==ST_VALUE) npool.addPointer(top);

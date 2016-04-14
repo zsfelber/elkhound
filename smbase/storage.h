@@ -353,6 +353,8 @@ friend class ::VoidNode;
     }
 
 
+    Storeable(Storeable & disable);
+
     void init(Storeable const & srcOrParent, size_t size_of, bool childOfParent);
 
 public:
@@ -836,7 +838,7 @@ private:
 
                ptr->fixPoolPointer(src_ptr, d);
                ptr->clear();
-               *ptr = *src_ptr;
+               ptr->reassign(*src_ptr);
                ptr->copyChildPools(*src_ptr);
            }
        }
@@ -986,11 +988,15 @@ private:
        }
        case Cp_Move:
        {
-           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL) && src.__kind == ST_STORAGE_POOL && getParent() == src.getParent());
+           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
 
-           fixPoolPointer();
+           if (getParent() == src.getParent()) {
+               fixPoolPointer();
 
-           constcast(src).clear();
+               constcast(src).clear();
+           } else {
+               itt  reassign ?
+           }
            break;
        }
        case Cp_All:
@@ -1199,11 +1205,7 @@ public:
         __store_size = STORAGE_POOL_SIZE;
    }
 
-   inline StoragePool& operator= (StoragePool const &src) {
-       reassign(src);
-
-       return *this;
-   }
+   StoragePool& operator= (StoragePool const &src);
 
    inline StoragePool& operator+= (StoragePool const &src) {
        StoragePool childView(DBG_INFO_ARG0);

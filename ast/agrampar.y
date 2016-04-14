@@ -275,7 +275,7 @@ Public
 
 /* yield AccessMod */
 AccessMod: Public
-             { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, &ASTList<string>::EMPTY); }
+             { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1); }
          | Public "(" StringList ")"
              { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, $3); }
          ;

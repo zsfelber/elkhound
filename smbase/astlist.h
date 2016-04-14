@@ -35,17 +35,17 @@ public:
   ~ASTList()                            {  }
 
   // ctor to make singleton list; often quite useful
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, T *elt)                       : str::Storeable(pool), list(DBG_INFO_ARG_FWD_FIRST  *this) { prepend(DBG_INFO_ARG_FWD_FIRST  elt); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, T *elt)                       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this) { prepend(DBG_INFO_ARG_FWD_FIRST  elt); }
 
   // stealing ctor; among other things, since &*this is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  *this,move) { }
-  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  *this,move) { }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  src.list,move) { }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,move) { }
   // making ast tree generation easy
-  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> const *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  *this,false) { xassert(!move); }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> const *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,false) { xassert(!move); }
 
-  void assign(ASTList<T> const &src, bool move)           { list.assign(*this, move); }
+  void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
 
   // selectors

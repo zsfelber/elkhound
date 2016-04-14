@@ -264,7 +264,7 @@ public:      // data
 public:      // funcs
   AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc, ASTList <string > *_mods) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD_FIRST  _mods, true/*move*/) {
   }
-  AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc, ASTList <string > const *_mods) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD_FIRST  _mods, false/*move*/) {
+  AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD) {
   }
   ~AccessMod();
 
@@ -286,7 +286,7 @@ class Annotation : public str::Storeable {
 public:      // data
 
 public:      // funcs
-  Annotation(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : Storeable(pool) {
+  Annotation(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool) {
   }
   virtual ~Annotation();
 
@@ -379,7 +379,7 @@ public:      // data
   string name;
 
 public:      // funcs
-  BaseClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _access, string _name) : Storeable(pool), access(_access), name(_name) {
+  BaseClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _access, string _name) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), access(_access), name(_name) {
   }
   ~BaseClass();
 
