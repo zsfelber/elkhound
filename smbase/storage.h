@@ -845,7 +845,12 @@ private:
    inline void fixPoolPointer() {
        xassert(ownerPool == this);
 
-       (void*&)memory[0] = this;
+       if (memory) {
+           (void*&)memory[0] = this;
+       }  else {
+           std::cout << "Warning  Storeable.fixPoolPointer(1) : fixPoolPointer() of empty pool. "
+                     << std::endl;
+       }
    }
 
    inline void fixPoolPointer(StoragePool * src, std::ptrdiff_t d) {
@@ -857,7 +862,12 @@ private:
            }
        }
 
-       (void*&)memory[0] = this;
+       if (memory) {
+           (void*&)memory[0] = this;
+       }  else {
+           std::cout << "Warning  Storeable.fixPoolPointer(2) : fixPoolPointer() of empty pool. "
+                     << std::endl;
+       }
    }
 
 
