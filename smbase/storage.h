@@ -684,7 +684,7 @@ private:
                xassert(ptr);
 
                if (*ptr0 && oldmem.contains(*ptr0)) {
-                   moveVariable(oldmem, *ptr, d);
+                   xassert(moveVariable(oldmem, *ptr, d));
                }
                size_t dpt = encodeDeltaPtr(origin, (uint8_t*)ptr);
                *intPointersFrom = dpt;
@@ -757,27 +757,31 @@ private:
        xassert(pool0 == pool);
    }
 
-   void moveVariable(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
+   bool moveVariable(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
        xassert(ownerPool == this);
 
        if (variable) {
            uint8_t* variable_addr = (uint8_t*)variable;
 #ifdef DEBUG
            StoragePool const * pool0 = oldmem.findChild(variable_addr);
-           xassert (pool0 == &oldmem);
+           if (pool0 == &oldmem) {
 #else
-           xassert (oldmem.contains(variable_addr));
+           if (oldmem.contains(variable_addr)) {
 #endif
 
-           variable_addr += d;
-           variable = (DataPtr)variable_addr;
+                variable_addr += d;
+                variable = (DataPtr)variable_addr;
 
 #ifdef DEBUG
-           StoragePool const * pool = findChild(variable_addr);
-           xassert(pool == this);
+                StoragePool const * pool = findChild(variable_addr);
+                xassert(pool == this);
 #else
-           xassert (contains(variable_addr));
+                xassert (contains(variable_addr));
 #endif
+                return true;
+           } else {
+                return (contains(variable_addr));
+           }
        }
    }
 
