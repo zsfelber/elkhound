@@ -182,12 +182,12 @@ std::ostream &ind(std::ostream &os, int indent);
 #if 1
   // headers w/o addresses
   #define PRINT_HEADER(subtreeName, clsname)                 \
-    str::ind(os, indent) << subtreeName << " = " #clsname ":\n";  \
+    str::ind(os, indent) << (subtreeName?subtreeName:"") << " = " #clsname ":\n";  \
     indent += 2   /* user ; */
 #else
   // headers w/ addresses
   #define PRINT_HEADER(subtreeName, clsname)                                           \
-    str::ind(os, indent) << subtreeName << " = " #clsname " (" << ((void*)this) << "):\n";  \
+    str::ind(os, indent) << (subtreeName?subtreeName:"") << " = " #clsname " (" << ((void*)this) << "):\n";  \
     indent += 2   /* user ; */
 #endif
 
