@@ -175,31 +175,35 @@ inline void splitMemoryTreeLines(std::string const &s, std::vector<std::string> 
     }
 }
 
-#define DEBUG_MEMORY_TREE(pool, DEBUG_BLOCK) \
-{ \
-    std::stringstream s; \
-    s<<"*****************************************************************************************************\n"; \
-    s<<str::lastObjName<<"..\n"; \
-    s<<"Pool:\n"; \
-    pool.debugPrint(s); \
-    s<<"\n"; \
-    s<<"String Pool:\n"; \
-    str_pool.debugPrint(s); \
-    s<<"\n"; \
-    s<<"Trace Pool:\n"; \
-    trace_pool.debugPrint(s); \
-    s<<"\n"; \
-    DEBUG_BLOCK\
-    rows2.clear(); \
-    splitMemoryTreeLines(s.str(), rows2); \
-    std::stringstream sd; \
-    if (LCS::printDiff(sd, rows1, rows2)) { \
-        std::cout << sd.str(); \
-        std::cout<<std::flush; \
-        rows1 = rows2; \
-    } \
-    return 0; \
-}
+#define DEBUG_MEMORY_TREE(pool, DEBUG_BLOCK)                                                \
+{                                                                                           \
+    try {                                                                                   \
+        std::stringstream s;                                                                \
+        s<<"*****************************************************************************************************\n"; \
+        s<<str::lastObjName<<"..\n";                                                        \
+        s<<"Pool:\n";                                                                       \
+        pool.debugPrint(s);                                                                 \
+        s<<"\n";                                                                            \
+        s<<"String Pool:\n";                                                                \
+        str_pool.debugPrint(s);                                                             \
+        s<<"\n";                                                                            \
+        s<<"Trace Pool:\n";                                                                 \
+        trace_pool.debugPrint(s);                                                           \
+        s<<"\n";                                                                            \
+        DEBUG_BLOCK                                                                         \
+        rows2.clear();                                                                      \
+        splitMemoryTreeLines(s.str(), rows2);                                               \
+        std::stringstream sd;                                                               \
+        if (LCS::printDiff(sd, rows1, rows2)) {                                             \
+            std::cout << sd.str();                                                          \
+            std::cout<<std::flush;                                                          \
+            rows1 = rows2;                                                                  \
+        }                                                                                   \
+        return 0;                                                                           \
+    } catch (x_assert const & x) {                                                          \
+        std::cout<<"assertion failed.\n";                                                   \
+    }                                                                                       \
+}                                                                                           \
 
 
 #endif // DIFF_H

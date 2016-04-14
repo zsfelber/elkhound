@@ -424,8 +424,13 @@ public:
        case ST_STORAGE_POOL:
        {
            StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
-           xassert(the_first);
-           return *the_first;
+           if (the_first) {
+               return *the_first;
+           } else {
+               std::cout << "Warning  Storeable.getParent() : getParent() of temporary object. "
+                         << std::endl;
+               return NULL;
+           }
        }
        default:
            x_assert_fail("Wrong kind.", __FILE__, __LINE__);
