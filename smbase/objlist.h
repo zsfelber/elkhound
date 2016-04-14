@@ -7,6 +7,7 @@
 #ifndef OBJLIST_H
 #define OBJLIST_H
 
+#include <boost/type_index.hpp>
 #include "voidlist.h"    // VoidList
 #include "storage.h"    // VoidList
 
@@ -149,8 +150,8 @@ private:
   }
 
   Storeable::debugPrint;
-  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { list.debugPrint(os, indent, subtreeName); }
-};
+    void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { str::ind(os,indent)<<"obj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os); }
+  };
 
 
 template <class T>

@@ -179,7 +179,7 @@ public:	       // funcs
 
   inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
-      str::ind(os,indent)<< s;
+      str::ind(os,indent)<<"str:"<< s;
   }
 };
 

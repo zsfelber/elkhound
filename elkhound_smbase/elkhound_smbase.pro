@@ -3,6 +3,8 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
+INCLUDEPATH += ../../boost_1_60_0
+
 SOURCES += main.cpp \
     ../smbase/autofile.cc \
     ../smbase/bflatten.cc \
@@ -228,5 +230,5 @@ HEADERS += \
     ../smbase/xobjlist.h \
     ../smbase/storage.h \
     ../smbase/int.h \
-    ../smbase/diff.h
+    ../smbase/diff.h \
 
