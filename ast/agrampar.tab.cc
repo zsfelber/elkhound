@@ -1436,7 +1436,7 @@ yyreduce:
 
   case 15:
 #line 164 "agrampar.y" /* yacc.c:1646  */
-    { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)"), NULL); }
+    { (yyval.tfClass) = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)")); }
 #line 1441 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 

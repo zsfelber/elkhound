@@ -494,8 +494,8 @@ protected:
     uint8_t *memory;
     size_t first_del_var;
     size_t deleted_vars;
-    size_t memlength, memcapacity;
-
+    size_t memlength;
+    size_t memcapacity;
     size_t* intpointers;
     size_t intptrslength, intptrscapacity;
 
@@ -836,7 +836,7 @@ private:
                xassert( source.contains(src_ptr) );
                xassert( contains(ptr) );
 
-               ptr->fixPoolPointer(src_ptr, d);
+               ptr->fixPoolPointer(src_ptr);
                ptr->clear();
                ptr->reassign(*src_ptr);
                ptr->copyChildPools(*src_ptr);
@@ -855,7 +855,7 @@ private:
        }
    }
 
-   inline void fixPoolPointer(StoragePool * src, std::ptrdiff_t d) {
+   inline void fixPoolPointer(StoragePool const * src) {
        if (ownerPool == src) {
            ownerPool = this;
        } else {
@@ -920,18 +920,16 @@ private:
 
       oldmemlength = memlength;
       newmemlength = oldmemlength + store_size;
-      bufsz = getMemBufSize(newmemlength);
-      if (memcapacity < bufsz) {
-          if (oldmemlength) {
-              // FIXME insert child pool instead of large block memcpy
-              StoragePool * child = new (*this)  StoragePool(DBG_INFO_ARG0_FIRST  *this, true);
-              swap(child);
-          } else {
-              extendBuffer(memory,           memlength,                       memcapacity, bufsz);
-              fixPoolPointer();
-              oldmemlength += sizeof(void*);
-              newmemlength += sizeof(void*);
-          }
+      if (!oldmemlength) {
+            bufsz = getMemBufSize(newmemlength);
+            memory = new uint8_t[memcapacity = bufsz];
+            fixPoolPointer();
+            oldmemlength += sizeof(void*);
+            newmemlength += sizeof(void*);
+      } else if (newmemlength > memcapacity - STORAGE_POOL_SIZE) {
+          // FIXME insert child pool instead of large block memcpy
+          StoragePool * child = new (*this)  StoragePool(DBG_INFO_ARG0_FIRST  *this, true);
+          swap(child);
       }
       memlength = newmemlength;
       _data = memory+oldmemlength;
@@ -963,12 +961,12 @@ private:
    }
 
    inline void assignImpl(StoragePool const & src, CopyMode copyMode=Cp_All) {
-       xassert(!isParentOf(src));
-       xassert(!src.isParentOf(*this));
 
        switch (copyMode) {
        case Cp_Duplicate:
        {
+           xassert(!isParentOf(src));
+           xassert(!src.isParentOf(*this));
            xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
 
            __parentVector = __parentVector0;
@@ -980,6 +978,8 @@ private:
        }
        case Cp_TmpDuplicate:
        {
+           xassert(!isParentOf(src));
+           xassert(!src.isParentOf(*this));
            xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
 
            ownerPool = (StoragePool*) &src;
@@ -988,15 +988,17 @@ private:
        }
        case Cp_Move:
        {
+           xassert(!isParentOf(src));
+           xassert(!src.isParentOf(*this));
            xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
 
-           if (getParent() == src.getParent()) {
-               fixPoolPointer();
+           //if (getParent() == src.getParent()) {
+               fixPoolPointer(&src);
 
                constcast(src).clear();
-           } else {
-               itt  reassign ?
-           }
+           //} else {
+           //    itt  reassign ?
+           //}
            break;
        }
        case Cp_All:
@@ -1004,23 +1006,11 @@ private:
            size_t bufsz = getMemBufSize(memlength);
            xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL) && bufsz==memcapacity);
 
-           memory = NULL;
-           intpointers = NULL;
-           extpointers = NULL;
-           childpools = NULL;
-
-           extptrslength = 0;
-           extptrscapacity = 0;
-
-           copyBuffer(src.memory, memlength, memcapacity, memory);
-           copyBuffer(src.intpointers, intptrslength, intptrscapacity, intpointers);
-           copyBuffer(src.childpools, chplslength, chplscapacity, childpools);
-
-           moveInternalPointers(src);
-           fixAllPoolPointers();
+           reassign(src);
            break;
        }
        default:
+           xassert(false);
            break;
        }
    }
