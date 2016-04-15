@@ -24,7 +24,8 @@ VoidList::VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &src, size_t size_of, b
 
 void VoidList::assign(VoidList const &src, size_t size_of, bool move) {
     str::Storeable::assign(src, size_of?size_of:sizeof(VoidList));
-    npool.assign(src.npool, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All);
+    npool.assignSameParent(src.npool);
+    npool.assignImpl(src.npool, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All);
     chk_assign(src);
 }
 

@@ -410,6 +410,8 @@ public:
 
    void assign(Storeable const & srcOrParent, size_t size_of);
 
+   void assignSameParent(Storeable const & srcOrParent);
+
    inline __Kind getKind() const {
        return (__Kind)__kind;
    }
@@ -816,30 +818,31 @@ private:
            deltaOrigin = memory;
        }
        std::ptrdiff_t d = deltaOrigin - source.memory;
-       xassert(d);
-       xassert(memory != source.memory);
+       if (d) {
+           xassert(memory != source.memory);
 
 
-       xassert(tar_chPoolsTo-tar_chPoolsFrom == src_chPoolsTo-src_chPoolsFrom);
+           xassert(tar_chPoolsTo-tar_chPoolsFrom == src_chPoolsTo-src_chPoolsFrom);
 
-       for (; tar_chPoolsFrom<tar_chPoolsTo; tar_chPoolsFrom++, src_chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(deltaOrigin, *tar_chPoolsFrom);
-           PtrToMe src_ptr = (PtrToMe)decodeDeltaPtr(source.memory, *src_chPoolsFrom);
+           for (; tar_chPoolsFrom<tar_chPoolsTo; tar_chPoolsFrom++, src_chPoolsFrom++) {
+               PtrToMe ptr = (PtrToMe)decodeDeltaPtr(deltaOrigin, *tar_chPoolsFrom);
+               PtrToMe src_ptr = (PtrToMe)decodeDeltaPtr(source.memory, *src_chPoolsFrom);
 
-           xassert(bool(ptr)==bool(src_ptr));
-           xassert(ptr->__kind==src_ptr->__kind);
-           xassert(ptr->__kind == ST_VALUE || ptr->__kind == ST_STORAGE_POOL);
+               xassert(bool(ptr)==bool(src_ptr));
+               xassert(ptr->__kind==src_ptr->__kind);
+               xassert(ptr->__kind == ST_VALUE || ptr->__kind == ST_STORAGE_POOL);
 
-           if (ptr) {
-               xassert( src_ptr->ownerPool == ptr->ownerPool );
-               xassert( (d+(uint8_t*)src_ptr) == (uint8_t*)ptr);
-               xassert( source.contains(src_ptr) );
-               xassert( contains(ptr) );
+               if (ptr) {
+                   xassert( src_ptr->ownerPool == ptr->ownerPool );
+                   xassert( (d+(uint8_t*)src_ptr) == (uint8_t*)ptr);
+                   xassert( source.contains(src_ptr) );
+                   xassert( contains(ptr) );
 
-               ptr->fixPoolPointer(src_ptr);
-               ptr->clear();
-               ptr->reassign(*src_ptr);
-               ptr->copyChildPools(*src_ptr);
+                   ptr->fixPoolPointer(src_ptr);
+                   ptr->clear();
+                   ptr->reassign(*src_ptr);
+                   ptr->copyChildPools(*src_ptr);
+               }
            }
        }
    }
@@ -1123,7 +1126,10 @@ public:
        }
 
        if (copyMode != Cp_TmpDuplicate) {
-           getParentRef().addChildPool(this);
+           StoragePool * pool = getParent();
+           if (pool) {
+               pool->addChildPool(this);
+           }
        }
    }
 
@@ -1882,21 +1888,7 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     case ST_VALUE:
     case ST_STORAGE_POOL:
     {
-        StoragePool * srcPool = src.getParent();
-        StoragePool const * par = srcPool->findChild(this);
-        if (par) {
-            __parentVector = encodeDeltaPtr((uint8_t*)par->memory, (uint8_t*)this);
-            xassert(par == getParent());
-        } else {
-            std::cout << "Warning  Storeable.assign(" << getKind()
-#ifdef DEBUG
-                      << " " << objectName.str
-#endif
-                      << ")  copy to stack : "
-                      << (void*) &src << " -> " << (void*) this << std::endl;
-            __parentVector = npos;
-            __kind = ST_NONE;
-        }
+        assignSameParent(src);
         break;
     }
     /*case ST_CHILD:
@@ -1909,6 +1901,24 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     }*/
     default:
         x_assert_fail("Invalid kind.", __FILE__, __LINE__);
+    }
+}
+
+inline void Storeable::assignSameParent(Storeable const & src) {
+    StoragePool * srcPool = src.getParent();
+    StoragePool const * par = srcPool->findChild(this);
+    if (par) {
+        __parentVector = encodeDeltaPtr((uint8_t*)par->memory, (uint8_t*)this);
+        xassert(par == getParent());
+    } else {
+        std::cout << "Warning  Storeable.assign(" << getKind()
+    #ifdef DEBUG
+                  << " " << objectName.str
+    #endif
+                  << ")  copy to stack : "
+                  << (void*) &src << " -> " << (void*) this << std::endl;
+        __parentVector = npos;
+        __kind = ST_NONE;
     }
 }
 

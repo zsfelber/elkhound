@@ -161,18 +161,18 @@ NewOpt: /* empty */          {}
 ClassBody: "{" ClassMembersOpt "}" /* no ";", see above */
              { $$=$2; }
          | ";"
-             { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)")); }
+             { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", &ASTList <CtorArg >::EMPTY, &ASTList <CtorArg >::EMPTY, &ASTList <BaseClass>::EMPTY, &ASTList <Annotation >::EMPTY), &ASTList <ASTClass >::EMPTY); }
          ;
 
 /* yields TF_class */
 /* does this by making an empty one initially, and then adding to it */
 ClassMembersOpt
   : /* empty */
-      { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)")); }
+      { $$ = new (y_pool) TF_class(DBG_INFO_ARG0_FIRST  y_pool,new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,"(placeholder)", &ASTList <CtorArg >::EMPTY, &ASTList <CtorArg >::EMPTY, &ASTList <BaseClass>::EMPTY, &ASTList <Annotation >::EMPTY), &ASTList <ASTClass >::EMPTY); }
   | ClassMembersOpt "->" TOK_NAME CtorArgsOpt BaseClassesOpt ";"
-      { ($$=$1)->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox($3), $4, NULL, $5, NULL)); }
+      { ($$=$1)->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox($3), $4, &ASTList <CtorArg >::EMPTY, $5, &ASTList <Annotation >::EMPTY)); }
   | ClassMembersOpt "->" TOK_NAME CtorArgsOpt BaseClassesOpt "{" CtorMembersOpt "}"
-      { ($$=$1)->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox($3), $4, NULL, $5, $7)); }
+      { ($$=$1)->ctors.append(DBG_INFO_ARG0_FIRST  new (y_pool) ASTClass(DBG_INFO_ARG0_FIRST  y_pool,unbox($3), $4, &ASTList <CtorArg >::EMPTY, $5, $7)); }
   | ClassMembersOpt Annotation
       { ($$=$1)->super->decls.append(DBG_INFO_ARG0_FIRST  $2); }
   ;
@@ -275,7 +275,7 @@ Public
 
 /* yield AccessMod */
 AccessMod: Public
-             { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1); }
+             { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, &ASTList <string >::EMPTY); }
          | Public "(" StringList ")"
              { $$ = new (y_pool) AccessMod(DBG_INFO_ARG0_FIRST  y_pool,$1, $3); }
          ;

@@ -43,7 +43,8 @@ public:
   ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  src.list,move) { }
   ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,move) { }
   // making ast tree generation easy
-  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> const *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,false) { xassert(!move); }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> const &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  src.list,false) {  }
+  ASTList(DBG_INFO_FORMAL_FIRST  ASTList<T> const *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,false) {  }
 
   void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }

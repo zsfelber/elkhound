@@ -39,7 +39,8 @@ public:      // data
   ASTList <ToplevelForm > forms;
 
 public:      // funcs
-  ASTSpecFile(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ASTList <ToplevelForm > *_forms) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), forms(DBG_INFO_ARG_FWD_FIRST  _forms, true/*move*/) {
+  template <class A>
+  ASTSpecFile(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, A _forms) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), forms(DBG_INFO_ARG_FWD_FIRST  _forms, true/*move*/) {
   }
   ~ASTSpecFile();
 
@@ -123,9 +124,8 @@ public:      // data
   ASTList <ASTClass > ctors;
 
 public:      // funcs
-  TF_class(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ASTClass *_super, ASTList <ASTClass > *_ctors) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), super(_super), ctors(DBG_INFO_ARG_FWD_FIRST  _ctors, true/*move*/) {
-  }
-  TF_class(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ASTClass *_super) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), super(_super), ctors(DBG_INFO_ARG_FWD) {
+  template <class A>
+  TF_class(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ASTClass *_super, A _ctors) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), super(_super), ctors(DBG_INFO_ARG_FWD_FIRST  _ctors, true/*move*/) {
   }
   virtual ~TF_class();
 
@@ -145,7 +145,8 @@ public:      // data
   ASTList <string > args;
 
 public:      // funcs
-  TF_option(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, ASTList <string > *_args) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD_FIRST  _args, true/*move*/) {
+  template <class A>
+  TF_option(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, A _args) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD_FIRST  _args, true/*move*/) {
   }
   virtual ~TF_option();
 
@@ -182,7 +183,8 @@ public:      // data
   ASTList <string > enumerators;
 
 public:      // funcs
-  TF_enum(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, ASTList <string > *_enumerators) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), enumerators(DBG_INFO_ARG_FWD_FIRST  _enumerators, true/*move*/) {
+  template <class A>
+  TF_enum(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, A _enumerators) : ToplevelForm(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), enumerators(DBG_INFO_ARG_FWD_FIRST  _enumerators, true/*move*/) {
   }
   virtual ~TF_enum();
 
@@ -213,10 +215,8 @@ public:      // data
   ASTList <CtorArg > totLastArgs;
 
 public:      // funcs
-  ASTClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, ASTList <CtorArg > *_args, ASTList <CtorArg > *_lastArgs, ASTList <BaseClass > *_bases, ASTList <Annotation > *_decls) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD_FIRST  _args, true/*move*/), lastArgs(DBG_INFO_ARG_FWD_FIRST  _lastArgs, true/*move*/), bases(DBG_INFO_ARG_FWD_FIRST  _bases, true/*move*/), decls(DBG_INFO_ARG_FWD_FIRST  _decls, true/*move*/),
-    level(0), consumed(0), parent(0), totArgs(DBG_INFO_ARG_FWD), totLastArgs(DBG_INFO_ARG_FWD){
-  }
-  ASTClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD), lastArgs(DBG_INFO_ARG_FWD), bases(DBG_INFO_ARG_FWD), decls(DBG_INFO_ARG_FWD),
+  template <class A, class B, class C, class D>
+  ASTClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, string _name, A _args, B _lastArgs, C _bases, D _decls) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(_name), args(DBG_INFO_ARG_FWD_FIRST  _args, true/*move*/), lastArgs(DBG_INFO_ARG_FWD_FIRST  _lastArgs, true/*move*/), bases(DBG_INFO_ARG_FWD_FIRST  _bases, true/*move*/), decls(DBG_INFO_ARG_FWD_FIRST  _decls, true/*move*/),
     level(0), consumed(0), parent(0), totArgs(DBG_INFO_ARG_FWD), totLastArgs(DBG_INFO_ARG_FWD){
   }
   ~ASTClass();
@@ -262,9 +262,8 @@ public:      // data
   ASTList <string > mods;
 
 public:      // funcs
-  AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc, ASTList <string > *_mods) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD_FIRST  _mods, true/*move*/) {
-  }
-  AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD) {
+  template <class A>
+  AccessMod(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, AccessCtl _acc, A _mods) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), acc(_acc), mods(DBG_INFO_ARG_FWD_FIRST  _mods, true/*move*/) {
   }
   ~AccessMod();
 

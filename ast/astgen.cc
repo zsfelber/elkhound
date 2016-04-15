@@ -409,8 +409,8 @@ private:        // funcs
   void emitCtorFields(ASTList<CtorArg> const &args,
                       ASTList<CtorArg> const &lastArgs, std::set<std::string> &userMembers);
   void innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::string> &userMembers);
-  void emitCtorFormal(int &ct, CtorArg const *arg);
-  void emitCtorFormals(int &ct, ASTList<CtorArg> const &args);
+  void emitCtorFormal(int &ct, CtorArg const *arg, char &lastLst);
+  void emitCtorFormals(int &ct, ASTList<CtorArg> const &args, char &lastLst);
   void emitCtorDefn(ASTClass const &cls, ASTClass const *parent);
   void passParentCtorArgs(int &ct, ASTList<CtorArg> const &args);
   void initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args);
@@ -731,7 +731,7 @@ void HGen::innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::strin
 
 
 // emit the declaration of a formal argument to a constructor
-void HGen::emitCtorFormal(int &ct, CtorArg const *arg)
+void HGen::emitCtorFormal(int &ct, CtorArg const *arg, char &lastLst)
 {
   // put commas between formals
   if (ct++ > 0) {
@@ -739,16 +739,20 @@ void HGen::emitCtorFormal(int &ct, CtorArg const *arg)
   }
 
   string const &type = arg->type;
-  out << type << " ";
-  if (isListType(type) ||
-      isTreeNode(type) ||
-      type.equals("LocString")) {
-    // lists and subtrees and LocStrings are constructed by passing pointers
-    trace("putStar") << "putting star for " << type << std::endl;
-    out << "*";
-  }
-  else {
-    trace("putStar") << "NOT putting star for " << type << std::endl;
+  if (isListType(type)) {
+      out << (lastLst++) << " ";
+  } else {
+      out << type << " ";
+      if (//isListType(type) ||
+          isTreeNode(type) ||
+          type.equals("LocString")) {
+        // lists and subtrees and LocStrings are constructed by passing pointers
+        trace("putStar") << "putting star for " << type << std::endl;
+        out << "*";
+      }
+      else {
+        trace("putStar") << "NOT putting star for " << type << std::endl;
+      }
   }
 
   out << "_" << arg->name;      // prepend underscore to param's name
@@ -759,10 +763,10 @@ void HGen::emitCtorFormal(int &ct, CtorArg const *arg)
   }
 }
 
-void HGen::emitCtorFormals(int &ct, ASTList<CtorArg> const &args)
+void HGen::emitCtorFormals(int &ct, ASTList<CtorArg> const &args, char &lastLst)
 {
   FOREACH_ASTLIST(CtorArg, args, arg) {
-    emitCtorFormal(ct, arg.data());
+    emitCtorFormal(ct, arg.data(), lastLst);
   }
 }
 
@@ -807,14 +811,38 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
   // declare the constructor
   {
     out << "public:      // funcs\n";
+
+    int astLists = 0;
+    int lastAstLists = 0;
+    FOREACH_ASTLIST(CtorArg, *args, arg) {
+      if (isListType(arg.data()->type)) {
+          astLists++;
+          lastAstLists++;
+      } else {
+          lastAstLists=0;
+      }
+    }
+
+    if (astLists) {
+        out << "  template <class ";
+        for (char ch = 'A', che = 'A'+astLists; ch<che; ch++) {
+            out << ch;
+            if (ch<che-1) {
+                out << ", class ";
+            }
+        }
+        out << ">\n";
+    }
+
     out << "  " << cls.name << "(";
     out << "DBG_INFO_FORMAL_FIRST  ";
 
     // list of formal parameters to the constructor
     {
       int ct = 0;
-      emitCtorFormals(ct, *args);
-      emitCtorFormals(ct, *lastArgs);
+      char lastLst = 'A';
+      emitCtorFormals(ct, *args, lastLst);
+      emitCtorFormals(ct, *lastArgs, lastLst);
     }
     out << ")";
 
@@ -3276,7 +3304,7 @@ void mergeItself(ASTSpecFile *base)
                   }
               }
               if (!mergedChild) {
-                  mergedChild = new (astgen_pool) ASTClass(DBG_INFO_ARG0_FIRST  astgen_pool, c->super->name, 0,0,0,0);
+                  mergedChild = new (astgen_pool) ASTClass(DBG_INFO_ARG0_FIRST  astgen_pool, c->super->name, &ASTList <CtorArg >::EMPTY, &ASTList <CtorArg >::EMPTY, &ASTList <BaseClass>::EMPTY, &ASTList <Annotation >::EMPTY);
                   s->ctors.append(DBG_INFO_ARG0_FIRST  mergedChild);
                   o << "Merged child not found, created an empty one." << std::endl;
               }
