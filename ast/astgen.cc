@@ -802,10 +802,10 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
   if (parent) {
       da = true;
 
-      args = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  constcast(&parent->getArgs()), false);
+      args = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  &astgen_pool, constcast(&parent->getArgs()), false);
       args->reappendAll(cls.args, (VoidEq)&cmpCtorArgs);
 
-      lastArgs = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  constcast(&cls.lastArgs), false);
+      lastArgs = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  &astgen_pool, constcast(&cls.lastArgs), false);
       lastArgs->appendAllNew(parent->getLastArgs(), (VoidEq)&cmpCtorArgs);
   }
   // declare the constructor
@@ -917,7 +917,11 @@ void HGen::initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args)
     }
 
     // initialize the field with the formal argument
-    out << arg.data()->name << "(_" << arg.data()->name ;
+    out << arg.data()->name << "(";
+    if (isListType(arg.data()->type)) {
+        out << "DBG_INFO_ARG_FWD_FIRST  &pool, ";
+    }
+    out<<"_" << arg.data()->name ;
     if (isListType(arg.data()->type)) {
         out << ", true/*move*/";
     }
@@ -3561,7 +3565,8 @@ void entry(int argc, char **argv)
   wholeAST = readAbstractGrammar(srcFname);
 
   // parse and merge extension modules
-  ObjList<string> modules(DBG_INFO_ARG0_FIRST  astgen_pool);
+  ObjList<string> *_modules = new (astgen_pool) ObjList<string>(DBG_INFO_ARG0_FIRST  astgen_pool);
+  ObjList<string> &modules = *_modules;
   while (*argv) {
     char const *fname = *argv;
     argv++;

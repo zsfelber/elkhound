@@ -321,12 +321,6 @@ friend class ::VoidNode;
     __DbgStr objectName;
 #endif
 
-    enum __Kind {
-        ST_NONE = 0,
-        ST_VALUE,
-        ST_STORAGE_POOL,
-        ST_DELETED
-    };
 
     uint8_t __kind;
     size_t __parentVector;
@@ -358,6 +352,13 @@ friend class ::VoidNode;
     void init(Storeable const & srcOrParent, size_t size_of, bool childOfParent);
 
 public:
+
+    enum __Kind {
+        ST_NONE = 0,
+        ST_VALUE,
+        ST_STORAGE_POOL,
+        ST_DELETED
+    };
 
    typedef StoragePool* PtrToMe;
    typedef Storeable* DataPtr;
@@ -411,6 +412,8 @@ public:
    void assign(Storeable const & srcOrParent, size_t size_of);
 
    void assignSameParent(Storeable const & srcOrParent);
+
+   void assignParent(StoragePool const * srcPool, __Kind def = ST_VALUE);
 
    inline __Kind getKind() const {
        return (__Kind)__kind;
@@ -1906,17 +1909,24 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
 
 inline void Storeable::assignSameParent(Storeable const & src) {
     StoragePool * srcPool = src.getParent();
+    assignParent(srcPool);
+}
+
+inline void Storeable::assignParent(StoragePool const * srcPool, __Kind def) {
     StoragePool const * par = srcPool->findChild(this);
     if (par) {
         __parentVector = encodeDeltaPtr((uint8_t*)par->memory, (uint8_t*)this);
+        if (!__kind) {
+            __kind = def;
+        }
         xassert(par == getParent());
     } else {
         std::cout << "Warning  Storeable.assign(" << getKind()
     #ifdef DEBUG
                   << " " << objectName.str
     #endif
-                  << ")  copy to stack : "
-                  << (void*) &src << " -> " << (void*) this << std::endl;
+                  << ")  copy to stack   from pool:"
+                  << (void*) srcPool << " -> " << (void*) this << std::endl;
         __parentVector = npos;
         __kind = ST_NONE;
     }

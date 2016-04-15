@@ -49,6 +49,9 @@ public:
     ExternalPtr ptrs[] = { (ExternalPtr)&tail };
     npool.convertExternalPointers(src.npool, ptrs, ptrs+1);  }
 
+  VoidList::getPool;
+  Storeable::assignParent;
+
   //void steal(VoidTailList *src,bool deleteOrig=true);
 
   // this syntax just makes the implementation inherited from
