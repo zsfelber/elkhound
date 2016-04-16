@@ -40,14 +40,20 @@ public:
   // use move:true as stealing ctor; among other things, since &*this is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  src.list,move) { if (!getKind() && pool0) { assignParent(pool0); list.assignParent(pool0); list.getPool().assignParent(pool0, Storeable::ST_STORAGE_POOL); } }
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,move) { if (!getKind() && pool0) { assignParent(pool0); list.assignParent(pool0); list.getPool().assignParent(pool0, Storeable::ST_STORAGE_POOL); } }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*list(DBG_INFO_ARG_FWD_FIRST  src.list,move)*/ { if (!getKind() && pool0) assignParent(pool0); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*list(DBG_INFO_ARG_FWD_FIRST  src->list,move)*/ { if (!getKind() && pool0) assignParent(pool0); }
   // move:false is default with const making ast tree generation easy
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> const &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  src.list,false) { if (!getKind() && pool0) { assignParent(pool0); list.assignParent(pool0); list.getPool().assignParent(pool0, Storeable::ST_STORAGE_POOL); } }
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> const *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  src->list,false) { if (!getKind() && pool0) { assignParent(pool0); list.assignParent(pool0); list.getPool().assignParent(pool0, Storeable::ST_STORAGE_POOL); } }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> const &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*list(DBG_INFO_ARG_FWD_FIRST  src.list,false)*/ { if (!getKind() && pool0) assignParent(pool0); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> const *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*list(DBG_INFO_ARG_FWD_FIRST  src->list,false)*/ { if (!getKind() && pool0) assignParent(pool0); }
 
   void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
+
+  inline void assignParent(str::StoragePool *pool0) {
+      Storeable::assignParent(pool0);
+      list.assignParent(pool0);
+      list.getPool().assignParent(pool0, Storeable::ST_STORAGE_POOL);
+  }
 
   // selectors
   int count() const                     { return list.count(); }

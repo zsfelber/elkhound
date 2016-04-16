@@ -17,6 +17,9 @@ struct __DbgStr {
     explicit __DbgStr(char const * str) : str(str) {}
 };
 
+struct __StoreAlreadyConstr {
+} StoreAlreadyConstr;
+
 class VoidList;
 class VoidTailList;
 class VoidNode;
@@ -384,6 +387,16 @@ public:
    void operator delete[] (void* ptr, void* voidptr2);
    void operator delete[] (void* ptr, size_t size);
 
+
+   Storeable(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing)
+#ifdef DEBUG
+    : objectName(objectName)  REG_CHILD_COMMA
+#endif
+   {
+#ifdef DEBUG
+      lastObjName = objectName.str;
+#endif
+   }
 
    Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of = 0);
 
@@ -1103,6 +1116,10 @@ private:
 
 
 public:
+
+   StoragePool(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing) : Storeable(DBG_INFO_ARG_FWD_FIRST  nothing) {
+
+   }
 
    StoragePool(DBG_INFO_FORMAL) : Storeable(DBG_INFO_ARG_FWD) {
        clear();
