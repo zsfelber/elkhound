@@ -17,15 +17,15 @@ public:    // data
   StringRef str;
 
 public:    // funcs
-  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool);
+  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool);
   LocString(DBG_INFO_FORMAL_FIRST  LocString const &obj);
 #ifdef DEBUG
   LocString(LocString const &obj);//undefined
 #endif
   LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent);
-  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, SourceLoc loc, StringRef str);
+  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, SourceLoc loc, StringRef str);
 
-  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
+  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);
   LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent, Flatten&);
   void xfer(str::StoragePool &pool, Flatten &flat);
 

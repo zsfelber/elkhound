@@ -45,7 +45,7 @@ protected:
 private:
   bool const owning;
   // make shallow copies and non-owning list
-  ObjList(DBG_INFO_FORMAL_FIRST ObjList const &obj) : str::Storeable(DBG_INFO_ARG_FWD), list(obj.list), owning(false) { }
+  ObjList(DBG_INFO_FORMAL_FIRST ObjList const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), owning(false) {  list.chk_assign(obj.list, move);   }
   ObjList& operator= (ObjList const &src) { NOWN list = src.list; return *this;  }
 
   inline void del_itm(T* itm) { if (owning) delete itm; }

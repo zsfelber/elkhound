@@ -44,7 +44,7 @@ struct ListClass : public str::Storeable {
     , classAndMemberName(classAndMemberName0)
     , elementClassName(elementClassName0)
   {}
-  ListClass(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, ListKind lkind0, rostring classAndMemberName0, rostring elementClassName0)
+  ListClass(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, ListKind lkind0, rostring classAndMemberName0, rostring elementClassName0)
     : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), lkind(lkind0)
     , classAndMemberName(classAndMemberName0)
     , elementClassName(elementClassName0)
@@ -111,10 +111,10 @@ bool wantGDB = false;
 // support for covariant return types in MSVC; see
 //   http://support.microsoft.com/kb/240862/EN-US/
 // The approach is to use
-//   virtual Super *nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
-//   Sub *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(pool, deepness,listDeepness)); }
+//   virtual Super *nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const;
+//   Sub *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const { return static_cast<Sub*>(nocvr_clone(pool, deepness,listDeepness)); }
 // in place of
-//   virtual Sub *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;
+//   virtual Sub *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const;
 bool nocvr = false;
 
 int debugEverything() {
@@ -647,17 +647,17 @@ void HGen::emitTFClass(TF_class const &cls)
   if (cls.hasChildren()) {
     if (!nocvr) {
       // normal case
-      out << "  virtual " << cls.super->name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  virtual " << cls.super->name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const=0;\n";
     }
     else {
       // msvc hack case
-      out << "  virtual " << cls.super->name << "* nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const=0;\n";
-      out << "  " << cls.super->name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const { return nocvr_clone(pool, deepness,listDeepness); }\n";
+      out << "  virtual " << cls.super->name << "* nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const=0;\n";
+      out << "  " << cls.super->name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const { return nocvr_clone(pool, deepness,listDeepness); }\n";
     }
   }
   else {
     // not pure or virtual
-    out << "  " << cls.super->name << " *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << cls.super->name << " *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const;\n";
   }
   out << "\n";
 
@@ -802,10 +802,10 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
   if (parent) {
       da = true;
 
-      args = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  &astgen_pool, constcast(&parent->getArgs()), false);
+      args = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  &astgen_pool, &parent->getArgs());
       args->reappendAll(cls.args, (VoidEq)&cmpCtorArgs);
 
-      lastArgs = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  &astgen_pool, constcast(&cls.lastArgs), false);
+      lastArgs = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  &astgen_pool, &cls.lastArgs);
       lastArgs->appendAllNew(parent->getLastArgs(), (VoidEq)&cmpCtorArgs);
   }
   // declare the constructor
@@ -922,9 +922,6 @@ void HGen::initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args)
         out << "DBG_INFO_ARG_FWD_FIRST  &pool, ";
     }
     out<<"_" << arg.data()->name ;
-    if (isListType(arg.data()->type)) {
-        out << ", true/*move*/";
-    }
     out << ")";
   }
 }
@@ -1041,12 +1038,12 @@ void HGen::emitCtor(ASTClass const &ctor, ASTClass const &parent)
   // clone function (take advantage of covariant return types)
   if (!nocvr) {
     // normal case
-    out << "  virtual " << ctor.name << " *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  virtual " << ctor.name << " *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const;\n";
   }
   else {
     // msvc hack case
-    out << "  virtual " << parent.name << "* nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const;\n";
-    out << "  " << ctor.name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness=0,int listDeepness=1) const\n"
+    out << "  virtual " << parent.name << "* nocvr_clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const;\n";
+    out << "  " << ctor.name << "* clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness=0,int listDeepness=1) const\n"
         << "    { return static_cast<" << ctor.name << "*>(nocvr_clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness,listDeepness)); }\n";
   }
 
@@ -1650,7 +1647,7 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
   if (!nocvr || !sub) {
     // normal case, or childless superclass case
-    out << name << " *" << name << "::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness,int listDeepness) const\n";
+    out << name << " *" << name << "::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness,int listDeepness) const\n";
   }
   else {
     // msvc hack case

@@ -365,7 +365,7 @@ void xmlPrintPointer(std::ostream &os, char const *label, void const *p);
 // returns a new'd list because the AST node ctors want
 // to accept an owner ptr to a list
 template <class T>
-ASTList<T> * /*owner*/ cloneASTList(str::StoragePool &pool, ASTList<T> const &src, int deepness=1, int listDeepness=1)
+ASTList<T> * /*owner*/ cloneASTList(str::StoragePool const &pool, ASTList<T> const &src, int deepness=1, int listDeepness=1)
 {
   deepness--;listDeepness--;
 
@@ -390,7 +390,7 @@ ASTList<T> * /*owner*/ cloneASTList(str::StoragePool &pool, ASTList<T> const &sr
 // because ASTList normally is owning, and probably deletes its
 // elements in its destructor..
 template <class T>
-ASTList<T> * /*owner*/ shallowCloneASTList(str::StoragePool &pool, ASTList<T> const &src)
+ASTList<T> * /*owner*/ shallowCloneASTList(str::StoragePool const &pool, ASTList<T> const &src)
 {
   ASTList<T> *ret = new (pool) ASTList<T>(DBG_INFO_ARG0_FIRST  pool);
   ret->assign(src, false);
@@ -406,7 +406,7 @@ ASTList<T> * /*owner*/ shallowCloneASTList(str::StoragePool &pool, ASTList<T> co
 
 // deep copy of a FakeList
 template <class T>
-FakeList<T> * /*owner*/ cloneFakeList(str::StoragePool &pool, FakeList<T> const *src, int deepness=1, int listDeepness=1)
+FakeList<T> * /*owner*/ cloneFakeList(str::StoragePool const &pool, FakeList<T> const *src, int deepness=1, int listDeepness=1)
 {
   if (!src) {
     return FakeList<T>::emptyList();     // base case of recursion

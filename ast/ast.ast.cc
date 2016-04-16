@@ -19,7 +19,7 @@ void ASTSpecFile::debugPrint(std::ostream &os, int indent, char const *subtreeNa
   PRINT_LIST(ToplevelForm, forms);
 }
 
-ASTSpecFile *ASTSpecFile::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+ASTSpecFile *ASTSpecFile::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
   deepness--; listDeepness--;
   ASTSpecFile *ret = new (pool) ASTSpecFile(
@@ -63,7 +63,7 @@ void TF_verbatim::debugPrint(std::ostream &os, int indent, char const *subtreeNa
   PRINT_STRING(code);
 }
 
-TF_verbatim *TF_verbatim::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+TF_verbatim *TF_verbatim::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_verbatim *ret = new (pool) TF_verbatim(
@@ -87,7 +87,7 @@ void TF_impl_verbatim::debugPrint(std::ostream &os, int indent, char const *subt
   PRINT_STRING(code);
 }
 
-TF_impl_verbatim *TF_impl_verbatim::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+TF_impl_verbatim *TF_impl_verbatim::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_impl_verbatim *ret = new (pool) TF_impl_verbatim(
@@ -114,7 +114,7 @@ void TF_class::debugPrint(std::ostream &os, int indent, char const *subtreeName)
   PRINT_LIST(ASTClass, ctors);
 }
 
-TF_class *TF_class::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+TF_class *TF_class::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_class *ret = new (pool) TF_class(
@@ -144,7 +144,7 @@ void TF_option::debugPrint(std::ostream &os, int indent, char const *subtreeName
   PRINT_LIST(string, args);
 }
 
-TF_option *TF_option::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+TF_option *TF_option::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_option *ret = new (pool) TF_option(
@@ -170,7 +170,7 @@ void TF_custom::debugPrint(std::ostream &os, int indent, char const *subtreeName
   PRINT_SUBTREE(cust);
 }
 
-TF_custom *TF_custom::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+TF_custom *TF_custom::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
     deepness--; listDeepness--;
   TF_custom *ret = new (pool) TF_custom(
@@ -198,7 +198,7 @@ void TF_enum::debugPrint(std::ostream &os, int indent, char const *subtreeName) 
   PRINT_LIST(string, enumerators);
 }
 
-TF_enum *TF_enum::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+TF_enum *TF_enum::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
   TF_enum *ret = new (pool) TF_enum(
     DBG_INFO_ARG_FWD_FIRST  pool, name,
@@ -229,7 +229,7 @@ void ASTClass::debugPrint(std::ostream &os, int indent, char const *subtreeName)
   PRINT_LIST(Annotation, decls);
 }
 
-ASTClass *ASTClass::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+ASTClass *ASTClass::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
   ASTClass *ret = new (pool) ASTClass(
     DBG_INFO_ARG_FWD_FIRST  pool, name,
@@ -259,7 +259,7 @@ void AccessMod::debugPrint(std::ostream &os, int indent, char const *subtreeName
   PRINT_LIST(string, mods);
 }
 
-AccessMod *AccessMod::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+AccessMod *AccessMod::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
   AccessMod *ret = new (pool) AccessMod(
     DBG_INFO_ARG_FWD_FIRST  pool, acc,
@@ -302,7 +302,7 @@ void UserDecl::debugPrint(std::ostream &os, int indent, char const *subtreeName)
   PRINT_STRING(init);
 }
 
-UserDecl *UserDecl::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+UserDecl *UserDecl::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
   UserDecl *ret = new (pool) UserDecl(
     DBG_INFO_ARG_FWD_FIRST  pool, ((deepness>=0)&&amod)? amod->clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness, listDeepness) : amod,
@@ -328,7 +328,7 @@ void CustomCode::debugPrint(std::ostream &os, int indent, char const *subtreeNam
   PRINT_STRING(code);
 }
 
-CustomCode *CustomCode::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+CustomCode *CustomCode::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
   CustomCode *ret = new (pool) CustomCode(
     DBG_INFO_ARG_FWD_FIRST  pool, qualifier,
@@ -354,7 +354,7 @@ void CtorArg::debugPrint(std::ostream &os, int indent, char const *subtreeName) 
   PRINT_STRING(defaultValue);
 }
 
-CtorArg *CtorArg::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+CtorArg *CtorArg::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
   CtorArg *ret = new (pool) CtorArg(
     DBG_INFO_ARG_FWD_FIRST  pool, isOwner,
@@ -380,7 +380,7 @@ void BaseClass::debugPrint(std::ostream &os, int indent, char const *subtreeName
   PRINT_STRING(name);
 }
 
-BaseClass *BaseClass::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int deepness, int listDeepness) const
+BaseClass *BaseClass::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
   BaseClass *ret = new (pool) BaseClass(
     DBG_INFO_ARG_FWD_FIRST  pool, access,

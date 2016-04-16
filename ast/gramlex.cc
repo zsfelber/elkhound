@@ -40,7 +40,7 @@ GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  rostring filename, std
     source(src),
     bufstate(NULL)
 {}
-GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, rostring filename, std::istream *src)
+GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring filename, std::istream *src)
   : Storeable(DBG_INFO_ARG_FWD_FIRST pool), loc(sourceLocManager->encodeBegin(toCStr(filename))),
     source(src),
     bufstate(NULL)
@@ -61,7 +61,7 @@ GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  FileState const &obj)
   *this = obj;
 }
 
-GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, FileState const &obj)
+GrammarLexer::FileState::FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, FileState const &obj)
     : Storeable(DBG_INFO_ARG_FWD_FIRST  pool)
 {
   *this = obj;

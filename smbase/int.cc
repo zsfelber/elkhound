@@ -9,7 +9,7 @@ Integer::Integer(DBG_INFO_FORMAL_FIRST  int ii)
   ctorcount++;
 }
 
-Integer::Integer(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int ii)
+Integer::Integer(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int ii)
   : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), i(ii)
 {
   ctorcount++;

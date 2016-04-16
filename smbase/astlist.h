@@ -30,29 +30,28 @@ public:
   static ASTList<T> const EMPTY;
 
   ASTList(DBG_INFO_FORMAL) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  sizeof(ASTList<T>)), list(DBG_INFO_ARG_FWD) {}
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
   ASTList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ASTList)), list(DBG_INFO_ARG_FWD_FIRST  *this) {}
   ~ASTList()                            {  }
 
   // ctor to make singleton list; often quite useful
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, T *elt)                       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this) { prepend(DBG_INFO_ARG_FWD_FIRST  elt); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, T *elt)                       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this) { prepend(DBG_INFO_ARG_FWD_FIRST  elt); }
 
   // use move:true as stealing ctor; among other things, since &*this is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*list(DBG_INFO_ARG_FWD_FIRST  src.list,move)*/ { if (!getKind() && pool0) assignParent(pool0); }
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*list(DBG_INFO_ARG_FWD_FIRST  src->list,move)*/ { if (!getKind() && pool0) assignParent(pool0); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> &src, bool move=true) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src.list, move); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> *src, bool move=true) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src->list, move); }
   // move:false is default with const making ast tree generation easy
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> const &src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*list(DBG_INFO_ARG_FWD_FIRST  src.list,false)*/ { if (!getKind() && pool0) assignParent(pool0); }
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool *pool0, ASTList<T> const *src,bool move) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*list(DBG_INFO_ARG_FWD_FIRST  src->list,false)*/ { if (!getKind() && pool0) assignParent(pool0); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src.list, false); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src->list, false); }
 
   void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
 
-  inline void assignParent(str::StoragePool *pool0) {
+  inline void assignParent(str::StoragePool const *pool0) {
       Storeable::assignParent(pool0);
       list.assignParent(pool0);
-      list.getPool().assignParent(pool0, Storeable::ST_STORAGE_POOL);
   }
 
   // selectors

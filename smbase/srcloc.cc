@@ -33,7 +33,7 @@ void addLineLength(ArrayStack<unsigned char> &lengths, int len)
   lengths.push((unsigned char)len);
 }
 
-SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, char const *n, SourceLoc aStartLoc)
+SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, char const *n, SourceLoc aStartLoc)
 : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool),  name(n),
   startLoc(aStartLoc),     // assigned by SourceLocManager
   hashLines(NULL),

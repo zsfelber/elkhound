@@ -17,7 +17,7 @@ struct __DbgStr {
     explicit __DbgStr(char const * str) : str(str) {}
 };
 
-struct __StoreAlreadyConstr {
+static struct __StoreAlreadyConstr {
 } StoreAlreadyConstr;
 
 class VoidList;
@@ -326,7 +326,7 @@ friend class ::VoidNode;
 
 
     uint8_t __kind;
-    size_t __parentVector;
+    StoragePool const * __parent;
     size_t __store_size;
 #ifdef REG_CHILD
     size_t __next;
@@ -375,8 +375,8 @@ public:
    void* operator new[] (std::size_t size, void* ptr);
    void* operator new[] (std::size_t size, const std::nothrow_t& nothrow_value);
 
-   void* operator new (std::size_t size, StoragePool & pool);
-   void* operator new[] (std::size_t size, StoragePool & pool);
+   void* operator new (std::size_t size, StoragePool const & pool);
+   void* operator new[] (std::size_t size, StoragePool const & pool);
 
    void operator delete (void* ptr);
    void operator delete (void* ptr, const std::nothrow_t& nothrow_constant);
@@ -401,7 +401,7 @@ public:
    Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of = 0);
 
    /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-   Storeable(DBG_INFO_FORMAL_FIRST StoragePool & pool);
+   Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool);
 
    /**
     * src: source object argument of copy constructor
@@ -432,47 +432,29 @@ public:
        return (__Kind)__kind;
    }
 
-   inline StoragePool & getParentRef() const {
+   inline StoragePool const & getParentRef() const {
        return NN(getParent());
    }
 
-   inline StoragePool * getParent() const {
-       switch (__kind) {
-       case ST_NONE:
-           return NULL;
-       case ST_VALUE:
-       case ST_STORAGE_POOL:
-       {
-           StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
-           if (the_first) {
-               return *the_first;
-           } else {
-               std::cout << "Warning  Storeable.getParent() : getParent() of temporary object. "
-                         << std::endl;
-               return NULL;
-           }
-       }
-       default:
-           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
-           break;
-       }
+   inline StoragePool const * getParent() const {
+       return __parent;
    }
 
-   inline StoragePool * getPool() const {
+   inline StoragePool const * getPool() const {
        switch (__kind) {
        case ST_NONE:
            return asPool();
        case ST_STORAGE_POOL:
            return (StoragePool*)this;
        case ST_VALUE:
-           return getParent();
+           return __parent;
        default:
            x_assert_fail("Wrong kind.", __FILE__, __LINE__);
            break;
        }
    }
 
-   inline StoragePool & getPoolRef() const {
+   inline StoragePool const & getPoolRef() const {
        return NN(getPool());
    }
 
@@ -661,7 +643,6 @@ public:
    enum CopyMode {
        Cp_All,
        Cp_Move,
-       Cp_Duplicate,
        Cp_TmpDuplicate,
    };
 
@@ -671,10 +652,6 @@ private:
    size_t chplslength, chplscapacity;
 
    StoragePool * ownerPool;
-
-   // ! __parentVector0 is the last !
-
-   size_t __parentVector0;
 
    inline void movePointers(StoragePool const & oldmem, uint8_t* origin = NULL) {
        xassert(ownerPool == this);
@@ -810,19 +787,6 @@ private:
        }
    }
 
-   void fixAllPoolPointers() {
-       fixPoolPointer();
-
-       size_t* chPoolsFrom = childpools;
-       size_t* chPoolsTo = childpools+chplslength;
-       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
-           if (ptr) {
-               ptr->fixAllPoolPointers();
-           }
-       }
-   }
-
    void copyChildPools(StoragePool const & source, uint8_t* deltaOrigin = NULL) {
        xassert(ownerPool == this);
 
@@ -863,17 +827,6 @@ private:
        }
    }
 
-   inline void fixPoolPointer() {
-       xassert(ownerPool == this);
-
-       if (memory) {
-           (void*&)memory[0] = this;
-       }  else {
-           std::cout << "Warning  Storeable.fixPoolPointer(1) : fixPoolPointer() of empty pool. "
-                     << std::endl;
-       }
-   }
-
    inline void fixPoolPointer(StoragePool const * src) {
        if (ownerPool == src) {
            ownerPool = this;
@@ -881,13 +834,6 @@ private:
            if (ownerPool != this) {
                xassert(ownerPool->isParentOf(*this));
            }
-       }
-
-       if (memory) {
-           (void*&)memory[0] = this;
-       }  else {
-           std::cout << "Warning  Storeable.fixPoolPointer(2) : fixPoolPointer() of empty pool. "
-                     << std::endl;
        }
    }
 
@@ -942,9 +888,6 @@ private:
       if (!oldmemlength) {
             bufsz = getMemBufSize(newmemlength);
             memory = new uint8_t[memcapacity = bufsz];
-            fixPoolPointer();
-            oldmemlength += sizeof(void*);
-            newmemlength += sizeof(void*);
       } else if (newmemlength > memcapacity - STORAGE_POOL_SIZE) {
           // FIXME insert child pool instead of large block memcpy
           StoragePool * child = new (*this)  StoragePool(DBG_INFO_ARG0_FIRST  *this, true);
@@ -957,10 +900,7 @@ private:
 
       DataPtr data = (DataPtr) _data;
       data->__kind = ST_VALUE;
-      data->__parentVector = encodeDeltaPtr(memory, (uint8_t*)_data);
-      if (store_size == STORAGE_POOL_SIZE) {
-          ((StoragePool*)data)->__parentVector0 = data->__parentVector;
-      }
+      data->__parent = this;
       data->__store_size = store_size;
    }
 
@@ -982,19 +922,6 @@ private:
    inline void assignImpl(StoragePool const & src, CopyMode copyMode=Cp_All) {
 
        switch (copyMode) {
-       case Cp_Duplicate:
-       {
-           xassert(!isParentOf(src));
-           xassert(!src.isParentOf(*this));
-           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
-
-           __parentVector = __parentVector0;
-           //// keep it 'this'!! ownerPool = (StoragePool*) &src;
-           ownerPool = (StoragePool*) &src;
-           xassert(getParentRef().contains(this));
-
-           break;
-       }
        case Cp_TmpDuplicate:
        {
            xassert(!isParentOf(src));
@@ -1035,7 +962,10 @@ private:
    }
 
    void reassign(StoragePool const & src) {
-       xassert(ownerPool == this);
+       if (ownerPool != this) {
+           xassert(ownerPool == &src);
+           ownerPool = this;
+       }
        xassert(!isParentOf(src));
        xassert(!src.isParentOf(*this));
 
@@ -1068,13 +998,12 @@ private:
        memcpy(intpointers, src.intpointers, sizeof(size_t)*(intptrslength = src.intptrslength));
        memcpy(childpools, src.childpools, sizeof(size_t)*(chplslength = src.chplslength));
 
-       fixAllPoolPointers();
        copyChildPools(src);
        moveInternalPointers(src);
    }
 
    inline bool isParentOf(Storeable const & chpool) const {
-       StoragePool * par = chpool.getParent();
+       StoragePool const * par = chpool.getParent();
        if (par == this) {
            return true;
        } else if (par) {
@@ -1127,7 +1056,7 @@ public:
    }
 
    StoragePool(DBG_INFO_FORMAL_FIRST Storeable const & srcOrParent, bool childOfParent, CopyMode copyMode=Cp_All) :
-       Storeable(DBG_INFO_ARG_FWD_FIRST srcOrParent, sizeof(StoragePool)-sizeof(__parentVector0), childOfParent) {
+       Storeable(DBG_INFO_ARG_FWD_FIRST srcOrParent, sizeof(StoragePool), childOfParent) {
 
        xassert(!isParentOf(srcOrParent));
        xassert(__store_size == STORAGE_POOL_SIZE);
@@ -1146,7 +1075,7 @@ public:
        }
 
        if (copyMode != Cp_TmpDuplicate) {
-           StoragePool * pool = getParent();
+           StoragePool * pool = constcast(getParent());
            if (pool) {
                pool->addChildPool(this);
            }
@@ -1154,9 +1083,9 @@ public:
    }
 
    virtual ~StoragePool() {
-       StoragePool * p = getParent();
-       if (p) {
-           p->removeChildPool(this);
+       StoragePool * pool = constcast(getParent());
+       if (pool) {
+           pool->removeChildPool(this);
        }
 
        if (ownerPool != this) {
@@ -1174,9 +1103,9 @@ public:
        uint8_t * bg = sizeof(objectName)+(uint8_t*)&objectName;
        uint8_t * th = (uint8_t*)this;
        std::ptrdiff_t d = bg-th;
-       memcpy(bg, d+(uint8_t*)&src, sizeof(StoragePool)-sizeof(__parentVector0)-d);
+       memcpy(bg, d+(uint8_t*)&src, sizeof(StoragePool)-d);
 #else
-       memcpy(this, &src, sizeof(StoragePool)-sizeof(__parentVector0));
+       memcpy(this, &src, sizeof(StoragePool));
 #endif
        assignImpl(src, copyMode);
    }
@@ -1215,7 +1144,7 @@ public:
        memset(this, 0, sizeof(StoragePool));
 #endif
        __kind = k;
-       __parentVector = npos;
+       __parent = NULL;
         first_del_var = npos;
         ownerPool = this;
         __store_size = STORAGE_POOL_SIZE;
@@ -1233,8 +1162,8 @@ public:
        xassert(ownerPool == this);
 
        size_t c;
-       size_t snetmemlen = src.memlength - sizeof(void*);
-       uint8_t* soldorigin = src.memory + sizeof(void*);
+       size_t snetmemlen = src.memlength;
+       uint8_t* soldorigin = src.memory;
 
        if (memcapacity<(c=getMemBufSize(memlength+snetmemlen))) {
            extendBuffer(memory, memlength, c);
@@ -1276,7 +1205,7 @@ public:
             chplslength += src.chplslength;
        }
 
-       uint8_t * deltaChildOrigin = childView.memory - sizeof(void*);
+       uint8_t * deltaChildOrigin = childView.memory;
 
        childView.moveInternalPointers(src, memory, deltaChildOrigin);
 
@@ -1312,8 +1241,6 @@ public:
        memcpy(_this, _pool, sizeof(SwapVars));
        memcpy(_pool, buf, sizeof(SwapVars));
 
-       fixAllPoolPointers();
-       pool->fixAllPoolPointers();
    }
 
    void convertExternalPointers(StoragePool const &src, ExternalPtr* convertExtPointersFrom, ExternalPtr* convertExtPointersTo) {
@@ -1606,7 +1533,7 @@ public:
 #ifdef DEBUG
        xassert(__store_size == getStoreSize(sizeof(StoragePool)));
        xassert(__kind < ST_DELETED);
-       xassert((__kind == ST_NONE) == (__parentVector == npos));
+       xassert(bool(__kind) == bool(__parent));
        xassert(ownerPool);
        xassert(bool(memory) == bool(memlength));
        xassert(bool(memcapacity) == bool(memlength));
@@ -1766,7 +1693,7 @@ public:
 
    inline iterator begin(DataPtr variablePtr = 0) const {
        if (!variablePtr) {
-           variablePtr = (DataPtr) (memory+sizeof(void*));
+           variablePtr = (DataPtr) memory;
        }
        return iterator(*this, (uint8_t*)variablePtr);
    }
@@ -1798,10 +1725,8 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
 #endif
 {
 #if debug_this
-    if (__kind == ST_PARENT && __parentVector && __parentVector != npos) {
-        StoragePool** the_first = (StoragePool**) decodeDeltaBackPtr((uint8_t*)this, __parentVector);
-        StoragePool* pool = *the_first;
-        if (pool->contains(this)) {
+    if (__kind == ST_PARENT && __parent) {
+        if (__parent->contains(this)) {
             std::cout<<"Bad allocation, use Storable(StoragePool &pool)" << std::endl;
         }
     }
@@ -1810,12 +1735,12 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
     lastObjName = objectName.str;
 #endif
     __kind = ST_NONE;
-    __parentVector = npos;
+    __parent = NULL;
     __store_size  = getStoreSize(size_of);
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool)
+inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool)
 #ifdef DEBUG
     : objectName(objectName)
 #endif
@@ -1827,7 +1752,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool & pool)
         xassert((__kind == ST_VALUE||__kind == ST_STORAGE_POOL) && getParent() == &pool);
     } else {
         __kind = ST_NONE;
-        __parentVector = npos;
+        __parent = NULL;
         __store_size  = 0;
     }
 }
@@ -1874,7 +1799,7 @@ inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool 
         StoragePool const & srcPool = srcOrParent.getPoolRef();
         xassert(srcPool.contains(this));
         __kind = ST_VALUE;
-        __parentVector = encodeDeltaPtr((uint8_t*)srcPool.memory, (uint8_t*)this);
+        __parent = &srcPool;
         __store_size = getStoreSize(size_of);
         xassert(&srcPool == getParent());
     #ifdef REG_CHILD
@@ -1903,7 +1828,7 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     // transfer __parentVector (we keep parent)
     switch (__kind) {
     case ST_NONE:
-        xassert(__parentVector == npos);
+        xassert(!__parent);
         break;
     case ST_VALUE:
     case ST_STORAGE_POOL:
@@ -1925,26 +1850,39 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
 }
 
 inline void Storeable::assignSameParent(Storeable const & src) {
-    StoragePool * srcPool = src.getParent();
-    assignParent(srcPool);
+    StoragePool const * srcPool = src.getParent();
+    if (srcPool) {
+        assignParent(srcPool);
+    } else {
+        if (__parent || __kind) {
+            std::cout << "Warning  Storeable.assignSameParent(" << getKind()
+        #ifdef DEBUG
+                      << " " << objectName.str
+        #endif
+                      << ")  copy to stack   from pool:"
+                      << (void*) srcPool << " -> " << (void*) this << std::endl;
+            __parent = NULL;
+            __kind = ST_NONE;
+        }
+    }
 }
 
 inline void Storeable::assignParent(StoragePool const * srcPool, __Kind def) {
     StoragePool const * par = srcPool->findChild(this);
     if (par) {
-        __parentVector = encodeDeltaPtr((uint8_t*)par->memory, (uint8_t*)this);
+        __parent = par;
         if (!__kind) {
             __kind = def;
         }
         xassert(par == getParent());
     } else {
-        std::cout << "Warning  Storeable.assign(" << getKind()
+        std::cout << "Warning  Storeable.assignParent(" << getKind()
     #ifdef DEBUG
                   << " " << objectName.str
     #endif
                   << ")  copy to stack   from pool:"
                   << (void*) srcPool << " -> " << (void*) this << std::endl;
-        __parentVector = npos;
+        __parent = NULL;
         __kind = ST_NONE;
     }
 }
@@ -1977,15 +1915,15 @@ inline void* Storeable::operator new[] (std::size_t size, const std::nothrow_t& 
     return result;
 }
 
-inline void* Storeable::operator new (std::size_t size, StoragePool& pool) {
+inline void* Storeable::operator new (std::size_t size, StoragePool const & pool) {
     void const * data;
-    pool.allocParentItem(data, getStoreSize(size));
+    constcast(pool).allocParentItem(data, getStoreSize(size));
     return constcast(data);
 }
 
-inline void* Storeable::operator new[] (std::size_t size, StoragePool& pool) {
+inline void* Storeable::operator new[] (std::size_t size, StoragePool const & pool) {
     void const * data;
-    pool.allocParentItem(data, getStoreSize(size));
+    constcast(pool).allocParentItem(data, getStoreSize(size));
     return constcast(data);
 }
 

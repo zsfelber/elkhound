@@ -21,16 +21,18 @@ public:
   VoidNode *next;           // (owner) next item in list, or NULL if last item
   str::Storeable *data;               // whatever it is the list is holding
 
-  VoidNode(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, str::Storeable *aData=NULL, VoidNode *aNext=NULL) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) {
+  VoidNode(DBG_INFO_FORMAL_FIRST  str::StoragePool const &_pool, str::Storeable *aData=NULL, VoidNode *aNext=NULL) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  _pool) {
       data=aData;
       next=aNext;
+      str::StoragePool & pool = constcast(_pool);
       pool.addPointer(next);
       pool.addPointer(data);
   }
 
   virtual ~VoidNode() {
-      getParent()->removePointer(next);
-      getParent()->removePointer(data);
+      str::StoragePool & pool = constcast(getParentRef());
+      pool.removePointer(next);
+      pool.removePointer(data);
   }
   void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const {
       str::ind(os,indent)<< " node:";
@@ -67,7 +69,6 @@ private:
   friend class VoidListIter;
   friend class VoidListMutator;
 
-  void chk_assign(VoidList const &obj);
   uint8_t* glueNpools(VoidList const &tail);
 
 #ifdef DEBUG
@@ -85,13 +86,16 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
+  VoidList(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing) : Storeable(DBG_INFO_ARG_FWD_FIRST  nothing), npool(DBG_INFO_ARG_FWD_FIRST  nothing)
+  {  }
+
   VoidList(DBG_INFO_FORMAL_FIRST  size_t size_of=0)  : str::Storeable(DBG_INFO_ARG_FWD_FIRST  size_of?size_of:sizeof(VoidList)), npool(DBG_INFO_ARG_FWD)
   { top=NULL;   if (getKind()==ST_VALUE) npool.addPointer(top); }
 
-  VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, str::StoragePool::CopyMode copy)  : str::Storeable(DBG_INFO_ARG_FWD), npool(DBG_INFO_ARG_FWD_FIRST  pool, false, copy)
+  VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, str::StoragePool::CopyMode copy)  : str::Storeable(DBG_INFO_ARG_FWD), npool(DBG_INFO_ARG_FWD_FIRST  pool, false, copy)
   { top=NULL;   if (getKind()==ST_VALUE) npool.addPointer(top); }
 
-  VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)  : str::Storeable(DBG_INFO_ARG_FWD_FIRST pool), npool(DBG_INFO_ARG_FWD_FIRST  *this, true)
+  VoidList(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool)  : str::Storeable(DBG_INFO_ARG_FWD_FIRST pool), npool(DBG_INFO_ARG_FWD_FIRST  *this, true)
   { top=NULL;   if (getKind()==ST_VALUE) npool.addPointer(top); }
 
   VoidList(DBG_INFO_FORMAL_FIRST  str::Storeable const &parent, size_t size_of=0) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, size_of?size_of:sizeof(VoidList), true), npool(DBG_INFO_ARG_FWD_FIRST  *this, true)
@@ -100,7 +104,9 @@ public:
   VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
   virtual ~VoidList()                { if (getKind()==ST_VALUE) npool.removePointer(top);/*npool clears it completely*/  }
 
+  void assignParent(str::StoragePool const *pool0);
   void assign(VoidList const &src, size_t size_of=0, bool move=false);
+  void chk_assign(VoidList const &obj, bool move);
 
   // selectors
   int count() const;                 // # of items in list

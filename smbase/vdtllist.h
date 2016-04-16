@@ -30,10 +30,13 @@ private:
   void adjustTails();
 
 public:
+  VoidTailList(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing) : VoidList(DBG_INFO_ARG_FWD_FIRST  nothing)
+  {  }
+
   VoidTailList(DBG_INFO_FORMAL) : VoidList(DBG_INFO_ARG_FWD_FIRST  sizeof(VoidTailList))
   { tail = NULL;  if (getKind()==ST_VALUE) npool.addPointer(tail); }
 
-  VoidTailList(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : VoidList(DBG_INFO_ARG_FWD_FIRST  pool)
+  VoidTailList(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool) : VoidList(DBG_INFO_ARG_FWD_FIRST  pool)
   { tail = NULL;  if (getKind()==ST_VALUE) npool.addPointer(tail); }
   VoidTailList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : VoidList(DBG_INFO_ARG_FWD_FIRST  parent,sizeof(VoidTailList))
   { tail = NULL;  if (getKind()==ST_VALUE) npool.addPointer(tail); }
@@ -43,14 +46,22 @@ public:
   VoidTailList(DBG_INFO_FORMAL_FIRST  VoidTailList const &src, bool move) : VoidList(DBG_INFO_ARG_FWD_FIRST  src, sizeof(VoidTailList), move)
   { }
 
-  void assign(VoidTailList const &src, bool move)
-  { VoidList::assign(src, sizeof(VoidTailList), move);
+  void assign(VoidTailList const &src, bool move) {
+    Storeable::assign(src, sizeof(VoidTailList));
+    chk_assign(src, move);
+  }
+  void chk_assign(VoidTailList const &src, bool move) {
+    VoidList::chk_assign(src, move);
     tail = src.tail;
     ExternalPtr ptrs[] = { (ExternalPtr)&tail };
-    npool.convertExternalPointers(src.npool, ptrs, ptrs+1);  }
+    npool.convertExternalPointers(src.npool, ptrs, ptrs+1);
+  }
+
+
+  VoidList::assignParent;
 
   VoidList::getPool;
-  Storeable::assignParent;
+
 
   //void steal(VoidTailList *src,bool deleteOrig=true);
 

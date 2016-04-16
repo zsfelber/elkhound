@@ -69,7 +69,7 @@ public:
 // interface for elements in a boxprint tree
 class BPElement : public str::Storeable {
 public:
-    BPElement(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) {}
+    BPElement(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) {}
     BPElement(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, size_t size_of) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, size_of, true) {}
 
   // if no breaks are taken, compute the # of columns;
@@ -105,7 +105,7 @@ public:
   string text;
 
 public:
-  BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, rostring t);
+  BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring t);
   BPText(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, rostring t);
   ~BPText();
 
@@ -141,7 +141,7 @@ public:
   int indent;
 
 public:
-  BPBreak(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, BreakType e, int i);
+  BPBreak(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, BreakType e, int i);
   ~BPBreak();
 
   // BPElement funcs
@@ -180,7 +180,7 @@ public:
   BPKind kind;
 
 public:
-  BPBox(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, BPKind k);
+  BPBox(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, BPKind k);
   BPBox(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, BPKind k);
   ~BPBox();
 
@@ -238,7 +238,7 @@ private:     // funcs
   BPBox *box() { return boxStack.top(); }
 
 public:      // funcs
-  BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool);
+  BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool);
   BoxPrint(DBG_INFO_FORMAL);
   ~BoxPrint();
 

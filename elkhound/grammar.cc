@@ -26,7 +26,7 @@ StringTable grammarStringTable;
 
 
 // ---------------------- Symbol --------------------
-Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &n, bool t, bool e)
+Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &n, bool t, bool e)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(DBG_INFO_ARG_FWD_FIRST  n),
     isTerm(t),
     isEmptyString(e),
@@ -42,7 +42,7 @@ Symbol::~Symbol()
 {}
 
 
-Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat)
+Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(DBG_INFO_ARG_FWD_FIRST  pool, flat),
     isTerm(false),
     isEmptyString(false),
@@ -157,7 +157,7 @@ Nonterminal const *Symbol::ifNonterminalC() const
 
 
 // -------------------- Terminal ------------------------
-Terminal::Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat)
+Terminal::Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat)
   : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, flat),
     alias(DBG_INFO_ARG_FWD_FIRST  pool, flat),
     classifyParam(NULL),
@@ -225,7 +225,7 @@ string Terminal::toString(bool quoteAliases) const
 
 
 // ----------------- Nonterminal ------------------------
-Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &name, bool isEmpty)
+Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &name, bool isEmpty)
   : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, name, false /*terminal*/, isEmpty),
     mergeParam1(NULL),
     mergeParam2(NULL),
@@ -246,7 +246,7 @@ Nonterminal::~Nonterminal()
 {}
 
 
-Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat)
+Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat)
   : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, flat),
     mergeParam1(NULL),
     mergeParam2(NULL),
@@ -332,7 +332,7 @@ bool Nonterminal::anyDDM() const
 // -------------------- TerminalSet ------------------------
 STATICDEF Terminal const *TerminalSet::suppressExcept = NULL;
 
-TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int numTerms) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool)
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int numTerms) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool)
 {
   init(numTerms);
 }
@@ -427,7 +427,7 @@ TerminalSet::~TerminalSet()
 }
 
 
-TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool)
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool)
   , bitmap(NULL)
 {}
 
@@ -597,7 +597,7 @@ void Production::RHSElt::xferSerfs(Flatten &flat, Grammar &g)
 
 
 // -------------------- Production -------------------------
-Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Nonterminal *L, char const *Ltag)
+Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Nonterminal *L, char const *Ltag)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), left(L),
     right(DBG_INFO_ARG_FWD_FIRST  *this),
     precedence(0),
@@ -620,7 +620,7 @@ Production::~Production()
 }
 
 
-Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat)
+Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), left(NULL), right(DBG_INFO_ARG_FWD_FIRST  *this),
     forbid(NULL),
     forbid_owned(false),

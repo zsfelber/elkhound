@@ -78,7 +78,7 @@ BPElement::~BPElement()
 
 
 // ------------------------- BPText ----------------------
-BPText::BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, rostring t)
+BPText::BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring t)
   : BPElement(DBG_INFO_ARG_FWD_FIRST  pool), text(t)
 {}
 BPText::BPText(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, rostring t)
@@ -108,7 +108,7 @@ void BPText::debugPrint(std::ostream &os, int /*ind*/) const
 
 
 // ------------------------ BPBreak ---------------------
-BPBreak::BPBreak(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, BreakType e, int i)
+BPBreak::BPBreak(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, BreakType e, int i)
   : BPElement(DBG_INFO_ARG_FWD_FIRST  pool), enabled(e),
     indent(i)
 {}
@@ -153,7 +153,7 @@ void BPBreak::debugPrint(std::ostream &os, int /*ind*/) const
 
 
 // ------------------------- BPBox ------------------------
-BPBox::BPBox(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, BPKind k)
+BPBox::BPBox(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, BPKind k)
   : BPElement(DBG_INFO_ARG_FWD_FIRST  pool), elts(DBG_INFO_ARG0_FIRST  pool),      // initially empty
     kind(k)
 {
@@ -329,7 +329,7 @@ BPKind const BoxPrint::hv   = BP_correlated;
 BPKind const BoxPrint::end  = NUM_BPKINDS;
 
 
-BoxPrint::BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
+BoxPrint::BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool)
   : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), boxStack(/* *this,*/ sizeof(ObjArrayStack<BPBox>)),
     levelIndent(2)
 {         
@@ -383,10 +383,10 @@ BoxPrint& BoxPrint::operator<< (BPKind k)
   }
   else {
     // open new box
-    str::StoragePool *pool = getParent();
+    str::StoragePool *pool = constcast(getParent());
     xassert(pool);
     // TODO dummy, it is bad, if str::StoragePool autogrows
-    boxStack.push(new (getParentRef()) BPBox(DBG_INFO_ARG0_FIRST  getParentRef(), k));
+    boxStack.push(new (*pool) BPBox(DBG_INFO_ARG0_FIRST  *pool, k));
   }
   return *this;
 }

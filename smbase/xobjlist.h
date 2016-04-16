@@ -80,7 +80,7 @@ outputCond([[[m4_dnl    // sobjlist
   #define NOWN
 public:
   // make shallow copies
-  className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj)         : str::Storeable(DBG_INFO_ARG_FWD), list(DBG_INFO_ARG_FWD_FIRST  obj.list) {     }
+  className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  list.chk_assign(obj.list, move);   }
   className& operator= (className const &src)         { list = src.list; return *this; }
 
   public:
@@ -93,7 +93,7 @@ public:
 private:
   bool const owning;
   // make shallow copies and non-owning list
-  className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj) : str::Storeable(DBG_INFO_ARG_FWD), list(obj.list), owning(false) { }
+  className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), owning(false) {  list.chk_assign(obj.list, move);   }
   className& operator= (className const &src) { NOWN list = src.list; return *this;  }
 
   inline void del_itm(T* itm) { if (owning) delete itm; }

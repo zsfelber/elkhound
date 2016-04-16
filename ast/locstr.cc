@@ -4,7 +4,7 @@
 #include "locstr.h"     // this module
 #include "exc.h"        // LocString
 
-LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
+LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), loc(SL_UNKNOWN),
     str(NULL)           // problem with "" is we don't have the string table here..
 {}
@@ -17,13 +17,13 @@ LocString::LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, true)
 {}
 
-LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, SourceLoc L, StringRef s)
+LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, SourceLoc L, StringRef s)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), loc(L),
     str(s)
 {}
 
 
-LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&)
+LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), loc(SL_UNKNOWN), str(NULL)
 {}
 

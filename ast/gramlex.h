@@ -73,14 +73,14 @@ private:     // data
 
   public:
     FileState(DBG_INFO_FORMAL_FIRST  rostring filename, std::istream *source);
-    FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, rostring filename, std::istream *source);
+    FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring filename, std::istream *source);
     ~FileState();
 
     FileState(DBG_INFO_FORMAL_FIRST  FileState const &obj);
 #ifdef DEBUG
     FileState(FileState const &obj);//undefined
 #endif
-    FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, FileState const &obj);
+    FileState(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, FileState const &obj);
     FileState& operator= (FileState const &obj);
   };
 

@@ -145,8 +145,8 @@ public:      // types
   public:    // funcs
     // this builds both the array and the index
     File(DBG_INFO_FORMAL_FIRST  char const *name, SourceLoc startLoc);
-    File(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, char const *name, SourceLoc startLoc);
-    //File(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, char const *name, SourceLoc startLoc);
+    File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, char const *name, SourceLoc startLoc);
+    //File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, char const *name, SourceLoc startLoc);
     ~File();
     void init();
     
@@ -194,9 +194,9 @@ public:      // types
       : str::Storeable(DBG_INFO_ARG_FWD), name(n), offset(o), line(L), col(c) {}
     StaticLoc(DBG_INFO_FORMAL_FIRST  StaticLoc const &obj)
       : str::Storeable(DBG_INFO_ARG_FWD), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
-    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, char const *n, int o, int L, int c)
+    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, char const *n, int o, int L, int c)
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(n), offset(o), line(L), col(c) {}
-    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, StaticLoc const &obj)
+    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, StaticLoc const &obj)
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
 

@@ -93,10 +93,10 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:      // funcs
-  Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &n, bool t, bool e = false);
+  Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &n, bool t, bool e = false);
   virtual ~Symbol();
 
-  Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
+  Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);
   void xfer(str::StoragePool &pool, Flatten &flat);
 
   // symmetric selectors
@@ -194,7 +194,7 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:     // funcs
-  Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &name)        // canonical name for terminal class
+  Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &name)        // canonical name for terminal class
     : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, name, true /*terminal*/),
       alias(DBG_INFO_ARG_FWD_FIRST  *this),
       precedence(0),
@@ -205,7 +205,7 @@ public:     // funcs
       termIndex(-1)
   {}
 
-  Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat);
+  Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat);
   void xfer(str::StoragePool &pool, Flatten &flat);
 
   virtual void print(ostream &os) const;
@@ -272,7 +272,7 @@ private:    // funcs
     { return ((unsigned)terminalIndex & 7); }
 
 public:     // funcs
-  TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, int numTerms=0);                   // allocate new set, initially empty
+  TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int numTerms=0);                   // allocate new set, initially empty
   TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, int numTerms=0);                   // allocate new set, initially empty
   TerminalSet(DBG_INFO_FORMAL_FIRST  TerminalSet const &obj);
   ~TerminalSet();
@@ -282,7 +282,7 @@ public:     // funcs
 
   void convert(GrammarAnalysis& g);
 
-  TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
+  TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);
   TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, Flatten&);
   void xfer(str::StoragePool &pool, Flatten &flat);
 
@@ -338,10 +338,10 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:     // funcs
-  Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, LocString const &name, bool isEmptyString=false);
+  Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &name, bool isEmptyString=false);
   virtual ~Nonterminal();
 
-  Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat);
+  Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat);
   void xfer(str::StoragePool &pool, Flatten &flat);
   void xferSerfs(str::StoragePool &pool, Flatten &flat, Grammar &g);
 
@@ -391,10 +391,10 @@ public:     // types
     LocString tag;             // tag for this symbol; can be ""
 
   public:
-    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Symbol *s, LocString const &t) : Storeable(pool), sym(s), tag(t) {}
+    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Symbol *s, LocString const &t) : Storeable(pool), sym(s), tag(t) {}
     ~RHSElt();
 
-    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
+    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);
     void xfer(str::StoragePool &pool, Flatten &flat);
     void xferSerfs(Flatten &flat, Grammar &g);
 
@@ -420,10 +420,10 @@ private:    // funcs
   void computeDerived();
 
 public:	    // funcs
-  Production(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Nonterminal *left, char const *leftTag);
+  Production(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Nonterminal *left, char const *leftTag);
   ~Production();
 
-  Production(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &flat);
+  Production(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat);
   void xfer(str::StoragePool &pool, Flatten &flat);
   void xferSerfs(Flatten &flat, Grammar &g);
 

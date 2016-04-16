@@ -16,24 +16,28 @@
 
 VoidList::VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &src, size_t size_of, bool move)
   : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, size_of?size_of:sizeof(VoidList), false),
-    npool(StoreAlreadyConstr)
+    npool(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)
     //npool(DBG_INFO_ARG0_FIRST  src.npool, false, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All)
 {
-   npool.assignSameParent(src.npool);
-   npool.assignImpl(src.npool, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All);
-   if (getKind()==ST_VALUE) npool.addPointer(top);
-   chk_assign(src);
+   chk_assign(src, move);
+   //if (getKind()==ST_VALUE) npool.addPointer(top);
+}
+
+void VoidList::assignParent(str::StoragePool const *pool0) {
+    Storeable::assignParent(pool0);
+    npool.assignParent(pool0, Storeable::ST_STORAGE_POOL);
 }
 
 void VoidList::assign(VoidList const &src, size_t size_of, bool move) {
     str::Storeable::assign(src, size_of?size_of:sizeof(VoidList));
     npool.assignSameParent(src.npool);
-    npool.assignImpl(src.npool, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All);
-    chk_assign(src);
+    chk_assign(src, move);
 }
 
-void VoidList::chk_assign(VoidList const &src) {
-    xassert(__kind == src.__kind && getParent() == src.getParent());
+void VoidList::chk_assign(VoidList const &src, bool move) {
+    npool.assignImpl(src.npool, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All);
+
+    xassert(src.__kind ? __kind == src.__kind && getParent() == src.getParent() : (!__kind || __kind == ST_VALUE));
 
     top = src.top;
     ExternalPtr ptrs[] = { (ExternalPtr)&top };
@@ -577,7 +581,9 @@ void VoidList::stealTailAt(int index, VoidList &source)
 
   // TODO fixme : ownerPool == NULL is ok?  see StoragePool.assignImpl
   str::StoragePool * stealSP =
-  new (npool)  str::StoragePool(DBG_INFO_ARG0_FIRST  source.npool, false,  str::StoragePool::Cp_Duplicate);
+  new (npool)  str::StoragePool(DBG_INFO_ARG0_FIRST  source.npool, false,  str::StoragePool::Cp_TmpDuplicate);
+  stealSP->assignParent(&npool, ST_STORAGE_POOL);
+  npool.addChildPool(stealSP);
 
   stealSP->selfCheck();
 
