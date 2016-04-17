@@ -868,7 +868,7 @@ private:
            xassert( (d+(uint8_t*)src_ptr) == (uint8_t*)ptr);
            xassert( source.contains(src_ptr) );
            xassert(src_ptr->__parent == &source);
-           xassert(__parent == &source);
+           xassert(ptr->__parent == &source);
            fixPoolPointer(ptr, src_ptr);
        }
    }
