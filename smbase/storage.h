@@ -794,6 +794,23 @@ private:
        if (d) {
            fixChildValues(source, deltaOrigin, d);
            fixChildPools(source, deltaOrigin, d);
+
+           for (iterator it = begin(), src_it = source.begin(); it != -1; it++, src_it++) {
+               xassert((it==-1)==(src_it==-1));
+               Storeable *cur = *it;
+               Storeable *src_cur = *src_it;
+               switch (cur->__kind) {
+               case ST_VALUE:
+                   fixChild<Storeable>(cur, src_cur, source, d);
+                   break;
+               case ST_STORAGE_POOL:
+                   // already processed in fixChildPools
+                   //fixChild<StoragePool>((StoragePool*)cur, (StoragePool*)src_cur, source, d);
+                   break;
+               default:
+                   break;
+               }
+           }
        }
    }
 
@@ -830,17 +847,24 @@ private:
            V* ptr = (V*)decodeDeltaPtr(deltaOrigin, *tar_chFrom);
            V* src_ptr = (V*)decodeDeltaPtr(source.memory, *src_chFrom);
 
-           xassert(bool(ptr)==bool(src_ptr));
+           fixChild(ptr, src_ptr, source, d);
+       }
+   }
+
+   template <class V>
+   inline void fixChild(V * ptr, V const * src_ptr,
+                       StoragePool const & source, std::ptrdiff_t d) {
+
+       xassert(bool(ptr)==bool(src_ptr));
+
+       if (ptr) {
            xassert(ptr->__kind==src_ptr->__kind);
            xassert(ptr->__kind == ST_VALUE || ptr->__kind == ST_STORAGE_POOL);
-
-           if (ptr) {
-               xassert( (d+(uint8_t*)src_ptr) == (uint8_t*)ptr);
-               xassert( source.contains(src_ptr) );
-               xassert(src_ptr->__parent == &source);
-               xassert(__parent == &source);
-               fixPoolPointer(ptr, src_ptr);
-           }
+           xassert( (d+(uint8_t*)src_ptr) == (uint8_t*)ptr);
+           xassert( source.contains(src_ptr) );
+           xassert(src_ptr->__parent == &source);
+           xassert(__parent == &source);
+           fixPoolPointer(ptr, src_ptr);
        }
    }
 
@@ -1053,6 +1077,9 @@ private:
 
    void addVariable(DataPtr dataVariable) {
        xassert(ownerPool == this);
+       if (dataVariable->asPool()) {
+           return;
+       }
        /*if (ownerPool != this) {
            ownerPool->addVariable(dataVariable);
            return;
@@ -1075,6 +1102,9 @@ private:
 
    void removeVariable(DataPtr dataVariable) {
        xassert(ownerPool == this);
+       if (dataVariable->asPool()) {
+           return;
+       }
        /*if (ownerPool != this) {
            ownerPool->removeVariable(dataVariable);
            return;
@@ -1353,7 +1383,7 @@ public:
        return extptrslength;
    }
 
-   inline bool contains(void* pointer) const {
+   inline bool contains(void const * pointer) const {
        return (memory<=pointer && pointer<memory+memlength);
    }
 
@@ -1993,12 +2023,18 @@ inline void Storeable::assignSameParent(Storeable const & src) {
 inline void Storeable::assignParent(StoragePool const * srcPool, __Kind def) {
     StoragePool const * par = srcPool->findChild(this);
     if (par) {
+        if (!__kind) {
+            constcast(par)->addVariable(this);
+        }
         __parent = par;
         if (!__kind) {
             __kind = def;
         }
         xassert(par == getParent());
     } else {
+        if (__kind && __parent) {
+            constcast(__parent)->removeVariable(this);
+        }
         std::cout << "Warning  Storeable.assignParent(" << getKind()
     #ifdef DEBUG
                   << " " << objectName.str
