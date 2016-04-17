@@ -1133,7 +1133,7 @@ public:
    }
 
    StoragePool(DBG_INFO_FORMAL_FIRST Storeable const & srcOrParent, bool childOfParent, CopyMode copyMode=Cp_All) :
-       Storeable(DBG_INFO_ARG_FWD_FIRST srcOrParent, sizeof(StoragePool), childOfParent) {
+       Storeable(DBG_INFO_ARG_FWD_FIRST srcOrParent, sizeof(StoragePool), childOfParent, true) {
 
        xassert(!isParentOf(srcOrParent));
        xassert(__store_size == STORAGE_POOL_SIZE);
