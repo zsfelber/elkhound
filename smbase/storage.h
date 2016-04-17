@@ -1930,7 +1930,7 @@ inline Storeable::~Storeable() {
     case ST_PARENT:
     case ST_STORAGE_POOL:
     case ST_CHILD:
-        constcast(getPoolRef()).removeVariable(this);
+        removeInParent();
         break;
     case ST_DELETED:
         x_assert_fail("Already deleted.", __FILE__, __LINE__);
