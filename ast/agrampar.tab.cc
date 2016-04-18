@@ -1493,7 +1493,7 @@ yyreduce:
     { (yyval.ctorArgList) = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool);
                  {
                    string tmp = unbox((yyvsp[0].str));
-                   (yyval.ctorArgList)->append(DBG_INFO_ARG0_FIRST  parseCtorArg(y_pool, tmp));
+                   (yyval.ctorArgList)->append(DBG_INFO_ARG0_FIRST  parseCtorArg((yyval.ctorArgList)->getList().getPool(), tmp));
                  }
                }
 #line 1500 "agrampar.tab.c" /* yacc.c:1646  */
@@ -1501,7 +1501,7 @@ yyreduce:
 
   case 25:
 #line 206 "agrampar.y" /* yacc.c:1646  */
-    { ((yyval.ctorArgList)=(yyvsp[-2].ctorArgList))->append(DBG_INFO_ARG0_FIRST  parseCtorArg(y_pool, unbox((yyvsp[0].str)))); }
+    { ((yyval.ctorArgList)=(yyvsp[-2].ctorArgList))->append(DBG_INFO_ARG0_FIRST  parseCtorArg((yyvsp[-2].ctorArgList)->getList().getPool(), unbox((yyvsp[0].str)))); }
 #line 1506 "agrampar.tab.c" /* yacc.c:1646  */
     break;
 

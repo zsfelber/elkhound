@@ -216,15 +216,15 @@ inline std::ptrdiff_t encodeSignedDeltaPtr(uint8_t const * origin, uint8_t const
 }
 
 inline uint8_t const * decodeDeltaPtr(uint8_t const * origin, size_t delta) {
-    return delta == npos ? NULL : origin + delta;
+    return (delta == npos || !origin) ? NULL : (origin + delta);
 }
 
 inline uint8_t const * decodeDeltaBackPtr(uint8_t const * origin, size_t delta) {
-    return delta == npos ? NULL : origin - delta;
+    return (delta == npos || !origin)  ? NULL : (origin - delta);
 }
 
 inline uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin, std::ptrdiff_t delta) {
-    return delta == 0 ? NULL : origin + delta;
+    return (delta == 0 || !origin)  ? NULL : (origin + delta);
 }
 
 inline std::ostream &ind(std::ostream &os, int indent)
@@ -846,7 +846,7 @@ private:
    inline void fixChildren(size_t* tar_chFrom, size_t* tar_chTo,
                        size_t* src_chFrom, size_t* src_chTo,
                        StoragePool const & source, uint8_t* deltaOrigin, std::ptrdiff_t d, bool req) {
-       xassert(memory != source.memory);
+       xassert( !source.memory || memory == (d+source.memory));
        xassert(tar_chTo-tar_chFrom == src_chTo-src_chFrom);
 
        for (; tar_chFrom<tar_chTo; tar_chFrom++, src_chFrom++) {
@@ -864,7 +864,7 @@ private:
        xassert(bool(ptr)==bool(src_ptr));
        if (ptr) {
            xassert(ptr->__kind==src_ptr->__kind);
-           xassert(ptr->__kind == ST_PARENT || ptr->__kind == ST_CHILD || ptr->__kind == ST_STORAGE_POOL);
+           xassert(ptr->__kind != ST_NONE || ptr->__kind != ST_DELETED);
            xassert( (d+(uint8_t*)src_ptr) == (uint8_t*)ptr);
            xassert( source.contains(src_ptr) );
            xassert(src_ptr->__parent == &source);
@@ -994,6 +994,15 @@ private:
 
            removeChildPool(&src);
            removeChildPool(this);
+
+           fixChildValues(src, memory, 0, false);
+           fixChildPools(src, memory, 0, false);
+
+           if (__parent) {
+               constcast(__parent)->removeChildPool(&src);
+               constcast(__parent)->addChildPool(this);
+           }
+
            break;
        }
        case Cp_All:
@@ -1093,6 +1102,49 @@ private:
        return constcast(this);
    }
 
+   template <typename T>
+   inline void addDeltaVal(T* vars, size_t &length, size_t &capacity, T dd) {
+       // to ensure it is ordered (binary search invariant)
+       T *val;
+       size_t pbufsz = getPtrBufSize(length);
+       if (capacity < pbufsz) {
+           extendBuffer(vars, length, capacity, pbufsz);
+       }
+
+       if (length) {
+           if (dd < vars[length-1]) {
+               val = lower_bound(vars, vars+length, dd, (T&)LNULL);
+               insertBufferItem(vars, length, val);
+           } else {
+               val = vars + length;
+           }
+       } else {
+           val = vars;
+       }
+       *val = dd;
+   }
+
+   template <typename T>
+   inline void removeDeltaVal(T* vars, size_t &length, T dd, T nullitm) {
+
+       T* last = vars+length;
+       T* val = lower_bound(vars, last, dd, nullitm);
+       if (val == last) {
+       } else {
+           T vval = *val;
+           if (vval == nullitm) {
+               std::cout << "Warning  StoragePool.removeDeltaVal : variable already removed : " << (void*) dd
+                         << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+           } else if (val == last-1) {
+               xassert (vval == dd);
+               shrinkTail(length, vars, nullitm);
+           } else {
+               xassert (vval == dd);
+               *val = nullitm;
+           }
+       }
+   }
+
 
    void addVariable(DataPtr dataVariable) {
        xassert(ownerPool == this && dataVariable && dataVariable->__kind == ST_PARENT);
@@ -1106,15 +1158,7 @@ private:
        xassert(child == this && dataVariable->getParent() == this);
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)dataVariable);
-       // to ensure it is ordered (binary search invariant)
-       if (intvarslength) {
-           xassert(dd > intvariables[intvarslength-1]);
-       }
-       size_t pbufsz = getPtrBufSize(intvarslength);
-       if (intvarscapacity < pbufsz) {
-           extendBuffer(intvariables, intvarslength, intvarscapacity, pbufsz);
-       }
-       intvariables[intvarslength++] = dd;
+       addDeltaVal(intvariables, intvarslength, intvarscapacity, dd);
    }
 
    void removeVariable(DataPtr dataVariable) {
@@ -1130,22 +1174,7 @@ private:
            StoragePool const * child = findChild(dataVariable);
            xassert(child == this && dataVariable->getParent() == this);
 
-           size_t* last = intvariables+intvarslength;
-           size_t* val = lower_bound(intvariables, last, dd, npos);
-           if (val == last) {
-           } else {
-               size_t vval = *val;
-               if (vval == npos) {
-                   std::cout << "Warning  StoragePool.removeVariable : internal variable already removed : " << (void*) dataVariable
-                             << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
-               } else if (val == last-1) {
-                   xassert (vval == dd);
-                   shrinkTail(intvarslength, intvariables, npos);
-               } else {
-                   xassert (vval == dd);
-                   *val = npos;
-               }
-           }
+           removeDeltaVal(intvariables, intvarslength, dd, npos);
        }
 
        dataVariable->__kind = ST_DELETED;
@@ -1154,6 +1183,7 @@ private:
        }
        deleted_vars += dataVariable->__store_size;
    }
+
 
 
 
@@ -1514,15 +1544,7 @@ public:
 
        if (pchild == this) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
-           // to ensure it is ordered (binary search invariant)
-           if (intptrslength) {
-               xassert(dd > intpointers[intptrslength-1]);
-           }
-           size_t pbufsz = getPtrBufSize(intptrslength);
-           if (intptrscapacity < pbufsz) {
-               extendBuffer(intpointers, intptrslength, intptrscapacity, pbufsz);
-           }
-           intpointers[intptrslength++] = dd;
+           addDeltaVal(intpointers, intptrslength, intptrslength, dd);
        } else if (pchild) {
            xassert(child == pchild);
            /*if (child != pchild) {
@@ -1534,15 +1556,7 @@ public:
            }*/
            constcast(pchild)->addPointer(dataPointer);
        } else {
-           ExternalPtr dd = &dataPointer;
-           size_t pbufsz = getPtrBufSize(extptrslength);
-           if (extptrscapacity < pbufsz) {
-               extendBuffer(extpointers, extptrslength, extptrscapacity, pbufsz);
-           }
-           // to ensure it is ordered (binary search invariant)
-           ExternalPtr* val = lower_bound(extpointers, extpointers+extptrslength, dd, (ExternalPtr&)LNULL);
-           insertBufferItem(extpointers, extptrslength, val);
-           *val = dd;
+           addDeltaVal(extpointers, extptrslength, extptrscapacity, &dataPointer);
        }
    }
 
@@ -1576,24 +1590,7 @@ public:
 
        if (pchild == this) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
-           size_t* last = intpointers+intptrslength;
-           size_t* val = lower_bound(intpointers, last, dd, npos);
-           if (val == last) {
-
-           } else {
-               size_t vval = *val;
-               if (vval == npos) {
-                   std::cout << "Warning  StoragePool.removePointer : internal pointer already removed : " << (void*) &dataPointer
-                             << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
-               } else {
-                   xassert (vval == dd);
-                   if (val == last-1) {
-                       shrinkTail(intptrslength, intpointers, npos);
-                   } else {
-                       *val = npos;
-                   }
-               }
-           }
+           removeDeltaVal(intpointers, intptrslength, dd, npos);
        } else if (pchild) {
            if (child != pchild) {
                std::cout << "Warning  StoragePool.removePointer : pointer pool mismatch:  (**) "
@@ -1604,24 +1601,7 @@ public:
            }
            constcast(pchild)->removePointer(dataPointer);
        } else if (extpointers) {
-           ExternalPtr dd = &dataPointer;
-           ExternalPtr* last = extpointers+extptrslength;
-           ExternalPtr* val = lower_bound(extpointers, last, dd, (ExternalPtr&)LNULL);
-           if (val == last) {
-           } else {
-               ExternalPtr vval = *val;
-               if (vval) {
-                   xassert (vval == dd);
-                   if (val == last-1) {
-                       shrinkTail(extptrslength, extpointers, (ExternalPtr) NULL);
-                   } else {
-                       *val = NULL;
-                   }
-               } else {
-                   std::cout << "Warning  StoragePool.removePointer : external pointer already removed : " << (void*) &dataPointer
-                             << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
-               }
-           }
+           removeDeltaVal(extpointers, extptrslength, &dataPointer, (ExternalPtr)NULL);
        } else {
            std::cout << "Warning  StoragePool.removePointer : not external pointers but not in : " << (void*) &dataPointer
                      << " of " << (void*) memory << " .. " << (void*) (memory+memlength);
@@ -1645,31 +1625,14 @@ public:
        xassert(ownerPool == this && contains(childPoolPointer));
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
-       // to ensure it is ordered (binary search invariant)
-       if (chplslength) {
-           xassert(dd > childpools[chplslength-1]);
-       }
-       size_t pbufsz = getPtrBufSize(chplslength);
-       if (chplscapacity < pbufsz) {
-           extendBuffer(childpools, chplslength, chplscapacity, pbufsz);
-       }
-       childpools[chplslength++] = dd;
+       addDeltaVal(childpools, chplslength, chplscapacity, dd);
    }
 
    inline void removeChildPool(CPtrToMe childPoolPointer) {
        if (memory <= (uint8_t*)childPoolPointer) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
-           size_t* last = childpools+chplslength;
-           size_t* val = lower_bound(childpools, last, dd, npos);
-           if (val == last) {
-           } else if (val == last-1) {
-               xassert (*val == dd);
-               shrinkTail(chplslength, childpools, npos);
-           } else {
-               xassert (*val == dd);
-               *val = npos;
-           }
-       }
+           removeDeltaVal(childpools, chplslength, dd, npos);
+      }
    }
 
    inline void removeChildPool(size_t * val) {
