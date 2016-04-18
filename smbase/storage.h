@@ -795,27 +795,31 @@ private:
        }
        std::ptrdiff_t d = deltaOrigin - source.memory;
        if (d) {
-           fixChildValues(source, deltaOrigin, d);
-           fixChildPools(source, deltaOrigin, d);
+           fixChildren(source, deltaOrigin, d, true);
+       }
+   }
 
-           for (iterator it = begin(), src_it = source.begin(); it != -1; it++, src_it++) {
-               xassert((it==-1)==(src_it==-1));
-               Storeable *cur = *it;
-               Storeable *src_cur = *src_it;
-               switch (cur->__kind) {
-               case ST_PARENT:
-                   fixChild<Storeable>(cur, src_cur, source, d, true);
-                   break;
-               case ST_STORAGE_POOL:
-                   // already processed in fixChildPools
-                   //fixChild<StoragePool>((StoragePool*)cur, (StoragePool*)src_cur, source, d);
-                   break;
-               case ST_CHILD:
-                   x_assert_fail("child directly in iterator not supported", __FILE__, __LINE__);
-                   break;
-               default:
-                   break;
-               }
+   void fixChildren(StoragePool const & source, uint8_t* deltaOrigin, std::ptrdiff_t d, bool req) {
+       fixChildValues(source, deltaOrigin, d, req);
+       fixChildPools(source, deltaOrigin, d, req);
+
+       for (iterator it = begin(), src_it = source.begin(); it != -1; it++, src_it++) {
+           xassert((it==-1)==(src_it==-1));
+           Storeable *cur = *it;
+           Storeable *src_cur = *src_it;
+           switch (cur->__kind) {
+           case ST_PARENT:
+               fixChild<Storeable>(cur, src_cur, source, d, req);
+               break;
+           case ST_STORAGE_POOL:
+               // already processed in fixChildPools
+               //fixChild<StoragePool>((StoragePool*)cur, (StoragePool*)src_cur, source, d);
+               break;
+           case ST_CHILD:
+               x_assert_fail("child directly in iterator not supported", __FILE__, __LINE__);
+               break;
+           default:
+               break;
            }
        }
    }
@@ -990,18 +994,12 @@ private:
 
            ownerPool = this;
 
-           constcast(src).clear();
-
            removeChildPool(&src);
            removeChildPool(this);
 
-           fixChildValues(src, memory, 0, false);
-           fixChildPools(src, memory, 0, false);
+           fixChildren(src, memory, 0, false);
 
-           if (__parent) {
-               constcast(__parent)->removeChildPool(&src);
-               constcast(__parent)->addChildPool(this);
-           }
+           constcast(src).clear();
 
            break;
        }
@@ -1116,6 +1114,11 @@ private:
        if (length) {
            if (dd < vars[length-1]) {
                val = lower_bound(vars, last, dd, nullitm);
+               if (val != last && *val == dd) {
+                   std::cout << "Warning  StoragePool.addDeltaVal : variable already inserted : " << (void*) dd
+                             << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
+                   return;
+               }
                insertBufferItem(vars, length, val);
            } else {
                val = last;
@@ -2058,6 +2061,8 @@ inline void Storeable::assignParent(StoragePool const * srcPool, __Kind def) {
                 break;
             case ST_STORAGE_POOL:
                 constcast(__parent)->removeChildPool(asPool());
+                break;
+            case ST_PARENT:
                 break;
             default:
                 x_assert_fail("wrong kind", __FILE__, __LINE__);

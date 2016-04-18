@@ -37,7 +37,7 @@ void VoidList::assign(VoidList const &src, size_t size_of, bool move) {
 void VoidList::chk_assign(VoidList const &src, bool move) {
     npool.assignImpl(src.npool, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All);
 
-    xassert(src.__kind ? __kind == src.__kind && getParent() == src.getParent() : (!__kind || __kind == ST_PARENT));
+    xassert(src.__kind ? __kind == src.__kind /*&& getParent() == src.getParent()*/ : (!__kind || __kind == ST_PARENT));
 
     top = src.top;
     ExternalPtr ptrs[] = { (ExternalPtr)&top };
