@@ -46,6 +46,10 @@ public:
   ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src.list, false); }
   ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src->list, false); }
 
+  VoidTailList const & getList() {
+      return list;
+  }
+
   void assign(ASTList<T> const &src, bool move)           { list.assign(src.list, move); }
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
 

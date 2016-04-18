@@ -3339,7 +3339,7 @@ void mergeItself(ASTSpecFile *base)
               c->super->bases.prepend(DBG_INFO_ARG0_FIRST  new (astgen_pool) BaseClass(DBG_INFO_ARG0_FIRST  astgen_pool, AC_PUBLIC, "Storeable"));
           }
 
-          c->super->args.prepend(DBG_INFO_ARG0_FIRST  parseCtorArg("public str::StoragePool &pool"));
+          c->super->args.prepend(DBG_INFO_ARG0_FIRST  parseCtorArg(c->super->args.getList().getPool(), "public str::StoragePool &pool"));
       }
     }
 }

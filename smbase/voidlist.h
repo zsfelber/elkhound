@@ -75,7 +75,7 @@ private:
   VoidList(VoidList const &obj);     // undefined
 #endif
 public:
-  inline str::StoragePool &getPool() {
+  inline str::StoragePool const &getPool() const {
       return npool;
   }
 

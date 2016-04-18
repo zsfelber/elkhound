@@ -199,11 +199,11 @@ CtorArgList: Arg
                { $$ = new (y_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  y_pool);
                  {
                    string tmp = unbox($1);
-                   $$->append(DBG_INFO_ARG0_FIRST  parseCtorArg(tmp));
+                   $$->append(DBG_INFO_ARG0_FIRST  parseCtorArg(y_pool, tmp));
                  }
                }
            | CtorArgList "," Arg
-               { ($$=$1)->append(DBG_INFO_ARG0_FIRST  parseCtorArg(unbox($3))); }
+               { ($$=$1)->append(DBG_INFO_ARG0_FIRST  parseCtorArg(y_pool, unbox($3))); }
            ;
 
 /* yields string */
