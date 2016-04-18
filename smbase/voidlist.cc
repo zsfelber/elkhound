@@ -615,8 +615,6 @@ void VoidList::stealTailAt(int index, VoidList &source)
 }
 
 uint8_t* VoidList::glueNpools(VoidList const &tail) {
-    size_t l = tail.npool.getExtPtrsLength();
-    xassert(l == 1 || l == 2);
 
     uint8_t * oldmemend;
 
