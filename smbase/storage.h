@@ -1103,7 +1103,7 @@ private:
    }
 
    template <typename T>
-   inline void addDeltaVal(T* vars, size_t &length, size_t &capacity, T dd) {
+   inline void addDeltaVal(T*& vars, size_t &length, size_t &capacity, T dd, T nullitm) {
        // to ensure it is ordered (binary search invariant)
        T *val;
        size_t pbufsz = getPtrBufSize(length);
@@ -1111,15 +1111,19 @@ private:
            extendBuffer(vars, length, capacity, pbufsz);
        }
 
+       T* last = vars + length;
+
        if (length) {
            if (dd < vars[length-1]) {
-               val = lower_bound(vars, vars+length, dd, (T&)LNULL);
+               val = lower_bound(vars, last, dd, nullitm);
                insertBufferItem(vars, length, val);
            } else {
-               val = vars + length;
+               val = last;
+               length++;
            }
        } else {
            val = vars;
+           length++;
        }
        *val = dd;
    }
@@ -1127,8 +1131,8 @@ private:
    template <typename T>
    inline void removeDeltaVal(T* vars, size_t &length, T dd, T nullitm) {
 
-       T* last = vars+length;
-       T* val = lower_bound(vars, last, dd, nullitm);
+       T* last = vars + length;
+       T* val = vars ? lower_bound(vars, last, dd, nullitm) : last;
        if (val == last) {
        } else {
            T vval = *val;
@@ -1158,7 +1162,7 @@ private:
        xassert(child == this && dataVariable->getParent() == this);
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)dataVariable);
-       addDeltaVal(intvariables, intvarslength, intvarscapacity, dd);
+       addDeltaVal(intvariables, intvarslength, intvarscapacity, dd, npos);
    }
 
    void removeVariable(DataPtr dataVariable) {
@@ -1544,7 +1548,7 @@ public:
 
        if (pchild == this) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
-           addDeltaVal(intpointers, intptrslength, intptrslength, dd);
+           addDeltaVal(intpointers, intptrslength, intptrscapacity, dd, npos);
        } else if (pchild) {
            xassert(child == pchild);
            /*if (child != pchild) {
@@ -1556,7 +1560,7 @@ public:
            }*/
            constcast(pchild)->addPointer(dataPointer);
        } else {
-           addDeltaVal(extpointers, extptrslength, extptrscapacity, &dataPointer);
+           addDeltaVal(extpointers, extptrslength, extptrscapacity, &dataPointer, (ExternalPtr)NULL);
        }
    }
 
@@ -1625,7 +1629,7 @@ public:
        xassert(ownerPool == this && contains(childPoolPointer));
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
-       addDeltaVal(childpools, chplslength, chplscapacity, dd);
+       addDeltaVal(childpools, chplslength, chplscapacity, dd, npos);
    }
 
    inline void removeChildPool(CPtrToMe childPoolPointer) {
