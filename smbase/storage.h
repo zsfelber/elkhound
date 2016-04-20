@@ -652,66 +652,90 @@ private:
 
    StoragePool * ownerPool;
 
-   inline void movePointers(StoragePool const & oldmem, uint8_t* origin = NULL) {
+   inline void movePointers(StoragePool const & oldmem) {
        xassert(ownerPool == this);
-       if (!origin) {
-           origin = memory;
-       }
 
-       moveInternalPointers(oldmem, origin);
-       moveExternalPointers(oldmem, origin);
+       moveInternalPointers(oldmem);
+       moveExternalPointers(oldmem);
    }
 
-   void moveInternalPointers(StoragePool const & oldmem, uint8_t* origin = NULL, uint8_t* deltaOrigin = NULL) {
-       xassert(ownerPool == this);
-       if (!origin) {
-           origin = memory;
-       }
-       if (!deltaOrigin) {
-           deltaOrigin = memory;
-       }
-
-       std::ptrdiff_t d = origin - oldmem.memory;
+   void moveInternalPointers(StoragePool const & oldmem) {
+       std::ptrdiff_t d = memory - oldmem.memory;
 
        size_t* intPointersFrom = intpointers;
        size_t* intPointersTo = intpointers+intptrslength;
        for (; intPointersFrom<intPointersTo; intPointersFrom++) {
-#ifdef DEBUG
-           ExternalPtr ptr0 = (ExternalPtr)decodeDeltaPtr(oldmem.memory, *intPointersFrom);
-           if (ptr0) {
-               xassert(oldmem.contains(ptr0));
-#endif
-               ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(deltaOrigin, *intPointersFrom);
-               xassert(ptr);
-
-               if (*ptr0 && oldmem.contains(*ptr0)) {
-                   xassert(moveVariable(oldmem, *ptr, d));
-               }
-               size_t dpt = encodeDeltaPtr(origin, (uint8_t*)ptr);
-               *intPointersFrom = dpt;
-#ifdef DEBUG
+           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
+           if (ptr) {
+               movePointer(oldmem, *ptr, d);
            }
-#endif
        }
    }
 
-   void moveExternalPointers(StoragePool const & oldmem, uint8_t* origin = NULL) {
-       xassert(ownerPool == this);
-       if (!origin) {
-           origin = memory;
-       }
+   void moveInternalPointers(StoragePool const & oldmem, size_t* intPointersFrom, size_t* intPointersTo) {
+       std::ptrdiff_t d = memory - oldmem.memory;
 
-       std::ptrdiff_t d = origin - oldmem.memory;
+       for (; intPointersFrom<intPointersTo; intPointersFrom++) {
+           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
+           if (ptr) {
+               movePointer(oldmem, *ptr, d);
+           }
+       }
+   }
+
+   void moveExternalPointers(StoragePool const & oldmem) {
+       std::ptrdiff_t d = memory - oldmem.memory;
 
        ExternalPtr* extPointersFrom = extpointers;
        ExternalPtr* extPointersTo = extpointers+extptrslength;
        for (; extPointersFrom<extPointersTo; extPointersFrom++) {
            ExternalPtr ptr = *extPointersFrom;
            if (ptr) {
-               moveVariable(oldmem, *ptr, d);
+               movePointer(oldmem, *ptr, d);
            }
        }
    }
+
+   template <typename T>
+   inline void convertDeltas(T* buf, T* last, uint8_t const * oldOrigin) {
+       for (; buf<last; buf++) {
+           uint8_t const * ptr = decodeDeltaPtr(oldOrigin, *buf);
+           if (ptr) {
+               *buf = encodeDeltaPtr(memory, ptr);
+           }
+       }
+   }
+
+   bool movePointer(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
+       xassert(ownerPool == this);
+
+       if (variable) {
+           uint8_t* variable_addr = (uint8_t*)variable;
+#ifdef DEBUG
+           StoragePool const * pool0 = oldmem.findChild(variable_addr);
+           if (pool0 == &oldmem) {
+#else
+           if (oldmem.contains(variable_addr)) {
+#endif
+
+                variable_addr += d;
+                variable = (DataPtr)variable_addr;
+
+#ifdef DEBUG
+                StoragePool const * pool = findChild(variable_addr);
+                xassert(pool == this);
+#else
+                xassert (contains(variable_addr));
+#endif
+                return true;
+           } else {
+                return (contains(variable_addr));
+           }
+       } else {
+           return false;
+       }
+   }
+
 
    inline void moveFrom(StoragePool const & parent, DataPtr & child, uint8_t * origin = NULL) {
        if (!origin) {
@@ -756,36 +780,6 @@ private:
 
        StoragePool const * pool0 = findChild(variable_addr);
        xassert(pool0 == pool);
-   }
-
-   bool moveVariable(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
-       xassert(ownerPool == this);
-
-       if (variable) {
-           uint8_t* variable_addr = (uint8_t*)variable;
-#ifdef DEBUG
-           StoragePool const * pool0 = oldmem.findChild(variable_addr);
-           if (pool0 == &oldmem) {
-#else
-           if (oldmem.contains(variable_addr)) {
-#endif
-
-                variable_addr += d;
-                variable = (DataPtr)variable_addr;
-
-#ifdef DEBUG
-                StoragePool const * pool = findChild(variable_addr);
-                xassert(pool == this);
-#else
-                xassert (contains(variable_addr));
-#endif
-                return true;
-           } else {
-                return (contains(variable_addr));
-           }
-       } else {
-           return false;
-       }
    }
 
    void fixChildren(StoragePool const & source, uint8_t* deltaOrigin = NULL) {
@@ -1101,7 +1095,7 @@ private:
    }
 
    template <typename T>
-   inline void addDeltaVal(T*& vars, size_t &length, size_t &capacity, T dd, T nullitm) {
+   inline void addValue(T*& vars, size_t &length, size_t &capacity, T dd, T nullitm) {
        // to ensure it is ordered (binary search invariant)
        T *val;
        size_t pbufsz = getPtrBufSize(length);
@@ -1115,7 +1109,7 @@ private:
            if (dd < vars[length-1]) {
                val = lower_bound(vars, last, dd, nullitm);
                if (val != last && *val == dd) {
-                   std::cout << "Warning  StoragePool.addDeltaVal : variable already inserted : " << (void*) dd
+                   std::cout << "Warning  StoragePool.addValue : variable already inserted : " << (void*) dd
                              << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
                    return;
                }
@@ -1132,7 +1126,7 @@ private:
    }
 
    template <typename T>
-   inline void removeDeltaVal(T* vars, size_t &length, T dd, T nullitm) {
+   inline void removeValue(T* vars, size_t &length, T dd, T nullitm) {
 
        T* last = vars + length;
        T* val = vars ? lower_bound(vars, last, dd, nullitm) : last;
@@ -1140,7 +1134,7 @@ private:
        } else {
            T vval = *val;
            if (vval == nullitm) {
-               std::cout << "Warning  StoragePool.removeDeltaVal : variable already removed : " << (void*) dd
+               std::cout << "Warning  StoragePool.removeValue : variable already removed : " << (void*) dd
                          << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
            } else if (val == last-1) {
                xassert (vval == dd);
@@ -1165,7 +1159,7 @@ private:
        xassert(child == this && dataVariable->getParent() == this);
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)dataVariable);
-       addDeltaVal(intvariables, intvarslength, intvarscapacity, dd, npos);
+       addValue(intvariables, intvarslength, intvarscapacity, dd, npos);
    }
 
    void removeVariable(DataPtr dataVariable) {
@@ -1181,7 +1175,7 @@ private:
            StoragePool const * child = findChild(dataVariable);
            xassert(child == this && dataVariable->getParent() == this);
 
-           removeDeltaVal(intvariables, intvarslength, dd, npos);
+           removeValue(intvariables, intvarslength, dd, npos);
        }
 
        dataVariable->__kind = ST_DELETED;
@@ -1323,10 +1317,8 @@ public:
        xassert(ownerPool == this);
 
        size_t c;
-       size_t snetmemlen = src.memlength;
-       uint8_t* soldorigin = src.memory;
 
-       if (memcapacity<(c=getMemBufSize(memlength+snetmemlen))) {
+       if (memcapacity<(c=getMemBufSize(memlength+src.memlength))) {
            extendBuffer(memory, memlength, c);
            memcapacity = c;
        }
@@ -1343,7 +1335,7 @@ public:
            chplscapacity = c;
        }
 
-       memcpy(memory+memlength, soldorigin, snetmemlen);
+       memcpy(memory+memlength, src.memory, src.memlength);
        // ! still remains sorted
        memcpy(intvariables+intvarslength, src.intvariables, sizeof(size_t)*src.intvarslength);
        // ! still remains sorted
@@ -1353,7 +1345,7 @@ public:
 
        childView.clear();
        childView.memory = memory + memlength;
-       childView.memlength = snetmemlen;
+       childView.memlength = src.memlength;
        childView.memcapacity = src.memcapacity;
        childView.intvariables = intvariables + intvarslength;
        childView.intvarslength = src.intvarslength;
@@ -1365,40 +1357,18 @@ public:
        childView.chplslength = src.chplslength;
        childView.chplscapacity = src.chplscapacity;
 
-       memlength += snetmemlen;
+       memlength += src.memlength;
        intptrslength += src.intptrslength;
        chplslength += src.chplslength;
 
-       uint8_t * deltaChildOrigin = childView.memory;
+       convertDeltas(childView.intvariables, childView.intvariables+childView.intvarslength, childView.memory);
+       convertDeltas(childView.intpointers, childView.intpointers+childView.intptrslength, childView.memory);
+       convertDeltas(childView.childpools, childView.childpools+childView.chplslength, childView.memory);
 
-       childView.moveInternalPointers(src, memory, deltaChildOrigin);
+       moveInternalPointers(src, childView.intpointers, childView.intpointers+childView.intptrslength);
 
        if (convertExtPointersFrom) {
            convertExternalPointers(src, convertExtPointersFrom, convertExtPointersTo);
-       }
-
-       std::ptrdiff_t d = deltaChildOrigin - src.memory;
-       if (d) {
-           fixChildValues(src, deltaChildOrigin, d, false);
-           fixChildPools(src, deltaChildOrigin, d, false);
-       }
-
-       size_t* chPoolsFrom = childView.childpools;
-       size_t* chPoolsTo = childView.childpools+childView.chplslength;
-       for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(deltaChildOrigin, *chPoolsFrom);
-           if (ptr) {
-               *chPoolsFrom = encodeDeltaPtr(memory, (uint8_t*)ptr);
-           }
-       }
-
-       size_t* intVarsFrom = childView.intvariables;
-       size_t* intVarsTo = childView.intvariables+childView.intvarslength;
-       for (; intVarsFrom<intVarsTo; intVarsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(deltaChildOrigin, *intVarsFrom);
-           if (ptr) {
-               *intVarsFrom = encodeDeltaPtr(memory, (uint8_t*)ptr);
-           }
        }
 
        removeChildPool(&src);
@@ -1435,7 +1405,7 @@ public:
            ExternalPtr srcPtr = *convertExtPointersFrom;
            if (srcPtr) {
                *extPointersFrom = srcPtr;
-               moveVariable(src, *srcPtr, d);
+               movePointer(src, *srcPtr, d);
            }
        }
 
@@ -1551,7 +1521,7 @@ public:
 
        if (pchild == this) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
-           addDeltaVal(intpointers, intptrslength, intptrscapacity, dd, npos);
+           addValue(intpointers, intptrslength, intptrscapacity, dd, npos);
        } else if (pchild) {
            xassert(child == pchild);
            /*if (child != pchild) {
@@ -1563,7 +1533,7 @@ public:
            }*/
            constcast(pchild)->addPointer(dataPointer);
        } else {
-           addDeltaVal(extpointers, extptrslength, extptrscapacity, &dataPointer, (ExternalPtr)NULL);
+           addValue(extpointers, extptrslength, extptrscapacity, &dataPointer, (ExternalPtr)NULL);
        }
    }
 
@@ -1597,7 +1567,7 @@ public:
 
        if (pchild == this) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
-           removeDeltaVal(intpointers, intptrslength, dd, npos);
+           removeValue(intpointers, intptrslength, dd, npos);
        } else if (pchild) {
            if (child != pchild) {
                std::cout << "Warning  StoragePool.removePointer : pointer pool mismatch:  (**) "
@@ -1608,7 +1578,7 @@ public:
            }
            constcast(pchild)->removePointer(dataPointer);
        } else if (extpointers) {
-           removeDeltaVal(extpointers, extptrslength, &dataPointer, (ExternalPtr)NULL);
+           removeValue(extpointers, extptrslength, &dataPointer, (ExternalPtr)NULL);
        } else {
            std::cout << "Warning  StoragePool.removePointer : not external pointers but not in : " << (void*) &dataPointer
                      << " of " << (void*) memory << " .. " << (void*) (memory+memlength);
@@ -1632,13 +1602,13 @@ public:
        xassert(ownerPool == this && contains(childPoolPointer));
 
        size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
-       addDeltaVal(childpools, chplslength, chplscapacity, dd, npos);
+       addValue(childpools, chplslength, chplscapacity, dd, npos);
    }
 
    inline void removeChildPool(CPtrToMe childPoolPointer) {
        if (memory <= (uint8_t*)childPoolPointer) {
            size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
-           removeDeltaVal(childpools, chplslength, dd, npos);
+           removeValue(childpools, chplslength, dd, npos);
       }
    }
 
