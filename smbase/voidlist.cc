@@ -545,17 +545,22 @@ bool VoidList::isSorted(VoidDiff diff, str::Storeable const *extra) const
 // attach tail's nodes to this; empty the tail
 void VoidList::concat(VoidList &tail)
 {
-  xassert(getParent() == tail.getParent());
+  if (&npool == tail.getParent()) {
 
-  // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
+  } else {
+      xassert(getParent() == tail.getParent());
 
-  if (tail.getParent()) {
-      constcast(tail.getParentRef()).removeChildPool(&tail.npool);
+
+      // TODO top and tail externalpointer can be mixed of stealSP child pool and this->npool
+
+      if (tail.getParent()) {
+          constcast(tail.getParentRef()).removeChildPool(&tail.npool);
+      }
+      tail.npool.removeAllExternalPointers();
+
+      //StoragePool stealSP =
+      new (npool)  str::StoragePool(DBG_INFO_ARG0_FIRST  tail.npool, false,  str::StoragePool::Cp_Move);
   }
-  tail.npool.removeAllExternalPointers();
-
-  //StoragePool stealSP =
-  new (npool)  str::StoragePool(DBG_INFO_ARG0_FIRST  tail.npool, false,  str::StoragePool::Cp_Move);
 
   if (!top) {
     top = tail.top;
@@ -679,16 +684,16 @@ VoidNode *VoidList::appendAll(VoidList const &tail, VoidNode *myTail, VoidNode *
 // TODO better using str::StoragePool impl based on buffer-copy
 void VoidList::appendAllNew(VoidList const &tail, VoidEq eq)
 {
-  VoidList dest(DBG_INFO_ARG0_FIRST  npool);
+  VoidList * dest = new (npool) VoidList(DBG_INFO_ARG0_FIRST  npool);
   VoidListIter srcIter(tail);
   for (; !srcIter.isDone(); srcIter.adv()) {
     str::Storeable *item = srcIter.data();
     int index = indexOf(item, eq);
     if (index == -1) {
-       dest.append(DBG_INFO_ARG0_FIRST  item);
+       dest->append(DBG_INFO_ARG0_FIRST  item);
     }
   }
-  concat(dest);
+  concat(*dest);
 }
 
 

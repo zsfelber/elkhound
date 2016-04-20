@@ -65,9 +65,10 @@ void VoidTailList::appendAllNew(VoidTailList const &tail, VoidEq eq)
 
 void VoidTailList::reappendAll(VoidTailList const &tail, VoidEq eq)
 {
-  VoidList::removeItems(tail, eq);
-  this->tail = top;
-  adjustTails();
+  if (VoidList::removeItems(tail, eq)) {
+      this->tail = top;
+      adjustTails();
+  }
   appendAll(tail);
 }
 

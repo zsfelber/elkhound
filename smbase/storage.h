@@ -706,6 +706,15 @@ private:
        }
    }
 
+   template <typename T>
+   inline void sort(T * buf, size_t buflength, T * src_buf, size_t src_buflength) {
+       // should remain sorted
+       if (buflength && src_buflength &&
+               buf[buflength-1] > src_buf[0]) {
+           std::sort(buf, buf+buflength+src_buflength);
+       }
+   }
+
    bool movePointer(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
        xassert(ownerPool == this);
 
@@ -738,9 +747,6 @@ private:
 
 
    inline void moveFrom(StoragePool const & parent, DataPtr & child, uint8_t * origin = NULL) {
-       if (!origin) {
-           origin = memory;
-       }
 
        StoragePool*  pool = this;
        std::ptrdiff_t d;
@@ -766,12 +772,19 @@ private:
            }
 
            xassert(it == chch.end());
+           if (!origin) {
+               xassert(pool == this);
+               origin = pool->memory;
+           }
 
-           d = pool->memory - ch.pool->memory;
+           d = origin - ch.pool->memory;
        } else {
            xassert(parent.contains(child));
 
-           d = pool->memory - parent.memory;
+           if (!origin) {
+               origin = pool->memory;
+           }
+           d = origin - parent.memory;
        }
 
        uint8_t* variable_addr = (uint8_t*)child;
@@ -1336,11 +1349,8 @@ public:
        }
 
        memcpy(memory+memlength, src.memory, src.memlength);
-       // ! still remains sorted
        memcpy(intvariables+intvarslength, src.intvariables, sizeof(size_t)*src.intvarslength);
-       // ! still remains sorted
        memcpy(intpointers+intptrslength, src.intpointers, sizeof(size_t)*src.intptrslength);
-       // ! still remains sorted
        memcpy(childpools+chplslength, src.childpools, sizeof(size_t)*src.chplslength);
 
        childView.clear();
@@ -1357,10 +1367,6 @@ public:
        childView.chplslength = src.chplslength;
        childView.chplscapacity = src.chplscapacity;
 
-       memlength += src.memlength;
-       intptrslength += src.intptrslength;
-       chplslength += src.chplslength;
-
        convertDeltas(childView.intvariables, childView.intvariables+childView.intvarslength, childView.memory);
        convertDeltas(childView.intpointers, childView.intpointers+childView.intptrslength, childView.memory);
        convertDeltas(childView.childpools, childView.childpools+childView.chplslength, childView.memory);
@@ -1371,11 +1377,21 @@ public:
            convertExternalPointers(src, convertExtPointersFrom, convertExtPointersTo);
        }
 
-       removeChildPool(&src);
-       removeChildPool(this);
-
        childView.fixChildren(src, src.memory);
        childView.ownerPool = this;
+
+       // These should remain sorted
+       sort(intvariables, intvarslength, childView.intvariables, childView.intvarslength);
+       sort(intpointers, intptrslength, childView.intpointers, childView.intptrslength);
+       sort(childpools, chplslength, childView.childpools, childView.chplslength);
+
+       memlength += src.memlength;
+       intvarslength += src.intvarslength;
+       intptrslength += src.intptrslength;
+       chplslength += src.chplslength;
+
+       removeChildPool(&src);
+       removeChildPool(this);
    }
 
    inline void swap(StoragePool * pool) {
@@ -1409,9 +1425,10 @@ public:
            }
        }
 
-       extptrslength += plen;
        // ! still remains sorted
-       std::sort(extpointers, extpointers+extptrslength);
+       sort(extpointers, extptrslength, extpointers+extptrslength, plen);
+
+       extptrslength += plen;
    }
 
    inline size_t getExtPtrsLength() const {
