@@ -795,20 +795,21 @@ private:
        xassert(pool0 == pool);
    }
 
-   void fixChildren(StoragePool const & source, uint8_t* deltaOrigin = NULL) {
+   void fixChildren(StoragePool const * target, StoragePool const & source) {
        xassert(ownerPool == this);
-       if (!deltaOrigin) {
-           deltaOrigin = memory;
+       if (!memory) {
+           memory = memory;
        }
-       std::ptrdiff_t d = deltaOrigin - source.memory;
+       std::ptrdiff_t d = memory - source.memory;
        //if (d) {
-           fixChildren(source, deltaOrigin, d, true);
+           fixChildren(target, source, d, true);
        //}
    }
 
-   void fixChildren(StoragePool const & source, uint8_t* deltaOrigin, std::ptrdiff_t d, bool req) {
-       fixChildValues(source, deltaOrigin, d, req);
-       fixChildPools(source, deltaOrigin, d, req);
+   void fixChildren(StoragePool const * target, StoragePool const & source,
+                    std::ptrdiff_t d, bool req) {
+       fixChildValues(target, source, d, req);
+       fixChildPools(target, source, d, req);
 
        for (iterator it = begin(), src_it = source.begin(); it != -1; it++, src_it++) {
            xassert((it==-1)==(src_it==-1));
@@ -816,7 +817,7 @@ private:
            Storeable *src_cur = *src_it;
            switch (cur->__kind) {
            case ST_PARENT:
-               fixChild<Storeable>(cur, src_cur, source, d, req);
+               fixChild<Storeable>(cur, src_cur, target, source, d, req);
                break;
            case ST_STORAGE_POOL:
                // already processed in fixChildPools
@@ -831,7 +832,8 @@ private:
        }
    }
 
-   inline void fixChildValues(StoragePool const & source, uint8_t* deltaOrigin, std::ptrdiff_t d, bool req = true) {
+   inline void fixChildValues(StoragePool const * target, StoragePool const & source,
+                              std::ptrdiff_t d, bool req = true) {
 
        size_t* tar_varsFrom = intvariables;
        size_t* tar_varsTo = intvariables+intvarslength;
@@ -839,10 +841,11 @@ private:
        size_t* src_varsTo = source.intvariables+source.intvarslength;
 
        fixChildren<Storeable>(tar_varsFrom, tar_varsTo, src_varsFrom, src_varsTo,
-                      source, deltaOrigin, d, req);
+                      target, source, d, req);
    }
 
-   inline void fixChildPools(StoragePool const & source, uint8_t* deltaOrigin, std::ptrdiff_t d, bool req = true) {
+   inline void fixChildPools(StoragePool const * target, StoragePool const & source,
+                             std::ptrdiff_t d, bool req = true) {
 
        size_t* tar_chPoolsFrom = childpools;
        size_t* tar_chPoolsTo = childpools+chplslength;
@@ -850,27 +853,29 @@ private:
        size_t* src_chPoolsTo = source.childpools+source.chplslength;
 
        fixChildren<StoragePool>(tar_chPoolsFrom, tar_chPoolsTo, src_chPoolsFrom, src_chPoolsTo,
-                      source, deltaOrigin, d, req);
+                      target, source, d, req);
    }
 
    template <class V>
    inline void fixChildren(size_t* tar_chFrom, size_t* tar_chTo,
                        size_t* src_chFrom, size_t* src_chTo,
-                       StoragePool const & source, uint8_t* deltaOrigin, std::ptrdiff_t d, bool req) {
+                       StoragePool const * target, StoragePool const & source,
+                           std::ptrdiff_t d, bool req) {
        xassert( !source.memory || memory == (d+source.memory));
        xassert(tar_chTo-tar_chFrom == src_chTo-src_chFrom);
 
        for (; tar_chFrom<tar_chTo; tar_chFrom++, src_chFrom++) {
-           V* ptr = (V*)decodeDeltaPtr(deltaOrigin, *tar_chFrom);
+           V* ptr = (V*)decodeDeltaPtr(memory, *tar_chFrom);
            V* src_ptr = (V*)decodeDeltaPtr(source.memory, *src_chFrom);
 
-           fixChild(ptr, src_ptr, source, d, req);
+           fixChild(ptr, src_ptr, target, source, d, req);
        }
    }
 
    template <class V>
    inline void fixChild(V* ptr, V* src_ptr,
-                        StoragePool const & source, std::ptrdiff_t d, bool req) {
+                        StoragePool const * target, StoragePool const & source,
+                        std::ptrdiff_t d, bool req) {
 
        xassert(bool(ptr)==bool(src_ptr));
        if (ptr) {
@@ -881,21 +886,21 @@ private:
            xassert(src_ptr->__parent == &source);
            xassert(ptr->__parent == &source);
 
-           fixPoolPointer(ptr, src_ptr);
+           fixPoolPointer(target, ptr, src_ptr);
            if (req) {
-               fixPoolPointerChildren(ptr, src_ptr);
+               fixPoolPointerChildren(target, ptr, src_ptr);
            }
        }
    }
 
-   inline void fixPoolPointer(Storeable * ptr, Storeable const * src_ptr) {
+   inline void fixPoolPointer(StoragePool const * target, Storeable * ptr, Storeable const * src_ptr) {
        xassert( contains(ptr) );
 
-       ptr->__parent = this;
+       ptr->__parent = target;
    }
 
-   inline void fixPoolPointer(StoragePool * ptr, StoragePool const * src_ptr) {
-       fixPoolPointer((Storeable*) ptr, src_ptr);
+   inline void fixPoolPointer(StoragePool const * target, StoragePool * ptr, StoragePool const * src_ptr) {
+       fixPoolPointer(target, (Storeable*) ptr, src_ptr);
 
        xassert( src_ptr->ownerPool == ptr->ownerPool );
 
@@ -906,12 +911,12 @@ private:
        }
    }
 
-   inline void fixPoolPointerChildren(Storeable * ptr, Storeable const * src_ptr) {
+   inline void fixPoolPointerChildren(StoragePool const * target, Storeable * ptr, Storeable const * src_ptr) {
 
    }
 
-   inline void fixPoolPointerChildren(StoragePool * ptr, StoragePool const * src_ptr) {
-       ptr->fixChildren(*src_ptr);
+   inline void fixPoolPointerChildren(StoragePool const * target, StoragePool * ptr, StoragePool const * src_ptr) {
+       ptr->fixChildren(ptr, *src_ptr);
    }
 
    void allocParentItem(void const *& _data, size_t store_size) {
@@ -1004,7 +1009,7 @@ private:
            removeChildPool(&src);
            removeChildPool(this);
 
-           fixChildren(src, memory, 0, false);
+           fixChildren(this, src, 0, false);
 
            constcast(src).clear();
 
@@ -1065,7 +1070,7 @@ private:
        memcpy(intpointers, src.intpointers, sizeof(size_t)*(intptrslength = src.intptrslength));
        memcpy(childpools, src.childpools, sizeof(size_t)*(chplslength = src.chplslength));
 
-       fixChildren(src);
+       fixChildren(this, src);
        moveInternalPointers(src);
 
        removeChildPool(&src);
@@ -1377,7 +1382,8 @@ public:
            convertExternalPointers(src, convertExtPointersFrom, convertExtPointersTo);
        }
 
-       childView.fixChildren(src, src.memory);
+       childView.memory = src.memory;
+       childView.fixChildren(this, src);
        childView.ownerPool = this;
 
        // These should remain sorted
@@ -1412,6 +1418,7 @@ public:
        size_t c;
        if (extptrscapacity<(c=getPtrBufSize(extptrslength+plen))) {
            extendBuffer(extpointers, extptrslength, c);
+           extptrscapacity = c;
        }
 
        ExternalPtr* extPointersFrom = extpointers + extptrslength;
@@ -1648,14 +1655,10 @@ public:
        xassert(ownerPool);
        xassert(bool(memory) == bool(memlength));
        xassert(bool(memcapacity) == bool(memlength));
-       xassert(bool(intvariables) == bool(intvarslength));
-       xassert(bool(intvarscapacity) == bool(intvarslength));
-       xassert(bool(intpointers) == bool(intptrslength));
-       xassert(bool(intptrscapacity) == bool(intptrslength));
-       xassert(bool(extpointers) == bool(extptrslength));
-       xassert(bool(extptrscapacity) == bool(extptrslength));
-       xassert(bool(childpools) == bool(chplslength));
-       xassert(bool(chplscapacity) == bool(chplslength));
+       xassert(bool(intvariables) == bool(intvarscapacity));
+       xassert(bool(intpointers) == bool(intptrscapacity));
+       xassert(bool(extpointers) == bool(extptrscapacity));
+       xassert(bool(childpools) == bool(chplscapacity));
 
        PtrToMe lastm = NULL;
        size_t* chPoolsFrom = childpools;
@@ -1664,12 +1667,82 @@ public:
            PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
            if (ptr) {
                xassert(contains(ptr));
+               xassert(ptr->__parent == this || ptr->__parent == ownerPool);
                xassert(!ptr->isParentOf(*this));
 
                ptr->selfCheck();
 
                xassert(ptr > lastm);
                lastm = ptr;
+           }
+       }
+       DataPtr lastd = NULL;
+       size_t* varsFrom = intvariables;
+       size_t* varsTo = intvariables+intvarslength;
+       for (; varsFrom<varsTo; varsFrom++) {
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *varsFrom);
+           if (ptr) {
+               xassert(contains(ptr));
+               xassert(ptr->__parent == this || ptr->__parent == ownerPool);
+
+               xassert(ptr > lastd);
+               lastd = ptr;
+           }
+       }
+       long long lastv = -1;
+       size_t* intPtrsFrom = intpointers;
+       size_t* intPtrsTo = intpointers+intptrslength;
+       for (; intPtrsFrom<intPtrsTo; intPtrsFrom++) {
+           size_t v = *intPtrsFrom;
+           if (v != npos) {
+               xassert(v < memlength);
+               ExternalPtr p = (ExternalPtr) decodeDeltaPtr(memory, v);
+               if (p) {
+                   if (*p) {
+                       StoragePool const * chpool = findChild(*p);
+                       if (chpool) {
+                           if (chpool == this) {
+                               xassert((*p)->__parent == this || (*p)->__parent == ownerPool);
+                           } else {
+                               xassert((*p)->__parent == chpool || (*p)->__parent == chpool->ownerPool);
+                           }
+                       }
+                   }
+               }
+               xassert(v > lastv);
+               lastv = v;
+           }
+       }
+       ExternalPtr lastp = NULL;
+       ExternalPtr* extPtrsFrom = extpointers;
+       ExternalPtr* extPtrsTo = extpointers+extptrslength;
+       for (; extPtrsFrom<extPtrsTo; extPtrsFrom++) {
+           ExternalPtr p = *extPtrsFrom;
+           if (p) {
+               xassert(p > lastp);
+               if (*p) {
+                   StoragePool const * chpool = findChild(*p);
+                   if (chpool) {
+                       if (chpool == this) {
+                           xassert((*p)->__parent == this || (*p)->__parent == ownerPool);
+                       } else {
+                           xassert((*p)->__parent == chpool || (*p)->__parent == chpool->ownerPool);
+                       }
+                   }
+               }
+               lastp = p;
+           }
+       }
+       for (iterator it = begin(); it != -1; it++) {
+           Storeable *cur = *it;
+           switch (cur->__kind) {
+           case ST_PARENT:
+           case ST_STORAGE_POOL:
+           case ST_CHILD:
+               xassert(cur->__parent == this || cur->__parent == ownerPool);
+               break;
+           default:
+               break;
            }
        }
 

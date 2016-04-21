@@ -78,11 +78,11 @@ str::Storeable *VoidList::nth(int which) const
 // fail assertion if list fails integrity check
 void VoidList::selfCheck() const
 {
+  npool.selfCheck();
+
   if (!top) {
     return;
   }
-
-  npool.selfCheck();
 
   // The technique here is the fast/slow list traversal to find loops (which
   // are the only way a singly-linked list can be bad). Basically, if there
@@ -1095,16 +1095,27 @@ void entry()
 
     // some sample items
     str::Storeable
-            *a=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),4),
-            *b=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),8),
-            *c=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),12),
+            *a=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),4);
+    list.selfCheck();
+    str::Storeable
+            *b=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),8);
+    list.selfCheck();
+    str::Storeable
+            *c=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),12);
+    list.selfCheck();
+    str::Storeable
             *d=new (list.getPool()) Integer(DBG_INFO_ARG0_FIRST  list.getPool(),16);
+    list.selfCheck();
 
     // test simple modifiers and info
     list.append(DBG_INFO_ARG0_FIRST  c);     PRINT(list);   // c
+    list.selfCheck();
     list.prepend(DBG_INFO_ARG0_FIRST  b);   	PRINT(list);   // b c
+    list.selfCheck();
     list.append(DBG_INFO_ARG0_FIRST  d);	PRINT(list);   // b c d
+    list.selfCheck();
     list.prepend(DBG_INFO_ARG0_FIRST  a);	PRINT(list);   // a b c d
+    list.selfCheck();
     list.removeAt(2);	PRINT(list);   // a b d
 
     xassert( list.count() == 3 &&

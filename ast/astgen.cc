@@ -803,10 +803,23 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
       da = true;
 
       args = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  &astgen_pool, &parent->getArgs());
+#ifdef DEBUG
+      args->selfCheck();
+#endif
       args->reappendAll(cls.args, (VoidEq)&cmpCtorArgs);
+#ifdef DEBUG
+      args->selfCheck();
+#endif
+
 
       lastArgs = new (astgen_pool) ASTList<CtorArg>(DBG_INFO_ARG0_FIRST  &astgen_pool, &cls.lastArgs);
+#ifdef DEBUG
+      lastArgs->selfCheck();
+#endif
       lastArgs->appendAllNew(parent->getLastArgs(), (VoidEq)&cmpCtorArgs);
+#ifdef DEBUG
+      lastArgs->selfCheck();
+#endif
   }
   // declare the constructor
   {
