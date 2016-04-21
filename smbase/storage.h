@@ -801,9 +801,9 @@ private:
            deltaOrigin = memory;
        }
        std::ptrdiff_t d = deltaOrigin - source.memory;
-       if (d) {
+       //if (d) {
            fixChildren(source, deltaOrigin, d, true);
-       }
+       //}
    }
 
    void fixChildren(StoragePool const & source, uint8_t* deltaOrigin, std::ptrdiff_t d, bool req) {
