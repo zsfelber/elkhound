@@ -716,7 +716,7 @@ private:
    }
 
    bool movePointer(StoragePool const & oldmem, DataPtr& variable, std::ptrdiff_t d) const {
-       xassert(ownerPool == this);
+       xassert(ownerPool == this || ownerPool == &oldmem);
 
        if (variable) {
            uint8_t* variable_addr = (uint8_t*)variable;
@@ -1021,57 +1021,78 @@ private:
            break;
        }
        default:
-           xassert(false);
+           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
            break;
        }
    }
 
    void reassign(StoragePool const & src) {
-       if (ownerPool != this) {
-           xassert(ownerPool == &src);
+       if (ownerPool == &src) {
+
+           StoragePool const * p = __parent;
+           clear();
            ownerPool = this;
-       }
-
-       delChildPools();
-
-       if (memcapacity<src.memcapacity) {
-           memcapacity = src.memcapacity;
-           delete[] memory;
-           memory = new uint8_t[memcapacity];
-       }
-       if (intvarscapacity<src.intvarscapacity) {
-           intvarscapacity = src.intvarscapacity;
-           delete[] intvariables;
-           intvariables = new size_t[intvarscapacity];
-       }
-       if (intptrscapacity<src.intptrscapacity) {
-           intptrscapacity = src.intptrscapacity;
-           delete[] intpointers;
-           intpointers = new size_t[intptrscapacity];
-       }
-       if (chplscapacity<src.chplscapacity) {
-           chplscapacity = src.chplscapacity;
-           delete[] childpools;
-           childpools = new size_t[chplscapacity];
-       }
-
-       extptrslength=0;
-       extptrscapacity=0;
-       if (extpointers) {
-           delete[] extpointers;
+           __parent = p;
+           if (src.memory) copyBuffer(src.memory, src.memlength, src.memcapacity, memory, memlength, memcapacity);
+           if (src.intvariables) copyBuffer(src.intvariables, src.intvarslength, src.intvarscapacity, intvariables, intvarslength, intvarscapacity);
+           if (src.intpointers) copyBuffer(src.intpointers, src.intptrslength, src.intptrscapacity, intpointers, intptrslength, intptrscapacity);
+           if (src.childpools) copyBuffer(src.childpools, src.chplslength, src.chplscapacity, childpools, chplslength, chplscapacity);
+           extptrslength=0;
+           extptrscapacity=0;
            extpointers = NULL;
+
+           fixChildren(this, src);
+           moveInternalPointers(src);
+
+           removeChildPool(&src);
+           removeChildPool(this);
+
+       } else if (ownerPool == this) {
+
+           delChildPools();
+
+           if (memcapacity<src.memcapacity) {
+               memcapacity = src.memcapacity;
+               delete[] memory;
+               memory = new uint8_t[memcapacity];
+           }
+           if (intvarscapacity<src.intvarscapacity) {
+               intvarscapacity = src.intvarscapacity;
+               delete[] intvariables;
+               intvariables = new size_t[intvarscapacity];
+           }
+           if (intptrscapacity<src.intptrscapacity) {
+               intptrscapacity = src.intptrscapacity;
+               delete[] intpointers;
+               intpointers = new size_t[intptrscapacity];
+           }
+           if (chplscapacity<src.chplscapacity) {
+               chplscapacity = src.chplscapacity;
+               delete[] childpools;
+               childpools = new size_t[chplscapacity];
+           }
+
+           extptrslength=0;
+           extptrscapacity=0;
+           if (extpointers) {
+               delete[] extpointers;
+               extpointers = NULL;
+           }
+
+           memcpy(memory, src.memory, memlength = src.memlength);
+           memcpy(intvariables, src.intvariables, sizeof(size_t)*(intvarslength = src.intvarslength));
+           memcpy(intpointers, src.intpointers, sizeof(size_t)*(intptrslength = src.intptrslength));
+           memcpy(childpools, src.childpools, sizeof(size_t)*(chplslength = src.chplslength));
+
+           fixChildren(this, src);
+           moveInternalPointers(src);
+
+           removeChildPool(&src);
+           removeChildPool(this);
+       } else {
+           x_assert_fail("reassign ownerPool mismatch", __FILE__, __LINE__);
        }
 
-       memcpy(memory, src.memory, memlength = src.memlength);
-       memcpy(intvariables, src.intvariables, sizeof(size_t)*(intvarslength = src.intvarslength));
-       memcpy(intpointers, src.intpointers, sizeof(size_t)*(intptrslength = src.intptrslength));
-       memcpy(childpools, src.childpools, sizeof(size_t)*(chplslength = src.chplslength));
-
-       fixChildren(this, src);
-       moveInternalPointers(src);
-
-       removeChildPool(&src);
-       removeChildPool(this);
    }
 
    inline bool isParentOf(Storeable const & chpool) const {
@@ -1234,8 +1255,8 @@ public:
            ownerPool = this;
        } else {
            xassert(__kind == ST_NONE || __kind == ST_STORAGE_POOL);
-           ownerPool = this;
            StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
+           ownerPool = &srcOrParentPool;
            assignImpl(srcOrParentPool, copyMode);
        }
 
@@ -1329,7 +1350,7 @@ public:
    }
 
    void append(StoragePool const &src, StoragePool &childView, ExternalPtr* convertExtPointersFrom = NULL, ExternalPtr* convertExtPointersTo = NULL) {
-       xassert(ownerPool == this);
+       xassert (ownerPool == this);
 
        size_t c;
 
