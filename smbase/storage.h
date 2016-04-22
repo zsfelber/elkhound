@@ -459,9 +459,10 @@ public:
        return NULL;
    }
 
-   inline void debugPrint(int indent = 0) const
+   inline int debugPrint(int indent = 0) const
    {
        debugPrint(std::cout, indent);
+       return 0;
    }
 
    virtual inline void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const
@@ -672,7 +673,7 @@ private:
        }
    }
 
-   void moveInternalPointers(StoragePool const & oldmem, size_t* intPointersFrom, size_t* intPointersTo) {
+   /*void moveInternalPointers(StoragePool const & oldmem, size_t* intPointersFrom, size_t* intPointersTo) {
        std::ptrdiff_t d = memory - oldmem.memory;
 
        for (; intPointersFrom<intPointersTo; intPointersFrom++) {
@@ -681,7 +682,7 @@ private:
                movePointer(oldmem, *ptr, d);
            }
        }
-   }
+   }*/
 
    void moveExternalPointers(StoragePool const & oldmem) {
        std::ptrdiff_t d = memory - oldmem.memory;
@@ -696,8 +697,7 @@ private:
        }
    }
 
-   template <typename T>
-   inline void convertDeltas(T* buf, T* last, uint8_t const * oldOrigin) {
+   inline void convertDeltas(size_t* buf, size_t* last, uint8_t const * oldOrigin) {
        for (; buf<last; buf++) {
            uint8_t const * ptr = decodeDeltaPtr(oldOrigin, *buf);
            if (ptr) {
@@ -797,9 +797,6 @@ private:
 
    void fixChildren(StoragePool const * target, StoragePool const & source) {
        xassert(ownerPool == this);
-       if (!memory) {
-           memory = memory;
-       }
        std::ptrdiff_t d = memory - source.memory;
        //if (d) {
            fixChildren(target, source, d, true);
@@ -1353,11 +1350,6 @@ public:
            chplscapacity = c;
        }
 
-       memcpy(memory+memlength, src.memory, src.memlength);
-       memcpy(intvariables+intvarslength, src.intvariables, sizeof(size_t)*src.intvarslength);
-       memcpy(intpointers+intptrslength, src.intpointers, sizeof(size_t)*src.intptrslength);
-       memcpy(childpools+chplslength, src.childpools, sizeof(size_t)*src.chplslength);
-
        childView.clear();
        childView.memory = memory + memlength;
        childView.memlength = src.memlength;
@@ -1372,17 +1364,21 @@ public:
        childView.chplslength = src.chplslength;
        childView.chplscapacity = src.chplscapacity;
 
+       memcpy(childView.memory, src.memory, src.memlength);
+       memcpy(childView.intvariables, src.intvariables, sizeof(size_t)*src.intvarslength);
+       memcpy(childView.intpointers, src.intpointers, sizeof(size_t)*src.intptrslength);
+       memcpy(childView.childpools, src.childpools, sizeof(size_t)*src.chplslength);
+
+       childView.moveInternalPointers(src);
+
        convertDeltas(childView.intvariables, childView.intvariables+childView.intvarslength, childView.memory);
        convertDeltas(childView.intpointers, childView.intpointers+childView.intptrslength, childView.memory);
        convertDeltas(childView.childpools, childView.childpools+childView.chplslength, childView.memory);
-
-       moveInternalPointers(src, childView.intpointers, childView.intpointers+childView.intptrslength);
 
        if (convertExtPointersFrom) {
            convertExternalPointers(src, convertExtPointersFrom, convertExtPointersTo);
        }
 
-       childView.memory = src.memory;
        childView.fixChildren(this, src);
        childView.ownerPool = this;
 
@@ -1701,11 +1697,7 @@ public:
                    if (*p) {
                        StoragePool const * chpool = findChild(*p);
                        if (chpool) {
-                           if (chpool == this) {
-                               xassert((*p)->__parent == this || (*p)->__parent == ownerPool);
-                           } else {
-                               xassert((*p)->__parent == chpool || (*p)->__parent == chpool->ownerPool);
-                           }
+                           xassert((*p)->__parent == chpool || (*p)->__parent == chpool->ownerPool);
                        }
                    }
                }
@@ -1723,11 +1715,7 @@ public:
                if (*p) {
                    StoragePool const * chpool = findChild(*p);
                    if (chpool) {
-                       if (chpool == this) {
-                           xassert((*p)->__parent == this || (*p)->__parent == ownerPool);
-                       } else {
-                           xassert((*p)->__parent == chpool || (*p)->__parent == chpool->ownerPool);
-                       }
+                       xassert((*p)->__parent == chpool || (*p)->__parent == chpool->ownerPool);
                    }
                }
                lastp = p;

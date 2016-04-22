@@ -626,8 +626,9 @@ uint8_t* VoidList::glueNpools(VoidList const &tail) {
     if (npool.findChild(tail.npool.memory) || tail.npool.findChild(npool.memory)) {
         oldmemend = NULL;
     } else {
-        oldmemend = npool.memory+npool.memlength;
-        npool += tail.npool;
+        str::StoragePool childView(DBG_INFO_ARG0);
+        npool.append(tail.npool, childView);
+        oldmemend = childView.memory;
     }
 
     return oldmemend;

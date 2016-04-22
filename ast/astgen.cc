@@ -781,14 +781,26 @@ bool isFuncDecl(UserDecl const *ud)
 bool cmpCtorArgs(CtorArg* left, CtorArg* right) {
     if (left) {
         if (right) {
+#ifdef DEBUG
+            std::cout << left->name << " <-> " << right->name << std::endl;
+#endif
             return left->name.equals(right->name);
         } else {
+#ifdef DEBUG
+            std::cout << left->name << " <-" << std::endl;
+#endif
             return false;
         }
     } else {
         if (right) {
+#ifdef DEBUG
+            std::cout << "-> " << right->name << std::endl;
+#endif
             return false;
         } else {
+#ifdef DEBUG
+            std::cout << "--" << std::endl;
+#endif
             return true;
         }
     }
