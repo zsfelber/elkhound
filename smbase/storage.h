@@ -1173,11 +1173,19 @@ private:
                std::cout << "Warning  StoragePool.removeValue : variable already removed : " << (void*) dd
                          << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
            } else if (val == last-1) {
-               xassert (vval == dd);
-               shrinkTail(length, vars, nullitm);
+               if (vval == dd) {
+                   shrinkTail(length, vars, nullitm);
+               } else {
+                   std::cout << "Warning  StoragePool.removeValue : variable not found : " << (void*) dd
+                             << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << "  next:"<< vval << std::endl;
+               }
            } else {
-               xassert (vval == dd);
-               *val = nullitm;
+               if (vval == dd) {
+                   *val = nullitm;
+               } else {
+                   std::cout << "Warning  StoragePool.removeValue : variable not found : " << (void*) dd
+                             << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << "  next:"<< vval << std::endl;
+               }
            }
        }
    }
