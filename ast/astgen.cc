@@ -304,6 +304,11 @@ bool isTreeListType(rostring type)
   return isListType(type) && isTreeNode(extractListType(type));
 }
 
+bool isStoreableType(rostring type)
+{
+  return isTreeListType(type) || type.equals("Integer") || type.equals("string") || type.equals("LocString");
+}
+
 // given a type for which 'is[Fake]ListType' returns true, extract
 // the type in the template argument angle brackets; this is used
 // to get the name of the type so we can pass it to the macros
@@ -744,13 +749,16 @@ void HGen::emitCtorFormal(int &ct, CtorArg const *arg, char &lastLst)
   } else {
       out << type << " ";
       if (//isListType(type) ||
-          isTreeNode(type) ||
-          type.equals("LocString")) {
+          isTreeNode(type)
+          //|| type.equals("LocString")
+              ) {
         // lists and subtrees and LocStrings are constructed by passing pointers
         trace("putStar") << "putting star for " << type << std::endl;
         out << "*";
-      }
-      else {
+      } else if (type.equals("LocString")) {
+        trace("putStar") << "putting & for " << type << std::endl;
+        out << "&";
+      } else {
         trace("putStar") << "NOT putting star for " << type << std::endl;
       }
   }
@@ -874,7 +882,8 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
         ct++;     // make sure we print a comma, below
         out << ")";
       } else {
-          out << " : Storeable(DBG_INFO_ARG_FWD_FIRST  pool, true)  ";
+        out << " : Storeable(DBG_INFO_ARG_FWD_FIRST  pool, true)  ";
+        ct++;     // make sure we print a comma, below
       }
 
       initializeMyCtorArgs(ct, cls.args);
@@ -936,6 +945,8 @@ void HGen::initializeMyCtorArgs(int &ct, ASTList<CtorArg> const &args)
     out << arg.data()->name << "(";
     if (isListType(arg.data()->type)) {
         out << "DBG_INFO_ARG_FWD_FIRST  &pool, ";
+    } else if (isStoreableType(arg.data()->type)) {
+        out << "DBG_INFO_ARG_FWD_FIRST  ";
     }
     out<<"_" << arg.data()->name ;
     out << ")";
@@ -1612,27 +1623,13 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
     // able to use 'ret' to refer to the tree constructed so far.
   }
 
-  if (isTreeListType(arg->type)) {
-    // clone an ASTList of tree nodes
-    out << "(listDeepness>=0||" << argName << ".owning) ? ";
-    out << "cloneASTList(pool, " << argName << ", deepness, listDeepness) : constcast(&" << argName << ")" ;
-  }
-  else if (isListType(arg->type)) {
-    if (streq(extractListType(arg->type), "LocString")) {
-      // these are owned, so clone deeply
-      out << "(listDeepness>=0||" << argName << ".owning) ? ";
-      out << "cloneASTList(pool, " << argName << ", deepness, listDeepness) : constcast(&" << argName << ")" ;
-    }
-    else {
-      // clone an ASTList of non-tree nodes
-      out << "(listDeepness>=0||" << argName << ".owning) ? ";
-      out << "shallowCloneASTList(pool, " << argName << ") : constcast(&" << argName << ")" ;
-    }
+  if (isListType(arg->type)) {
+    // clone an ASTList of (tree?) nodes
+    out << "cloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, " << argName << ", deepness, listDeepness) " ;
   }
   else if (isFakeListType(arg->type)) {
     // clone a FakeList (of tree nodes, we assume..)
-    out << "(listDeepness>=0) ? ";
-    out << "cloneFakeList(pool, " << argName << ", deepness, listDeepness) : " << argName ;
+    out << "cloneFakeList(DBG_INFO_ARG_FWD_FIRST  pool, " << argName << ", deepness, listDeepness) ";
   }
   else if (isTreeNode(arg->type)) {
     // clone a tree node
@@ -1640,11 +1637,11 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
   }
   else if (streq(arg->type, "LocString")) {
     // clone a LocString; we store objects, but pass pointers
-    out << "(deepness>=0)? " << argName << ".clone(DBG_INFO_ARG_FWD_FIRST  pool) : constcast(&" << argName<<")" ;
+    out << "(deepness>=0)? *" << argName << ".clone(DBG_INFO_ARG_FWD_FIRST  pool) : *str::constcast(&" << argName<<")" ;
   }
   else {
     // pass the non-tree node's value directly
-    out << argName;
+    out << "str::constcast(" << argName << ")";
   }
 }
 
@@ -1674,7 +1671,7 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
   if (!emitCustomCode(myClass->decls, "substituteClone")) {
     out << "  deepness--; listDeepness--;" << std::endl;
-    out << "  " << name << " *ret = new (pool) " << name << "(";
+    out << "  " << name << " *ret = new (pool) " << name << "(DBG_INFO_ARG0_FIRST  ";
 
     // clone each of the superclass ctor arguments
     int ct=0;

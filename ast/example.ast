@@ -104,7 +104,7 @@ class HasLastArgs(int x)(int w) {
 
 class SomethingElse(int x, int y) {
   custom substituteClone 
-    { return new SomethingElse(x,y); /*my own clone() code*/ }
+    { return new SomethingElse(DBG_INFO_ARG0_FIRST  constcast(pool), x,y); /*my own clone() code*/ }
 }
 
 

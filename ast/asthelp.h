@@ -365,15 +365,15 @@ void xmlPrintPointer(std::ostream &os, char const *label, void const *p);
 // returns a new'd list because the AST node ctors want
 // to accept an owner ptr to a list
 template <class T>
-ASTList<T> * /*owner*/ cloneASTList(str::StoragePool const &pool, ASTList<T> const &src, int deepness=1, int listDeepness=1)
+ASTList<T> * /*owner*/ cloneASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, ASTList<T> const &src, int deepness=1, int listDeepness=1)
 {
   deepness--;listDeepness--;
 
   const bool d = (deepness >= 0);
-  ASTList<T> *ret = new (pool) ASTList<T>(DBG_INFO_ARG0_FIRST  pool);
+  ASTList<T> *ret = new (pool) ASTList<T>(DBG_INFO_ARG_FWD_FIRST  pool);
   if (d) {
       FOREACH_ASTLIST(T, src, iter) {
-        ret->append(DBG_INFO_ARG0_FIRST  iter.data()->clone(DBG_INFO_ARG0_FIRST  pool, deepness, listDeepness));
+        ret->append(DBG_INFO_ARG_FWD_FIRST  iter.data()->clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness, listDeepness));
       }
   } else {
       ret->assign(src, false);
@@ -390,9 +390,9 @@ ASTList<T> * /*owner*/ cloneASTList(str::StoragePool const &pool, ASTList<T> con
 // because ASTList normally is owning, and probably deletes its
 // elements in its destructor..
 template <class T>
-ASTList<T> * /*owner*/ shallowCloneASTList(str::StoragePool const &pool, ASTList<T> const &src)
+ASTList<T> * /*owner*/ shallowCloneASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, ASTList<T> const &src)
 {
-  ASTList<T> *ret = new (pool) ASTList<T>(DBG_INFO_ARG0_FIRST  pool);
+  ASTList<T> *ret = new (pool) ASTList<T>(DBG_INFO_ARG_FWD_FIRST  pool);
   ret->assign(src, false);
 
   //FOREACH_ASTLIST(T, src, iter) {
@@ -406,7 +406,7 @@ ASTList<T> * /*owner*/ shallowCloneASTList(str::StoragePool const &pool, ASTList
 
 // deep copy of a FakeList
 template <class T>
-FakeList<T> * /*owner*/ cloneFakeList(str::StoragePool const &pool, FakeList<T> const *src, int deepness=1, int listDeepness=1)
+FakeList<T> * /*owner*/ cloneFakeList(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, FakeList<T> const *src, int const deepness=1, int const listDeepness=1)
 {
   if (!src) {
     return FakeList<T>::emptyList();     // base case of recursion
@@ -415,11 +415,11 @@ FakeList<T> * /*owner*/ cloneFakeList(str::StoragePool const &pool, FakeList<T> 
   T *head = constcast(src->firstC());
   if (deepness > 0) {
       // clone first element
-      head = head->clone(pool, deepness-1, listDeepness-1);
+      head = head->clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness-1, listDeepness-1);
       xassert(head->next == NULL);     // it had better not copy the list tail itself!
   }
   // attach to result of cloning the tail
-  FakeList<T> *tail = cloneFakeList(pool, src->butFirstC(), deepness, listDeepness);
+  FakeList<T> *tail = cloneFakeList(DBG_INFO_ARG_FWD_FIRST  pool, src->butFirstC(), deepness, listDeepness);
   return tail->prepend(head);
 }
 

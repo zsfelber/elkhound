@@ -34,8 +34,8 @@ public:    // funcs
   //void copyAndDel(LocString *obj);
 
   // sometimes useful for generating arguments to the above ctor
-  LocString *clone(str::StoragePool &pool) const;
-  LocString *clone(str::StoragePool &pool, int deepness, int listDeepness) const;
+  LocString *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool) const;
+  LocString *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const;
 
   LocString& operator= (LocString const &obj)
     { loc = obj.loc; str = obj.str; return *this; }

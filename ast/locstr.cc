@@ -52,14 +52,14 @@ void LocString::xfer(str::StoragePool &pool, Flatten &flat)
   delete obj;
 }*/
 
-LocString *LocString::clone(str::StoragePool &pool) const
+LocString *LocString::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool) const
 {
-  return new (pool) LocString(*this);
+  return new (pool) LocString(DBG_INFO_ARG_FWD_FIRST  *this);
 }
 
-LocString *LocString::clone(str::StoragePool &pool, int deepness, int listDeepness) const
+LocString *LocString::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const
 {
-  return new (pool) LocString(*this);
+  return new (pool) LocString(DBG_INFO_ARG_FWD_FIRST  *this);
 }
 
 

@@ -23,7 +23,7 @@ ASTSpecFile *ASTSpecFile::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &p
 {
   deepness--; listDeepness--;
   ASTSpecFile *ret = new (pool) ASTSpecFile(
-    DBG_INFO_ARG_FWD_FIRST  pool, cloneASTList(pool, forms, deepness, listDeepness)
+    DBG_INFO_ARG_FWD_FIRST  pool, cloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, forms, deepness, listDeepness)
   );
   return ret;
 }
@@ -120,7 +120,7 @@ TF_class *TF_class::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, i
   TF_class *ret = new (pool) TF_class(
     DBG_INFO_ARG_FWD_FIRST  pool,
     ((deepness>=0)&&super)? super->clone(DBG_INFO_ARG_FWD_FIRST  pool, deepness, listDeepness) : super,
-    cloneASTList(pool, ctors, deepness, listDeepness)
+    cloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, ctors, deepness, listDeepness)
   );
   return ret;
 }
@@ -149,7 +149,7 @@ TF_option *TF_option::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool,
     deepness--; listDeepness--;
   TF_option *ret = new (pool) TF_option(
     DBG_INFO_ARG_FWD_FIRST  pool, name,
-    shallowCloneASTList(pool, args)
+    shallowCloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, args)
   );
   return ret;
 }
@@ -202,7 +202,7 @@ TF_enum *TF_enum::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int
 {
   TF_enum *ret = new (pool) TF_enum(
     DBG_INFO_ARG_FWD_FIRST  pool, name,
-    shallowCloneASTList(pool, enumerators)
+    shallowCloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, enumerators)
   );
   return ret;
 }
@@ -233,10 +233,10 @@ ASTClass *ASTClass::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, i
 {
   ASTClass *ret = new (pool) ASTClass(
     DBG_INFO_ARG_FWD_FIRST  pool, name,
-    cloneASTList(pool, args, deepness, listDeepness),
-    cloneASTList(pool, lastArgs, deepness, listDeepness),
-    cloneASTList(pool, bases, deepness, listDeepness),
-    cloneASTList(pool, decls, deepness, listDeepness)
+    cloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, args, deepness, listDeepness),
+    cloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, lastArgs, deepness, listDeepness),
+    cloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, bases, deepness, listDeepness),
+    cloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, decls, deepness, listDeepness)
   );
   return ret;
 }
@@ -263,7 +263,7 @@ AccessMod *AccessMod::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool,
 {
   AccessMod *ret = new (pool) AccessMod(
     DBG_INFO_ARG_FWD_FIRST  pool, acc,
-    shallowCloneASTList(pool, mods)
+    shallowCloneASTList(DBG_INFO_ARG_FWD_FIRST  pool, mods)
   );
   return ret;
 }

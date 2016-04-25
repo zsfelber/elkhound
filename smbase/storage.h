@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <algorithm>
 #include <iostream>
+#include <string>
+#include <sstream>
 
 #include "xassert.h"
 
@@ -486,6 +488,11 @@ public:
    virtual inline void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const
    {
    }
+#ifdef DEBUG
+   inline char const * getObjectName() const {
+       return objectName.str;
+   }
+#endif
 };
 
 
@@ -2248,6 +2255,19 @@ inline void operator<<(std::ostream & os, Storeable const & st) {
 
 }// namespace str
 
+inline std::string toString(str::Storeable const & st) {
+  std::stringstream s;
+  st.debugPrint(s);
+  return s.str();
+}
+/*
+inline char const * toString(str::StoragePool const & st) {
+#ifdef DEBUG
+   return st.getObjectName();
+#endif
+   return "storage pool " __FILE_LINE__;
+#else
+}*/
 
 #endif // STORAGE_H
 
