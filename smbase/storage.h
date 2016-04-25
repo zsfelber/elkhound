@@ -540,7 +540,10 @@ public:
        uint8_t* memend;
        uint8_t const * variablePtr;
 
-       inline iterator(StoragePool const & pool, uint8_t const * variablePtr) : index(0), variablePtr(variablePtr) {
+       inline iterator(StoragePool const & pool, uint8_t const * _variablePtr) : index(0), variablePtr(_variablePtr) {
+           if (!variablePtr) {
+               variablePtr = pool.memory;
+           }
            memend = pool.memory + pool.memlength;
            check();
        }
@@ -944,37 +947,58 @@ private:
        size_t oldmemlength, newmemlength, bufsz;
 
       // if hollow >50% :
-      if (deleted_vars > memlength>>1) {
-          uint8_t const * first = NULL;
-          size_t continous = 0;
-          uint8_t const * da = decodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) first_del_var);
-          for (iterator it(*this, da); it != -1; it++) {
-              Storeable *cur = *it;
-              if (cur->__kind == ST_DELETED) {
-                  if (!first) first = it.variablePtr;
-                  continous += cur->__store_size;
-                  if (continous >= store_size) {
-                      xassert(first >= da);
+       if (deleted_vars) {
+           size_t chkmemlen = memlength;
+           if (first_del_var != npos) {
+              chkmemlen -= first_del_var;
+           }
+           chkmemlen>>=1;
+          if (deleted_vars > chkmemlen) {
+              uint8_t const * first = NULL;
+              size_t continous = 0;
+              uint8_t const * da = decodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) first_del_var);
+              for (iterator it(*this, da); it != -1; it++) {
+                  Storeable *cur = *it;
+                  if (cur->__kind == ST_DELETED) {
+                      if (!first) first = it.variablePtr;
+                      size_t cur_stos = cur->__store_size;
+                      size_t kontinous = continous + cur_stos;
+                      if (kontinous >= store_size) {
+                          xassert(first >= da);
+                          _data = first;
+                          deleted_vars -= continous;
+                          deleted_vars -= store_size;
 
-                      _data = first;
-                      deleted_vars -= continous;
+                          cur->__store_size = store_size;
 
-                      if (first == da) {
-                          first_del_var = npos;
-                          if (deleted_vars) {
-                              for (it++; it != -1; it++) {
-                                  if (it->__kind == ST_DELETED) {
-                                      first_del_var = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) it.variablePtr);
-                                      break;
+                          it++;
+                          if (cur_stos != store_size) {
+                              xassert(it != -1);
+                              xassert(store_size < cur_stos);
+                              it->__store_size = cur_stos - store_size;
+                              it->__kind = ST_DELETED;
+                          }
+
+                          if (first == da) {
+                              if (deleted_vars) {
+                                  for (; it != -1; it++) {
+                                      if (it->__kind == ST_DELETED) {
+                                          first_del_var = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) it.variablePtr);
+                                          break;
+                                      }
                                   }
+                              } else {
+                                  first_del_var = npos;
                               }
                           }
+                          goto ok;
+                      } else {
+                          continous = kontinous;
                       }
-                      goto ok;
+                  } else {
+                      first = NULL;
+                      continous = 0;
                   }
-              } else {
-                  first = NULL;
-                  continous = 0;
               }
           }
       }
@@ -1416,6 +1440,9 @@ public:
        memcpy(childView.intpointers, src.intpointers, sizeof(size_t)*src.intptrslength);
        memcpy(childView.childpools, src.childpools, sizeof(size_t)*src.chplslength);
 
+       //size_t memlength0 = memlength;
+       memlength += src.memlength;
+
        childView.moveInternalPointers(src);
 
        convertDeltas(childView.intvariables, childView.intvariables+childView.intvarslength, childView.memory  DBG_INFO_FWD_PCOM(childView.memory+childView.memlength) );
@@ -1434,7 +1461,6 @@ public:
        sort(intpointers, intptrslength, childView.intpointers, childView.intptrslength);
        sort(childpools, chplslength, childView.childpools, childView.chplslength);
 
-       memlength += src.memlength;
        intvarslength += src.intvarslength;
        intptrslength += src.intptrslength;
        chplslength += src.chplslength;
@@ -1934,9 +1960,6 @@ public:
    }
 
    inline iterator begin(DataPtr variablePtr = 0) const {
-       if (!variablePtr) {
-           variablePtr = (DataPtr) memory;
-       }
        return iterator(*this, (uint8_t*)variablePtr);
    }
 
