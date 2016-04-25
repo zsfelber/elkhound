@@ -35,6 +35,9 @@ class VoidNode;
 #define DBG_INFO_ARG_FWD_FIRST objectName,
 #define DBG_INFO_ARG0 __DbgStr(__FILE_LINE__)
 #define DBG_INFO_ARG0_FIRST __DbgStr(__FILE_LINE__),
+#define DBG_INFO_FWD(a) a
+#define DBG_INFO_FWD_COM(a) a,
+#define DBG_INFO_FWD_PCOM(a) ,a
 #else
 #define DBG_INFO_FORMAL
 #define DBG_INFO_FORMAL_FIRST
@@ -42,6 +45,9 @@ class VoidNode;
 #define DBG_INFO_ARG_FWD_FIRST
 #define DBG_INFO_ARG0
 #define DBG_INFO_ARG0_FIRST
+#define DBG_INFO_FWD(a)
+#define DBG_INFO_FWD_COM(a)
+#define DBG_INFO_FWD_PCOM(a)
 #endif
 
 #ifdef REG_CHILD
@@ -197,17 +203,20 @@ inline size_t getPtrBufSize(size_t ptrslength) {
     return ((ptrslength + STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
 }
 
-
-inline size_t encodeDeltaPtr(uint8_t const * origin, uint8_t const * address) {
+inline size_t encodeDeltaPtr(uint8_t const * origin,
+                             DBG_INFO_FWD_COM(uint8_t const * org_last)
+                             uint8_t const * address) {
     if (!address || !origin) {
         return npos;
     } else {
        xassert(origin <= address);
+       DBG_INFO_FWD(xassert(address < org_last);)
         return (size_t)(address - origin);
     }
 }
 
-inline std::ptrdiff_t encodeSignedDeltaPtr(uint8_t const * origin, uint8_t const * address) {
+inline std::ptrdiff_t encodeSignedDeltaPtr(uint8_t const * origin,
+                                           uint8_t const * address) {
     if (!address || !origin) {
         return 0;
     } else {
@@ -215,15 +224,27 @@ inline std::ptrdiff_t encodeSignedDeltaPtr(uint8_t const * origin, uint8_t const
     }
 }
 
-inline uint8_t const * decodeDeltaPtr(uint8_t const * origin, size_t delta) {
-    return (delta == npos || !origin) ? NULL : (origin + delta);
+inline uint8_t const * decodeDeltaPtr(uint8_t const * origin,
+                                      DBG_INFO_FWD_COM(uint8_t const * org_last)
+                                      size_t delta) {
+    if (delta == npos || !origin) {
+        return NULL;
+    } else {
+        uint8_t const * address = origin + delta;
+        xassert(origin <= address);
+        DBG_INFO_FWD(xassert(address < org_last);)
+        return address;
+    }
 }
 
-inline uint8_t const * decodeDeltaBackPtr(uint8_t const * origin, size_t delta) {
+/*inline uint8_t const * decodeDeltaBackPtr(uint8_t const * origin,
+                                          DBG_INFO_FWD_COM(uint8_t const * org_last)
+                                          size_t delta) {
     return (delta == npos || !origin)  ? NULL : (origin - delta);
-}
+}*/
 
-inline uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin, std::ptrdiff_t delta) {
+inline uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin,
+                                            std::ptrdiff_t delta) {
     return (delta == 0 || !origin)  ? NULL : (origin + delta);
 }
 
@@ -320,10 +341,7 @@ friend class ::VoidList;
 friend class ::VoidTailList;
 friend class ::VoidNode;
 
-#ifdef DEBUG
-    __DbgStr objectName;
-#endif
-
+DBG_INFO_FWD(__DbgStr objectName;)
 
     uint8_t __kind;
     StoragePool const * __parent;
@@ -666,7 +684,7 @@ private:
        size_t* intPointersFrom = intpointers;
        size_t* intPointersTo = intpointers+intptrslength;
        for (; intPointersFrom<intPointersTo; intPointersFrom++) {
-           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
+           ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) *intPointersFrom);
            if (ptr) {
                movePointer(oldmem, *ptr, d);
            }
@@ -697,11 +715,11 @@ private:
        }
    }
 
-   inline void convertDeltas(size_t* buf, size_t* last, uint8_t const * oldOrigin) {
+   inline void convertDeltas(size_t* buf, size_t* last, uint8_t const * oldOrigin  DBG_INFO_FWD_PCOM(uint8_t const * oldLast)) {
        for (; buf<last; buf++) {
-           uint8_t const * ptr = decodeDeltaPtr(oldOrigin, *buf);
+           uint8_t const * ptr = decodeDeltaPtr(oldOrigin, DBG_INFO_FWD_COM(oldLast) *buf);
            if (ptr) {
-               *buf = encodeDeltaPtr(memory, ptr);
+               *buf = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) ptr);
            }
        }
    }
@@ -766,7 +784,7 @@ private:
                     break;
                 } else {
                     xassert(pool->chplslength == ch.pool->chplslength);
-                    StoragePool*  chpool = (StoragePool*) decodeDeltaPtr(pool->memory, pool->childpools[ch.index]);
+                    StoragePool*  chpool = (StoragePool*) decodeDeltaPtr(pool->memory, DBG_INFO_FWD_COM(pool->memory+pool->memlength) pool->childpools[ch.index]);
                     pool = chpool;
                 }
            }
@@ -862,8 +880,8 @@ private:
        xassert(tar_chTo-tar_chFrom == src_chTo-src_chFrom);
 
        for (; tar_chFrom<tar_chTo; tar_chFrom++, src_chFrom++) {
-           V* ptr = (V*)decodeDeltaPtr(memory, *tar_chFrom);
-           V* src_ptr = (V*)decodeDeltaPtr(source.memory, *src_chFrom);
+           V* ptr = (V*)decodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) *tar_chFrom);
+           V* src_ptr = (V*)decodeDeltaPtr(source.memory, DBG_INFO_FWD_COM(source.memory+source.memlength) *src_chFrom);
 
            fixChild(ptr, src_ptr, target, source, d, req);
        }
@@ -929,7 +947,7 @@ private:
       if (deleted_vars > memlength>>1) {
           uint8_t const * first = NULL;
           size_t continous = 0;
-          uint8_t const * da = decodeDeltaPtr(memory, first_del_var);
+          uint8_t const * da = decodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) first_del_var);
           for (iterator it(*this, da); it != -1; it++) {
               Storeable *cur = *it;
               if (cur->__kind == ST_DELETED) {
@@ -946,7 +964,7 @@ private:
                           if (deleted_vars) {
                               for (it++; it != -1; it++) {
                                   if (it->__kind == ST_DELETED) {
-                                      first_del_var = encodeDeltaPtr(memory, it.variablePtr);
+                                      first_del_var = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) it.variablePtr);
                                       break;
                                   }
                               }
@@ -1202,7 +1220,7 @@ private:
        StoragePool const * child = findChild(dataVariable);
        xassert(child == this && dataVariable->getParent() == this);
 
-       size_t dd = encodeDeltaPtr(memory, (uint8_t*)dataVariable);
+       size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)dataVariable);
        addValue(intvariables, intvarslength, intvarscapacity, dd, npos);
    }
 
@@ -1213,7 +1231,7 @@ private:
            return;
        }*/
 
-       size_t dd = encodeDeltaPtr(memory, (uint8_t*)dataVariable);
+       size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)dataVariable);
 
        if (dataVariable->__kind == ST_CHILD) {
            StoragePool const * child = findChild(dataVariable);
@@ -1326,7 +1344,7 @@ public:
        size_t* chPoolsFrom = childpools;
        size_t* chPoolsTo = childpools+chplslength;
        for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) *chPoolsFrom);
            if (ptr && ptr->ownerPool == ptr) {
                ptr->del();
            }
@@ -1400,9 +1418,9 @@ public:
 
        childView.moveInternalPointers(src);
 
-       convertDeltas(childView.intvariables, childView.intvariables+childView.intvarslength, childView.memory);
-       convertDeltas(childView.intpointers, childView.intpointers+childView.intptrslength, childView.memory);
-       convertDeltas(childView.childpools, childView.childpools+childView.chplslength, childView.memory);
+       convertDeltas(childView.intvariables, childView.intvariables+childView.intvarslength, childView.memory  DBG_INFO_FWD_PCOM(childView.memory+childView.memlength) );
+       convertDeltas(childView.intpointers, childView.intpointers+childView.intptrslength, childView.memory  DBG_INFO_FWD_PCOM(childView.memory+childView.memlength));
+       convertDeltas(childView.childpools, childView.childpools+childView.chplslength, childView.memory  DBG_INFO_FWD_PCOM(childView.memory+childView.memlength));
 
        if (convertExtPointersFrom) {
            convertExternalPointers(src, convertExtPointersFrom, convertExtPointersTo);
@@ -1478,7 +1496,7 @@ public:
        size_t* chPoolsFrom = childpools;
        size_t* chPoolsTo = childpools+chplslength;
        for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *chPoolsFrom);
            if (ptr) {
                StoragePool const * result = ptr->findChild(pointer);
                if (result) {
@@ -1500,7 +1518,7 @@ public:
        size_t* chPoolsFrom = childpools;
        size_t* chPoolsTo = childpools+chplslength;
        for (int i = 0; chPoolsFrom<chPoolsTo; i++, chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *chPoolsFrom);
            if (ptr) {
                ptr->findChildChain(result, pointer);
                if (result.size()) {
@@ -1515,7 +1533,7 @@ public:
    }
 
    inline size_t* getChildPointer(StoragePool const * child) const {
-       size_t dd = encodeDeltaPtr(memory, (uint8_t*)child);
+       size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)child);
        size_t * last = childpools+chplslength;
        size_t* val = lower_bound(childpools, last, dd, npos);
        if (val == last) {
@@ -1569,7 +1587,7 @@ public:
        }
 
        if (pchild == this) {
-           size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
+           size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)&dataPointer);
            addValue(intpointers, intptrslength, intptrscapacity, dd, npos);
        } else if (pchild) {
            xassert(child == pchild);
@@ -1615,7 +1633,7 @@ public:
        }
 
        if (pchild == this) {
-           size_t dd = encodeDeltaPtr(memory, (uint8_t*)&dataPointer);
+           size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)&dataPointer);
            removeValue(intpointers, intptrslength, dd, npos);
        } else if (pchild) {
            if (child != pchild) {
@@ -1650,13 +1668,13 @@ public:
    inline void addChildPool(CPtrToMe childPoolPointer) {
        xassert(ownerPool == this && contains(childPoolPointer));
 
-       size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
+       size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)childPoolPointer);
        addValue(childpools, chplslength, chplscapacity, dd, npos);
    }
 
    inline void removeChildPool(CPtrToMe childPoolPointer) {
-       if (memory <= (uint8_t*)childPoolPointer) {
-           size_t dd = encodeDeltaPtr(memory, (uint8_t*)childPoolPointer);
+       if (memory <= (uint8_t*)childPoolPointer && ((uint8_t*)childPoolPointer) < (memory+memlength)) {
+           size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)childPoolPointer);
            removeValue(childpools, chplslength, dd, npos);
       }
    }
@@ -1689,7 +1707,7 @@ public:
        size_t* chPoolsFrom = childpools;
        size_t* chPoolsTo = childpools+chplslength;
        for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *chPoolsFrom);
            if (ptr) {
                xassert(contains(ptr));
                xassert(ptr->__parent == this || ptr->__parent == ownerPool);
@@ -1705,7 +1723,7 @@ public:
        size_t* varsFrom = intvariables;
        size_t* varsTo = intvariables+intvarslength;
        for (; varsFrom<varsTo; varsFrom++) {
-           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *varsFrom);
+           PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *varsFrom);
            if (ptr) {
                xassert(contains(ptr));
                xassert(ptr->__parent == this || ptr->__parent == ownerPool);
@@ -1721,7 +1739,7 @@ public:
            size_t v = *intPtrsFrom;
            if (v != npos) {
                xassert(v < memlength);
-               ExternalPtr p = (ExternalPtr) decodeDeltaPtr(memory, v);
+               ExternalPtr p = (ExternalPtr) decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) v);
                if (p) {
                    if (*p) {
                        StoragePool const * chpool = findChild(*p);
@@ -1837,7 +1855,7 @@ public:
          size_t* chPoolsFrom = childpools;
          size_t* chPoolsTo = childpools+chplslength;
          for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
-             PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory, *chPoolsFrom);
+             PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *chPoolsFrom);
              if (ptr) {
                  ptr->debugPrint(os, indent+2);
                  os<<"\n";
@@ -1877,7 +1895,7 @@ public:
              size_t* intVarsFrom = intvariables;
              size_t* intVarsTo = intvariables+intvarslength;
              for (; intVarsFrom<intVarsTo; intVarsFrom++) {
-                 DataPtr var = (DataPtr)decodeDeltaPtr(memory, *intVarsFrom);
+                 DataPtr var = (DataPtr)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *intVarsFrom);
                  if (var) {
                      debugVar(os, var, false);
                  }
@@ -1890,7 +1908,7 @@ public:
              size_t* intPointersFrom = intpointers;
              size_t* intPointersTo = intpointers+intptrslength;
              for (; intPointersFrom<intPointersTo; intPointersFrom++) {
-                 ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory, *intPointersFrom);
+                 ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *intPointersFrom);
                  if (ptr) {
                      debugPtr(os, ptr);
                  }
@@ -1941,19 +1959,13 @@ public:
 
 
 inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing)
-#ifdef DEBUG
-    : objectName(objectName)  REG_CHILD_COMMA
-#endif
+DBG_INFO_FWD(: objectName(objectName)  REG_CHILD_COMMA)
 {
-#ifdef DEBUG
-      lastObjName = objectName.str;
-#endif
+    DBG_INFO_FWD(lastObjName = objectName.str;)
 }
 
 inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
-#ifdef DEBUG
-    : objectName(objectName)  REG_CHILD_COMMA
-#endif
+DBG_INFO_FWD(: objectName(objectName)  REG_CHILD_COMMA)
 #ifdef REG_CHILD
     NDEBUG_COLON __next(0)
 #endif
@@ -1965,9 +1977,7 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
         }
     }
 #endif
-#ifdef DEBUG
-    lastObjName = objectName.str;
-#endif
+DBG_INFO_FWD(lastObjName = objectName.str;)
     __kind = ST_NONE;
     __parent = NULL;
     __store_size  = getStoreSize(size_of);
@@ -1975,13 +1985,9 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
 inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool)
-#ifdef DEBUG
-    : objectName(objectName)
-#endif
+DBG_INFO_FWD(: objectName(objectName))
 {
-#ifdef DEBUG
-    lastObjName = objectName.str;
-#endif
+    DBG_INFO_FWD(lastObjName = objectName.str;)
     if (pool.contains(this)) {
         xassert((isPool?__kind == ST_STORAGE_POOL:__kind == ST_PARENT) && getParent() == &pool);
     } else {
@@ -1993,24 +1999,16 @@ inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, boo
 
 template<class ME>
 inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  ME const & srcOrParent, bool childOfParent, bool isPool)
-#ifdef DEBUG
-    : objectName(objectName)
-#endif
+DBG_INFO_FWD(: objectName(objectName))
 {
-#ifdef DEBUG
-    lastObjName = objectName.str;
-#endif
+    DBG_INFO_FWD(lastObjName = objectName.str;)
     init(srcOrParent, sizeof(ME), childOfParent, isPool);
 }
 
 inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool)
-#ifdef DEBUG
-    : objectName(objectName)
-#endif
+DBG_INFO_FWD(: objectName(objectName))
 {
-#ifdef DEBUG
-    lastObjName = objectName.str;
-#endif
+    DBG_INFO_FWD(lastObjName = objectName.str;)
     init(srcOrParent, size_of, childOfParent, isPool);
 }
 

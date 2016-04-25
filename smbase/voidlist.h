@@ -102,7 +102,7 @@ public:
   { top=NULL;   if (getKind()==ST_PARENT) npool.addPointer(top); }
 
   VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &obj, size_t size_of=0, bool move=false);     // makes a (shallow) copy of the contents
-  virtual ~VoidList()                { if (getKind()==ST_PARENT) npool.removePointer(top);/*npool clears it completely*/  }
+  virtual ~VoidList()                { /*npool clears it completely*/  }
 
   void assignParent(str::StoragePool const *pool0);
   void assign(VoidList const &src, size_t size_of=0, bool move=false);

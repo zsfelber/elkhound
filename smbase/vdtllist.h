@@ -40,7 +40,7 @@ public:
   { tail = NULL;  if (getKind()==ST_PARENT) npool.addPointer(tail); }
   VoidTailList(DBG_INFO_FORMAL_FIRST  str::Storeable &parent) : VoidList(DBG_INFO_ARG_FWD_FIRST  parent,sizeof(VoidTailList))
   { tail = NULL;  if (getKind()==ST_PARENT) npool.addPointer(tail); }
-  ~VoidTailList()                    { if (getKind()==ST_PARENT) npool.removePointer(tail); }
+  ~VoidTailList()                    {  }
   
   // move:true  special ctor which steals the list. NOTE invoker should always deallocate the header
   VoidTailList(DBG_INFO_FORMAL_FIRST  VoidTailList const &src, bool move) : VoidList(DBG_INFO_ARG_FWD_FIRST  src, sizeof(VoidTailList), move)
