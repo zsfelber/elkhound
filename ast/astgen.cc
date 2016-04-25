@@ -275,7 +275,7 @@ string getSuperTypeOf(rostring sub)
 string extractNodeType(rostring type)
 {
   char const *end = toCStr(type);
-  while (isalnum(*end) || *end=='_') {
+  while (isalnum(*end) || *end=='_' || *end==':') {
     end++;
   }
   return substring(type, end-toCStr(type));
@@ -3352,10 +3352,10 @@ void mergeItself(ASTSpecFile *base)
               o << "freeform result:" << std::endl;
               c->super->debugPrint(o, 0);
           } else {
-              c->super->bases.prepend(DBG_INFO_ARG0_FIRST  new (astgen_pool) BaseClass(DBG_INFO_ARG0_FIRST  astgen_pool, AC_PUBLIC, "Storeable"));
+              c->super->bases.prepend(DBG_INFO_ARG0_FIRST  new (astgen_pool) BaseClass(DBG_INFO_ARG0_FIRST  astgen_pool, AC_PUBLIC, "str::Storeable"));
           }
 
-          c->super->args.prepend(DBG_INFO_ARG0_FIRST  parseCtorArg(c->super->args.getList().getPool(), "public str::StoragePool &pool"));
+          c->super->args.prepend(DBG_INFO_ARG0_FIRST  parseCtorArg(c->super->args.getList().getPool(), "str::StoragePool &pool"));
       }
     }
 }
