@@ -192,6 +192,10 @@ bool VoidTailList::appendUnique(str::Storeable *newitem)
   adjustTail();
   return retval;
 }
+void VoidTailList::reverse() {
+    tail = top;
+    VoidList::reverse();
+}
 
 void VoidTailList::selfCheck() const
 {

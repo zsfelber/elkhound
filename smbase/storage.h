@@ -547,6 +547,7 @@ public:
        uint8_t* memend;
        uint8_t const * variablePtr;
 
+       inline iterator() {}
        inline iterator(StoragePool const & pool, uint8_t const * _variablePtr) : index(0), variablePtr(_variablePtr) {
            if (!variablePtr) {
                variablePtr = pool.memory;
@@ -961,33 +962,39 @@ private:
            }
            chkmemlen>>=1;
           if (deleted_vars > chkmemlen) {
-              uint8_t const * first = NULL;
+              iterator first;
               size_t continous = 0;
               uint8_t const * da = decodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) first_del_var);
               for (iterator it(*this, da); it != -1; it++) {
                   Storeable *cur = *it;
                   if (cur->__kind == ST_DELETED) {
-                      if (!first) first = it.variablePtr;
+                      if (!continous) {
+                          first = it;
+                      }
                       size_t cur_stos = cur->__store_size;
                       size_t kontinous = continous + cur_stos;
                       if (kontinous >= store_size) {
-                          xassert(first >= da);
-                          _data = first;
-                          deleted_vars -= continous;
+                          xassert(first.variablePtr >= da);
+                          if (continous) {
+                              it = first;
+                              cur = *it;
+                          }
+                          _data = cur;
                           deleted_vars -= store_size;
+
+                          size_t store_size_remains = kontinous - store_size;
 
                           cur->__store_size = store_size;
 
                           it++;
-                          if (cur_stos != store_size) {
+                          if (store_size_remains) {
                               xassert(it != -1);
-                              xassert(store_size < cur_stos);
                               cur = *it;
-                              cur->__store_size = cur_stos - store_size;
+                              cur->__store_size = store_size_remains;
                               cur->__kind = ST_DELETED;
                           }
 
-                          if (first == da) {
+                          if (first.variablePtr == da) {
                               first_del_var = npos;
                               if (deleted_vars) {
                                   for (; it != -1; it++) {
@@ -1003,7 +1010,6 @@ private:
                           continous = kontinous;
                       }
                   } else {
-                      first = NULL;
                       continous = 0;
                   }
               }

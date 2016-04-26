@@ -637,46 +637,50 @@ uint8_t* VoidList::glueNpools(VoidList const &tail) {
 // using str::StoragePool impl based on buffer-copy
 VoidNode *VoidList::appendAll(VoidList const &tail, VoidNode *myTail, VoidNode *tailTail)
 {
-  uint8_t * oldmemend = glueNpools(tail);
+  if (tail.top) {
+      uint8_t * oldmemend = glueNpools(tail);
 
-  // find the end of 'this' list
-  VoidNode *n;
-  if (!myTail) {
-      n = top;
-      if (n) {
-          for(; n->next; n = n->next);
-      }
-  } else {
-      n = myTail;
-  }
-  xassert(bool(top) == bool(n));
-
-  if (oldmemend) {
-
-      if (n) {
-          n->next = tail.top;
-          npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next, oldmemend);
+      // find the end of 'this' list
+      VoidNode *n;
+      if (myTail) {
+          n = myTail;
+          xassert(top);
       } else {
-          top = tail.top;
-          npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)top, oldmemend);
-      }
-
-      if (tailTail) {
-          npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)tailTail, oldmemend);
-      }
-  } else {
-
-      VoidNode *tn = tail.top;
-      if (tn) {
-          for(; tn; tn = tn->next) {
-              if (n) {
-                  n = n->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, tn->data);
-              } else {
-                  n = top = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, tn->data);
-              }
+          n = top;
+          if (n) {
+              for(; n->next; n = n->next);
           }
       }
-      tailTail = n;
+
+      if (oldmemend) {
+
+          if (n) {
+              n->next = tail.top;
+              npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)n->next, oldmemend);
+          } else {
+              top = tail.top;
+              npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)top, oldmemend);
+          }
+
+          if (tailTail) {
+              npool.moveFrom(tail.npool, (str::Storeable::DataPtr&)tailTail, oldmemend);
+          }
+      } else {
+
+          VoidNode *tn = tail.top;
+          if (tn) {
+              for(; tn; tn = tn->next) {
+                  if (n) {
+                      n = n->next = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, tn->data);
+                  } else {
+                      n = top = new (npool) VoidNode(DBG_INFO_ARG0_FIRST  npool, tn->data);
+                  }
+              }
+          }
+          tailTail = n;
+      }
+  } else {
+      tailTail = myTail;
   }
 
   return tailTail;
@@ -703,21 +707,19 @@ VoidNode* VoidList::prependAll(VoidList const &head, VoidNode *headTail)
 {
     VoidNode *myTail = NULL;
 
-    uint8_t * oldmemend = glueNpools(head);
-
     // find the end of 'this' list
-    VoidNode *n;
-    if (!headTail) {
-        n = head.top;
-        if (n) {
-            for(; n->next; n = n->next);
-        }
-    } else {
-        n = headTail;
-    }
-    xassert(bool(head.top) == bool(n));
+    VoidNode *n = head.top;
 
     if (n) {
+
+        uint8_t * oldmemend = glueNpools(head);
+
+        if (headTail) {
+            n = headTail;
+        } else {
+            for(; n->next; n = n->next);
+        }
+
         if (oldmemend) {
 
             npool.moveFrom(head.npool, (str::Storeable::DataPtr&)n, oldmemend);

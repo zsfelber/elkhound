@@ -116,7 +116,7 @@ ASTGEN_OBJS := \
 
 # ast.ast.cc is a dependency here but not explicitly in the command
 # line because ast.hand.cc #includes it
-astgen: $(ASTGEN_OBJS) ast.ast.cc $(LIBSMBASE) 
+astgen: $(ASTGEN_OBJS) ast.ast.cc $(LIBSMBASE)
 	$(CXX) -o astgen $(ASTGEN_OBJS) $(LDFLAGS)
 
 

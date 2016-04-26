@@ -104,6 +104,7 @@ public:
   bool appendUnique(str::Storeable *newitem);
   //void removeItem(str::Storeable *item);
   //bool removeIfPresent(str::Storeable *item);
+  void reverse();
 
   // debugging
   void selfCheck() const;

@@ -102,6 +102,7 @@ public:
   // list-as-set: mutators
   bool prependUnique(T *newitem)        { return list.prependUnique(newitem); }
   bool appendUnique(T *newitem)         { return list.appendUnique(newitem); }
+  void reverse()                        { list.reverse(); }
 
   // debugging: two additional invariants
   void selfCheck() const                { list.selfCheck(); }

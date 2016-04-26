@@ -3251,9 +3251,13 @@ void mergeSuperclass(TF_class *base, TF_class *ext)
     ASTClass *prev = findClass(base, c->name);
     if (prev) {
       mergeClass(prev, c);
-      delete c;
+      // TODO FIXME not now, this also invalidates the left side (see mergeClass) :
+      // delete c;
     }
     else {
+        xassert(c->name!=string::nullString);
+        xassert(c->name!=string::emptyString);
+        xassert(!c->name.isempty());
       // add it wholesale
       trace("merge") << "adding subclass: " << c->name << std::endl;
       base->ctors.append(DBG_INFO_ARG0_FIRST  c);
@@ -3349,10 +3353,10 @@ void mergeItself(ASTSpecFile *base)
               o << "freeform result:" << std::endl;
               c->super->debugPrint(o, 0);
           } else {
-              c->super->bases.prepend(DBG_INFO_ARG0_FIRST  new (astgen_pool) BaseClass(DBG_INFO_ARG0_FIRST  astgen_pool, AC_PUBLIC, "str::Storeable"));
+              c->super->bases.prepend(DBG_INFO_ARG0_FIRST  new (c->super->bases.getList().getPool()) BaseClass(DBG_INFO_ARG0_FIRST  c->super->bases.getList().getPool(), AC_PUBLIC, "str::Storeable"));
           }
 
-          c->super->args.prepend(DBG_INFO_ARG0_FIRST  parseCtorArg(c->super->args.getList().getPool(), "str::StoragePool &pool"));
+          c->super->args.prepend(DBG_INFO_ARG0_FIRST  parseCtorArg(DBG_INFO_ARG0_FIRST  c->super->args.getList().getPool(), "str::StoragePool &pool"));
       }
     }
 }
@@ -3372,7 +3376,8 @@ void mergeExtension(ASTSpecFile *base, ASTSpecFile *ext)
       TF_class *prev = findSuperclass(base, c->super->name);
       if (prev) {
         mergeSuperclass(prev, c);
-        delete c;
+        // TODO FIXME not now, this also invalidates the left side (see mergeClass) :
+        // delete c;
       }
       else {
         // add the whole class
@@ -3388,7 +3393,8 @@ void mergeExtension(ASTSpecFile *base, ASTSpecFile *ext)
       TF_enum *prev = findEnum(base, e->name);
       if (prev) {
         mergeEnum(prev, e);
-        delete e;
+        // TODO FIXME not now, this also invalidates the left side (see mergeClass) :
+        // delete e;
       }
       else {
         // add the whole enum
@@ -3583,8 +3589,9 @@ void entry(int argc, char **argv)
     
     modules.append(DBG_INFO_ARG0_FIRST  new (astgen_pool) string(DBG_INFO_ARG0_FIRST  astgen_pool, fname));
 
-    Owner<ASTSpecFile> extension;
-    extension = readAbstractGrammar(fname);
+    // TODO FIXME not now, this also invalidates the left side (see mergeClass) :
+    //Owner<ASTSpecFile> extension;
+    ASTSpecFile * extension = readAbstractGrammar(fname);
 
     mergeExtension(wholeAST, extension);
   }

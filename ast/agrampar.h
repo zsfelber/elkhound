@@ -52,7 +52,7 @@ string *box(char const *s);
 string *appendStr(string *left, string *right);
 
 // parse a string into components
-CtorArg *parseCtorArg(str::StoragePool const &pool, rostring str);
+CtorArg *parseCtorArg(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring str);
 
 // error routine
 void agrampar_yyerror(char const *msg, void *parseParam);

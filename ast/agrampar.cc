@@ -40,9 +40,9 @@ string *appendStr(string *left, string *right)
 }
 
 
-CtorArg *parseCtorArg(str::StoragePool const & pool, rostring origStr)
+CtorArg *parseCtorArg(DBG_INFO_FORMAL_FIRST  str::StoragePool const & pool, rostring origStr)
 {
-  CtorArg *ret = new (pool) CtorArg(DBG_INFO_ARG0_FIRST  pool, false, "", "", "");
+  CtorArg *ret = new (pool) CtorArg(DBG_INFO_ARG_FWD_FIRST  pool, false, "", "", "");
 
   // strip leading and trailing whitespace
   string str = trimWhitespace(origStr);

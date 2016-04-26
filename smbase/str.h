@@ -55,6 +55,7 @@ class string : public str::Storeable {
 protected:     // data
   // 10/12/00: switching to never letting s be NULL
   char *s;     	       	       	       // string contents; never NULL
+public:
   static char * const emptyString;     // a global ""; should never be modified
   static char * const nullString;
 
