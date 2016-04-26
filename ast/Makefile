@@ -32,6 +32,7 @@ CXX := $(CXX)
 OPT_DEBUG := -O0 -DDEBUG
 
 # flags for the C and C++ compilers (and preprocessor)
+CCFLAGS0 := $(OPT_DEBUG) -I$(BOOST) -I$(SMBASE)
 CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -D__LINUX__ $(OPT_DEBUG) -I$(BOOST) -I$(SMBASE)
 
 # flags for the linker

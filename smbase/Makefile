@@ -25,6 +25,7 @@ OPT_DEBUG := -O0 -DDEBUG
 
 # flags for the C and C++ compilers (and preprocessor)
 CFLAGS  := -g -Wall -D__UNIX__ -D__LINUX__
+CCFLAGS0 := $(OPT_DEBUG) -I$(BOOST)
 CCFLAGS := -g -Wall -Wno-deprecated -D__UNIX__ -D__LINUX__ $(OPT_DEBUG) -I$(BOOST)
 
 # cross-compile info
@@ -116,7 +117,7 @@ $(MALLOC_MODULE).o: $(MALLOC_MODULE).c
 
 # mysig needs some flags to *not* be set ....
 mysig.o: mysig.cc mysig.h
-	$(CXX) -c -g mysig.cc
+	$(CXX) -c -g $(CCFLAGS0) mysig.cc
 
 # library itself
 OBJS := \
@@ -265,7 +266,7 @@ tobjpool$(EXE): tobjpool.cc objpool.h
 	$(TESTCXX) -o $@ tobjpool.cc $(TESTFLAGS)
 
 cycles$(EXE): cycles.h cycles.c
-	$(TESTCC) -o $@ -DTEST_CYCLES cycles.c
+	$(TESTCC) -o $@ -DTEST_CYCLES cycles.c 
 
 crc$(EXE): crc.cpp
 	$(TESTCXX) -o $@ $(CCFLAGS) -DTEST_CRC crc.cpp

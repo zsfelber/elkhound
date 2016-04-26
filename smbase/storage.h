@@ -571,7 +571,7 @@ public:
                variablePtr += st;
                check();
            } else {
-               x_assert_fail("Overindexed Storageable iterator.", __FILE__, __LINE__);
+               x_assert_fail("Overindexed Storeable iterator.", __FILE__, __LINE__);
            }
        }
 
@@ -632,7 +632,7 @@ public:
                variablePtr = (DataPtr) (variableMemFirst + variablePtr->__next);
                check();
            } else {
-               x_assert_fail("Overindexed Storageable iterator.", __FILE__, __LINE__);
+               x_assert_fail("Overindexed Storeable iterator.", __FILE__, __LINE__);
            }
        }
 
@@ -982,11 +982,13 @@ private:
                           if (cur_stos != store_size) {
                               xassert(it != -1);
                               xassert(store_size < cur_stos);
-                              it->__store_size = cur_stos - store_size;
-                              it->__kind = ST_DELETED;
+                              cur = *it;
+                              cur->__store_size = cur_stos - store_size;
+                              cur->__kind = ST_DELETED;
                           }
 
                           if (first == da) {
+                              first_del_var = npos;
                               if (deleted_vars) {
                                   for (; it != -1; it++) {
                                       if (it->__kind == ST_DELETED) {
@@ -994,8 +996,6 @@ private:
                                           break;
                                       }
                                   }
-                              } else {
-                                  first_del_var = npos;
                               }
                           }
                           goto ok;
