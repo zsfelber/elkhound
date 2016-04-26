@@ -3581,7 +3581,7 @@ void entry(int argc, char **argv)
     char const *fname = *argv;
     argv++;
     
-    modules.append(DBG_INFO_ARG0_FIRST  new (astgen_pool) string(DBG_INFO_ARG0_FIRST  fname));
+    modules.append(DBG_INFO_ARG0_FIRST  new (astgen_pool) string(DBG_INFO_ARG0_FIRST  astgen_pool, fname));
 
     Owner<ASTSpecFile> extension;
     extension = readAbstractGrammar(fname);

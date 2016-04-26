@@ -42,9 +42,11 @@ string::string(DBG_INFO_FORMAL_FIRST  char const *src, int length, SmbaseStringF
 void* string::operator new (size_t size) {
     return str::Storeable::operator new(size, str_pool);
 }
+
 void* string::operator new (size_t size, str::StoragePool &pool) {
     return str::Storeable::operator new(size, pool);
 }
+
 
 void string::dup(char const *src)
 {
