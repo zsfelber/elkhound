@@ -239,7 +239,7 @@ private:     // funcs
 
 public:      // funcs
   BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool);
-  BoxPrint(DBG_INFO_FORMAL);
+  //BoxPrint(DBG_INFO_FORMAL);
   ~BoxPrint();
 
   // append another element to the current innermost box

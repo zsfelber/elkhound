@@ -154,7 +154,7 @@ void BPBreak::debugPrint(std::ostream &os, int /*ind*/) const
 
 // ------------------------- BPBox ------------------------
 BPBox::BPBox(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, BPKind k)
-  : BPElement(DBG_INFO_ARG_FWD_FIRST  pool), elts(DBG_INFO_ARG0_FIRST  pool),      // initially empty
+  : BPElement(DBG_INFO_ARG_FWD_FIRST  pool), elts(DBG_INFO_ARG0_FIRST  *this),      // initially empty
     kind(k)
 {
   xassert((unsigned)k < NUM_BPKINDS);
@@ -330,7 +330,7 @@ BPKind const BoxPrint::end  = NUM_BPKINDS;
 
 
 BoxPrint::BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool)
-  : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), boxStack(/* *this,*/ sizeof(ObjArrayStack<BPBox>)),
+  : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), boxStack(DBG_INFO_ARG_FWD_FIRST  *this, sizeof(ObjArrayStack<BPBox>)),
     levelIndent(2)
 {         
   // initial vert box
@@ -338,17 +338,19 @@ BoxPrint::BoxPrint(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool)
   boxStack.push(new (getParentRef()) BPBox(DBG_INFO_ARG0_FIRST  getParentRef(), BP_vertical));
 }
 
+/*
 BoxPrint::BoxPrint(DBG_INFO_FORMAL)
-  : str::Storeable(DBG_INFO_ARG_FWD), boxStack(/* *this,*/ sizeof(ObjArrayStack<BPBox>)),
+  : str::Storeable(DBG_INFO_ARG_FWD), boxStack(DBG_INFO_ARG_FWD_FIRST  sizeof(ObjArrayStack<BPBox>)),
     levelIndent(2)
 {
   // initial vert box
   // TODO dummy, it is bad, if str::StoragePool autogrows
-  boxStack.push(new (getParentRef()) BPBox(DBG_INFO_ARG0_FIRST  getParentRef(), BP_vertical));
-}
+  boxStack.push(new BPBox(DBG_INFO_ARG0_FIRST  BP_vertical));
+}*/
 
 BoxPrint::~BoxPrint()
-{}
+{
+}
 
 
 void BoxPrint::append(DBG_INFO_FORMAL_FIRST  BPElement *elt)
@@ -359,13 +361,17 @@ void BoxPrint::append(DBG_INFO_FORMAL_FIRST  BPElement *elt)
 
 BoxPrint& BoxPrint::operator<< (rostring s)
 {
-  append(DBG_INFO_ARG0_FIRST  new BPText(DBG_INFO_ARG0_FIRST  *this, s));
+    str::StoragePool *pool = constcast(getParent());
+    xassert(pool);
+  append(DBG_INFO_ARG0_FIRST  new (*pool) BPText(DBG_INFO_ARG0_FIRST  *pool, s));
   return *this;
 }
 
 BoxPrint& BoxPrint::operator<< (char const *s)
 {
-  append(DBG_INFO_ARG0_FIRST  new BPText(DBG_INFO_ARG0_FIRST  *this, s));
+    str::StoragePool *pool = constcast(getParent());
+    xassert(pool);
+  append(DBG_INFO_ARG0_FIRST  new (*pool) BPText(DBG_INFO_ARG0_FIRST  *pool, s));
   return *this;
 }
 
@@ -459,7 +465,9 @@ void BoxPrint::debugPrintCout() const
 
 void doit(int argc, char *argv[])
 {
-  BoxPrint bp(DBG_INFO_ARG0);
+  str::StoragePool pool(DBG_INFO_ARG0);
+
+  STORE_NEW_REF0(pool, BoxPrint, bp);
 
   bp << "int foo()" << bp.br
      << "{" << bp.ind;

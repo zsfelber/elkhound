@@ -3,6 +3,7 @@
 
 #include "vptrmap.h"     // this module
 #include "xassert.h"     // xfailure
+#include "storage.h"
 
 #include <stddef.h>      // NULL
 #include <string.h>      // memset
@@ -255,7 +256,7 @@ void test1()
     #define CAST(something) /*nothing*/
 
     PtrMap<Node,int> map;
-    ObjArrayStack<Node> stack;
+    ObjArrayStack<Node> stack(DBG_INFO_ARG0);
 
     int iters2 = rand() % ITERS2MAX;
     for (int j=0; j < iters2; j++) {

@@ -7,6 +7,7 @@
 #include "xassert.h"      // xassert
 #include <stdlib.h>       // qsort
 #include <string.h>
+#include "storage.h"
 
 
 // -------------------- Array ----------------------
@@ -360,15 +361,19 @@ public:
 // ------------------- ObjArrayStack -----------------
 // an ArrayStack of owner pointers
 template <class T>
-class ObjArrayStack {
+class ObjArrayStack : public str::Storeable {
 private:    // data
   ArrayStack<T*> arr;
 
+  ObjArrayStack(ObjArrayStack const & );
 public:     // funcs
-  ObjArrayStack(int initArraySize = 10)
-    : arr(initArraySize)
+  ObjArrayStack(DBG_INFO_FORMAL_FIRST  str::Storeable & parent, int initArraySize = 10)
+    : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, true), arr(initArraySize)
     {}
-  ~ObjArrayStack() { deleteAll(); }
+  ObjArrayStack(DBG_INFO_FORMAL_FIRST  int initArraySize = 10)
+    : Storeable(DBG_INFO_ARG_FWD), arr(initArraySize)
+    {}
+  ~ObjArrayStack() { if (!getKind()) deleteAll(); }
 
   void push(T *ptr)          { arr.push(ptr); }
   T *pop()                   { return arr.pop(); }
