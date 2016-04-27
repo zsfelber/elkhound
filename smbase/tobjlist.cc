@@ -46,49 +46,60 @@ void print(ObjList<Integer> const &list)
 
 void testSorting()
 {
-  str::StoragePool pool(DBG_INFO_ARG0);
-  enum { ITERS=100, ITEMS=20 };
+  try {
+      str::StoragePool pool(DBG_INFO_ARG0);
+      enum { ITERS=100, ITEMS=20 };
 
-  loopi(ITERS) {
-    // construct a list
-    STORE_NEW_REF0(pool, ObjList<Integer>, list1);
-    STORE_NEW_REF0(pool, ObjList<Integer>, list2);
+      loopi(ITERS) {
+          try {
+            str::StoragePool pool2(DBG_INFO_ARG0);
+            // construct a list
+            STORE_NEW_REF0(pool2, ObjList<Integer>, list1);
+            STORE_NEW_REF0(pool2, ObjList<Integer>, list2);
 
-    int items = rand()%ITEMS;
-    loopj(items) {
-      int it = rand()%ITEMS;
-      list1.prepend(DBG_INFO_ARG0_FIRST  new Integer(DBG_INFO_ARG0_FIRST  it));
-      list2.prepend(DBG_INFO_ARG0_FIRST  new Integer(DBG_INFO_ARG0_FIRST  it));     // two lists with identical contents
+            int items = rand()%ITEMS;
+            loopj(items) {
+              int it = rand()%ITEMS;
+              list1.prepend(DBG_INFO_ARG0_FIRST  new (pool2) Integer(DBG_INFO_ARG0_FIRST  pool2, it));
+              list2.prepend(DBG_INFO_ARG0_FIRST  new (pool2) Integer(DBG_INFO_ARG0_FIRST  pool2, it));     // two lists with identical contents
+            }
+            //PRINT(list1);
+
+            // sort them
+            list1.insertionSort(intDiff);
+            list2.mergeSort(intDiff);
+            //PRINT(list1);
+
+            // verify structure
+            list1.selfCheck();
+            list2.selfCheck();
+
+            // verify length
+            xassert(list1.count() == items && list2.count() == items);
+
+            // verify sortedness
+            verifySorted(list1);
+            verifySorted(list2);
+
+            // verify equality
+            ObjListIter<Integer> iter1(list1);
+            ObjListIter<Integer> iter2(list2);
+            for (; !iter1.isDone(); iter1.adv(), iter2.adv()) {
+              xassert(iter1.data()->i == iter2.data()->i);
+            }
+            xassert(iter2.isDone());    // another length check
+
+            // it's still conceivable the lists are not correct,
+            // but highly unlikely, in my judgment
+          } catch (std::bad_alloc const & x) {
+              std::cout << x.what() << std::endl;
+              throw;
+          }
+      }
+    } catch (std::bad_alloc const & x) {
+        std::cout << x.what() << std::endl;
+        throw;
     }
-    //PRINT(list1);
-
-    // sort them
-    list1.insertionSort(intDiff);
-    list2.mergeSort(intDiff);
-    //PRINT(list1);
-
-    // verify structure
-    list1.selfCheck();
-    list2.selfCheck();
-
-    // verify length
-    xassert(list1.count() == items && list2.count() == items);
-
-    // verify sortedness
-    verifySorted(list1);
-    verifySorted(list2);
-
-    // verify equality
-    ObjListIter<Integer> iter1(list1);
-    ObjListIter<Integer> iter2(list2);
-    for (; !iter1.isDone(); iter1.adv(), iter2.adv()) {
-      xassert(iter1.data()->i == iter2.data()->i);
-    }
-    xassert(iter2.isDone());    // another length check
-
-    // it's still conceivable the lists are not correct,
-    // but highly unlikely, in my judgment
-  }
 }
 
 
