@@ -205,7 +205,7 @@ void emitMLActionCode(GrammarAnalysis const &g, rostring mliFname,
       ;
 
   g.tables->finishTables();
-  g.tables->emitMLConstructionCode(out, string(g.actionClassName), "makeTables");
+  g.tables->emitMLConstructionCode(out, g.actionClassName->str, string("makeTables"));
 
   #if 0   // not implemented
     // I put this last in the context class, and make it public
@@ -384,12 +384,12 @@ void emitMLActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
     FOREACH_OBJLIST(Production::RHSElt, prod.right, rhsIter) {
       Production::RHSElt const &elt = *(rhsIter.data());
       index++;
-      if (elt.tag.length() == 0) continue;
+      if (!elt.tag || elt.tag->length() == 0) continue;
 
       // example:
       //   let e1 = (Obj.obj svals.(0) : int) in
       out << "  let " << elt.tag << " = (Obj.obj svals.(" << index << ") : "
-          << typeString(elt.sym->type, elt.tag) << ") in\n";
+          << typeString(elt.sym->type, *elt.tag) << ") in\n";
     }
     
     // give a name to the yielded value so we can ensure it conforms to
@@ -398,7 +398,7 @@ void emitMLActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
 
     // now insert the user's code, to execute in this environment of
     // properly-typed semantic values
-    emitMLUserCode(out, prod.action, true /*braces*/);
+    emitMLUserCode(out, *prod.action, true /*braces*/);
 
     out << "  in (Obj.repr __result)\n"     // cast to tSemanticValue
         << ");\n"
@@ -537,7 +537,7 @@ void emitMLDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
     emitMLFuncDecl(g, out, dcl, sym.type,
       stringc << "dup_" << sym.name
               << " (" << sym.dupParam << ": " << sym.type << ") ");
-    emitMLUserCode(out, sym.dupCode);
+    emitMLUserCode(out, *sym.dupCode);
     out << "\n";
   }
 
@@ -546,7 +546,7 @@ void emitMLDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
       stringc << "del_" << sym.name
               << " (" << (sym.delParam? sym.delParam : "_")
               << ": " << sym.type << ") ");
-    emitMLUserCode(out, sym.delCode);
+    emitMLUserCode(out, *sym.delCode);
     out << "\n";
   }
 
@@ -555,7 +555,7 @@ void emitMLDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
       stringc << "merge_" << sym.name
               << " (" << nonterm->mergeParam1 << ": " << notVoid(sym.type) << ") "
               << " (" << nonterm->mergeParam2 << ": " << notVoid(sym.type) << ") ");
-    emitMLUserCode(out, nonterm->mergeCode);
+    emitMLUserCode(out, *nonterm->mergeCode);
     out << "\n";
   }
 
@@ -563,7 +563,7 @@ void emitMLDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
     emitMLFuncDecl(g, out, dcl, "bool",
       stringc << "keep_" << sym.name
               << " (" << nonterm->keepParam << ": " << sym.type << ") ");
-    emitMLUserCode(out, nonterm->keepCode);
+    emitMLUserCode(out, *nonterm->keepCode);
     out << "\n";
   }
 
@@ -571,7 +571,7 @@ void emitMLDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
     emitMLFuncDecl(g, out, dcl, "int",
       stringc << "classify_" << sym.name
               << " (" << term->classifyParam << ": " << sym.type << ") ");
-    emitMLUserCode(out, term->classifyCode);
+    emitMLUserCode(out, *term->classifyCode);
     out << "\n";
   }
 }
@@ -581,7 +581,7 @@ void emitMLSwitchCode(Grammar const &g, EmitCode &out,
                       ObjList<Symbol> const &syms, int whichFunc,
                       char const *templateCode, char const *actUpon)
 {
-  out << replace(signature, "$acn", string(g.actionClassName)) << " =\n"
+  out << replace(signature, "$acn", g.actionClassName->str) << " =\n"
          "begin\n"
          "  match " << switchVar << " with\n"
          ;
@@ -596,7 +596,7 @@ void emitMLSwitchCode(Grammar const &g, EmitCode &out,
         whichFunc==4 && sym.asTerminalC().classifyCode) {
       out << "  | " << sym.getTermOrNontermIndex() << " -> (\n";
       out << replace(replace(templateCode,
-               "$symName", string(sym.name)),
+               "$symName", sym.name->str),
                "$symType", notVoid(sym.type));
       out << "    )\n";
     }

@@ -27,14 +27,14 @@ StringTable grammarStringTable;
 
 // ---------------------- Symbol --------------------
 Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &n, bool t, bool e)
-  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(DBG_INFO_ARG_FWD_FIRST  n),
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(&n),
     isTerm(t),
     isEmptyString(e),
     type(NULL),
     dupParam(NULL),
-    dupCode(DBG_INFO_ARG_FWD_FIRST  pool),
+    dupCode(NULL),
     delParam(NULL),
-    delCode(DBG_INFO_ARG_FWD_FIRST  pool),
+    delCode(NULL),
     reachable(false)
 {}
 
@@ -43,30 +43,30 @@ Symbol::~Symbol()
 
 
 Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat)
-  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(DBG_INFO_ARG_FWD_FIRST  pool, flat),
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(LIT_STR_1(flat)),
     isTerm(false),
     isEmptyString(false),
     type(NULL),
     dupParam(NULL),
-    dupCode(DBG_INFO_ARG_FWD_FIRST  pool),
+    dupCode(NULL),
     delParam(NULL),
-    delCode(DBG_INFO_ARG_FWD_FIRST  pool)
+    delCode(NULL)
 {}
 
 void Symbol::xfer(str::StoragePool &pool, Flatten &flat)
 {
   // have to break constness to unflatten
-  const_cast<LocString&>(name).xfer(pool, flat);
+  constcast(name)->xfer(pool, flat);
   flat.xferBool(const_cast<bool&>(isTerm));
   flat.xferBool(const_cast<bool&>(isEmptyString));
 
   flattenStrTable->xfer(flat, type);
 
   flattenStrTable->xfer(flat, dupParam);
-  dupCode.xfer(pool, flat);
+  constcast(dupCode)->xfer(pool, flat);
 
   flattenStrTable->xfer(flat, delParam);
-  delCode.xfer(pool, flat);
+  constcast(delCode)->xfer(pool, flat);
   
   flat.xferBool(reachable);
 }
@@ -114,11 +114,11 @@ void Symbol::printDDM(ostream &os) const
 
 void Symbol::internalPrintDDM(ostream &os) const
 {
-  if (dupCode.isNonNull()) {
+  if (dupCode && dupCode->isNonNull()) {
     os << "    dup(" << dupParam << ") [" << dupCode << "]\n";
   }
 
-  if (delCode.isNonNull()) {
+  if (delCode && delCode->isNonNull()) {
     os << "    del(" << (delParam? delParam : "") << ") [" << delCode << "]\n";
   }
 }
@@ -126,8 +126,8 @@ void Symbol::internalPrintDDM(ostream &os) const
 
 bool Symbol::anyDDM() const
 {
-  return dupCode.isNonNull() ||
-         delCode.isNonNull();
+  return (dupCode&&dupCode->isNonNull()) ||
+         (delCode&&delCode->isNonNull());
 }
 
 
@@ -159,16 +159,16 @@ Nonterminal const *Symbol::ifNonterminalC() const
 // -------------------- Terminal ------------------------
 Terminal::Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat)
   : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, flat),
-    alias(DBG_INFO_ARG_FWD_FIRST  pool, flat),
+    alias(LIT_STR_1(flat)),
     classifyParam(NULL),
-    classifyCode(DBG_INFO_ARG_FWD_FIRST  pool)
+    classifyCode(NULL)
 {}
 
 void Terminal::xfer(str::StoragePool &pool, Flatten &flat)
 {
   Symbol::xfer(pool, flat);
 
-  alias.xfer(pool, flat);
+  constcast(alias)->xfer(pool, flat);
 
   flat.xferInt(precedence);
   flat.xferInt((int&)associativity);
@@ -176,7 +176,7 @@ void Terminal::xfer(str::StoragePool &pool, Flatten &flat)
   flat.xferInt(termIndex);
 
   flattenStrTable->xfer(flat, classifyParam);
-  classifyCode.xfer(pool, flat);
+  constcast(classifyCode)->xfer(pool, flat);
 }
 
 
@@ -195,8 +195,8 @@ void Terminal::internalPrintDDM(ostream &os) const
 {
   Symbol::internalPrintDDM(os);
 
-  if (classifyCode.isNonNull()) {
-    os << "    classify(" << classifyParam << ") [" << classifyCode << "]\n";
+  if (classifyCode&&classifyCode->isNonNull()) {
+    os << "    classify(" << classifyParam << ") [" << *classifyCode << "]\n";
   }
 }
 
@@ -204,22 +204,22 @@ void Terminal::internalPrintDDM(ostream &os) const
 bool Terminal::anyDDM() const
 {
   return Symbol::anyDDM() ||
-         classifyCode.isNonNull();
+         (classifyCode&&classifyCode->isNonNull());
 }
 
 
 string Terminal::toString(bool quoteAliases) const
 {
-  if (alias.length() > 0) {
+  if (alias&&alias->length() > 0) {
     if (quoteAliases) {
-      return stringc << "\"" << ::toString(alias) << "\"";
+      return stringc << "\"" << ::toString(*alias) << "\"";
     }
     else {
-      return ::toString(alias);
+      return ::toString(*alias);
     }
   }
   else {
-    return ::toString(name);
+    return ::toString(*name);
   }
 }
 
@@ -229,9 +229,9 @@ Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Lo
   : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, name, false /*terminal*/, isEmpty),
     mergeParam1(NULL),
     mergeParam2(NULL),
-    mergeCode(DBG_INFO_ARG_FWD_FIRST  pool),
+    mergeCode(NULL),
     keepParam(NULL),
-    keepCode(DBG_INFO_ARG_FWD_FIRST  pool),
+    keepCode(NULL),
     maximal(false),
     subsets(DBG_INFO_ARG_FWD_FIRST  pool),
     ntIndex(-1),
@@ -250,9 +250,9 @@ Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Fl
   : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, flat),
     mergeParam1(NULL),
     mergeParam2(NULL),
-    mergeCode(DBG_INFO_ARG_FWD_FIRST  pool),
+    mergeCode(NULL),
     keepParam(NULL),
-    keepCode(DBG_INFO_ARG_FWD_FIRST  pool),
+    keepCode(NULL),
     first(DBG_INFO_ARG_FWD_FIRST  pool,flat),
     follow(DBG_INFO_ARG_FWD_FIRST  pool,flat),
     subsets(DBG_INFO_ARG_FWD_FIRST  pool),
@@ -266,10 +266,10 @@ void Nonterminal::xfer(str::StoragePool &pool, Flatten &flat)
 
   flattenStrTable->xfer(flat, mergeParam1);
   flattenStrTable->xfer(flat, mergeParam2);
-  mergeCode.xfer(pool, flat);
+  constcast(mergeCode)->xfer(pool, flat);
 
   flattenStrTable->xfer(flat, keepParam);
-  keepCode.xfer(pool, flat);
+  constcast(keepCode)->xfer(pool, flat);
 }
 
 void Nonterminal::xferSerfs(str::StoragePool &pool, Flatten &flat, Grammar &g)
@@ -310,13 +310,13 @@ void Nonterminal::internalPrintDDM(ostream &os) const
 {
   Symbol::internalPrintDDM(os);
   
-  if (mergeCode.isNonNull()) {
+  if (mergeCode&&mergeCode->isNonNull()) {
     os << "    merge(" << mergeParam1 << ", " << mergeParam2
-       << ") [" << mergeCode << "]\n";
+       << ") [" << *mergeCode << "]\n";
   }
 
-  if (keepCode.isNonNull()) {
-    os << "    keep(" << keepParam << ") [" << keepCode << "]\n";
+  if (keepCode&&keepCode->isNonNull()) {
+    os << "    keep(" << keepParam << ") [" << *keepCode << "]\n";
   }
 }
 
@@ -324,8 +324,8 @@ void Nonterminal::internalPrintDDM(ostream &os) const
 bool Nonterminal::anyDDM() const
 {
   return Symbol::anyDDM() ||
-         mergeCode.isNonNull() ||
-         keepCode.isNonNull();
+         (mergeCode&&mergeCode->isNonNull()) ||
+         (keepCode&&keepCode->isNonNull());
 }
 
 
@@ -581,12 +581,12 @@ Production::RHSElt::~RHSElt()
 
 Production::RHSElt::RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sym(NULL),
-    tag(DBG_INFO_ARG_FWD_FIRST  pool, flat)
+    tag(LIT_STR_1(flat))
 {}
 
 void Production::RHSElt::xfer(str::StoragePool &pool, Flatten &flat)
 {
-  tag.xfer(pool, flat);
+  constcast(tag)->xfer(pool, flat);
 }
 
 void Production::RHSElt::xferSerfs(Flatten &flat, Grammar &g)
@@ -605,7 +605,7 @@ Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Nont
     forbid_owned(false),
     rhsLen(-1),
     prodIndex(-1),
-    action(DBG_INFO_ARG_FWD_FIRST  *this),
+    action(NULL),
     firstSet(DBG_INFO_ARG_FWD_FIRST  *this)       // don't allocate bitmap yet
 {
     constcast(pool).addPointer(forbid);
@@ -624,14 +624,14 @@ Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flat
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), left(NULL), right(DBG_INFO_ARG_FWD_FIRST  *this),
     forbid(NULL),
     forbid_owned(false),
-    action(DBG_INFO_ARG_FWD_FIRST  *this,flat),
+    action(LIT_STR_1(flat)),
     firstSet(DBG_INFO_ARG_FWD_FIRST  *this,flat)
 {}
 
 void Production::xfer(str::StoragePool &pool, Flatten &flat)
 {
   xferObjList(pool, flat, right);
-  action.xfer(pool, flat);
+  constcast(action)->xfer(pool, flat);
   flat.xferInt(precedence);
   xferNullableOwnerPtr(pool, flat, forbid);
 
@@ -757,7 +757,7 @@ int Production::findTag(StringRef tag) const
   ObjListIter<RHSElt> tagIter(right);
   int index=1;
   for(; !tagIter.isDone(); tagIter.adv(), index++) {
-    if (tagCompare(tagIter.data()->tag, tag)) {
+    if (tagCompare(tagIter.data()->tag->str.c_str(), tag)) {
       return index;
     }
   }
@@ -786,7 +786,7 @@ string Production::symbolTag(int index) const
 
   // find index in RHS list
   index--;
-  return string(right.nthC(index)->tag);
+  return right.nthC(index)->tag->str;
 }
 
 
@@ -888,7 +888,7 @@ string Production::rhsString(bool printTags, bool quoteAliases) const
 
       string symName(DBG_INFO_ARG0);
       if (elt.sym->isNonterminal()) {
-        symName = elt.sym->name;
+        symName = *elt.sym->name;
       }
       else {
         // print terminals as aliases if possible
@@ -897,7 +897,7 @@ string Production::rhsString(bool printTags, bool quoteAliases) const
 
       if (printTags) {
         // print tag if present
-        sb << taggedName(symName, elt.tag);
+        sb << taggedName(symName, elt.tag->str.c_str());
       }
       else {
         sb << symName;
@@ -919,8 +919,8 @@ string Production::toStringMore(bool printCode) const
   stringBuilder sb(DBG_INFO_ARG0);
   sb << toString();
 
-  if (printCode && !action.isNull()) {
-    sb << "\t\t[" << action.strref() << "]";
+  if (printCode && action && !action->isNull()) {
+    sb << "\t\t[" << action->strref() << "]";
   }
 
   sb << "\n";
@@ -948,7 +948,7 @@ Grammar::Grammar(DBG_INFO_FORMAL)
     terminalCodeMapped(0),
     maxCode(0),
     verbatim(DBG_INFO_ARG_FWD_FIRST  pool),
-    actionClassName(DBG_INFO_ARG_FWD_FIRST  pool),
+    actionClassName(NULL),
     actionClasses(DBG_INFO_ARG_FWD_FIRST  pool),
     implVerbatim(DBG_INFO_ARG_FWD_FIRST  pool)
 {
@@ -976,7 +976,7 @@ void Grammar::xfer(Flatten &flat)
 
   xferObjList(pool, flat, verbatim);
 
-  actionClassName.xfer(pool, flat);
+  constcast(actionClassName)->xfer(pool, flat);
   xferObjList(pool, flat, actionClasses);
 
   xferObjList(pool, flat, implVerbatim);
@@ -1104,7 +1104,7 @@ bool Grammar::declareToken(DBG_INFO_FORMAL_FIRST  LocString const &symbolName, i
   // assign fields specified in %token declaration
   term->termIndex = index;
   term->termCode = code;
-  term->alias = alias;
+  term->alias = &alias;
 
   return true;
 }
@@ -1124,7 +1124,7 @@ string bisonTokenName(Terminal const *t)
   //return stringc << "\"" << t->name << "\"";
 
   // but the newer ones don't like quoted terminal names..
-  return string(t->name.str);
+  return t->name->str;
 }
 
 // print the grammar in a form that Bison likes
@@ -1198,7 +1198,7 @@ void Grammar::printAsBison(ostream &os) const
         }
         else {       
           os << "\n";
-          INTLOOP(i, 0, nt.data()->name.length()) {
+          INTLOOP(i, 0, nt.data()->name->length()) {
             os << " ";
           }
           os << "|";
@@ -1256,7 +1256,7 @@ void Grammar::printAsBison(ostream &os) const
     else {
       // finish the rules with a semicolon
       os << "\n";
-      INTLOOP(i, 0, nt.data()->name.length()) {
+      INTLOOP(i, 0, nt.data()->name->length()) {
         os << " ";
       }
       os << ";";
@@ -1272,12 +1272,12 @@ void Grammar::printAsBison(ostream &os) const
 Nonterminal const *Grammar::findNonterminalC(char const *name) const
 {
   // check for empty first, since it's not in the list
-  if (emptyString->name.equals(name)) {
+  if (emptyString->name->equals(name)) {
     return emptyString;
   }
 
   SFOREACH_NONTERMINAL(nonterminals, iter) {
-    if (iter.data()->name.equals(name)) {
+    if (iter.data()->name->equals(name)) {
       return iter.data();
     }
   }
@@ -1288,8 +1288,8 @@ Nonterminal const *Grammar::findNonterminalC(char const *name) const
 Terminal const *Grammar::findTerminalC(char const *name) const
 {
   SFOREACH_TERMINAL(terminals, iter) {
-    if (iter.data()->name.equals(name) ||
-        iter.data()->alias.equals(name)) {
+    if (iter.data()->name->equals(name) ||
+        iter.data()->alias->equals(name)) {
       return iter.data();
     }
   }

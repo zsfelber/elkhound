@@ -43,6 +43,12 @@ class GrammarAnalysis;
 
 extern SourceLocManager mgr;
 
+#define LIT_STR_1(x) new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), x)
+#define LIT_STR_2(l,s) new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), l, s)
+#define LIT_STR_2_ADD(l,s) LIT_STR_2(l, grammarStringTable.add(s))
+#define LIT_STR(s) LIT_STR_2(SL_INIT, s)
+#define LIT_STR_ADD(s) LIT_STR_2_ADD(SL_INIT, s)
+
 
 // ---------------- DottedProduction --------------------
 // a production, with an indicator that says how much of this

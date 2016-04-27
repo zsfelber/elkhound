@@ -109,8 +109,8 @@ public:      // data
   // todo: can eliminate commentStartLine in favor of tokenStartLoc?
   //int commentStartLine;            // for reporting unterminated C comments
   int integerLiteral;              // to store number literal value
-  StringRef stringLiteral;         // string in quotes, minus the quotes
-  StringRef includeFileName;       // name in an #include directive
+  string stringLiteral;         // string in quotes, minus the quotes
+  string includeFileName;       // name in an #include directive
 
   // defined in the base class, FlexLexer:
   //   const char *YYText();           // start of matched text

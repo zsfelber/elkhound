@@ -72,7 +72,7 @@ extern StringTable grammarStringTable;
 class Symbol : public str::Storeable {
 // ------ representation ------
 public:
-  LocString const name;     // symbol's name in grammar
+  LocString const* const name;     // symbol's name in grammar
   bool const isTerm;        // true: terminal (only on right-hand sides of productions)
                             // false: nonterminal (can appear on left-hand sides)
   bool const isEmptyString; // true only for the emptyString nonterminal
@@ -80,10 +80,10 @@ public:
   StringRef type;           // C type of semantic value
 
   StringRef dupParam;       // name of parameter to 'dup'
-  LocString dupCode;        // code to duplicate a semantic value
+  LocString const *dupCode;        // code to duplicate a semantic value
 
   StringRef delParam;       // param name; may be NULL to indicate not used
-  LocString delCode;        // code
+  LocString const *delCode;        // code
   
 // ----------- annotation ------------
 public:
@@ -136,7 +136,7 @@ public:      // funcs
   // true if any of the handlers were specified
   virtual bool anyDDM() const;
 
-  virtual string toString() const { return string(name); }
+  virtual string toString() const { return string(DBG_INFO_ARG0_FIRST  *name); }
 
 };
 
@@ -168,7 +168,7 @@ public:     // data
   // L2_EQUALEQUAL, the alias might be "=="; the alias should *not*
   // include actual double-quote characters
   // if the alias is "", there is no alias
-  LocString alias;
+  LocString const *alias;
 
   // parsgen-time conflict resolution: if a shift/reduce conflict
   // occurs between a production and a symbol, both with specified
@@ -181,7 +181,7 @@ public:     // data
   AssocKind associativity;
 
   StringRef classifyParam;      // name of parameter to 'classify'
-  LocString classifyCode;       // code to reclassify a token type
+  LocString const *classifyCode;       // code to reclassify a token type
 
 // ------ annotation ------
 public:     // data
@@ -196,11 +196,11 @@ protected:  // funcs
 public:     // funcs
   Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &name)        // canonical name for terminal class
     : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, name, true /*terminal*/),
-      alias(DBG_INFO_ARG_FWD_FIRST  *this),
+      alias(NULL),
       precedence(0),
       associativity(AK_NONASSOC),
       classifyParam(NULL),
-      classifyCode(DBG_INFO_ARG_FWD_FIRST  *this),
+      classifyCode(NULL),
       termCode(-1),
       termIndex(-1)
   {}
@@ -321,10 +321,10 @@ class Nonterminal : public Symbol {
 public:
   StringRef mergeParam1;    // param name for first alternative
   StringRef mergeParam2;    // and 2nd alt
-  LocString mergeCode;      // code to resolve then
+  LocString const *mergeCode;      // code to resolve then
 
   StringRef keepParam;      // name of parameter to 'keep'
-  LocString keepCode;       // code to decide whether to keep a reduction
+  LocString const *keepCode;       // code to decide whether to keep a reduction
 
   bool maximal;             // if true, use maximal munch disambiguation
   
@@ -388,10 +388,10 @@ public:     // types
     // tags applied to the symbols for purposes of unambiguous naming in
     // actions, and for self-commenting value as role indicators; an
     // empty tag ("") is allowed and means there is no tag
-    LocString tag;             // tag for this symbol; can be ""
+    LocString const *tag;             // tag for this symbol; can be ""
 
   public:
-    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Symbol *s, LocString const &t) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sym(s), tag(DBG_INFO_ARG_FWD_FIRST  t) {}
+    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Symbol *s, LocString const &t) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sym(s), tag(&t) {}
     ~RHSElt();
 
     RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);
@@ -409,7 +409,7 @@ public:	    // data
   bool forbid_owned;
 
   // user-supplied reduction action code
-  LocString action;
+  LocString const *action;
   RHSElt* defaultSymbol = 0;          // default type determination (of 1-symbol-wide productions) :
                                       // analyzing its consistency
 
@@ -546,7 +546,7 @@ public:	    // data
   ObjList<LocString> verbatim;
 
   // name of the class into which the action functions are placed
-  LocString actionClassName;
+  LocString const *actionClassName;
   StringRef actionClassName0;
 
   // verbatim action class declaration, and additional codes from

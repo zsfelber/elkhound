@@ -19,8 +19,6 @@
 #include <ctype.h>           // isspace, isalnum
 #include <sstream>           // stringstream
 
-#define LIT_STR(s) * new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), SL_INIT, grammarStringTable.add(s))
-
 inline bool isVoid(char const * tp) {
     return !tp || !strcmp("void", tp);
 }
@@ -148,7 +146,7 @@ void astParseError(SourceLoc loc, rostring msg)
 
 void astParseError(rostring msg)
 {
-  LocString ls(DBG_INFO_ARG0_FIRST);   // no location info
+  LocString ls(DBG_INFO_ARG0);   // no location info
   THROW(XASTParse(ls, msg));
 }
 
@@ -219,7 +217,7 @@ void setAnnotations(GrammarAST *ast)
 LocString& extractActionClassName(LocString const &body)
 {
   // find start of first token
-  char const *start = body.str;
+  char const *start = body.str.c_str();
   while (isspace(*start)) start++;
 
   // find end of first token
@@ -228,8 +226,7 @@ LocString& extractActionClassName(LocString const &body)
   while (isalnum(*p) || *p=='_') p++;
   
   // yield that, with the same source location
-  return * LocString(DBG_INFO_ARG0_FIRST  body.loc, grammarStringTable.add(
-    substring(start, p-start).c_str()));
+  return * LIT_STR_2_ADD(body.loc, substring(start, p-start).c_str());
 }
 
 
@@ -283,15 +280,15 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
         //
         // new:
         g.actionClasses.deleteAll();
-        g.actionClasses.append(DBG_INFO_ARG0_FIRST  new LocString(DBG_INFO_ARG0_FIRST  c->body));
+        g.actionClasses.append(DBG_INFO_ARG0_FIRST  LIT_STR(c->body));
       }
 
       ASTNEXT(TF_verbatim, v) {
         if (v->isImpl) {
-          g.implVerbatim.append(DBG_INFO_ARG0_FIRST  new LocString(DBG_INFO_ARG0_FIRST  v->code));
+          g.implVerbatim.append(DBG_INFO_ARG0_FIRST  LIT_STR(v->code));
         }
         else {
-          g.verbatim.append(DBG_INFO_ARG0_FIRST  new LocString(DBG_INFO_ARG0_FIRST  v->code));
+          g.verbatim.append(DBG_INFO_ARG0_FIRST  LIT_STR(v->code));
         }
       }
 
@@ -363,7 +360,7 @@ Nonterminal * createNonterm(Environment &env, GrammarAST *ast, TF_nonterm *nt) {
     }
 
     // make the Grammar object to represent the new nonterminal
-    Nonterminal *result = env.g.getOrMakeNonterminal(nt->name);
+    Nonterminal *result = env.g.getOrMakeNonterminal(DBG_INFO_ARG0_FIRST  nt->name);
 
     // add this decl to our running list (in the original environment)
     //
@@ -387,8 +384,8 @@ void astParseGrammar(Environment &env, GrammarAST *ast)
     FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
 
       if (iter.data()->isTF_start()) {
-          constcast(env.startSymbol) = iter.data()->asTF_start()->symbol.clone(env.g.pool);
-          constcast(env.startLexer) = iter.data()->asTF_start()->lexer.clone(env.g.pool);
+          constcast(env.startSymbol) = iter.data()->asTF_start()->symbol.clone(DBG_INFO_ARG0_FIRST  env.g.pool);
+          constcast(env.startLexer) = iter.data()->asTF_start()->lexer.clone(DBG_INFO_ARG0_FIRST  env.g.pool);
       }
 
       if (!iter.data()->isTF_nonterm()) continue;
@@ -414,7 +411,7 @@ void astParseGrammar(Environment &env, GrammarAST *ast)
     }
   }
 
-  if (!env.g.actionClassName.str) {
+  if (env.g.actionClassName.str.isempty()) {
     astParseError("you must specify a context class; for example:\n"
                   "  context_class Context : public UserActions {};\n");
   }
@@ -481,7 +478,7 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
       trace("grampar") << "token: code=" << code
                        << ", name=" << name << std::endl;
 
-      if (!env.g.declareToken(term.name, code, term.alias)) {
+      if (!env.g.declareToken(DBG_INFO_ARG0_FIRST  term.name, code, term.alias)) {
         astParseError(term.name, "token already declared");
       }
     }
@@ -670,7 +667,7 @@ void fillDefaultType(Nonterminal* nonterm) {
     if (!nonterm->deftravd) {
 
         nonterm->deftravd = true;
-        StringRef empty = grammarStringTable.add("");
+        //rostring empty = grammarStringTable.add("");
 
         bool err_concur = false;
         bool err_in_one = false;
@@ -700,7 +697,7 @@ void fillDefaultType(Nonterminal* nonterm) {
 
             if (isVoid(sym->type)) {
                 // remove "tag" for void args:
-                p->defaultSymbol->tag.str = empty;
+                //TODO ? p->defaultSymbol->tag.str = empty;
                 p->defaultSymbol = NULL;
 
                 err_in_one = true;
@@ -755,7 +752,7 @@ void fillDefaultType(Nonterminal* nonterm) {
                 if (p->defaultSymbol) {
                     std::stringstream s;
                     s<<"/* return "<< p->defaultSymbol ->tag.str <<";  /* inconsistent nonterm("<<nonterm->name<<") type*/";
-                    p->action.str = grammarStringTable.add(s.str().c_str());
+                    p->action = LIT_STR_2_ADD(p->action.loc, s.str().c_str());
                 }
             }
         }
@@ -766,14 +763,14 @@ void addDefaultTypesActions(Environment &env, GrammarAST *ast, Nonterminal *nont
 {
     Grammar &g = env.g;
     // language defaults
-    StringRef defaultType, defaultAction;
+    string const *defaultType, *defaultAction;
     if (g.targetLang.equals("OCaml")) {
-      defaultType = grammarStringTable.add("unit");
-      defaultAction = grammarStringTable.add("()");
+      defaultType = &grammarStringTable.add("unit");
+      defaultAction = &grammarStringTable.add("()");
     }
     else /*C*/ {
-      defaultType = grammarStringTable.add("void");
-      defaultAction = grammarStringTable.add("return;");
+      defaultType = &grammarStringTable.add("void");
+      defaultAction = &grammarStringTable.add("return;");
     }
 
     fillDefaultType(nonterm);
@@ -785,7 +782,7 @@ void addDefaultTypesActions(Environment &env, GrammarAST *ast, Nonterminal *nont
 
     // default type
     if (forceDefaults || !nonterm->type) {
-      nonterm->type = defaultType;
+      nonterm->type = defaultType->c_str();
     }
 
     int prodi = 0;
@@ -806,10 +803,10 @@ void addDefaultTypesActions(Environment &env, GrammarAST *ast, Nonterminal *nont
           if (prod->defaultSymbol) {
               std::stringstream s;
               s<<"return "<< prod->defaultSymbol ->tag.str <<";";
-              StringRef defaultTagAction = grammarStringTable.add(s.str().c_str());
-              prod->action.str = defaultTagAction;
+              rostring defaultTagAction = grammarStringTable.add(s.str().c_str());
+              prod->action = LIT_STR_2(prod->action.loc, defaultTagAction);
           } else {
-              prod->action.str = defaultAction;
+              prod->action = LIT_STR_2(prod->action.loc, *defaultAction);
           }
       }
 
@@ -818,7 +815,7 @@ void addDefaultTypesActions(Environment &env, GrammarAST *ast, Nonterminal *nont
         // clear RHSElt tags, since otherwise the lack of types
         // will provoke errors; and default actions don't refer to
         // the RHSElts anyway
-        StringRef empty = grammarStringTable.add("");
+        //StringRef empty = grammarStringTable.add("");
         for (ObjListIter<Production::RHSElt> rhsIter(prod->right);
              !rhsIter.isDone(); rhsIter.adv()) {
             // convenient alias
@@ -890,9 +887,10 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
 
         if (s && s->type) {
 
-            grType = LIT_STR(s->type).clone(env.g.pool);
+            //grType = LIT_STR(s->type).clone(env.g.pool);
+            grType = new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), SL_INIT, s->type);
 
-            usr = name = s->name.str;
+            usr = name = s->name;
 
         }
     } else {
@@ -917,12 +915,12 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
 
         if (startRuleAction) {
             newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
-                                    startRuleAction->clone(env.g.pool),
-                                    LIT_STR(name.c_str()).clone(env.g.pool), grType->clone(env.g.pool));
+                                    startRuleAction->clone(DBG_INFO_ARG0_FIRST  env.g.pool),
+                                    LIT_STR(name), grType->clone(DBG_INFO_ARG0_FIRST  env.g.pool));
         } else {
             newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
-                                    new LocString(SL_UNKNOWN, NULL),
-                                    LIT_STR(name.c_str()).clone(env.g.pool), grType->clone(env.g.pool));
+                                    LIT_STR_2(SL_UNKNOWN, NULL),
+                                    LIT_STR(name), grType->clone(DBG_INFO_ARG0_FIRST  env.g.pool));
         }
         env.parserFuncs[name] = newStart;
 
@@ -1348,8 +1346,8 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               s << "   " << type->str << " result = parsers->parse_" << usr << "(tag);" << std::endl;
               s << "   return result;" << std::endl;
 
-              constcast(prodDecl->actionCode).str = LIT_STR(s.str().c_str()).clone(env.g.pool)->str;
-              orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name).clone(env.g.pool)));
+              constcast(prodDecl->actionCode) = LIT_STR(s.str().c_str());
+              orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name)));
 
           }
 

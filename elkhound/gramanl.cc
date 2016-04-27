@@ -5262,7 +5262,6 @@ void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML
 int inner_entry(int argc, char **argv)
 {
   #define SHIFT argc--; argv++ /* user ; */
-  #define LIT_STR(s) LocString(SL_INIT, grammarStringTable.add(s))
 
   char const *progName = argv[0];
   SHIFT;

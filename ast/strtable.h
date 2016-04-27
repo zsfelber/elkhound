@@ -61,6 +61,12 @@ public:
 
     rostring add(StringRef src);
 
+    inline void xfer(Flatten &flat, StringRef &ref) {
+        string const * r = &add(ref);
+        xfer(flat, r);
+        ref = r->c_str();
+    }
+
     // read/write binary
     void xfer(Flatten &flat, string const *& ref);
 
