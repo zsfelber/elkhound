@@ -391,7 +391,7 @@ public:     // types
     LocString tag;             // tag for this symbol; can be ""
 
   public:
-    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Symbol *s, LocString const &t) : Storeable(pool), sym(s), tag(t) {}
+    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Symbol *s, LocString const &t) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sym(s), tag(DBG_INFO_ARG_FWD_FIRST  t) {}
     ~RHSElt();
 
     RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);

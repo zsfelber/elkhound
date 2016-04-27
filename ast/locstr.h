@@ -14,7 +14,7 @@
 class LocString : public str::Storeable {
 public:    // data
   SourceLoc loc;
-  StringRef str;
+  rostring str;
 
 public:    // funcs
   LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool);
@@ -23,7 +23,8 @@ public:    // funcs
   LocString(LocString const &obj);//undefined
 #endif
   LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent);
-  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, SourceLoc loc, StringRef str);
+  LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, SourceLoc loc, rostring str);
+  LocString(DBG_INFO_FORMAL_FIRST  SourceLoc loc, rostring str);
 
   LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);
   LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent, Flatten&);
@@ -38,7 +39,7 @@ public:    // funcs
   LocString *clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int deepness, int listDeepness) const;
 
   LocString& operator= (LocString const &obj)
-    { loc = obj.loc; str = obj.str; return *this; }
+    { assign(obj); /*loc = obj.loc; str = obj.str;*/ return *this; }
 
   // string with location info
   string locString() const { return toString(loc); }
@@ -48,10 +49,11 @@ public:    // funcs
     { return os << loc.str; }
   friend stringBuilder& operator<< (stringBuilder &sb, LocString const &loc)
     { return sb << loc.str; }
-  StringRef strref() const { return str; }
-  operator StringRef () const { return str; }
+  StringRef strref() const { return str.c_str(); }
+  operator StringRef () const { return str.c_str(); }
   char operator [] (int index) const { return str[index]; }
-  bool equals(char const *other) const;    // string comparison
+  bool equals(rostring other) const;    // string comparison
+  bool equals(StringRef other) const;    // string comparison
   int length() const { return strlen(str); }
 
   // experimenting with allowing 'str' to be null, which is convenient

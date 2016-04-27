@@ -195,18 +195,18 @@ int GrammarLexer::yylexInc()
 }
 
 
-StringRef GrammarLexer::curToken() const
+rostring GrammarLexer::curToken() const
 {
   return addString(yytext, yyleng);
 }
 
-StringRef GrammarLexer::addString(char *str, int len) const
+rostring GrammarLexer::addString(char *str, int len) const
 {
   // write a null terminator temporarily
   char wasThere = str[len];
   if (wasThere) {
     str[len] = 0;
-    StringRef ret = strtable.add(str);
+    rostring ret = strtable.add(str);
     str[len] = wasThere;
     return ret;
   }
@@ -223,13 +223,13 @@ bool GrammarLexer::embedFinishMatches(char ch) const
 }
 
 
-StringRef GrammarLexer::curFuncBody() const
+rostring GrammarLexer::curFuncBody() const
 {
   return strtable.add(embedded->getFuncBody().c_str());
 }
 
 
-StringRef GrammarLexer::curDeclName() const
+rostring GrammarLexer::curDeclName() const
 {
   return strtable.add(embedded->getDeclName().c_str());
 }

@@ -342,7 +342,7 @@ TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, int num
   init(numTerms);
 }
 
-TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  TerminalSet const &obj) : Storeable(DBG_INFO_ARG_FWD_FIRST  obj)
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  TerminalSet const &obj) : Storeable(DBG_INFO_ARG_FWD_FIRST  obj, true)
 {
   init(obj.bitmapLen * 8);    // close enough; same # of bytes at least
   if (bitmapLen) {
@@ -579,7 +579,7 @@ Production::RHSElt::~RHSElt()
 {}
 
 
-Production::RHSElt::RHSElt(DBG_INFO_FORMAL_FIRST str::StoragePool &pool, Flatten &flat)
+Production::RHSElt::RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sym(NULL),
     tag(DBG_INFO_ARG_FWD_FIRST  pool, flat)
 {}
@@ -608,12 +608,12 @@ Production::Production(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Nont
     action(DBG_INFO_ARG_FWD_FIRST  *this),
     firstSet(DBG_INFO_ARG_FWD_FIRST  *this)       // don't allocate bitmap yet
 {
-    pool.addPointer(forbid);
+    constcast(pool).addPointer(forbid);
 }
 
 Production::~Production()
 {
-  getPoolRef().removePointer(forbid);
+  constcast(getPoolRef()).removePointer(forbid);
   if (forbid_owned) {
       delete forbid;
   }

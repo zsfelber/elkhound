@@ -4,8 +4,11 @@
 #ifndef STRTABLE_H
 #define STRTABLE_H
 
+#include <map>
 #include "strhash.h"     // StringHash
 #include "str.h"         // rostring
+#include "storage.h"
+#include "astlist.h"
 
 // fwd
 class Flatten;
@@ -23,8 +26,45 @@ extern class StringTable *flattenStrTable;
 // string (null-terminated), so it can be printed directly, etc.
 typedef char const *StringRef;
 
-
+// TODO into StoragePool
 class StringTable {
+
+    struct E {
+        string *rs;
+        StringRef s;
+        E(StringRef s) : s(s) {}
+        inline bool operator<(E const & other) const {
+            char const * a = s, * b = other.s;
+            for (; *a&&*b; a++, b++) {
+                char d = *a - *b;
+                if (d) {
+                    return d<0;
+                }
+            }
+            return *b;
+        }
+    };
+    struct Buf {
+        E* arr;
+        size_t sz;
+        size_t cap;
+        Buf() : arr(NULL), sz(0), cap(0) {}
+    };
+
+    std::map<int16_t, Buf> tbl;
+
+public:
+
+    inline rostring add(rostring src) {
+        return add(src.c_str());
+    }
+
+    rostring add(StringRef src);
+
+    // read/write binary
+    void xfer(Flatten &flat, string const *& ref);
+
+    /*
 public:      // constants
   enum {
     rackSize = 16000,      // size of one rack
@@ -106,6 +146,7 @@ public:     // funcs
 
   // read/write binary
   void xfer(Flatten &flat, StringRef &ref);
+  */
 };
 
 

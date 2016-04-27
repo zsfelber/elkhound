@@ -8,6 +8,26 @@
 #include <string.h>      // strlen
 
 
+rostring StringTable::add(StringRef src) {
+    int16_t hash = src ? src[0] : 0;
+    if (hash) hash += src[1];
+    Buf& itm = tbl[hash];
+    size_t cap = str::getPtrBufSize(itm.sz);
+    if (cap > itm.cap) {
+        str::extendBuffer(itm.arr, itm.sz, itm.cap, cap);
+    }
+    E srch(src);
+    E* r;
+    if (!str::binary_insert(itm.arr,itm.arr+itm.sz, srch, r)) {
+        str::insertBufferItem(itm.arr, itm.sz, r);
+        *r = srch;
+        r->rs = new string(src);
+        r->s = r->rs->c_str();
+    }
+    return *r->rs;
+}
+
+/*
 StringTable *flattenStrTable = NULL;
 
 
@@ -96,9 +116,11 @@ StringRef StringTable::get(char const *src) const
   return (StringRef)hash.get(src);
 }
 
+*/
+
                                         
 // for now, just store each instance separately ...
-void StringTable::xfer(Flatten &flat, StringRef &ref)
+void StringTable::xfer(Flatten &flat, string const *& ref)
 {
   if (flat.reading()) {
     // read the string
@@ -107,7 +129,7 @@ void StringTable::xfer(Flatten &flat, StringRef &ref)
 
     if (str) {
       // add to table
-      ref = add(str);
+      ref = &add(str);
 
       // delete string's storage
       delete str;
@@ -121,6 +143,7 @@ void StringTable::xfer(Flatten &flat, StringRef &ref)
   else {
     // copy it to disk
     // since we're writing, the cast is ok
-    flat.xferCharString(const_cast<char*&>(ref));
+    char const * r = ref->c_str();
+    flat.xferCharString(const_cast<char*&>(r));
   }
 }

@@ -340,6 +340,7 @@ void parseFieldDecl(string &type, string &name, rostring decl)
   // extract the parts
   type = trimWhitespace(substring(decl, ofs));
   name = trimWhitespace(toCStr(decl)+ofs);
+  std::cout << decl << "->" << type << " + " << name << std::endl;
 }
 
 string extractFieldType(rostring decl)

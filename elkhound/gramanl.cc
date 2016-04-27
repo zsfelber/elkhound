@@ -58,6 +58,8 @@ static bool const LR1 = false;
 // context-sensitivity of LR(1))
 static bool const LALR1 = true;
 
+SourceLocManager mgr;
+
 #if !defined(NDEBUG)     // track unauthorized malloc's
   #define TRACK_MALLOC
 #endif
@@ -5341,8 +5343,6 @@ int inner_entry(int argc, char **argv)
     // default naming scheme
     prefix0 = replace(argv[0], ".gr", "");
   }
-
-  SourceLocManager mgr;
 
   // parse the grammar
   string grammarFname = argv[0];

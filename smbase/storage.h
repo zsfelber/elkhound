@@ -137,7 +137,7 @@ template<typename T>
 inline void copyBuffer(T* src, size_t srclen, size_t srccap,
                        T*& dest, size_t &dstlen, size_t &dstcap) {
     xassert(srccap && !dest);
-    dest = new T[srccap];
+    dest = (T*)new uint8_t[srccap*sizeof(T)];//avoid using default constructor for class types
     if (!dest) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
     dstlen = srclen;
     dstcap = srccap;
@@ -147,7 +147,7 @@ inline void copyBuffer(T* src, size_t srclen, size_t srccap,
 template<typename T>
 inline void copyBuffer(T* src, size_t srclen, size_t srccap, T*& dest) {
     xassert(!dest);
-    dest = new T[srccap];
+    dest = (T*)new uint8_t[srccap*sizeof(T)];//avoid using default constructor for class types
     memcpy(dest, src, srclen*sizeof(T));
 }
 
@@ -155,7 +155,7 @@ template<typename T>
 inline void extendBuffer(T*& buf, size_t size, size_t& capacity, size_t newcap) {
     xassert(newcap);
     T* old = buf;
-    buf = new T[newcap];
+    buf = (T*)new uint8_t[newcap*sizeof(T)];//avoid using default constructor for class types
     if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
     if (old) {
         memcpy(buf, old, size*sizeof(T));
@@ -168,7 +168,7 @@ template<typename T>
 inline void extendBuffer(T*& buf, size_t size, size_t newcap) {
     xassert(newcap);
     T* old = buf;
-    buf = new T[newcap];
+    buf = (T*)new uint8_t[newcap*sizeof(T)];//avoid using default constructor for class types
     if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
     if (old) {
         memcpy(buf, old, size*sizeof(T));
@@ -255,6 +255,55 @@ inline std::ostream &ind(std::ostream &os, int indent)
   return os;
 }
 
+#define BI_NI \
+    if (*middle == nullItem) {                                                   \
+        T* _middle = middle;                                                     \
+        do {                                                                     \
+            _middle++;                                                           \
+        } while (*_middle == nullItem && _middle < last);                        \
+                                                                                 \
+        if (_middle == last) {                                                   \
+            nothingToTheRight = true;                                            \
+            _middle = middle;                                                    \
+                                                                                 \
+            do {                                                                 \
+                _middle--;                                                       \
+            } while (*_middle == nullItem && _middle >= first);                  \
+                                                                                 \
+            if (_middle < first) {                                               \
+                result = last;                                                   \
+                return false;                                                    \
+            }                                                                    \
+        }                                                                        \
+                                                                                 \
+        middle = _middle;                                                        \
+    }                                                                            \
+
+#define BI(bi_ni) \
+    while (first < last) {                                                       \
+      std::ptrdiff_t half = (last-first) >> 1;                                   \
+      T* middle = first + half;                                                  \
+      bool nothingToTheRight = false;                                            \
+                                                                                 \
+      bi_ni                                                                      \
+                                                                                 \
+      if (*middle < val) {                                                       \
+          first = middle+1;                                                      \
+          if (nothingToTheRight) {                                               \
+              result = first;                                                    \
+              return false;                                                      \
+          }                                                                      \
+      } else if (val < *middle) {                                                \
+          /* exclusive index  (no -1)*/                                          \
+          last = middle;                                                         \
+      } else {                                                                   \
+          result = middle;                                                       \
+          return true;                                                           \
+      }                                                                          \
+    }                                                                            \
+    result = first;                                                              \
+    return false;                                                                \
+
 /**
  * std::lower_bound  with  null item (we ignore null items)
  *  @brief Finds the first position in which @a val could be inserted
@@ -268,49 +317,12 @@ inline std::ostream &ind(std::ostream &os, int indent)
  *  @ingroup binary_search_algorithms
 */
 template<typename T>
-T* lower_bound(T* first, T* last,
-      const T& val, const T& nullItem) {
-
-  while (first < last) {
-    std::ptrdiff_t half = (last-first) >> 1;
-    T* middle = first + half;
-    bool nothingToTheRight = false;
-
-    if (*middle == nullItem) {
-        T* _middle = middle;
-        do {
-            _middle++;
-        } while (*_middle == nullItem && _middle < last);
-
-        if (_middle == last) {
-            nothingToTheRight = true;
-            _middle = middle;
-
-            do {
-                _middle--;
-            } while (*_middle == nullItem && _middle >= first);
-
-            if (_middle < first) {
-                return last;
-            }
-        }
-
-        middle = _middle;
-    }
-
-    if (*middle < val) {
-        first = middle+1;
-        if (nothingToTheRight) {
-            return first;
-        }
-    } else if (*middle > val) {
-        // exclusive index  (no -1)
-        last = middle;
-    } else {
-        return middle;
-    }
-  }
-  return first;
+bool binary_insert(T* first, T* last, const T& val, const T& nullItem, T*& result) {
+   BI(BI_NI)
+}
+template<typename T>
+bool binary_insert(T* first, T* last, const T& val, T*& result) {
+   BI(/**/)
 }
 
 template<typename T>
@@ -434,6 +446,9 @@ public:
    Storeable(DBG_INFO_FORMAL_FIRST  Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool = false);
 
    virtual ~Storeable();
+
+   template<class ME>
+   void assign(ME const & srcOrParent);
 
    void assign(Storeable const & srcOrParent, size_t size_of);
 
@@ -1195,7 +1210,7 @@ private:
 
        if (length) {
            if (dd < vars[length-1]) {
-               val = lower_bound(vars, last, dd, nullitm);
+               binary_insert(vars, last, dd, nullitm, val);
                if (val != last && *val == dd) {
                    std::cout << "Warning  StoragePool.addValue : variable already inserted : " << (void*) dd
                              << " of " << (void*) memory << " .. " << (void*) (memory+memlength) << std::endl;
@@ -1217,7 +1232,11 @@ private:
    inline void removeValue(T* vars, size_t &length, T dd, T nullitm) {
 
        T* last = vars + length;
-       T* val = vars ? lower_bound(vars, last, dd, nullitm) : last;
+       T* val;
+       if (vars)
+           binary_insert(vars, last, dd, nullitm, val);
+       else
+           val = last;
        if (val == last) {
        } else {
            T vval = *val;
@@ -1571,7 +1590,8 @@ public:
    inline size_t* getChildPointer(StoragePool const * child) const {
        size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)child);
        size_t * last = childpools+chplslength;
-       size_t* val = lower_bound(childpools, last, dd, npos);
+       size_t* val;
+       binary_insert(childpools, last, dd, npos, val);
        if (val == last) {
            // TODO
            return NULL;
@@ -2085,6 +2105,11 @@ inline void Storeable::removeInParent() {
     if (pool) {
         pool->removeVariable(this);
     }
+}
+
+template<class ME>
+inline void Storeable::assign(ME const & srcOrParent) {
+    assign(srcOrParent, sizeof(ME));
 }
 
 inline void Storeable::assign(Storeable const & src, size_t size_of) {

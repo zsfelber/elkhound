@@ -267,6 +267,10 @@ public:      // funcs
   SourceLocManager(str::StoragePool &parent);
   ~SourceLocManager();
 
+  str::StoragePool & getPool() {
+      return pool;
+  }
+
   // origins:
   //   character offsets start at 0
   //   lines start at 1

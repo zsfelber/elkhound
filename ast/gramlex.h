@@ -135,7 +135,7 @@ private:     // funcs
   
   // adds a string with only the specified # of chars; writes (but
   // then restores) a null terminator if necessary, so 'str' isn't const
-  StringRef addString(char *str, int len) const;
+  rostring addString(char *str, int len) const;
                                         
   // nominally true if 'ch' equals 'embedFinish', but with a niggle
   bool embedFinishMatches(char ch) const;
@@ -154,13 +154,13 @@ public:      // funcs
   ~GrammarLexer();
 
   // get current token as a string
-  StringRef curToken() const;
+  rostring curToken() const;
   int curLen() const { return const_cast<GrammarLexer*>(this)->YYLeng(); }
 
   // current token's embedded text
-  StringRef curFuncBody() const;
-  StringRef curDeclBody() const { return curFuncBody(); }    // implementation artifact
-  StringRef curDeclName() const;
+  rostring curFuncBody() const;
+  rostring curDeclBody() const { return curFuncBody(); }    // implementation artifact
+  rostring curDeclName() const;
 
   // read the next token and return its code; returns TOK_EOF for end of file;
   // this function is defined in flex's output source code; this one

@@ -11,6 +11,8 @@
 
 class GrammarLexer;
 
+extern StringTable stringTable;
+
 
 // ---------------- agrampar's view of the parser --------------------
 // name of extra parameter to yyparse (i.e. the context in
@@ -46,10 +48,10 @@ extern int yydebug;
 string unbox(string *s);
 
 // box 's' as a string object
-string *box(char const *s);
+string const *box(char const *s);
 
 // return concatenation of two strings; source strings are deallocated
-string *appendStr(string *left, string *right);
+string *appendStr(string const *left, string const *right);
 
 // parse a string into components
 CtorArg *parseCtorArg(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring str);

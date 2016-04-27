@@ -19,23 +19,24 @@
 //extern
 str::StoragePool y_pool(DBG_INFO_ARG0);
 
-string unbox(string *s)
+/*string unbox(string *s)
 {
   string ret = *s;      // later optimization: transfer s.p directly
   delete s;
   return ret;
-}
+}*/
 
-string *box(char const *s)
+string const *box(char const *s)
 {
-  return new string(DBG_INFO_ARG0_FIRST  s);
+  // return new string(DBG_INFO_ARG0_FIRST  s);
+  return &stringTable.add(s);
 }
 
-string *appendStr(string *left, string *right)
+string *appendStr(string const *left, string const *right)
 {
   string *ret = new string(DBG_INFO_ARG0_FIRST  *left & *right);
-  delete left;
-  delete right;
+  //delete left;
+  //delete right;
   return ret;
 }
 
@@ -94,11 +95,11 @@ int agrampar_yylex(YYSTYPE *lvalp, void *parseParam)
   switch (code) {
     case TOK_NAME:
     case TOK_INTLIT:
-      lvalp->str = box(lexer.curToken());
+      lvalp->str = constcast(&lexer.curToken());
       break;
 
     case TOK_EMBEDDED_CODE:
-      lvalp->str = box(lexer.curFuncBody());
+      lvalp->str = constcast(&lexer.curFuncBody());
       break;
 
     default:

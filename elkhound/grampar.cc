@@ -19,7 +19,7 @@
 #include <ctype.h>           // isspace, isalnum
 #include <sstream>           // stringstream
 
-#define LIT_STR(s) LocString(SL_INIT, grammarStringTable.add(s))
+#define LIT_STR(s) * new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), SL_INIT, grammarStringTable.add(s))
 
 inline bool isVoid(char const * tp) {
     return !tp || !strcmp("void", tp);
@@ -142,13 +142,13 @@ void astParseError(LocString const &failToken, rostring msg)
 
 void astParseError(SourceLoc loc, rostring msg)
 {
-  LocString locstr(loc, NULL);
+  LocString locstr(DBG_INFO_ARG0_FIRST  loc, NULL);
   THROW(XASTParse(locstr, msg));
 }
 
 void astParseError(rostring msg)
 {
-  LocString ls;   // no location info
+  LocString ls(DBG_INFO_ARG0_FIRST);   // no location info
   THROW(XASTParse(ls, msg));
 }
 
@@ -216,7 +216,7 @@ void setAnnotations(GrammarAST *ast)
 }
 
 
-LocString extractActionClassName(LocString const &body)
+LocString& extractActionClassName(LocString const &body)
 {
   // find start of first token
   char const *start = body.str;
@@ -228,7 +228,7 @@ LocString extractActionClassName(LocString const &body)
   while (isalnum(*p) || *p=='_') p++;
   
   // yield that, with the same source location
-  return LocString(body.loc, grammarStringTable.add(
+  return * LocString(DBG_INFO_ARG0_FIRST  body.loc, grammarStringTable.add(
     substring(start, p-start).c_str()));
 }
 
@@ -283,15 +283,15 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
         //
         // new:
         g.actionClasses.deleteAll();
-        g.actionClasses.append(new LocString(c->body));
+        g.actionClasses.append(DBG_INFO_ARG0_FIRST  new LocString(DBG_INFO_ARG0_FIRST  c->body));
       }
 
       ASTNEXT(TF_verbatim, v) {
         if (v->isImpl) {
-          g.implVerbatim.append(new LocString(v->code));
+          g.implVerbatim.append(DBG_INFO_ARG0_FIRST  new LocString(DBG_INFO_ARG0_FIRST  v->code));
         }
         else {
-          g.verbatim.append(new LocString(v->code));
+          g.verbatim.append(DBG_INFO_ARG0_FIRST  new LocString(DBG_INFO_ARG0_FIRST  v->code));
         }
       }
 

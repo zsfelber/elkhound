@@ -10,16 +10,20 @@ LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool)
 {}
 
 LocString::LocString(DBG_INFO_FORMAL_FIRST  LocString const &obj)
-  : Storeable(DBG_INFO_ARG_FWD_FIRST  obj,false)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  obj,false), str(NULL)
 {}
 
 LocString::LocString(DBG_INFO_FORMAL_FIRST  Storeable const &parent)
-  : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, true)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, true), str(NULL)
 {}
 
-LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, SourceLoc L, StringRef s)
+LocString::LocString(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, SourceLoc L, rostring s)
   : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), loc(L),
     str(s)
+{}
+
+LocString::LocString(DBG_INFO_FORMAL_FIRST  SourceLoc L, rostring s)
+  : Storeable(DBG_INFO_ARG_FWD), loc(L), str(s)
 {}
 
 
@@ -41,7 +45,8 @@ void LocString::xfer(str::StoragePool &pool, Flatten &flat)
   // so for now I'm punting and not saving the loc at all...
 
   xassert(flattenStrTable);
-  flattenStrTable->xfer(flat, str);
+  const string *result = &str;
+  flattenStrTable->xfer(flat, result);
 }
 
 
@@ -63,14 +68,19 @@ LocString *LocString::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool,
 }
 
 
-bool LocString::equals(char const *other) const
+bool LocString::equals(StringRef other) const
 {
-  if (!str) {
+  if (!str.length()) {
     return !other;                            // equal if both null
   }
   else {
-    return other && streq(str, other); // or same contents
+    return other && str.equals(other); // or same contents
   }
+}
+
+bool LocString::equals(rostring other) const
+{
+  return str.equals(other.c_str()); // or same contents
 }
 
 string toString(LocString const &s)

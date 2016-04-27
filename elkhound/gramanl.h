@@ -41,6 +41,9 @@ class EmitCode;           // emitcode.h
 class GrammarAnalysis;
 
 
+extern SourceLocManager mgr;
+
+
 // ---------------- DottedProduction --------------------
 // a production, with an indicator that says how much of this
 // production has been matched by some part of the input string
