@@ -58,8 +58,8 @@ static bool const LR1 = false;
 // context-sensitivity of LR(1))
 static bool const LALR1 = true;
 
-SourceLocManager mgr;
-str::StoragePool gramanl_pool;
+str::StoragePool gramanl_pool(DBG_INFO_ARG0);
+SourceLocManager mgr(gramanl_pool);
 
 #if !defined(NDEBUG)     // track unauthorized malloc's
   #define TRACK_MALLOC
@@ -105,7 +105,13 @@ DottedProduction::DottedProduction(DottedProduction const &obj)
 #endif // 0
 
 
-DottedProduction::DottedProduction()
+DottedProduction::DottedProduction() : Storeable(DBG_INFO_ARG0), firstSet(DBG_INFO_ARG0_FIRST  *this)
+{
+  init();
+}
+
+DottedProduction::DottedProduction(Storeable &parent) :
+    Storeable(DBG_INFO_ARG0_FIRST  parent, true), firstSet(DBG_INFO_ARG0_FIRST  *this)
 {
   init();
 }
@@ -195,21 +201,21 @@ void DottedProduction::print(ostream &os) const
 
 // ---------------------- LRItem -------------------
 LRItem::LRItem(int numTerms, DottedProduction const *dp)
-  : dprod(dp),
-    lookahead(numTerms)
+  : Storeable(DBG_INFO_ARG0), dprod(dp),
+    lookahead(DBG_INFO_ARG0_FIRST  *this, numTerms)
 {}
 
 LRItem::LRItem(LRItem const &obj)
-  : dprod(obj.dprod),
-    lookahead(obj.lookahead)
+  : Storeable(DBG_INFO_ARG0), dprod(obj.dprod),
+    lookahead(DBG_INFO_ARG0_FIRST  obj.lookahead)
 {}
 
 LRItem::~LRItem()
 {}
 
 LRItem::LRItem(Flatten &flat)
-  : dprod(NULL),
-    lookahead(flat)
+  : Storeable(DBG_INFO_ARG0), dprod(NULL),
+    lookahead(DBG_INFO_ARG0_FIRST  *this, flat)
 {}
 
 void LRItem::xfer(str::StoragePool &pool, Flatten &flat)
@@ -236,7 +242,7 @@ void LRItem::xferSerfs(Flatten &flat, GrammarAnalysis &g)
 // compare two items in an arbitrary (but deterministic) way so that
 // sorting will always put a list of items into the same order, for
 // comparison purposes; this doesn't consider the lookahead
-STATICDEF int LRItem::diff(LRItem const *a, LRItem const *b, void*)
+STATICDEF int LRItem::diff(LRItem const *a, LRItem const *b, Storeable const*)
 {
   // check the prodIndex first
   int ret = a->prodIndex() - b->prodIndex();
@@ -287,8 +293,8 @@ string LRItem::toString(Grammar const &g) const
 
 // ----------------- ItemSet -------------------
 ItemSet::ItemSet(StateId anId, int numTerms, int numNonterms)
-  : kernelItems(),
-    nonkernelItems(),
+  : Storeable(DBG_INFO_ARG0), kernelItems(DBG_INFO_ARG0),
+    nonkernelItems(DBG_INFO_ARG0),
     termTransition(NULL),      // inited below
     nontermTransition(NULL),   // inited below
     terms(numTerms),
@@ -328,7 +334,9 @@ ItemSet::~ItemSet()
 
 
 ItemSet::ItemSet(Flatten &flat)
-  : termTransition(NULL),
+  : Storeable(DBG_INFO_ARG0), kernelItems(DBG_INFO_ARG0),
+    nonkernelItems(DBG_INFO_ARG0),
+    termTransition(NULL),
     nontermTransition(NULL),
     dotsAtEnd(NULL),
     numDotsAtEnd(0),
@@ -535,7 +543,7 @@ void ItemSet::removeShift(Terminal const *sym)
 void ItemSet::addKernelItem(LRItem *item)
 {
   // add it
-  kernelItems.appendUnique(item);
+  kernelItems.appendUnique(DBG_INFO_ARG0_FIRST item);
 }
 
 
@@ -571,7 +579,7 @@ bool ItemSet::operator==(ItemSet const &obj) const
 
 void ItemSet::addNonkernelItem(LRItem *item)
 {
-  nonkernelItems.appendUnique(item);
+  nonkernelItems.appendUnique(DBG_INFO_ARG0_FIRST  item);
   
   // note: the caller is supposed to call changedItems
 }
@@ -615,11 +623,11 @@ void ItemSet::getAllItems(SObjList<LRItem> &dest, bool nonkernel) const
   SObjListMutator<LRItem> mut(dest);
 
   FOREACH_OBJLIST(LRItem, kernelItems, k) {
-    mut.append(const_cast<LRItem*>(k.data()));
+    mut.append(DBG_INFO_ARG0_FIRST  const_cast<LRItem*>(k.data()));
   }
   if (nonkernel) {
     FOREACH_OBJLIST(LRItem, nonkernelItems, n) {
-      mut.append(const_cast<LRItem*>(n.data()));
+      mut.append(DBG_INFO_ARG0_FIRST  const_cast<LRItem*>(n.data()));
     }
   }
 }
@@ -700,7 +708,7 @@ void ItemSet::getPossibleReductions(ProductionList &reductions,
     }
 
     // ok, this one's ready
-    reductions.append(const_cast<Production*>(item->getProd()));       // (constness)
+    reductions.append(DBG_INFO_ARG0_FIRST  const_cast<Production*>(item->getProd()));       // (constness)
   }
 }
 
@@ -1342,7 +1350,7 @@ void GrammarAnalysis::computeProductionsByLHS()
       int LHSindex = prod.data()->left->ntIndex;
       xassert(LHSindex < numNonterms);
 
-      productionsByLHS[LHSindex].append(prod.data());
+      productionsByLHS[LHSindex].append(DBG_INFO_ARG0_FIRST  prod.data());
       prod.data()->prodIndex = pi++;
       indexedProds[prod.data()->prodIndex] = prod.data();
     }
@@ -1462,12 +1470,12 @@ void GrammarAnalysis::initializeAuxData()
           changed = true;
       }
       codeHasTerm[code] = t;
-      terminals.append(t);
+      terminals.append(DBG_INFO_ARG0_FIRST  t);
       ti++;
     } else {
       terminalCodeMapped = true;
       t->termIndex = 0;
-      urTerminals.append(t);
+      urTerminals.append(DBG_INFO_ARG0_FIRST  t);
       changed = true;
     }
   }
@@ -1475,16 +1483,16 @@ void GrammarAnalysis::initializeAuxData()
   SMUTATE_EACH_NONTERMINAL(allNonterminals, iter) {
     Nonterminal *nt = iter.data();
     if (nt->reachable) {
-      nonterminals.append(nt);
+      nonterminals.append(DBG_INFO_ARG0_FIRST  nt);
       SFOREACH_OBJLIST(Production, nt->productions, pter) {
           Production * prod = constcast(pter.data());
-          productions.append(prod);
+          productions.append(DBG_INFO_ARG0_FIRST  prod);
       }
     } else {
-      urNonterminals.append(nt);
+      urNonterminals.append(DBG_INFO_ARG0_FIRST  nt);
       SFOREACH_OBJLIST(Production, nt->productions, pter) {
           Production * prod = constcast(pter.data());
-          urProductions.append(prod);
+          urProductions.append(DBG_INFO_ARG0_FIRST  prod);
       }
       changed = true;
     }
@@ -1736,7 +1744,7 @@ void GrammarAnalysis::computeFirst()
         // the list iter is mutating because I modify LHS's First set
 
       // compute First(RHS-sequence)
-      TerminalSet firstOfRHS(numTerms);
+      TerminalSet firstOfRHS(DBG_INFO_ARG0_FIRST  numTerms);
       firstOfSequence(firstOfRHS, prod->right);
 
       // store this back into 'prod'
@@ -1870,7 +1878,7 @@ void GrammarAnalysis::computeFollow()
         // everything in First(beta) is in Follow(B)
         {
           // compute First(beta)
-          TerminalSet firstOfBeta(numTerms);
+          TerminalSet firstOfBeta(DBG_INFO_ARG0_FIRST  numTerms);
           firstOfIterSeq(firstOfBeta, afterRightSym);
 
           // put those into Follow(rightNT)
@@ -1927,13 +1935,13 @@ void GrammarAnalysis::computePredictiveParsingTable()
     Production *prod = prodIter.data();
 
     // for each terminal 'term' in First(RHS)
-    TerminalSet firsts(numTerms);
+    TerminalSet firsts(DBG_INFO_ARG0_FIRST  numTerms);
     firstOfSequence(firsts, prod->right);
     for (int termIndex=0; termIndex<numTerms; termIndex++) {
       if (!firsts.contains(termIndex)) continue;
 
       // add 'prod' to table[LHS,term]
-      TABLE(prod->left->ntIndex, termIndex).prependUnique(prod);
+      TABLE(prod->left->ntIndex, termIndex).prependUnique(DBG_INFO_ARG0_FIRST  prod);
     }
 
     // if RHS ->* emptyString, ...
@@ -1943,7 +1951,7 @@ void GrammarAnalysis::computePredictiveParsingTable()
         if (!firsts.contains(termIndex)) continue;
 
         // ... add 'prod' to table[LHS,term]
-        TABLE(prod->left->ntIndex, termIndex).prependUnique(prod);
+        TABLE(prod->left->ntIndex, termIndex).prependUnique(DBG_INFO_ARG0_FIRST  prod);
       }
     }
   }
@@ -2032,7 +2040,7 @@ void GrammarAnalysis::itemSetClosure(ItemSet &itemSet)
   ArrayStack<LRItem*> worklist;
 
   // scratch terminal set for singleItemClosure
-  TerminalSet scratchSet(numTerminals());
+  TerminalSet scratchSet(DBG_INFO_ARG0_FIRST  numTerminals());
 
   // and another for the items we've finished
   OwnerKHashTable<LRItem, DottedProduction> finished(
@@ -2073,7 +2081,7 @@ void GrammarAnalysis::itemSetClosure(ItemSet &itemSet)
          !iter.isDone(); iter.adv()) {
       // temporarily, the item is owned both by the hashtable
       // and the list
-      itemSet.nonkernelItems.prepend(iter.data());
+      itemSet.nonkernelItems.prepend(DBG_INFO_ARG0_FIRST  iter.data());
     }
     finished.disownAndForgetAll();
   }
@@ -2327,7 +2335,7 @@ void GrammarAnalysis::moveDotNoClosure(ItemSet const *source, Symbol const *symb
       // need to access destIter; if there are no more items, make more
       if (destIter.isDone()) {
         // the new item becomes the current 'data()'
-        destIter.insertBefore(new LRItem(numTerminals(), NULL /*dprod*/));
+        destIter.insertBefore(DBG_INFO_ARG0_FIRST  new LRItem(DBG_INFO_ARG0_FIRST  numTerminals(), NULL /*dprod*/));
       }
 
       // move the dot; write dot-moved item into 'destIter'
@@ -2544,7 +2552,7 @@ void GrammarAnalysis::constructLRItemSets()
         //
         // this call also yields the unused remainder of the kernel items,
         // so we can add them back in at the end
-        ObjList<LRItem> unusedTail;
+        ObjList<LRItem> unusedTail(DBG_INFO_ARG0);
         moveDotNoClosure(itemSet, sym, scratchState,
                          unusedTail, kernelCRCArray);
         ItemSet *withDotMoved = scratchState;    // clarify role from here down
@@ -2661,7 +2669,7 @@ void GrammarAnalysis::constructLRItemSets()
   try {
     for (OwnerKHashTableIter<ItemSet, ItemSet> iter(itemSetsDone);
          !iter.isDone(); iter.adv()) {
-      itemSets.prepend(iter.data());
+      itemSets.prepend(DBG_INFO_ARG0_FIRST  iter.data());
     }
     itemSetsDone.disownAndForgetAll();
   }
@@ -2673,7 +2681,7 @@ void GrammarAnalysis::constructLRItemSets()
 
   // since we sometimes consider a state more than once, the
   // states end up out of order; put them back in order
-  itemSets.mergeSort(ItemSet::diffById);
+  itemSets.mergeSort(DBG_INFO_ARG0_FIRST  ItemSet::diffById);
 
 
   traceProgress(1) << "done with LR sets: " << itemSets.count()
@@ -2886,17 +2894,17 @@ void GrammarAnalysis::computeBFSTree()
   SObjList<ItemSet> done;
 
   // initial entry in queue is root of BFS tree
-  queue.append(startState);
+  queue.append(DBG_INFO_ARG0_FIRST  startState);
 
   // it will be convenient to have all the symbols in a single list
   // for iteration purposes
-  SymbolList allSymbols;       	  // (const list)
+  SymbolList allSymbols(DBG_INFO_ARG0);       	  // (const list)
   {
     SFOREACH_TERMINAL(terminals, t) {
-      allSymbols.append(const_cast<Terminal*>(t.data()));
+      allSymbols.append(DBG_INFO_ARG0_FIRST  const_cast<Terminal*>(t.data()));
     }
     SFOREACH_NONTERMINAL(nonterminals, nt) {
-      allSymbols.append(const_cast<Nonterminal*>(nt.data()));
+      allSymbols.append(DBG_INFO_ARG0_FIRST  const_cast<Nonterminal*>(nt.data()));
     }
   }
 
@@ -2906,7 +2914,7 @@ void GrammarAnalysis::computeBFSTree()
     ItemSet *source = queue.removeAt(0);
 
     // mark it as done so we won't consider any more transitions to it
-    done.append(source);
+    done.append(DBG_INFO_ARG0_FIRST  source);
 
     // for each symbol...
     SFOREACH_SYMBOL(allSymbols, sym) {
@@ -2928,7 +2936,7 @@ void GrammarAnalysis::computeBFSTree()
       target->BFSparent = source;
 
       // finally, enqueue the target so we'll explore its targets too
-      queue.append(target);
+      queue.append(DBG_INFO_ARG0_FIRST  target);
     }
   }
 }
@@ -3202,7 +3210,7 @@ bool isAmbiguousNonterminal(Symbol const *sym)
 void GrammarAnalysis::renumberStates()
 {
   // sort them into the right order
-  itemSets.mergeSort(&GrammarAnalysis::renumberStatesDiff, this);
+  itemSets.mergeSort(DBG_INFO_ARG0_FIRST  &GrammarAnalysis::renumberStatesDiff, this);
 
   // number them in that order
   int n = 0;
@@ -3298,13 +3306,13 @@ STATICDEF int GrammarAnalysis::renumberStatesDiff
 
   // finally, order by possible reductions
   SFOREACH_OBJLIST(Terminal, gramanl->terminals, termIter) {
-    ProductionList lpl, rpl;
+    ProductionList lpl(DBG_INFO_ARG0), rpl(DBG_INFO_ARG0);
     left->getPossibleReductions(lpl, termIter.data(), false /*parsing*/);
     right->getPossibleReductions(rpl, termIter.data(), false /*parsing*/);
 
     // sort the productions before we can compare them...
-    lpl.insertionSort(&GrammarAnalysis::arbitraryProductionOrder);
-    rpl.insertionSort(&GrammarAnalysis::arbitraryProductionOrder);
+    lpl.insertionSort(DBG_INFO_ARG0_FIRST  &GrammarAnalysis::arbitraryProductionOrder);
+    rpl.insertionSort(DBG_INFO_ARG0_FIRST  &GrammarAnalysis::arbitraryProductionOrder);
 
     ret = lpl.compareAsLists(rpl, &GrammarAnalysis::arbitraryProductionOrder);
     if (ret) return ret;
@@ -3409,7 +3417,7 @@ void GrammarAnalysis::computeParseTables(bool allowAmbig, int reportReachable)
       ItemSet const *shiftDest = state->transitionC(terminal);
 
       // can reduce?
-      ProductionList reductions;
+      ProductionList reductions(DBG_INFO_ARG0);
       state->getPossibleReductions(reductions, terminal,
                                    false /*parsing*/);
 
@@ -3631,7 +3639,7 @@ SymbolId encodeSymbolId(Symbol const *sym)
 // will lead to the given state, from the start state
 string GrammarAnalysis::leftContextString(ItemSet const *state) const
 {
-  SymbolList ctx;
+  SymbolList ctx(DBG_INFO_ARG0);
   leftContext(ctx, state);                // get as list
   return symbolSequenceToString(ctx);	  // convert to string
 }
@@ -3656,7 +3664,7 @@ void GrammarAnalysis::leftContext(SymbolList &output,
     Symbol const *sym = inverseTransitionC(parent, state);
 
     // prepend that symbol's name to our current context
-    output.prepend(const_cast<Symbol*>(sym));
+    output.prepend(DBG_INFO_ARG0_FIRST  const_cast<Symbol*>(sym));
 
     // move to our parent and repeat
     state = parent;
@@ -3688,11 +3696,11 @@ int priorityFewer(int a_dominant, int b_dominant,
 string GrammarAnalysis::sampleInput(ItemSet const *state) const
 {
   // get left-context as terminals and nonterminals
-  SymbolList symbols;
+  SymbolList symbols(DBG_INFO_ARG0);
   leftContext(symbols, state);
 
   // reduce the nonterminals to terminals
-  TerminalList terminals;
+  TerminalList terminals(DBG_INFO_ARG0);
   if (!rewriteAsTerminals(terminals, symbols)) {
     return string("(failed to reduce!!)");
   }
@@ -3711,7 +3719,7 @@ bool GrammarAnalysis::rewriteAsTerminals(TerminalList &output, SymbolList const 
 {
   // we detect looping by noticing if we ever reduce via the same
   // production more than once in a single vertical recursive slice
-  ProductionList reductionStack;      // starts empty
+  ProductionList reductionStack(DBG_INFO_ARG0);      // starts empty
 
   // start the recursive version
   return rewriteAsTerminalsHelper(output, input, reductionStack);
@@ -3739,7 +3747,7 @@ bool GrammarAnalysis::
 
     else if (sym->isTerminal()) {
       // no sweat, just copy it (er, copy the pointer)
-      output.append(const_cast<Terminal*>(&sym->asTerminalC()));
+      output.append(DBG_INFO_ARG0_FIRST  const_cast<Terminal*>(&sym->asTerminalC()));
     }
 
     else {
@@ -3767,7 +3775,7 @@ bool GrammarAnalysis::
 // production's RHS contains a symbol already expanded, and the other
 // does not, then prefer the RHS which hasn't already been expanded
 int compareProductionsForRewriting(Production const *p1, Production const *p2, 
-                                   void *extra)
+                                   Storeable const *extra)
 {                                             
   ProductionList *reductionStack = (ProductionList*)extra;
    
@@ -3798,7 +3806,7 @@ bool GrammarAnalysis::
                              ProductionList &reductionStack) const
 {
   // get all of 'nonterminal's productions that are not recursive
-  ProductionList candidates;
+  ProductionList candidates(DBG_INFO_ARG0);
   SFOREACH_PRODUCTION(productions, prodIter) {
     Production const *prod = prodIter.data();
     if (prod->left != nonterminal) continue;
@@ -3816,7 +3824,7 @@ bool GrammarAnalysis::
     }
 
     // it's a candidate
-    candidates.prepend(const_cast<Production*>(prod));   // constness
+    candidates.prepend(DBG_INFO_ARG0_FIRST  const_cast<Production*>(prod));   // constness
   }
 
   if (candidates.isEmpty()) {
@@ -3838,11 +3846,11 @@ bool GrammarAnalysis::
     Production const *prod = candIter.data();
 
     // add chosen production to the stack
-    reductionStack.prepend(const_cast<Production*>(prod));
+    reductionStack.prepend(DBG_INFO_ARG0_FIRST  const_cast<Production*>(prod));
 
     // now, the chosen rule provides a RHS, which is a sequence of
     // terminals and nonterminals; recursively reduce that sequence
-    SymbolList rhsSymbols;
+    SymbolList rhsSymbols(DBG_INFO_ARG0);
     prod->getRHSSymbols(rhsSymbols);
     retval = rewriteAsTerminalsHelper(output, rhsSymbols, reductionStack);
 
@@ -4005,7 +4013,7 @@ void GrammarAnalysis::addTreebuildingActions()
   {
     StringRef extra = grammarStringTable.add(
       "\n#include \"ptreenode.h\"     // PTreeNode\n");
-    verbatim.prepend(new (pool) LITERAL_LOCSTRING(extra));
+    verbatim.prepend(DBG_INFO_ARG0_FIRST  new (pool) LITERAL_LOCSTRING(extra));
   }
 
   // get handles to the strings we want to emit
@@ -4041,7 +4049,7 @@ void GrammarAnalysis::addTreebuildingActions()
     Production *p = prodIter.data();
 
     // build up the code
-    stringBuilder code;
+    stringBuilder code(DBG_INFO_ARG0);
     code << "return new PTreeNode(\"" << p->left->name << " -> "
          << encodeWithEscapes(p->rhsString(false /*printTags*/, 
                                            true /*quoteAliases*/))

@@ -58,7 +58,7 @@ extern str::StoragePool gramanl_pool;
 // production has been matched by some part of the input string
 // (exactly which part of the input depends on where this appears
 // in the algorithm's data structures)
-class DottedProduction {
+class DottedProduction : public str::Storeable {
 // ------ representation ------
 private:    // data
   Production const *prod;        // (serf) the base production
@@ -97,6 +97,7 @@ public:	    // funcs
   //DottedProduction(GrammarAnalysis const &g);       // for later filling-in
   //DottedProduction(/*GrammarAnalysis const &g,*/ Production *p, int d);
   DottedProduction();     // for creating arrays of them
+  DottedProduction(str::Storeable &parent);     // for creating arrays of them
   ~DottedProduction();
 
   // no point to flattening these because they're easily re-computable
@@ -171,7 +172,7 @@ public:    // funcs
   void xferSerfs(Flatten &flat, GrammarAnalysis &g);
 
   // comparison
-  static int diff(LRItem const *a, LRItem const *b, void*);
+  static int diff(LRItem const *a, LRItem const *b, Storeable const*);
   bool equalNoLA(LRItem const &obj) const
     { return dprod == obj.dprod; }
 
