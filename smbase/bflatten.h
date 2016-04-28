@@ -6,6 +6,7 @@
 
 #include "flatten.h"      // Flatten
 #include "ohashtbl.h"     // OwnerHashTable
+#include "storage.h"
 #include <stdio.h>        // FILE
 
 class BFlatten : public Flatten {
@@ -50,7 +51,7 @@ T *writeThenRead(T &obj)
 
   // read
   BFlatten in(fname, true /*reading*/);
-  T *ret = new T(in);
+  T *ret = new T(DBG_INFO_ARG0_FIRST  in);
   ret->xfer(in);
 
   remove(fname);

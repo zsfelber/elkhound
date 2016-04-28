@@ -74,9 +74,5 @@ string toXml(LocString op);
 void fromXml(LocString &out, rostring str);
 
 
-// useful for constructing literal strings in source code
-#define LITERAL_LOCSTRING(str)                                   \
-  LocString(HERE_SOURCELOC, str)
-
 
 #endif // LOCSTR_H

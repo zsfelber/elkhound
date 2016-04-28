@@ -81,6 +81,7 @@ outputCond([[[m4_dnl    // sobjlist
 public:
   // make shallow copies
   className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  list.chk_assign(obj.list, move);   }
+  className[[[]]](DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr)       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {     }
   className& operator= (className const &src)         { list = src.list; return *this; }
 
   public:
@@ -88,20 +89,23 @@ public:
   className[[[]]](DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this,0) {}
   className[[[]]](DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(className)), list(DBG_INFO_ARG_FWD_FIRST  *this,0) {}
 ]]], [[[m4_dnl          // objlist
-  #define OWN xassert(owning);
-  #define NOWN xassert(!owning);
+  //#define OWN xassert(owning);
+  //#define NOWN xassert(!owning);
+  #define OWN
+  #define NOWN
 private:
-  bool const owning;
+  //bool const owning;
   // make shallow copies and non-owning list
-  className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), owning(false) {  list.chk_assign(obj.list, move);   }
+  className[[[]]](DBG_INFO_FORMAL_FIRST className const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*, owning(false)*/ {  list.chk_assign(obj.list, move);   }
+  className[[[]]](DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr)       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {     }
   className& operator= (className const &src) { NOWN list = src.list; return *this;  }
 
-  inline void del_itm(T* itm) { if (owning) delete itm; }
+  inline void del_itm(T* itm) { /*if (owning) delete itm;*/ }
 
   public:
-  className[[[]]](DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  sizeof(className[[[]]])), list(DBG_INFO_ARG_FWD), owning(true) {}
-  className[[[]]](DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this,0), owning(true) {}
-  className[[[]]](DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(className)), list(DBG_INFO_ARG_FWD_FIRST  *this,0), owning(true) {}
+  className[[[]]](DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  sizeof(className[[[]]])), list(DBG_INFO_ARG_FWD)/*, owning(true)*/ {}
+  className[[[]]](DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this,0)/*, owning(true)*/ {}
+  className[[[]]](DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(className)), list(DBG_INFO_ARG_FWD_FIRST  *this,0)/*, owning(true)*/ {}
 ]]])m4_dnl
 
   ~className[[[]]]()                      m4_dnl
@@ -257,14 +261,15 @@ outputCond([[[m4_dnl    // sobjlist
 public:
   mutatorName[[[]]](className<T> &lst)     : mut(lst.list) { reset(); }
 ]]], [[[m4_dnl          // objlist
-  #define OWN xassert(owning);
+  #define OWN
+  //#define OWN xassert(owning);
 private:
-  bool const owning;
+  //bool const owning;
 
-  inline void del_itm(T* itm) { if (owning) delete itm; }
+  inline void del_itm(T* itm) { /*if (owning) delete itm;*/ }
 
 public:
-  mutatorName[[[]]](className<T> &lst)     : mut(lst.list), owning(lst.owning) { reset(); }
+  mutatorName[[[]]](className<T> &lst)     : mut(lst.list)/*, owning(lst.owning)*/ { reset(); }
 ]]])m4_dnl
 
   ~mutatorName[[[]]]()                    {}
@@ -277,7 +282,7 @@ public:
 outputCond([[[m4_dnl    // sobjlist
 mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut) {}
 ]]], [[[m4_dnl          // objlist
-mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut), owning(obj.owning) {}
+mutatorName[[[]]](mutatorName const &obj)             : mut(obj.mut)/*, owning(obj.owning)*/ {}
 ]]])m4_dnl
 
   mutatorName& operator=(mutatorName const &obj)  { mut = obj.mut;  return *this; }

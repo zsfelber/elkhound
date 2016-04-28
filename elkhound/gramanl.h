@@ -52,6 +52,10 @@ extern str::StoragePool gramanl_pool;
 // locstring for NULL, with no location
 #define NOLOC_NULL LIT_STR_2(SL_UNKNOWN, NULL)
 
+// useful for constructing literal strings in source code
+#define LITERAL_LOCSTRING(str)  new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), HERE_SOURCELOC, str)
+#define STR(s) LITERAL_LOCSTRING(grammarStringTable.add(s))
+
 
 // ---------------- DottedProduction --------------------
 // a production, with an indicator that says how much of this
@@ -161,13 +165,22 @@ public:    // data
 #endif
 
 public:    // funcs
-  LRItem(LRItem const &obj);
-  ~LRItem();
+  LRItem(DBG_INFO_FORMAL_FIRST  LRItem const &obj);
 
   // need 'numTerms' to tell how big to make 'lookahead'
-  LRItem(int numTerms, DottedProduction const *dp);
+  LRItem(DBG_INFO_FORMAL_FIRST  int numTerms, DottedProduction const *dp);
 
-  LRItem(Flatten&);
+  LRItem(DBG_INFO_FORMAL_FIRST  Flatten&);
+
+  LRItem(DBG_INFO_FORMAL_FIRST  str::StoragePool & pool, LRItem const &obj);
+
+  // need 'numTerms' to tell how big to make 'lookahead'
+  LRItem(DBG_INFO_FORMAL_FIRST  str::StoragePool & pool, int numTerms, DottedProduction const *dp);
+
+  LRItem(DBG_INFO_FORMAL_FIRST  str::StoragePool & pool, Flatten&);
+
+  ~LRItem();
+
   void xfer(str::StoragePool &pool, Flatten &flat);
   void xferSerfs(Flatten &flat, GrammarAnalysis &g);
 
@@ -314,7 +327,7 @@ public:     // funcs
   void getAllItems(SObjList<LRItem> &dest, bool nonkernel=true) const;
 
   // used for sorting by id
-  static int diffById(ItemSet const *left, ItemSet const *right, void*);
+  static int diffById(ItemSet const *left, ItemSet const *right, Storeable const*);
 
   // ---- transition queries ----
   // query transition fn for an arbitrary symbol; returns
@@ -571,11 +584,11 @@ private:    // funcs
   
   void renumberStates();
   static int renumberStatesDiff
-    (ItemSet const *left, ItemSet const *right, void *vgramanl);
+    (ItemSet const *left, ItemSet const *right, Storeable const*vgramanl);
   static int arbitraryProductionOrder
-    (Production const *left, Production const *right, void*);
+    (Production const *left, Production const *right, Storeable const*);
   static int arbitraryRHSEltOrder
-    (Production::RHSElt const *left, Production::RHSElt const *right, void*);
+    (Production::RHSElt const *left, Production::RHSElt const *right, Storeable const*);
 
   void computeBFSTree();
 

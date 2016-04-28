@@ -77,12 +77,12 @@ public:
                             // false: nonterminal (can appear on left-hand sides)
   bool const isEmptyString; // true only for the emptyString nonterminal
 
-  StringRef type;           // C type of semantic value
+  string const *type;           // C type of semantic value
 
-  StringRef dupParam;       // name of parameter to 'dup'
+  string const *dupParam;       // name of parameter to 'dup'
   LocString const *dupCode;        // code to duplicate a semantic value
 
-  StringRef delParam;       // param name; may be NULL to indicate not used
+  string const *delParam;       // param name; may be NULL to indicate not used
   LocString const *delCode;        // code
   
 // ----------- annotation ------------
@@ -274,6 +274,7 @@ private:    // funcs
 public:     // funcs
   TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, int numTerms=0);                   // allocate new set, initially empty
   TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, int numTerms=0);                   // allocate new set, initially empty
+  TerminalSet(DBG_INFO_FORMAL_FIRST  int numTerms=0);                   // allocate new set, initially empty
   TerminalSet(DBG_INFO_FORMAL_FIRST  TerminalSet const &obj);
   ~TerminalSet();
 
@@ -319,8 +320,8 @@ public:     // funcs
 class Nonterminal : public Symbol {
 // ---------- representation --------
 public:
-  StringRef mergeParam1;    // param name for first alternative
-  StringRef mergeParam2;    // and 2nd alt
+  string const * mergeParam1;    // param name for first alternative
+  string const * mergeParam2;    // and 2nd alt
   LocString const *mergeCode;      // code to resolve then
 
   StringRef keepParam;      // name of parameter to 'keep'
@@ -513,7 +514,7 @@ class GrammarAST;
 
 // ---------------- Grammar --------------------
 // represent a grammar: nonterminals, terminals, productions, and start-symbol
-class Grammar {
+class Grammar : public str::Storeable {
 
 // ------ representation ------
 public:	    // data
@@ -579,6 +580,7 @@ public:	    // data
 
 public:     // funcs
   Grammar(DBG_INFO_FORMAL);                            // set everything manually
+  Grammar(DBG_INFO_FORMAL_FIRST  Grammar const &cpy);                            // set everything manually
   ~Grammar();
 
   // read/write as binary file

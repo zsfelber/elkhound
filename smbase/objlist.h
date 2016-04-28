@@ -40,20 +40,23 @@ protected:
   VoidList list;                        // list itself
 
 
-  #define OWN xassert(owning);
-  #define NOWN xassert(!owning);
+  //#define OWN xassert(owning);
+  //#define NOWN xassert(!owning);
+  #define OWN
+  #define NOWN
 private:
-  bool const owning;
+  //bool const owning;
   // make shallow copies and non-owning list
-  ObjList(DBG_INFO_FORMAL_FIRST ObjList const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), owning(false) {  list.chk_assign(obj.list, move);   }
+  ObjList(DBG_INFO_FORMAL_FIRST ObjList const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*, owning(false)*/ {  list.chk_assign(obj.list, move);   }
+  ObjList(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr)       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {     }
   ObjList& operator= (ObjList const &src) { NOWN list = src.list; return *this;  }
 
-  inline void del_itm(T* itm) { if (owning) delete itm; }
+  inline void del_itm(T* itm) { /*if (owning) delete itm;*/ }
 
   public:
-  ObjList(DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  sizeof(ObjList)), list(DBG_INFO_ARG_FWD), owning(true) {}
-  ObjList(DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this,0), owning(true) {}
-  ObjList(DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ObjList)), list(DBG_INFO_ARG_FWD_FIRST  *this,0), owning(true) {}
+  ObjList(DBG_INFO_FORMAL)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  sizeof(ObjList)), list(DBG_INFO_ARG_FWD)/*, owning(true)*/ {}
+  ObjList(DBG_INFO_FORMAL_FIRST str::StoragePool &pool)                            : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), list(DBG_INFO_ARG_FWD_FIRST  *this,0)/*, owning(true)*/ {}
+  ObjList(DBG_INFO_FORMAL_FIRST str::Storeable const &parent)                      : str::Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(ObjList)), list(DBG_INFO_ARG_FWD_FIRST  *this,0)/*, owning(true)*/ {}
 
   ~ObjList()                           { deleteAll(); }
 
@@ -174,14 +177,15 @@ class ObjListMutator {
 protected:
   VoidListMutator mut;       // underlying mutator
 
-  #define OWN xassert(owning);
+  #define OWN
+  //#define OWN xassert(owning);
 private:
-  bool const owning;
+  //bool const owning;
 
-  inline void del_itm(T* itm) { if (owning) delete itm; }
+  inline void del_itm(T* itm) { /*if (owning) delete itm;*/ }
 
 public:
-  ObjListMutator(ObjList<T> &lst)     : mut(lst.list), owning(lst.owning) { reset(); }
+  ObjListMutator(ObjList<T> &lst)     : mut(lst.list)/*, owning(lst.owning)*/ { reset(); }
 
   ~ObjListMutator()                    {}
 
@@ -190,7 +194,7 @@ public:
   // iterator copying; safe *only* until one of the mutators modifies
   // the list structure (by inserting or removing), at which time all
   // other iterators might be in limbo
-ObjListMutator(ObjListMutator const &obj)             : mut(obj.mut), owning(obj.owning) {}
+ObjListMutator(ObjListMutator const &obj)             : mut(obj.mut)/*, owning(obj.owning)*/ {}
 
   ObjListMutator& operator=(ObjListMutator const &obj)  { mut = obj.mut;  return *this; }
     // requires that 'this' and 'obj' already refer to the same 'list'

@@ -119,7 +119,7 @@ void Symbol::internalPrintDDM(ostream &os) const
   }
 
   if (delCode && delCode->isNonNull()) {
-    os << "    del(" << (delParam? delParam : "") << ") [" << delCode << "]\n";
+    os << "    del(" << (delParam? *delParam : "") << ") [" << delCode << "]\n";
   }
 }
 
@@ -338,6 +338,11 @@ TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, in
 }
 
 TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  Storeable const &parent, int numTerms) : Storeable(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(TerminalSet), true)
+{
+  init(numTerms);
+}
+
+TerminalSet::TerminalSet(DBG_INFO_FORMAL_FIRST  int numTerms) : Storeable(DBG_INFO_ARG_FWD)
 {
   init(numTerms);
 }
@@ -932,6 +937,7 @@ string Production::toStringMore(bool printCode) const
 // ------------------ Grammar -----------------
 Grammar::Grammar(DBG_INFO_FORMAL)
   :
+    Storeable(DBG_INFO_ARG0),
     pool(DBG_INFO_ARG_FWD),
     nonterminals(DBG_INFO_ARG_FWD_FIRST  pool),
     terminals(DBG_INFO_ARG_FWD_FIRST  pool),
@@ -958,6 +964,19 @@ Grammar::Grammar(DBG_INFO_FORMAL)
     pool.addPointer(emptyString);
 }
 
+Grammar::Grammar(DBG_INFO_FORMAL_FIRST  Grammar const &cpy) :
+    Storeable(DBG_INFO_ARG0_FIRST  cpy, false), pool(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+    nonterminals(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+    terminals(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+    productions(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+    prefix0(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr), pref(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+    verbatim(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+    actionClasses(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+    implVerbatim(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+    targetLang(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr) {
+
+    pool.assigned(cpy.pool, str::StoragePool::Cp_All);
+}
 
 
 

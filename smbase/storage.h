@@ -1049,49 +1049,6 @@ private:
       data->__store_size = store_size;
    }
 
-   inline void assignImpl(StoragePool const & src, CopyMode copyMode=Cp_All) {
-
-       switch (copyMode) {
-       case Cp_TmpDuplicate:
-       {
-           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
-
-           ownerPool = (StoragePool*) &src;
-
-           removeChildPool(&src);
-           removeChildPool(this);
-
-           break;
-       }
-       case Cp_Move:
-       {
-           xassert(__parent == src.__parent);
-           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
-
-           ownerPool = this;
-
-           removeChildPool(&src);
-           removeChildPool(this);
-
-           fixChildren(this, src, 0, false);
-
-           constcast(src).clear();
-
-           break;
-       }
-       case Cp_All:
-       {
-           size_t bufsz = getMemBufSize(memlength);
-           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL) && bufsz==memcapacity);
-
-           reassign(src);
-           break;
-       }
-       default:
-           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
-           break;
-       }
-   }
 
    void reassign(StoragePool const & src) {
        if (ownerPool == &src) {
@@ -1336,7 +1293,7 @@ public:
            xassert(__kind == ST_NONE || __kind == ST_STORAGE_POOL);
            StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
            ownerPool = &srcOrParentPool;
-           assignImpl(srcOrParentPool, copyMode);
+           assigned(srcOrParentPool, copyMode);
        }
 
        if (copyMode != Cp_TmpDuplicate) {
@@ -1368,7 +1325,51 @@ public:
 #else
        memcpy(this, &src, sizeof(StoragePool));
 #endif
-       assignImpl(src, copyMode);
+       assigned(src, copyMode);
+   }
+
+   inline void assigned(StoragePool const & src, CopyMode copyMode=Cp_All) {
+
+       switch (copyMode) {
+       case Cp_TmpDuplicate:
+       {
+           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
+
+           ownerPool = (StoragePool*) &src;
+
+           removeChildPool(&src);
+           removeChildPool(this);
+
+           break;
+       }
+       case Cp_Move:
+       {
+           xassert(__parent == src.__parent);
+           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL));
+
+           ownerPool = this;
+
+           removeChildPool(&src);
+           removeChildPool(this);
+
+           fixChildren(this, src, 0, false);
+
+           constcast(src).clear();
+
+           break;
+       }
+       case Cp_All:
+       {
+           size_t bufsz = getMemBufSize(memlength);
+           xassert((__kind == ST_NONE || __kind == ST_STORAGE_POOL) && (src.__kind == ST_NONE || src.__kind == ST_STORAGE_POOL) && bufsz==memcapacity);
+
+           reassign(src);
+           break;
+       }
+       default:
+           x_assert_fail("Wrong kind.", __FILE__, __LINE__);
+           break;
+       }
    }
 
    inline void removeInParent() {

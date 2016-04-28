@@ -509,7 +509,7 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
       }
 
       // annotate with declared type
-      t->type = type.type->strref();
+      t->type = &type.type->str;
 
       // parse the dup/del/merge spec
       astParseDDM(env, t, type.funcs);
@@ -568,7 +568,7 @@ void astParseDDM(Environment &env, Symbol *sym,
       if (sym->dupParam) {
         astParseError(func.name, "duplicate 'dup' function");
       }
-      sym->dupParam = func.nthFormal(0).strref();
+      sym->dupParam = &func.nthFormal(0).str;
       sym->dupCode = func.code;
     }
 
@@ -579,7 +579,7 @@ void astParseDDM(Environment &env, Symbol *sym,
         sym->delParam = NULL;
       }
       else if (numFormals == 1) {
-        sym->delParam = func.nthFormal(0).strref();
+        sym->delParam = &func.nthFormal(0).str;
       }
       else {
         astParseError(func.name, "'del' function must have either zero or one formal parameters");
@@ -599,8 +599,8 @@ void astParseDDM(Environment &env, Symbol *sym,
         if (nonterm->mergeParam1) {
           astParseError(func.name, "duplicate 'merge' function");
         }
-        nonterm->mergeParam1 = func.nthFormal(0).strref();
-        nonterm->mergeParam2 = func.nthFormal(1).strref();
+        nonterm->mergeParam1 = &func.nthFormal(0).str;
+        nonterm->mergeParam2 = &func.nthFormal(1).str;
         nonterm->mergeCode = func.code;
       }
       else {
@@ -662,7 +662,7 @@ void astParseDDM(Environment &env, Symbol *sym,
 
 void fillDefaultType(Nonterminal* nonterm) {
 
-    traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type:"0") << std::endl;
+    traceProgress() << "Nonterminal: " << nonterm->name << "  type:" << (nonterm->type?nonterm->type->c_str():"0") << std::endl;
     // fix circles:
     if (!nonterm->deftravd) {
 
@@ -671,7 +671,7 @@ void fillDefaultType(Nonterminal* nonterm) {
 
         bool err_concur = false;
         bool err_in_one = false;
-        bool init_void = isVoid(nonterm->type);
+        bool init_void = isVoid(nonterm->type->c_str());
         std::string concur_types;
         // loop over default type providing single productions
         // (their single symbols were collected into 'defaults')
@@ -695,7 +695,7 @@ void fillDefaultType(Nonterminal* nonterm) {
                 fillDefaultType(&nt);
             }
 
-            if (isVoid(sym->type)) {
+            if (isVoid(sym->type->c_str())) {
                 // remove "tag" for void args:
                 //TODO ? p->defaultSymbol->tag.str = empty;
                 p->defaultSymbol = NULL;
@@ -709,12 +709,12 @@ void fillDefaultType(Nonterminal* nonterm) {
 
                 //trace("prec") << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << std::endl;
 
-                if (!isVoid(nonterm->type) && nonterm->type != sym->type) {
+                if (!isVoid(nonterm->type->c_str()) && nonterm->type != sym->type) {
                     if (!err_concur) {
-                        concur_types = concur_types + nonterm->type;
+                        concur_types = concur_types + nonterm->type->c_str();
                     }
                     err_concur = true;
-                    concur_types = concur_types + "," + sym->type;
+                    concur_types = concur_types + "," + sym->type->c_str();
                 } else if (!nonterm->type_is_default) {
                     nonterm->type = sym->type;
                     nonterm->type_is_default = true;
@@ -733,14 +733,14 @@ void fillDefaultType(Nonterminal* nonterm) {
             //errors++;
         }
 
-        if (!err_in_one && !err_concur && isVoid(nonterm->type)) {
+        if (!err_in_one && !err_concur && isVoid(nonterm->type->c_str())) {
             trace("prec") << "Nonterminal " << nonterm->name << " has an undefined (default) type, but after looking for default type it is still void." << std::endl;
             //errors++;
         }
 
         if (err_in_one || err_concur) {
             if (nonterm->type_is_default) {
-                nonterm->type = "void";
+                nonterm->type = &grammarStringTable.add("void");
                 nonterm->type_is_default = false;
             } else {
                 traceProgress() << "Nonterminal   type errors: " << nonterm->name << "  user defined type kept:" << nonterm->type << std::endl;
@@ -782,7 +782,7 @@ void addDefaultTypesActions(Environment &env, GrammarAST *ast, Nonterminal *nont
 
     // default type
     if (forceDefaults || !nonterm->type) {
-      nonterm->type = defaultType->c_str();
+      nonterm->type = defaultType;
     }
 
     int prodi = 0;
@@ -888,7 +888,7 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
         if (s && s->type) {
 
             //grType = LIT_STR(s->type);
-            grType = LIT_STR(s->type);
+            grType = LIT_STR(*s->type);
 
             usr = name = s->name->strref();
 
@@ -1123,7 +1123,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           std::string indp = indent + "   ";
 
           type = v0 && nonterm->type  ?
-                      LIT_STR(nonterm->type) : LIT_STR((tp+"*").c_str());
+                      LIT_STR(*nonterm->type) : LIT_STR_ADD((tp+"*").c_str());
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
@@ -1371,7 +1371,7 @@ void astParseNonterm(Environment &env, TF_nonterm const *nt, int ntIndex)
   Nonterminal *nonterm = env.g.findNonterminal(*name);
   xassert(nonterm);
 
-  nonterm->type = nt->type->strref();
+  nonterm->type = &nt->type->str;
   nonterm->ntIndex = ntIndex;
 
 
@@ -1545,7 +1545,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
            constcast(first->tag->str) = synthesizedStart ? "top" : "tag";
         }
         prod->defaultSymbol = first;
-      } else if (synthesizedStart && isVoid(nonterm->type)) {
+      } else if (synthesizedStart && isVoid(nonterm->type->c_str())) {
         traceProgress() << "tags: " << tags << std::endl;
         astParseErrorCont(env, nonterm->name, "Synthetic start is missing type, and unable to determine default.");
       }

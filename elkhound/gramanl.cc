@@ -200,22 +200,37 @@ void DottedProduction::print(ostream &os) const
 
 
 // ---------------------- LRItem -------------------
-LRItem::LRItem(int numTerms, DottedProduction const *dp)
+LRItem::LRItem(DBG_INFO_FORMAL_FIRST  int numTerms, DottedProduction const *dp)
   : Storeable(DBG_INFO_ARG0), dprod(dp),
     lookahead(DBG_INFO_ARG0_FIRST  *this, numTerms)
 {}
 
-LRItem::LRItem(LRItem const &obj)
+LRItem::LRItem(DBG_INFO_FORMAL_FIRST  LRItem const &obj)
   : Storeable(DBG_INFO_ARG0), dprod(obj.dprod),
     lookahead(DBG_INFO_ARG0_FIRST  obj.lookahead)
 {}
 
-LRItem::~LRItem()
-{}
-
-LRItem::LRItem(Flatten &flat)
+LRItem::LRItem(DBG_INFO_FORMAL_FIRST  Flatten &flat)
   : Storeable(DBG_INFO_ARG0), dprod(NULL),
     lookahead(DBG_INFO_ARG0_FIRST  *this, flat)
+{}
+
+LRItem::LRItem(DBG_INFO_FORMAL_FIRST  str::StoragePool & pool, int numTerms, DottedProduction const *dp)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool), dprod(dp),
+    lookahead(DBG_INFO_ARG0_FIRST  *this, numTerms)
+{}
+
+LRItem::LRItem(DBG_INFO_FORMAL_FIRST  str::StoragePool & pool, LRItem const &obj)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool), dprod(obj.dprod),
+    lookahead(DBG_INFO_ARG0_FIRST  obj.lookahead)
+{}
+
+LRItem::LRItem(DBG_INFO_FORMAL_FIRST  str::StoragePool & pool, Flatten &flat)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool), dprod(NULL),
+    lookahead(DBG_INFO_ARG0_FIRST  *this, flat)
+{}
+
+LRItem::~LRItem()
 {}
 
 void LRItem::xfer(str::StoragePool &pool, Flatten &flat)
@@ -633,7 +648,7 @@ void ItemSet::getAllItems(SObjList<LRItem> &dest, bool nonkernel) const
 }
 
 
-STATICDEF int ItemSet::diffById(ItemSet const *left, ItemSet const *right, void*)
+STATICDEF int ItemSet::diffById(ItemSet const *left, ItemSet const *right, Storeable const*)
 {
   return left->id - right->id;
 }
@@ -954,7 +969,15 @@ void ItemSet::writeGraph(ostream &os, GrammarAnalysis const &g) const
 
 // ------------------------ GrammarAnalysis --------------------
 GrammarAnalysis::GrammarAnalysis()
-  : codeHasTerm(0),
+    :
+    Grammar(DBG_INFO_ARG0),
+    allNonterminals(DBG_INFO_ARG0),
+    allTerminals(DBG_INFO_ARG0),
+    allProductions(DBG_INFO_ARG0),
+    urNonterminals(DBG_INFO_ARG0),
+    urTerminals(DBG_INFO_ARG0),
+    urProductions(DBG_INFO_ARG0),
+    codeHasTerm(0),
     derivable(NULL),
     indexedNonterms(NULL),
     indexedTerms(NULL),
@@ -966,7 +989,7 @@ GrammarAnalysis::GrammarAnalysis()
     numProds(0),
     initialized(false),
     nextItemSetId(0),    // [ASU] starts at 0 too
-    itemSets(),
+    itemSets(DBG_INFO_ARG0),
     startState(NULL),
     cyclic(false),
     symOfInterest(NULL),
@@ -975,14 +998,14 @@ GrammarAnalysis::GrammarAnalysis()
 {
 }
 
-GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(cpy),
+GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(DBG_INFO_ARG0_FIRST  cpy),
+    allNonterminals(DBG_INFO_ARG0_FIRST  cpy.allNonterminals),
+    allTerminals(DBG_INFO_ARG0_FIRST  cpy.allTerminals),
+    allProductions(DBG_INFO_ARG0_FIRST  cpy.allProductions),
+    urNonterminals(DBG_INFO_ARG0_FIRST  cpy.urNonterminals),
+    urTerminals(DBG_INFO_ARG0_FIRST  cpy.urTerminals),
+    urProductions(DBG_INFO_ARG0_FIRST  cpy.urProductions),
     codeHasTerm(0),
-    allNonterminals(pool,cpy.allNonterminals),
-    allTerminals(pool,cpy.allTerminals),
-    allProductions(pool,cpy.allProductions),
-    urNonterminals(pool,cpy.urNonterminals),
-    urTerminals(pool,cpy.urTerminals),
-    urProductions(pool,cpy.urProductions),
     derivable(NULL),
     indexedNonterms(NULL),
     indexedTerms(NULL),
@@ -994,7 +1017,7 @@ GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(cpy),
     numProds(0),
     initialized(false),
     nextItemSetId(0),    // [ASU] starts at 0 too
-    itemSets(),
+    itemSets(DBG_INFO_ARG0),
     startState(NULL),
     cyclic(false),
     symOfInterest(NULL),
@@ -1928,7 +1951,8 @@ void GrammarAnalysis::computePredictiveParsingTable()
   int numNonterms = numNonterminals();
 
   // the table will be a 2d array of lists of productions
-  ProductionList *table = new ProductionList[numTerms * numNonterms];     // (owner)
+  //ProductionList *table = new ProductionList[numTerms * numNonterms];     // (owner)
+  ProductionList *table = (ProductionList *)new uint8_t*[numTerms * numNonterms*sizeof(ProductionList)];     // (owner)
   #define TABLE(term,nt) table[(term) + (nt)*numNonterms]
 
   // for each production 'prod' (non-const iter because adding them
@@ -2256,7 +2280,7 @@ void GrammarAnalysis
 
       // it's not already there, so add it to worklist (but first
       // actually create it!)
-      LRItem *newItem = new LRItem(numTerms, newDP);
+      LRItem *newItem = new (gramanl_pool) LRItem(DBG_INFO_ARG0_FIRST  gramanl_pool, numTerms, newDP);
       newItem->lookahead.copy(newItemLA);
       if (tr) {
         trs << "      this dprod is new, queueing it to add" << endl;
@@ -2337,7 +2361,7 @@ void GrammarAnalysis::moveDotNoClosure(ItemSet const *source, Symbol const *symb
       // need to access destIter; if there are no more items, make more
       if (destIter.isDone()) {
         // the new item becomes the current 'data()'
-        destIter.insertBefore(DBG_INFO_ARG0_FIRST  new LRItem(DBG_INFO_ARG0_FIRST  numTerminals(), NULL /*dprod*/));
+        destIter.insertBefore(DBG_INFO_ARG0_FIRST  new (gramanl_pool) LRItem(DBG_INFO_ARG0_FIRST  gramanl_pool, numTerminals(),(DottedProduction*) NULL /*dprod*/));
       }
 
       // move the dot; write dot-moved item into 'destIter'
@@ -2450,7 +2474,7 @@ void GrammarAnalysis::constructLRItemSets()
     // this is a dummy item; it allocates the bitmap for 'lookahead',
     // but those bits and the 'dprod' pointer will be overwritten
     // many times during the algorithm
-    LRItem *item = new LRItem(numTerms, NULL /*dottedprod*/);
+    LRItem *item = new (gramanl_pool) LRItem(DBG_INFO_ARG0_FIRST  gramanl_pool, numTerms, NULL /*dottedprod*/);
     scratchState->addKernelItem(item);
   }
 
@@ -2466,7 +2490,7 @@ void GrammarAnalysis::constructLRItemSets()
     ItemSet *is = makeItemSet();              // (owner)
     startState = is;
     LRItem *firstDP
-      = new LRItem(numTerms, getDProd(productions.first(), 0 /*dot at left*/));
+      = new (gramanl_pool) LRItem(DBG_INFO_ARG0_FIRST  gramanl_pool, numTerms, getDProd(productions.first(), 0 /*dot at left*/));
     
     // don't add this to the lookahead; we assume EOF is actually
     // mentioned in the production already, and we won't contemplate
@@ -2624,7 +2648,7 @@ void GrammarAnalysis::constructLRItemSets()
           // we don't already have it; need to actually allocate & copy
           withDotMoved = makeItemSet();
           FOREACH_OBJLIST(LRItem, scratchState->kernelItems, iter) {
-            withDotMoved->addKernelItem(new LRItem( *(iter.data()) ));
+            withDotMoved->addKernelItem(new (gramanl_pool) LRItem(DBG_INFO_ARG0_FIRST  gramanl_pool,  *(iter.data()) ));
           }
 
           // finish it by computing its closure
@@ -2683,7 +2707,7 @@ void GrammarAnalysis::constructLRItemSets()
 
   // since we sometimes consider a state more than once, the
   // states end up out of order; put them back in order
-  itemSets.mergeSort(DBG_INFO_ARG0_FIRST  ItemSet::diffById);
+  itemSets.mergeSort(ItemSet::diffById);
 
 
   traceProgress(1) << "done with LR sets: " << itemSets.count()
@@ -2892,8 +2916,8 @@ void GrammarAnalysis::computeBFSTree()
 {
   // for the BFS, we need a queue of states yet to be processed, and a
   // pile of 'done' states
-  SObjList<ItemSet> queue;
-  SObjList<ItemSet> done;
+  SObjList<ItemSet> queue(DBG_INFO_ARG0);
+  SObjList<ItemSet> done(DBG_INFO_ARG0);
 
   // initial entry in queue is root of BFS tree
   queue.append(DBG_INFO_ARG0_FIRST  startState);
@@ -3044,7 +3068,7 @@ void GrammarAnalysis::resolveConflicts(
   }
 
   static char const *conflictSym = getenv("CONFLICT_SYMBOL");
-  bool canPrint = !conflictSym || 0==strcmp(sym->name, conflictSym);
+  bool canPrint = !conflictSym || sym->name->equals(conflictSym);
 
   // after the disambiguation, maybe now there's no conflicts?
   // or, if conflicts remain, did we get at least that many warning
@@ -3212,7 +3236,7 @@ bool isAmbiguousNonterminal(Symbol const *sym)
 void GrammarAnalysis::renumberStates()
 {
   // sort them into the right order
-  itemSets.mergeSort(DBG_INFO_ARG0_FIRST  &GrammarAnalysis::renumberStatesDiff, this);
+  itemSets.mergeSort(&GrammarAnalysis::renumberStatesDiff, this);
 
   // number them in that order
   int n = 0;
@@ -3231,7 +3255,7 @@ void GrammarAnalysis::renumberStates()
 }
 
 STATICDEF int GrammarAnalysis::renumberStatesDiff
-  (ItemSet const *left, ItemSet const *right, void *vgramanl)
+  (ItemSet const *left, ItemSet const *right, Storeable const*vgramanl)
 {
   GrammarAnalysis *gramanl = (GrammarAnalysis*)vgramanl;
 
@@ -3313,8 +3337,8 @@ STATICDEF int GrammarAnalysis::renumberStatesDiff
     right->getPossibleReductions(rpl, termIter.data(), false /*parsing*/);
 
     // sort the productions before we can compare them...
-    lpl.insertionSort(DBG_INFO_ARG0_FIRST  &GrammarAnalysis::arbitraryProductionOrder);
-    rpl.insertionSort(DBG_INFO_ARG0_FIRST  &GrammarAnalysis::arbitraryProductionOrder);
+    lpl.insertionSort(&GrammarAnalysis::arbitraryProductionOrder);
+    rpl.insertionSort(&GrammarAnalysis::arbitraryProductionOrder);
 
     ret = lpl.compareAsLists(rpl, &GrammarAnalysis::arbitraryProductionOrder);
     if (ret) return ret;
@@ -3336,7 +3360,7 @@ STATICDEF int GrammarAnalysis::renumberStatesDiff
 }
 
 STATICDEF int GrammarAnalysis::arbitraryProductionOrder
-  (Production const *left, Production const *right, void*)
+  (Production const *left, Production const *right, Storeable const*)
 {
   // compare LHS
   int ret = left->left->ntIndex - right->left->ntIndex;
@@ -3348,7 +3372,7 @@ STATICDEF int GrammarAnalysis::arbitraryProductionOrder
 }
 
 STATICDEF int GrammarAnalysis::arbitraryRHSEltOrder
-  (Production::RHSElt const *left, Production::RHSElt const *right, void*)
+  (Production::RHSElt const *left, Production::RHSElt const *right, Storeable const*)
 {
   int ret = (int)left->sym->isTerminal() - (int)right->sym->isTerminal();
   if (ret) return ret;
@@ -3777,7 +3801,7 @@ bool GrammarAnalysis::
 // production's RHS contains a symbol already expanded, and the other
 // does not, then prefer the RHS which hasn't already been expanded
 int compareProductionsForRewriting(Production const *p1, Production const *p2, 
-                                   Storeable const *extra)
+                                   str::Storeable const *extra)
 {                                             
   ProductionList *reductionStack = (ProductionList*)extra;
    
@@ -3853,7 +3877,7 @@ bool GrammarAnalysis::
     // now, the chosen rule provides a RHS, which is a sequence of
     // terminals and nonterminals; recursively reduce that sequence
     SymbolList rhsSymbols(DBG_INFO_ARG0);
-    prod->getRHSSymbols(rhsSymbols);
+    prod->getRHSSymbols(DBG_INFO_ARG0_FIRST  rhsSymbols);
     retval = rewriteAsTerminalsHelper(output, rhsSymbols, reductionStack);
 
     // remove chosen production from stack
@@ -4008,41 +4032,40 @@ void GrammarAnalysis::lrParse(char const *input)
 // ------------------- grammar transformations ------------------
 void GrammarAnalysis::addTreebuildingActions()
 {
-  #define STR(s) LITERAL_LOCSTRING(grammarStringTable.add(s))
 
 
   // prepend an #include to the verbatim
   {
-    StringRef extra = grammarStringTable.add(
+    rostring extra = grammarStringTable.add(
       "\n#include \"ptreenode.h\"     // PTreeNode\n");
-    verbatim.prepend(DBG_INFO_ARG0_FIRST  new (pool) LITERAL_LOCSTRING(extra));
+    verbatim.prepend(DBG_INFO_ARG0_FIRST  LITERAL_LOCSTRING(extra));
   }
 
   // get handles to the strings we want to emit
-  LocString param = STR("n");
-  LocString dupCode = STR("return n;");    // dup is identity
-  LocString delCode = STR("");             // del is no-op
-  LocString svalType = STR("PTreeNode*");
+  LocString const *param = STR("n");
+  LocString const *dupCode = STR("return n;");    // dup is identity
+  LocString const *delCode = STR("");             // del is no-op
+  LocString const *svalType = STR("PTreeNode*");
 
   // merge relies on chaining scheme for alternatives
-  LocString mergeParam1 = STR("L");
-  LocString mergeParam2 = STR("R");
-  LocString mergeCode = STR("L->addAlternative(R); return L;");
+  LocString const *mergeParam1 = STR("L");
+  LocString const *mergeParam2 = STR("R");
+  LocString const *mergeCode = STR("L->addAlternative(R); return L;");
 
   // write dup/del/merge for nonterminals
   SMUTATE_EACH_OBJLIST(Nonterminal, nonterminals, ntIter) {
     Nonterminal *nt = ntIter.data();
 
-    nt->dupParam = param;
+    nt->dupParam = &param->str;
     nt->dupCode = dupCode;
 
-    nt->delParam = param;
+    nt->delParam = &param->str;
     nt->delCode = delCode;
 
-    nt->type = svalType;
+    nt->type = &svalType->str;
 
-    nt->mergeParam1 = mergeParam1;
-    nt->mergeParam2 = mergeParam2;
+    nt->mergeParam1 = &mergeParam1->str;
+    nt->mergeParam2 = &mergeParam2->str;
     nt->mergeCode = mergeCode;
   }
 
@@ -4420,7 +4443,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
 
 
   // insert the stand-alone verbatim sections
-  {FOREACH_OBJLIST(LocString, g.verbatim, iter) {
+  {FOREACH_OBJLIST(LocString const, g.verbatim, iter) {
     emitUserCode(dcl, *(iter.data()), false /*braces*/);
   }}
 
@@ -4429,7 +4452,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
   // the action functions are inserted as methods
   {
     int ct=0;
-    FOREACH_OBJLIST(LocString, g.actionClasses, iter) {
+    FOREACH_OBJLIST(LocString const, g.actionClasses, iter) {
 
       if (ct++ > 0) {
         // end the previous class; the following body will open
@@ -4441,15 +4464,15 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       dcl << "\n"
           << "// parser context class\n"
           << "class ";
-      LocString s = *(iter.data());
-      std::string code = s.str;
-      code.replace(code.find(g.actionClassName0), strlen(g.actionClassName0), g.actionClassName.str);
+      LocString const *s = iter.data();
+      std::string code = s->strref();
+      code.replace(code.find(g.actionClassName0), strlen(g.actionClassName0), g.actionClassName->strref());
       for (int i = 0; i<code.length() && (i = code.find("${class}", i, 8))!=std::string::npos; i+=8) {
-          code.replace(i, 8, g.actionClassName.str);
+          code.replace(i, 8, g.actionClassName->strref());
       }
 
       s = STR(code.c_str());
-      emitUserCode(dcl, s, false /*braces*/);
+      emitUserCode(dcl, *s, false /*braces*/);
   }}
 
   if (g.terminalCodeMapped) {
@@ -4566,7 +4589,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
   out << "\n";
 
   g.tables->finishTables();
-  g.tables->emitConstructionCode(out, string(g.actionClassName), "makeTables");
+  g.tables->emitConstructionCode(out, *g.actionClassName, "makeTables");
 
 
   // I put this last in the context class, and make it public
@@ -4633,11 +4656,11 @@ void emitCommon(  Environment &env, string &prefix0,
 }
 
 
-void emitUserCode(EmitCode &out, LocString const &code, bool braces)
+void emitUserCode(EmitCode &out, LocString const *code, bool braces)
 {
   out << "\n";
-  if (code.validLoc()) {
-    out << lineDirective(code.loc);
+  if (code->validLoc()) {
+    out << lineDirective(code->loc);
   }
   
   // 7/27/03: swapped so that braces are inside the line directive
@@ -4645,7 +4668,7 @@ void emitUserCode(EmitCode &out, LocString const &code, bool braces)
     out << "{";
   }
 
-  out << code;
+  out << *code;
 
   // the final brace is on the same line so errors reported at the
   // last brace go to user code
@@ -4653,7 +4676,7 @@ void emitUserCode(EmitCode &out, LocString const &code, bool braces)
     out << " }";
   }
 
-  if (code.validLoc()) {
+  if (code->validLoc()) {
     out << "\n" << restoreLine;
   }
   out << "\n";
@@ -4808,15 +4831,15 @@ void emitActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
     // iterate over RHS elements, emitting formals for each with a tag
     FOREACH_OBJLIST(Production::RHSElt, prod.right, rhsIter) {
       Production::RHSElt const &elt = *(rhsIter.data());
-      if (elt.tag.length() == 0) continue;
+      if (!elt.tag || elt.tag->length() == 0) continue;
 
       if (ct++ > 0) {
         out << ", ";
         dcl << ", ";
       }
 
-      out << typeString(elt.sym->type, elt.tag);
-      dcl << typeString(elt.sym->type, elt.tag);
+      out << typeString(elt.sym->type->c_str(), *elt.tag);
+      dcl << typeString(elt.sym->type->c_str(), *elt.tag);
 
       // the tag becomes the formal parameter's name
       out << " " << elt.tag;
@@ -4828,7 +4851,7 @@ void emitActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
 
     // now insert the user's code, to execute in this environment of
     // properly-typed semantic values
-    emitUserCode(out, prod.action);
+    emitUserCode(out, *prod.action);
   }}
 
   out << "\n";
@@ -4862,15 +4885,15 @@ void emitActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
       // even if they didn't get a tag
       index++;
 
-      if (elt.tag.length() == 0) continue;
+      if (!elt.tag || elt.tag->length() == 0) continue;
 
       if (ct++ > 0) {
         out << ", ";
       }
 
       // cast SemanticValue to proper type
-      out << "(" << typeString(elt.sym->type, elt.tag) << ")";
-      if (isEnumType(elt.sym->type)) {
+      out << "(" << typeString(elt.sym->type->c_str(), *elt.tag) << ")";
+      if (isEnumType(elt.sym->type->c_str())) {
         // egcs-1.1.2 complains when I cast from void* to enum, even
         // when there is a cast!  so let's put an intermediate cast
         // to int
@@ -4881,7 +4904,7 @@ void emitActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
 
     out << ")";     // end of argument list
 
-    if (0==strcmp(prod.left->type, "void")) {
+    if (prod.left->type->equals("void")) {
       // cute hack: turn the expression into a comma expression, with
       // the value returned being 0
       out << ", 0";
@@ -5019,21 +5042,21 @@ void emitDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
 {
   Terminal const *term = sym.ifTerminalC();
   Nonterminal const *nonterm = sym.ifNonterminalC();
-  char const *symType = notVoid(sym.type);
+  char const *symType = notVoid(sym.type->c_str());
 
   if (sym.dupCode) {
     emitFuncDecl(g, out, dcl, symType,
       stringc << "dup_" << sym.name
               << "(" << symType << " " << sym.dupParam << ") ");
-    emitUserCode(out, sym.dupCode);
+    emitUserCode(out, *sym.dupCode);
   }
 
   if (sym.delCode) {
     emitFuncDecl(g, out, dcl, "void",
       stringc << "del_" << sym.name
               << "(" << symType << " "
-              << (sym.delParam? sym.delParam : "") << ") ");
-    emitUserCode(out, sym.delCode);
+              << (sym.delParam? sym.delParam->c_str() : "") << ") ");
+    emitUserCode(out, *sym.delCode);
   }
 
   if (nonterm && nonterm->mergeCode) {
@@ -5041,21 +5064,21 @@ void emitDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
       stringc << "merge_" << sym.name
               << "(" << symType << " " << nonterm->mergeParam1
               << ", " << symType << " " << nonterm->mergeParam2 << ") ");
-    emitUserCode(out, nonterm->mergeCode);
+    emitUserCode(out, *nonterm->mergeCode);
   }
 
   if (nonterm && nonterm->keepCode) {
     emitFuncDecl(g, out, dcl, "bool",
       stringc << "keep_" << sym.name
               << "(" << symType << " " << nonterm->keepParam << ") ");
-    emitUserCode(out, nonterm->keepCode);
+    emitUserCode(out, *nonterm->keepCode);
   }
 
   if (term && term->classifyCode) {
     emitFuncDecl(g, out, dcl, "int",
       stringc << "classify_" << sym.name
               << "(int oldTokenType, " << symType << " " << term->classifyParam << ", int* multipleTokens) ");
-    emitUserCode(out, term->classifyCode);
+    emitUserCode(out, *term->classifyCode);
   }
 }
 
@@ -5072,29 +5095,29 @@ void emitSwitchCode(Grammar const &g, EmitCode &out,
                     ObjList<Symbol> const &syms, int whichFunc,
                     char const *templateCode, char const *actUpon)
 {
-  out << replace(signature, "$acn", string(g.actionClassName)) << "\n"
+  out << replace(signature, "$acn", g.actionClassName->str) << "\n"
          "{\n"
          "  switch (" << switchVar << ") {\n";
 
   FOREACH_OBJLIST(Symbol, syms, symIter) {
     Symbol const &sym = *(symIter.data());
 
-    if (whichFunc==0 && sym.dupCode ||
-        whichFunc==1 && sym.delCode ||
-        whichFunc==2 && sym.asNonterminalC().mergeCode ||
-        whichFunc==3 && sym.asNonterminalC().keepCode ||
-        whichFunc==4 && sym.asTerminalC().classifyCode) {
+    if ((whichFunc==0 && sym.dupCode) ||
+        (whichFunc==1 && sym.delCode) ||
+        (whichFunc==2 && sym.asNonterminalC().mergeCode) ||
+        (whichFunc==3 && sym.asNonterminalC().keepCode) ||
+        (whichFunc==4 && sym.asTerminalC().classifyCode)) {
       out << "    case " << sym.getTermOrNontermIndex() << ":\n";
       out << replace(replace(templateCode,
-               "$symName", string(sym.name)),
-               "$symType", notVoid(sym.type));
+               "$symName", sym.name->str),
+               "$symType", notVoid(sym.type->c_str()));
     }
-    else if (whichFunc==0 && noDeclaredType(sym.type)) {
+    else if (whichFunc==0 && noDeclaredType(sym.type->c_str())) {
       // dup for symbol with no declared type: don't complain
       out << "    case " << sym.getTermOrNontermIndex() << ":\n";
       out << "      return sval;\n";
     }
-    else if (whichFunc==1 && noDeclaredType(sym.type)) {
+    else if (whichFunc==1 && noDeclaredType(sym.type->c_str())) {
       // del for no declared type
       out << "    case " << sym.getTermOrNontermIndex() << ":\n";
       out << "      break;\n";
@@ -5193,7 +5216,7 @@ void get_names(AbstractProdDecl const * pdecl, int multiIndex, string const & pr
       }
     }
 
-    if (names!=1 && pdecl->name && pdecl->name.isNonNull()) {
+    if (names!=1 && pdecl->name && pdecl->name->isNonNull()) {
         sname << pdecl->name;
         names = 1;
     }
@@ -5241,9 +5264,10 @@ void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML
     {
         std::stringstream s;
 
-        g.actionClassName0 = g.actionClassName.str;
+        g.actionClassName0 = g.actionClassName->strref();
         s << g.actionClassName << pref;
-        g.actionClassName.str = STR(s.str().c_str());
+        // TODO it was sameloc orignially
+        g.actionClassName = STR(s.str().c_str());
         if (debug) {
             cout << "actionClassName:" << g.actionClassName << endl;
         }
@@ -5282,7 +5306,7 @@ int inner_entry(int argc, char **argv)
 
   // as long as this remains 0-length, it means to use
   // the default naming scheme
-  string prefix0;
+  string prefix0(DBG_INFO_ARG0);
 
   // true to use ML, false to use C
   bool useML = false;
@@ -5433,7 +5457,7 @@ int inner_entry(int argc, char **argv)
 
   do {
 
-      string prefix, pref;
+      string prefix(DBG_INFO_ARG0), pref(DBG_INFO_ARG0);
 
       {
 
@@ -5443,7 +5467,7 @@ int inner_entry(int argc, char **argv)
                      multiIndex <= ast->childrenNT->productions.count() ) {
 
               AbstractProdDecl *prod = ast->childrenNT->productions.nth(multiIndex-1);
-              pref = prod->name.str;
+              pref = *prod->name;
               s << prefix0 << "_" << pref;
               prefix = s.str().c_str();
           } else {
@@ -5548,7 +5572,7 @@ int inner_entry(int argc, char **argv)
   emitCommon(env0, prefix0, bufHead0, bufConsBase0, bufHeadFun0, hFname, ccFname, grammarFname);
 
   if (ast->childrenNT->productions.count() > 1) {
-      string prefix, pref;
+      string prefix(DBG_INFO_ARG0), pref(DBG_INFO_ARG0);
       prefix = prefix0;
 
       traceRemoveAll();
@@ -5565,7 +5589,7 @@ int inner_entry(int argc, char **argv)
           ast->forms.removeItem(ast->earlyStartNT);
       }
 
-      ast->forms.prepend(ast->childrenNT);
+      ast->forms.prepend(DBG_INFO_ARG0_FIRST  ast->childrenNT);
       ast->firstNT = ast->childrenNT;
       ast->firstNT->name = LIT_STR("__GeneratedStartOverall");
       ast->firstNT->type = LIT_STR("void*");

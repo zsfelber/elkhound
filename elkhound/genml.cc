@@ -389,7 +389,7 @@ void emitMLActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
       // example:
       //   let e1 = (Obj.obj svals.(0) : int) in
       out << "  let " << elt.tag << " = (Obj.obj svals.(" << index << ") : "
-          << typeString(elt.sym->type, *elt.tag) << ") in\n";
+          << typeString(elt.sym->type->c_str(), *elt.tag) << ") in\n";
     }
     
     // give a name to the yielded value so we can ensure it conforms to
@@ -534,9 +534,9 @@ void emitMLDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
   Nonterminal const *nonterm = sym.ifNonterminalC();
 
   if (sym.dupCode) {
-    emitMLFuncDecl(g, out, dcl, sym.type,
+    emitMLFuncDecl(g, out, dcl, sym.type->c_str(),
       stringc << "dup_" << sym.name
-              << " (" << sym.dupParam << ": " << sym.type << ") ");
+              << " (" << *sym.dupParam << ": " << *sym.type << ") ");
     emitMLUserCode(out, *sym.dupCode);
     out << "\n";
   }
@@ -544,17 +544,17 @@ void emitMLDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
   if (sym.delCode) {
     emitMLFuncDecl(g, out, dcl, "unit",
       stringc << "del_" << sym.name
-              << " (" << (sym.delParam? sym.delParam : "_")
+              << " (" << (sym.delParam? sym.delParam->c_str() : "_")
               << ": " << sym.type << ") ");
     emitMLUserCode(out, *sym.delCode);
     out << "\n";
   }
 
   if (nonterm && nonterm->mergeCode) {
-    emitMLFuncDecl(g, out, dcl, notVoid(sym.type),
-      stringc << "merge_" << sym.name
-              << " (" << nonterm->mergeParam1 << ": " << notVoid(sym.type) << ") "
-              << " (" << nonterm->mergeParam2 << ": " << notVoid(sym.type) << ") ");
+    emitMLFuncDecl(g, out, dcl, notVoid(sym.type->c_str()),
+      stringc << "merge_" << *sym.name
+              << " (" << nonterm->mergeParam1 << ": " << notVoid(sym.type->c_str()) << ") "
+              << " (" << nonterm->mergeParam2 << ": " << notVoid(sym.type->c_str()) << ") ");
     emitMLUserCode(out, *nonterm->mergeCode);
     out << "\n";
   }
@@ -597,7 +597,7 @@ void emitMLSwitchCode(Grammar const &g, EmitCode &out,
       out << "  | " << sym.getTermOrNontermIndex() << " -> (\n";
       out << replace(replace(templateCode,
                "$symName", sym.name->str),
-               "$symType", notVoid(sym.type));
+               "$symType", notVoid(sym.type->c_str()));
       out << "    )\n";
     }
   }

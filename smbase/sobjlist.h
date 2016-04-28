@@ -44,6 +44,7 @@ protected:
 public:
   // make shallow copies
   SObjList(DBG_INFO_FORMAL_FIRST SObjList const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  list.chk_assign(obj.list, move);   }
+  SObjList(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr)       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {     }
   SObjList& operator= (SObjList const &src)         { list = src.list; return *this; }
 
   public:

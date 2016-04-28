@@ -71,6 +71,7 @@ public:	       // funcs
   string(DBG_INFO_FORMAL_FIRST char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
   string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
   string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
+  string(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  }
   string(char const *src) : str::Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
   string(DBG_INFO_FORMAL ) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { s=emptyString; }
   ~string() { kill(); }

@@ -10,7 +10,7 @@
 
 class Flatten;
 
-class Bit2d {        
+class Bit2d : str::Storeable {
 private:     // data
   byte *data;  	    // bits; [0..stride-1] is first row, etc.
   bool owning;      // when false, 'data' is not owned by this object
@@ -27,13 +27,15 @@ private:     // funcs
 
 public:      // funcs
   // NOTE: does *not* clear the bitmap!  use 'setall' to do that
-  Bit2d(point const &aSize);
-  Bit2d(Bit2d const &obj);
+  Bit2d(DBG_INFO_FORMAL_FIRST  point const &aSize);
+  Bit2d(DBG_INFO_FORMAL_FIRST  Bit2d const &obj);
+  Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, point const &aSize);
+  Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Bit2d const &obj);
+  Bit2d(DBG_INFO_FORMAL_FIRST  Flatten&);
 
   Bit2d& operator= (Bit2d const &obj);     // sizes must be equal already
   ~Bit2d();
 
-  Bit2d(Flatten&);
   void xfer(Flatten &flat);
   void xfer(str::StoragePool &pool, Flatten &flat);
 
@@ -62,7 +64,7 @@ public:      // funcs
   // bit of a hack: I want to be able to save the data as code which,
   // when compiled, will build a bit2d from static data.. for this
   // I need access to some private fields and a special ctor
-  Bit2d(byte * /*serf*/ data, point const &size, int stride);
+  Bit2d(DBG_INFO_FORMAL_FIRST  byte * /*serf*/ data, point const &size, int stride);
   byte *private_data() { return data; }
   int private_datasize() const { return datasize(); }
   int private_stride() const { return stride; }

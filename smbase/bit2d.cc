@@ -9,8 +9,8 @@
 #include <stdio.h>      // printf
 
 
-Bit2d::Bit2d(point const &aSize)
-  : owning(true),
+Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  point const &aSize)
+  : Storeable(DBG_INFO_ARG0), owning(true),
     size(aSize)
 {
   xassert(size.x > 0 && size.y > 0);
@@ -19,21 +19,49 @@ Bit2d::Bit2d(point const &aSize)
 }
 
 
-Bit2d::~Bit2d()
-{
-  if (owning) {
-    delete data;
-  }
-}
-
-
-Bit2d::Bit2d(Bit2d const &obj)
+Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  Bit2d const &obj)
+  : Storeable(DBG_INFO_ARG0)
 {
   size = obj.size;
   stride = obj.stride;
   data = new byte[datasize()];
   owning = true;
   memcpy(data, obj.data, datasize());
+}
+
+
+Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, point const &aSize)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool), owning(true),
+    size(aSize)
+{
+  xassert(size.x > 0 && size.y > 0);
+  stride = (size.x+7)/8;
+  data = new byte[datasize()];
+}
+
+
+Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Bit2d const &obj)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool)
+{
+  size = obj.size;
+  stride = obj.stride;
+  data = new byte[datasize()];
+  owning = true;
+  memcpy(data, obj.data, datasize());
+}
+
+
+Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  Flatten &)
+  : Storeable(DBG_INFO_ARG0), data(NULL),
+    owning(true)
+{}
+
+
+Bit2d::~Bit2d()
+{
+  if (owning) {
+    delete data;
+  }
 }
 
 
@@ -52,12 +80,6 @@ bool Bit2d::operator== (Bit2d const &obj) const
   return (size == obj.size) &&
          (0==memcmp(data, obj.data, datasize()));
 }
-
-
-Bit2d::Bit2d(Flatten &)
-  : data(NULL),
-    owning(true)
-{}
 
 void Bit2d::xfer(Flatten &flat)
 {
@@ -172,8 +194,8 @@ void Bit2d::print() const
 
 
 // hack
-Bit2d::Bit2d(byte * /*serf*/ d, point const &sz, int str)
-  : data(d),
+Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  byte * /*serf*/ d, point const &sz, int str)
+  : Storeable(DBG_INFO_ARG_FWD), data(d),
     owning(false),    // since it's a serf ptr
     size(sz),
     stride(str)
@@ -188,7 +210,7 @@ Bit2d::Bit2d(byte * /*serf*/ d, point const &sz, int str)
 
 int main()
 {
-  Bit2d bits(point(17,3));
+  Bit2d bits(DBG_INFO_ARG0_FIRST  point(17,3));
   xassert(bits.okpt(point(16,2)) &&
          !bits.okpt(point(17,3)) &&
          !bits.okpt(point(2,16)));
