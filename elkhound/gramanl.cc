@@ -5343,6 +5343,16 @@ int inner_entry(int argc, char **argv)
     prefix0 = replace(argv[0], ".gr", "");
   }
 
+  GrammarAnalysis g0;
+  if (useML) {
+    g0.targetLang = "OCaml";
+  }
+  //g0.pref = pref0;
+  g0.prefix0 = prefix0;
+
+  // default, empty environment
+  Environment env0(g0);
+
   // parse the grammar
   string grammarFname = argv[0];
   SHIFT;
@@ -5364,23 +5374,12 @@ int inner_entry(int argc, char **argv)
   int multiIndex = 0;
   int result = 0;
   int maxSr=0,maxRr=0;
-  string pref0;
   std::stringstream bufHead0, bufConsBase0, bufHeadFun0;
-
-  GrammarAnalysis g0;
-  if (useML) {
-    g0.targetLang = "OCaml";
-  }
-  g0.pref = pref0;
-  g0.prefix0 = prefix0;
-
-  // default, empty environment
-  Environment env0(g0);
 
   setAnnotations(ast);
   parseGrammarAST(env0, ast, eof);
   if (!env0.startLexer||env0.startLexer->isNull()) {
-      constcast(env0.startLexer) = LIT_STR("AstTreeNodeLexer").clone();
+      constcast(env0.startLexer) = LIT_STR("AstTreeNodeLexer");
   }
 
   synthesizeStartRule(env0, ast, eof, multiIndex, grType0, name0, usr0);
@@ -5393,7 +5392,7 @@ int inner_entry(int argc, char **argv)
   }
 
   if (!grType0) {
-      grType0 = LIT_STR("void*").clone();
+      grType0 = LIT_STR("void*");
   }
 
   bufHead0 << "   AstCharLexer* charLexer;" << std::endl;

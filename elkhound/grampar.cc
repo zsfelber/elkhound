@@ -521,7 +521,7 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
     FOREACH_ASTLIST(PrecSpec, terms.prec, iter) {
       PrecSpec const &spec = *(iter.data());
 
-      FOREACH_ASTLIST(LocString const, spec.tokens, tokIter) {
+      FOREACH_ASTLIST(LocString, spec.tokens, tokIter) {
         LocString const *tokName = tokIter.data();
         trace("grampar") << "prec: " << toString(spec.kind)
                          << " " << spec.prec << " " << tokName;
@@ -934,7 +934,7 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
                         LIT_STR("__GeneratedChildren"),   // name
                         grType,          // type
                         NULL,                                     // empty list of functions
-                        new (env.g.pool) ASTList<AbstractProdDecl>(DBG_INFO_ARG0_FIRST  constcast(env.g.pool), newStart),          // productions
+                        new (env.g.pool) ASTList<AbstractProdDecl>(DBG_INFO_ARG0_FIRST  env.g.pool, constcast(newStart)),          // productions
                         NULL                                      // subsets
                       );
         }
@@ -1351,7 +1351,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               s << "   return result;" << std::endl;
 
               constcast(prodDecl)->actionCode = LIT_STR(s.str().c_str());
-              orhs.append(new (env.g.pool) RH_name(NOLOC_NULL, LIT_STR(prodDecl->name)));
+              orhs.append(DBG_INFO_ARG0_FIRST  new (env.g.pool) RH_name(DBG_INFO_ARG0_FIRST  env.g.pool, NOLOC_NULL, prodDecl->name));
 
           }
 
@@ -1498,14 +1498,14 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
           astParseErrorCont(env, symName, "undeclared symbol");
 
           // synthesize one anyway so we can find more errors
-          nonterm = g.getOrMakeNonterminal(symName);
+          nonterm = g.getOrMakeNonterminal(DBG_INFO_ARG0_FIRST  symName);
         }
 
         if (term && term->termIndex==0 && !synthesizedStart) {
           astParseError(symName, "you cannot use the EOF token in your rules");
         }
 
-        if (symTag.equals("loc")) {
+        if (symTag->equals("loc")) {
           // bad because loc is the name of the automatically-propagated
           // source location information
           astParseErrorCont(env, symTag, "cannot use \"loc\" as a tag");
@@ -1533,7 +1533,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
         }
         else {
           // add it to the production
-          Production::RHSElt * r = prod->append(g, s, symTag);
+          Production::RHSElt * r = prod->append(DBG_INFO_ARG0_FIRST  g, s, symTag);
 
           if (!first) first = r;
           tags++;
@@ -1541,8 +1541,8 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       }
       // generating default rule
       if (synthesizedStart ? tags<=2 : (tags==1)) {
-        if (!first->tag || !first->tag.length()) {
-           first->tag.str = synthesizedStart ? "top" : "tag";
+        if (!first->tag || !first->tag->length()) {
+           constcast(first->tag->str) = synthesizedStart ? "top" : "tag";
         }
         prod->defaultSymbol = first;
       } else if (synthesizedStart && isVoid(nonterm->type)) {
@@ -1550,7 +1550,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
         astParseErrorCont(env, nonterm->name, "Synthetic start is missing type, and unable to determine default.");
       }
 
-      nonterm->appendProd(prod);
+      nonterm->appendProd(DBG_INFO_ARG0_FIRST  prod);
 
       // after constructing the production we need to do this
       // update: no we don't -- GrammarAnalysis takes care of it (and
@@ -1558,7 +1558,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       //prod->finished();
 
       // add production to grammar
-      g.addProduction(prod);
+      g.addProduction(DBG_INFO_ARG0_FIRST  prod);
 }
 
 
@@ -1624,7 +1624,7 @@ void mergeContext(GrammarAST *base, TF_context * /*owner*/ ext)
 {
   // do simple append, since the grammar parser above knows how
   // to handle multiple context classes
-  base->forms.append(ext);
+  base->forms.append(DBG_INFO_ARG0_FIRST  ext);
 
   #if 0
   // find 'base' context
@@ -1665,7 +1665,7 @@ void mergeOption(GrammarAST *base, TF_option * /*owner*/ ext)
     if (!iter.data()->isTF_option()) continue;
     TF_option *op = iter.data()->asTF_option();
     
-    if (op->name.str == ext->name.str) {
+    if (op->name->equals(*ext->name)) {
       // replace the old value
       op->value = ext->value;
       delete ext;
@@ -1674,7 +1674,7 @@ void mergeOption(GrammarAST *base, TF_option * /*owner*/ ext)
   }
 
   // otherwise, just add the new option
-  base->forms.append(ext);
+  base->forms.append(DBG_INFO_ARG0_FIRST  ext);
 }
 
 
@@ -1702,7 +1702,7 @@ void mergeTerminals(GrammarAST *base, TF_terminals * /*owner*/ ext)
   }
   
   // no TF_terminals in 'base'.. unusual, but easy to handle
-  base->forms.append(ext);
+  base->forms.append(DBG_INFO_ARG0_FIRST  ext);
 }
 
 
@@ -1711,7 +1711,7 @@ void mergeSpecFunc(TF_nonterm *base, SpecFunc * /*owner*/ ext)
   // find an existing spec func with the same name
   FOREACH_ASTLIST_NC(SpecFunc, base->funcs, iter) {
     SpecFunc *f = iter.data();
-    if (f->name.str == ext->name) {
+    if (f->name->equals(*ext->name)) {
       // replace the old code with the extension code
       base->funcs.removeItem(f);
       delete f;
@@ -1720,7 +1720,7 @@ void mergeSpecFunc(TF_nonterm *base, SpecFunc * /*owner*/ ext)
   }
 
   // just add it
-  base->funcs.append(ext);
+  base->funcs.append(DBG_INFO_ARG0_FIRST  ext);
 }
 
 
@@ -1734,14 +1734,14 @@ bool equalRHSElt(RHSElt const *elt1, RHSElt const *elt2)
   // use an alias.. but I don't have the necessary information to detect
   // that, since I haven't yet computed the associated Symbols
   if (elt1->isRH_name()) {
-    return elt1->asRH_nameC()->name.str == elt2->asRH_nameC()->name.str;
+    return elt1->asRH_nameC()->name->equals(*elt2->asRH_nameC()->name);
   }
   if (elt1->isRH_string()) {
-    return elt1->asRH_stringC()->str.str == elt2->asRH_stringC()->str.str;
+    return elt1->asRH_stringC()->str->equals(*elt2->asRH_stringC()->str);
   }
   if (elt1->isRH_prec()) {
     // this means you can't change the precedence..
-    return elt1->asRH_precC()->tokName.str == elt2->asRH_precC()->tokName.str;
+    return elt1->asRH_precC()->tokName->equals(*elt2->asRH_precC()->tokName);
   }
 
   xfailure("unknown RHSElt kind");
@@ -1806,7 +1806,7 @@ void mergeProduction(TF_nonterm *base, AbstractProdDecl *ext)
   }
 
   // add the production
-  base->productions.append(ext);
+  base->productions.append(DBG_INFO_ARG0_FIRST  ext);
 }
 
 
@@ -1816,19 +1816,19 @@ void mergeNonterminal(GrammarAST *base, TF_nonterm * /*owner*/ ext)
   TF_nonterm *exist = NULL;
   FOREACH_ASTLIST_NC(TopForm, base->forms, iter) {
     if (iter.data()->isTF_nonterm() &&
-        iter.data()->asTF_nonterm()->name.str == ext->name) {
+        iter.data()->asTF_nonterm()->name->equals(*ext->name)) {
       exist = iter.data()->asTF_nonterm();
     }
   }
 
   if (!exist) {
     // no pre-existing, just append it
-    base->forms.append(ext);
+    base->forms.append(DBG_INFO_ARG0_FIRST  ext);
     return;
   }
 
   // make sure the types agree
-  if (exist->type.str != ext->type) {
+  if (!exist->type->str.equals(*ext->type)) {
     astParseError(ext->type, "cannot redefine the type of a nonterminal");
   }
 
@@ -1861,7 +1861,7 @@ void mergeGrammar(GrammarAST *base, GrammarAST *ext)
 
       ASTNEXT(TF_verbatim, v) {
         // verbatims simply accumulate
-        base->forms.append(v);
+        base->forms.append(DBG_INFO_ARG0_FIRST  v);
       }
 
       ASTNEXT(TF_option, op) {
@@ -1889,7 +1889,7 @@ void mergeGrammar(GrammarAST *base, GrammarAST *ext)
 // ---------------- external interface -------------------
 bool isGramlexEmbed(int code);     // defined in gramlex.lex
 
-GrammarAST *parseGrammarFile(rostring origFname, bool useML)
+GrammarAST *parseGrammarFile(Environment &env, rostring origFname, bool useML)
 {
   string fname = origFname;
 
@@ -1918,21 +1918,21 @@ GrammarAST *parseGrammarFile(rostring origFname, bool useML)
   }
   
   // build lexer
-  GrammarLexer lexer(isGramlexEmbed,
-                     grammarStringTable,
-                     fname.c_str(),
-                     in.xfr(),
-                     embed);
+  GrammarLexer *lexer = new (env.g.pool) GrammarLexer(env.g.pool, isGramlexEmbed,
+                                                      grammarStringTable,
+                                                      fname.c_str(),
+                                                      in.xfr(),
+                                                      embed);
   if (embed) {
     // install the refined error reporter
-    embed->err = &lexer.altReporter;
+    embed->err = &lexer->altReporter;
   }
 
-  ParseParams params(lexer);
+  ParseParams params(*lexer);
 
   traceProgress() << "parsing grammar source: " << fname << std::endl;
   int retval = grampar_yyparse(&params);
-  if (retval==0 && lexer.errors==0) {
+  if (retval==0 && lexer->errors==0) {
     GrammarAST *ret = params.treeTop;
 
     if (tracingSys("printGrammarAST")) {
