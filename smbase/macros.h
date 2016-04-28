@@ -29,6 +29,7 @@
 
 // member copy in constructor initializer list
 #define DMEMB(var) var(obj.var)
+#define PMEMB(var) var(obj->var)
 
 // member copy in operator =
 #define CMEMB(var) var = obj.var

@@ -50,7 +50,8 @@ public:    // funcs
   friend stringBuilder& operator<< (stringBuilder &sb, LocString const &loc)
     { return sb << loc.str; }
   StringRef strref() const { return str.c_str(); }
-  operator StringRef () const { return str.c_str(); }
+  //operator StringRef () const { return str.c_str(); }
+  operator rostring () const { return str; }
   char operator [] (int index) const { return str[index]; }
   bool equals(rostring other) const;    // string comparison
   bool equals(StringRef other) const;    // string comparison
@@ -65,7 +66,8 @@ public:    // funcs
 };
 
 // yields simply the string, no location info
-string toString(LocString const &s);
+rostring toString(LocString const &s);
+rostring toString(LocString const *s);
 
 // xml stuff...
 string toXml(LocString op);

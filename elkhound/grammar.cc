@@ -26,8 +26,8 @@ StringTable grammarStringTable;
 
 
 // ---------------------- Symbol --------------------
-Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &n, bool t, bool e)
-  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(&n),
+Symbol::Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const *n, bool t, bool e)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(n),
     isTerm(t),
     isEmptyString(e),
     type(NULL),
@@ -225,7 +225,7 @@ string Terminal::toString(bool quoteAliases) const
 
 
 // ----------------- Nonterminal ------------------------
-Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &name, bool isEmpty)
+Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const *name, bool isEmpty)
   : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, name, false /*terminal*/, isEmpty),
     mergeParam1(NULL),
     mergeParam2(NULL),
@@ -713,7 +713,7 @@ void Production::getRHSSymbols(DBG_INFO_FORMAL_FIRST SymbolList &output) const
 }
 
 
-Production::RHSElt* Production::append(DBG_INFO_FORMAL_FIRST  Grammar &g, Symbol *sym, LocString const &tag)
+Production::RHSElt* Production::append(DBG_INFO_FORMAL_FIRST  Grammar &g, Symbol *sym, LocString const *tag)
 {
   // my new design decision (6/26/00 14:24) is to disallow the
   // emptyString nonterminal from explicitly appearing in the
@@ -953,7 +953,7 @@ Grammar::Grammar(DBG_INFO_FORMAL)
     implVerbatim(DBG_INFO_ARG_FWD_FIRST  pool)
 {
     emptyString = new (pool)
-      Nonterminal(DBG_INFO_ARG_FWD_FIRST  pool, LocString(DBG_INFO_ARG_FWD_FIRST  pool, HERE_SOURCELOC, "empty"),
+      Nonterminal(DBG_INFO_ARG_FWD_FIRST  pool, LIT_STR_2(HERE_SOURCELOC, "empty"),
                 true /*isEmptyString*/);
     pool.addPointer(emptyString);
 }
@@ -1087,11 +1087,11 @@ void Grammar::addProduction(DBG_INFO_FORMAL_FIRST  Production *prod)
 
 
 // add a token to those we know about
-bool Grammar::declareToken(DBG_INFO_FORMAL_FIRST  LocString const &symbolName, int code,
-                           LocString const &alias)
+bool Grammar::declareToken(DBG_INFO_FORMAL_FIRST  LocString const *symbolName, int code,
+                           LocString const *alias)
 {
   // verify that this token hasn't been declared already
-  if (findSymbolC(symbolName)) {
+  if (findSymbolC(*symbolName)) {
     cout << "token " << symbolName << " has already been declared\n";
     return false;
   }
@@ -1104,7 +1104,7 @@ bool Grammar::declareToken(DBG_INFO_FORMAL_FIRST  LocString const &symbolName, i
   // assign fields specified in %token declaration
   term->termIndex = index;
   term->termCode = code;
-  term->alias = &alias;
+  term->alias = alias;
 
   return true;
 }
@@ -1269,7 +1269,7 @@ void Grammar::printAsBison(ostream &os) const
 
 
 // ------------------- symbol access -------------------
-Nonterminal const *Grammar::findNonterminalC(char const *name) const
+Nonterminal const *Grammar::findNonterminalC(rostring name) const
 {
   // check for empty first, since it's not in the list
   if (emptyString->name->equals(name)) {
@@ -1285,7 +1285,7 @@ Nonterminal const *Grammar::findNonterminalC(char const *name) const
 }
 
 
-Terminal const *Grammar::findTerminalC(char const *name) const
+Terminal const *Grammar::findTerminalC(rostring name) const
 {
   SFOREACH_TERMINAL(terminals, iter) {
     if (iter.data()->name->equals(name) ||
@@ -1297,7 +1297,7 @@ Terminal const *Grammar::findTerminalC(char const *name) const
 }
 
 
-Symbol const *Grammar::findSymbolC(char const *name) const
+Symbol const *Grammar::findSymbolC(rostring name) const
 {
   // try nonterminals
   Nonterminal const *nt = findNonterminalC(name);
@@ -1311,9 +1311,9 @@ Symbol const *Grammar::findSymbolC(char const *name) const
 
 
 
-Nonterminal *Grammar::getOrMakeNonterminal(DBG_INFO_FORMAL_FIRST  LocString const &name)
+Nonterminal *Grammar::getOrMakeNonterminal(DBG_INFO_FORMAL_FIRST  LocString const *name)
 {
-  Nonterminal *nt = findNonterminal(name);
+  Nonterminal *nt = findNonterminal(*name);
   if (nt != NULL) {
     return nt;
   }
@@ -1323,9 +1323,9 @@ Nonterminal *Grammar::getOrMakeNonterminal(DBG_INFO_FORMAL_FIRST  LocString cons
   return nt;
 }
 
-Terminal *Grammar::getOrMakeTerminal(DBG_INFO_FORMAL_FIRST  LocString const &name)
+Terminal *Grammar::getOrMakeTerminal(DBG_INFO_FORMAL_FIRST  LocString const *name)
 {
-  Terminal *term = findTerminal(name);
+  Terminal *term = findTerminal(*name);
   if (term != NULL) {
     return term;
   }
@@ -1335,9 +1335,9 @@ Terminal *Grammar::getOrMakeTerminal(DBG_INFO_FORMAL_FIRST  LocString const &nam
   return term;
 }
 
-Symbol *Grammar::getOrMakeSymbol(DBG_INFO_FORMAL_FIRST  LocString const &name)
+Symbol *Grammar::getOrMakeSymbol(DBG_INFO_FORMAL_FIRST  LocString const *name)
 {
-  Symbol *sym = findSymbol(name);
+  Symbol *sym = findSymbol(*name);
   if (sym != NULL) {
     return sym;
   }
@@ -1346,7 +1346,7 @@ Symbol *Grammar::getOrMakeSymbol(DBG_INFO_FORMAL_FIRST  LocString const &name)
   // it will be a nonterminal or a terminal.  For now, I will
   // use the lexical convention that nonterminals are
   // capitalized and terminals are not.
-  if (isupper(name[0])) {
+  if (isupper((*name)[0])) {
     return getOrMakeNonterminal(DBG_INFO_ARG_FWD_FIRST  name);
   }
   else {

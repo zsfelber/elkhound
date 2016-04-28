@@ -142,17 +142,17 @@ void astParseError(rostring msg);
 class XASTParse : public xBase {
 public:    // data
   // token at or near failure
-  LocString failToken;
+  LocString const * failToken;
 
   // what is wrong
   string message;
 
 private:   // funcs
-  static string constructMsg(LocString const &tok, rostring msg);
+  static string constructMsg(LocString const *&tok, rostring msg);
 
 public:    // funcs
-  XASTParse(LocString const &tok, rostring msg);
-  XASTParse(XASTParse const &obj);
+  XASTParse(LocString const *&tok, rostring msg);
+  XASTParse(XASTParse const *&obj);
   ~XASTParse();
 };
 

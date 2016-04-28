@@ -4114,7 +4114,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
 {            
   // prepare for symbol of interest
   {
-    char const *name = getenv("SYM_OF_INTEREST");
+    string name = getenv("SYM_OF_INTEREST");
     if (name != NULL) {
       symOfInterest = findSymbolC(name);
       if (!symOfInterest) {

@@ -306,7 +306,7 @@ bool isTreeListType(rostring type)
 
 bool isStoreableType(rostring type)
 {
-  return isTreeListType(type) || type.equals("Integer") || type.equals("string") || type.equals("LocString");
+  return isTreeListType(type) || type.equals("Integer") || type.equals("string") ;//|| type.equals("LocString");
 }
 
 // given a type for which 'is[Fake]ListType' returns true, extract
@@ -719,7 +719,7 @@ void HGen::innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::strin
       std::string s(arg.data()->name.c_str());
 
       char const *star = "";
-      if (isTreeNode(arg.data()->type)) {
+      if (isTreeNode(arg.data()->type) || arg.data()->type.equals("LocString")) {
         // make it a pointer in the concrete representation
         star = "*";
       }
@@ -751,14 +751,14 @@ void HGen::emitCtorFormal(int &ct, CtorArg const *arg, char &lastLst)
       out << type << " ";
       if (//isListType(type) ||
           isTreeNode(type)
-          //|| type.equals("LocString")
+          || type.equals("LocString")
               ) {
         // lists and subtrees and LocStrings are constructed by passing pointers
         trace("putStar") << "putting star for " << type << std::endl;
         out << "*";
-      } else if (type.equals("LocString")) {
-        trace("putStar") << "putting & for " << type << std::endl;
-        out << "&";
+      //} else if (type.equals("LocString")) {
+      //  trace("putStar") << "putting & for " << type << std::endl;
+      //  out << "&";
       } else {
         trace("putStar") << "NOT putting star for " << type << std::endl;
       }
@@ -1638,7 +1638,7 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
   }
   else if (streq(arg->type, "LocString")) {
     // clone a LocString; we store objects, but pass pointers
-    out << "(deepness>=0)? *" << argName << ".clone(DBG_INFO_ARG_FWD_FIRST  pool) : *str::constcast(&" << argName<<")" ;
+    out << "(deepness>=0)? " << argName << "->clone(DBG_INFO_ARG_FWD_FIRST  pool) : str::constcast(" << argName<<")" ;
   }
   else {
     // pass the non-tree node's value directly

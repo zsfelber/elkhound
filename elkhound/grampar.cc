@@ -83,15 +83,15 @@ Environment::~Environment()
 
 // -------------------- XASTParse --------------------
 STATICDEF string XASTParse::
-  constructMsg(LocString const &tok, rostring msg)
+  constructMsg(LocString const *&tok, rostring msg)
 {
-  if (tok.validLoc()) {
-    if (tok.isNonNull()) {
-      return stringc << tok.locString() << ": near " << tok
+  if (tok && tok->validLoc()) {
+    if (tok->isNonNull()) {
+      return stringc << tok->locString() << ": near " << tok
                      << ", " << msg;
     }
     else {
-      return stringc << tok.locString() << ": " << msg;
+      return stringc << tok->locString() << ": " << msg;
     }
   }
   else {
@@ -99,17 +99,17 @@ STATICDEF string XASTParse::
   }
 }
 
-XASTParse::XASTParse(LocString const &tok, rostring m)
+XASTParse::XASTParse(LocString const *&tok, rostring m)
   : xBase(constructMsg(tok, m)),
     failToken(tok),
     message(m)
 {}
 
 
-XASTParse::XASTParse(XASTParse const &obj)
+XASTParse::XASTParse(XASTParse const *&obj)
   : xBase(obj),
-    DMEMB(failToken),
-    DMEMB(message)
+    PMEMB(failToken),
+    PMEMB(message)
 {}
 
 XASTParse::~XASTParse()
@@ -133,25 +133,25 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
 
 // really a static semantic error, more than a parse error..
-void astParseError(LocString const &failToken, rostring msg)
+void astParseError(LocString const *&failToken, rostring msg)
 {
   THROW(XASTParse(failToken, msg));
 }
 
 void astParseError(SourceLoc loc, rostring msg)
 {
-  LocString locstr(DBG_INFO_ARG0_FIRST  loc, NULL);
+  LocString const *locstr = LIT_STR_2(loc, NULL);
   THROW(XASTParse(locstr, msg));
 }
 
 void astParseError(rostring msg)
 {
-  LocString ls(DBG_INFO_ARG0);   // no location info
+  LocString const *ls;    // no location info
   THROW(XASTParse(ls, msg));
 }
 
 // print the same message, but keep going anyway
-void astParseErrorCont(Environment &env, LocString const &failToken,
+void astParseErrorCont(Environment &env, LocString const *&failToken,
                        rostring msg)
 {
   XASTParse x(failToken, msg);
@@ -214,10 +214,10 @@ void setAnnotations(GrammarAST *ast)
 }
 
 
-LocString& extractActionClassName(LocString const &body)
+LocString* extractActionClassName(LocString const *body)
 {
   // find start of first token
-  char const *start = body.str.c_str();
+  char const *start = body->str.c_str();
   while (isspace(*start)) start++;
 
   // find end of first token
@@ -226,7 +226,7 @@ LocString& extractActionClassName(LocString const &body)
   while (isalnum(*p) || *p=='_') p++;
   
   // yield that, with the same source location
-  return * LIT_STR_2_ADD(body.loc, substring(start, p-start).c_str());
+  return LIT_STR_2_ADD(body->loc, substring(start, p-start).c_str());
 }
 
 
@@ -422,7 +422,7 @@ void astParseGrammar(Environment &env, GrammarAST *ast)
 }
 
 // validate 'name'
-TerminalOrSet astParseTokens(Environment &env, LocString const &name)
+TerminalOrSet astParseTokens(Environment &env, LocString const *name)
 {
   Terminal *t = env.g.findTerminal(name);
   TerminalOrSet s;
@@ -445,9 +445,9 @@ TerminalOrSet astParseTokens(Environment &env, LocString const &name)
 }
 
 // validate 'name'
-Terminal *astParseToken(Environment &env, LocString const &name)
+Terminal *astParseToken(Environment &env, LocString const *name)
 {
-  Terminal *t = env.g.findTerminal(name);
+  Terminal *t = env.g.findTerminal(name->str.c_str());
   if (!t) {
     astParseError(name, "undeclared token");
   }
@@ -1417,8 +1417,8 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       // deal with RHS elements
       FOREACH_ASTLIST(RHSElt, prodDecl->rhs, iter) {
         RHSElt const *n = iter.data();
-        LocString symName;
-        LocString symTag;
+        LocString const * symName;
+        LocString const * symTag;
         bool isString = false;
         bool isAnnotation = false;
 
@@ -1449,9 +1449,9 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
 
             try {
               if (s.set) {
-                 prod->addForbid(g, s.s);
+                 prod->addForbid(DBG_INFO_ARG0_FIRST  g, s.s);
               } else if (s.t) {
-                 prod->addForbid(g, s.t, g.numTerminals());
+                 prod->addForbid(DBG_INFO_ARG0_FIRST  g, s.t, g.numTerminals());
               }
             } catch (std::exception) {
                astParseError(f->tokName, "forbid_next : only single noneterminal allowed");
@@ -1472,8 +1472,8 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
         }
 
         // see which (if either) thing this name already is
-        Terminal *term = g.findTerminal(symName);
-        Nonterminal *nonterm = g.findNonterminal(symName);
+        Terminal *term = g.findTerminal(*symName);
+        Nonterminal *nonterm = g.findNonterminal(*symName);
         if (term && nonterm) {
           if (isString) {
             astParseError(symName, "token alias has same name as a nonterminal");

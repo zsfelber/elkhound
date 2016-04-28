@@ -83,9 +83,14 @@ bool LocString::equals(rostring other) const
   return str.equals(other.c_str()); // or same contents
 }
 
-string toString(LocString const &s)
+rostring toString(LocString const &s)
 {
-  return string(s.str);
+  return s.str;
+}
+
+rostring toString(LocString const *s)
+{
+  return s->str;
 }
 
 

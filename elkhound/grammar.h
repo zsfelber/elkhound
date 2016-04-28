@@ -72,7 +72,7 @@ extern StringTable grammarStringTable;
 class Symbol : public str::Storeable {
 // ------ representation ------
 public:
-  LocString const* const name;     // symbol's name in grammar
+  LocString const* name;     // symbol's name in grammar
   bool const isTerm;        // true: terminal (only on right-hand sides of productions)
                             // false: nonterminal (can appear on left-hand sides)
   bool const isEmptyString; // true only for the emptyString nonterminal
@@ -93,7 +93,7 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:      // funcs
-  Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &n, bool t, bool e = false);
+  Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const *n, bool t, bool e = false);
   virtual ~Symbol();
 
   Symbol(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);
@@ -194,7 +194,7 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:     // funcs
-  Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &name)        // canonical name for terminal class
+  Terminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const *name)        // canonical name for terminal class
     : Symbol(DBG_INFO_ARG_FWD_FIRST  pool, name, true /*terminal*/),
       alias(NULL),
       precedence(0),
@@ -338,7 +338,7 @@ protected:  // funcs
   virtual void internalPrintDDM(ostream &os) const;
 
 public:     // funcs
-  Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const &name, bool isEmptyString=false);
+  Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, LocString const *name, bool isEmptyString=false);
   virtual ~Nonterminal();
 
   Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten &flat);
@@ -391,7 +391,7 @@ public:     // types
     LocString const *tag;             // tag for this symbol; can be ""
 
   public:
-    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Symbol *s, LocString const &t) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sym(s), tag(&t) {}
+    RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Symbol *s, LocString const *t) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sym(s), tag(t) {}
     ~RHSElt();
 
     RHSElt(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Flatten&);
@@ -441,7 +441,7 @@ public:	    // funcs
   void getRHSSymbols(DBG_INFO_FORMAL_FIRST  SymbolList &output) const;
 
   // append a RHS symbol
-  RHSElt* append(DBG_INFO_FORMAL_FIRST  Grammar &g, Symbol *sym, LocString const &tag);
+  RHSElt* append(DBG_INFO_FORMAL_FIRST  Grammar &g, Symbol *sym, LocString const *tag);
 
   // call this when production is built, so it can compute annotations
   // (this is called by GrammarAnalysis::initializeAuxData, from
@@ -592,8 +592,8 @@ public:     // funcs
   // ---- building a grammar ----
   // declare a new token exists, with name and optional alias;
   // return false if it's already declared
-  bool declareToken(DBG_INFO_FORMAL_FIRST   LocString const &symbolName, int code,
-                    LocString const &alias);
+  bool declareToken(DBG_INFO_FORMAL_FIRST   LocString const *symbolName, int code,
+                    LocString const *alias);
 
   // add a new production; the rhs arg list must be terminated with a NULL
   //void addProduction(Nonterminal *lhs, Symbol *rhs, ...);
@@ -626,12 +626,12 @@ public:     // funcs
   // ---- symbol access ----
   #define SYMBOL_ACCESS(Thing)                              \
     /* retrieve, return NULL if not there */                \
-    Thing const *find##Thing##C(char const *name) const;    \
-    Thing *find##Thing(char const *name)                    \
+    Thing const *find##Thing##C(rostring name) const;    \
+    Thing *find##Thing(rostring name)                    \
       { return const_cast<Thing*>(find##Thing##C(name)); }  \
                                                             \
     /* retrieve, or create it if not already there */       \
-    Thing *getOrMake##Thing(DBG_INFO_FORMAL_FIRST  LocString const &name);
+    Thing *getOrMake##Thing(DBG_INFO_FORMAL_FIRST  LocString const *name);
 
   SYMBOL_ACCESS(Symbol)        // findSymbolC, findSymbol, getOrMakeSymbol
   SYMBOL_ACCESS(Terminal)      // findTerminal{C,}, getOrMakeTerminal
