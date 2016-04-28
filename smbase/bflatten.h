@@ -14,7 +14,7 @@ private:     // data
   bool readMode;          // true=read, false=write
 
   struct OwnerMapping {
-    void *ownerPtr;       // a pointer
+    void const *ownerPtr;       // a pointer
     int intName;          // a unique integer name
   };
   OwnerHashTable<OwnerMapping> ownerTable;      // owner <-> int mapping
@@ -31,8 +31,8 @@ public:      // funcs
   // Flatten funcs
   virtual bool reading() const { return readMode; }
   virtual void xferSimple(void *var, unsigned len);
-  virtual void noteOwner(void *ownerPtr);
-  virtual void xferSerf(void *&serfPtr, bool nullable=false);
+  virtual void noteOwner(void const *ownerPtr);
+  virtual void xferSerf(void const *&serfPtr, bool nullable=false);
 };
 
                   

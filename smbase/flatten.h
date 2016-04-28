@@ -53,10 +53,10 @@ public:
    
   // ------------- owner/serf ------------
   // take note of an owner pointer where we expect to xfer serfs to it
-  virtual void noteOwner(void *ownerPtr) = 0;
+  virtual void noteOwner(void const *ownerPtr) = 0;
 
   // xfer a serf pointer that we've previously taken note of
-  virtual void xferSerf(void *&serfPtr, bool nullable=false) = 0;
+  virtual void xferSerf(void const *&serfPtr, bool nullable=false) = 0;
   void writeSerf(void *serfPtr);
   void *readSerf();
 };

@@ -72,7 +72,7 @@ public:
 
 public:
   xBase(rostring m);       // create exception object with message 'm'
-  xBase(xBase const &m);   // copy ctor
+  xBase(xBase const *m);   // copy ctor
   virtual ~xBase();
 
   rostring why() const

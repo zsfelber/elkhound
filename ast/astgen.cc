@@ -718,8 +718,12 @@ void HGen::innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::strin
     FOREACH_ASTLIST(CtorArg, args, arg) {
       std::string s(arg.data()->name.c_str());
 
+      char const *star0 = "";
       char const *star = "";
-      if (isTreeNode(arg.data()->type) || arg.data()->type.equals("LocString")) {
+      if (arg.data()->type.equals("LocString")) {
+          star0 = " const";
+          star = " const *";
+      } else if (isTreeNode(arg.data()->type)) {
         // make it a pointer in the concrete representation
         star = "*";
       }
@@ -729,7 +733,7 @@ void HGen::innerEmitCtorFields(ASTList<CtorArg> const &args, std::set<std::strin
           out << "  " << arg.data()->type << " " << star << arg.data()->name << ";\n";
       }
 
-      out << "  typedef " << arg.data()->type << " Type__" << arg.data()->name << ";\n";
+      out << "  typedef " << arg.data()->type << star0 << " Type__" << arg.data()->name << ";\n";
       out << "  typedef " << arg.data()->type  << star << " Type__" << arg.data()->name << "_star" << ";\n";
     }
   }
@@ -749,6 +753,10 @@ void HGen::emitCtorFormal(int &ct, CtorArg const *arg, char &lastLst)
       out << (lastLst++) << " ";
   } else {
       out << type << " ";
+      if (type.equals("LocString")){
+         out << "const";
+      }
+
       if (//isListType(type) ||
           isTreeNode(type)
           || type.equals("LocString")
@@ -1638,7 +1646,7 @@ void CGen::emitCloneCtorArg(CtorArg const *arg, int &ct)
   }
   else if (streq(arg->type, "LocString")) {
     // clone a LocString; we store objects, but pass pointers
-    out << "(deepness>=0)? " << argName << "->clone(DBG_INFO_ARG_FWD_FIRST  pool) : str::constcast(" << argName<<")" ;
+    out << "(deepness>=0)? " << argName << "->clone(DBG_INFO_ARG_FWD_FIRST  pool) : " << argName ;
   }
   else {
     // pass the non-tree node's value directly

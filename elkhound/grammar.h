@@ -543,7 +543,7 @@ public:	    // data
 
   // sections of verbatim code emitted into the interface file, before
   // the parser context class body
-  ObjList<LocString> verbatim;
+  ObjList<LocString const> verbatim;
 
   // name of the class into which the action functions are placed
   LocString const *actionClassName;
@@ -552,10 +552,10 @@ public:	    // data
   // verbatim action class declaration, and additional codes from
   // extension modules to append to it (but see note of 11/13/04
   // in grampar.cc)
-  ObjList<LocString> actionClasses;
+  ObjList<LocString const> actionClasses;
 
   // code emitted into the implementation file at the end
-  ObjList<LocString> implVerbatim;
+  ObjList<LocString const> implVerbatim;
 
   // ---- declarative options ----
   // name of the target language; nominally "C++"

@@ -21,9 +21,9 @@ public:
   VoidNode *next;           // (owner) next item in list, or NULL if last item
   str::Storeable *data;               // whatever it is the list is holding
 
-  VoidNode(DBG_INFO_FORMAL_FIRST  str::StoragePool const &_pool, str::Storeable *aData=NULL, VoidNode *aNext=NULL) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  _pool) {
-      data=aData;
-      next=aNext;
+  VoidNode(DBG_INFO_FORMAL_FIRST  str::StoragePool const &_pool, str::Storeable const *aData=NULL, VoidNode const *aNext=NULL) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  _pool) {
+      data=constcast(aData);
+      next=constcast(aNext);
       str::StoragePool & pool = constcast(_pool);
       pool.addPointer(next);
       pool.addPointer(data);
@@ -117,8 +117,8 @@ public:
   str::Storeable *last() const { return nth(count()-1); }
 
   // insertion
-  void prepend(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem);       // insert at front
-  VoidNode* append(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem);        // insert at rear
+  void prepend(DBG_INFO_FORMAL_FIRST  str::Storeable const *newitem);       // insert at front
+  VoidNode* append(DBG_INFO_FORMAL_FIRST  str::Storeable const *newitem);        // insert at rear
   void insertAt(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem, int index);
     // new item is inserted such that its index becomdes 'index'
   void insertSorted(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem, VoidDiff const diff, str::Storeable const *extra=NULL);
@@ -238,15 +238,15 @@ public:
   str::Storeable *&dataRef()                 { return current->data; }
 
   // insertion
-  void insertBefore(DBG_INFO_FORMAL_FIRST  str::Storeable *item);
+  void insertBefore(DBG_INFO_FORMAL_FIRST  str::Storeable const *item);
     // 'item' becomes the new 'current', and the current 'current' is
     // pushed forward (so the next adv() will make it current again)
 
-  void insertAfter(DBG_INFO_FORMAL_FIRST  str::Storeable *item);
+  void insertAfter(DBG_INFO_FORMAL_FIRST  str::Storeable const *item);
     // 'item' becomes what we reach with the next adv();
     // isDone() must be false
 
-  void append(DBG_INFO_FORMAL_FIRST  str::Storeable *item);
+  void append(DBG_INFO_FORMAL_FIRST  str::Storeable const *item);
     // only valid while isDone() is true, it inserts 'item' at the end of
     // the list, and advances such that isDone() remains true; equivalent
     // to { xassert(isDone()); insertBefore(item); adv(); }

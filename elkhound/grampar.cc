@@ -280,42 +280,42 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
         //
         // new:
         g.actionClasses.deleteAll();
-        g.actionClasses.append(DBG_INFO_ARG0_FIRST  LIT_STR(c->body));
+        g.actionClasses.append(DBG_INFO_ARG0_FIRST  c->body);
       }
 
       ASTNEXT(TF_verbatim, v) {
         if (v->isImpl) {
-          g.implVerbatim.append(DBG_INFO_ARG0_FIRST  LIT_STR(v->code));
+          g.implVerbatim.append(DBG_INFO_ARG0_FIRST  v->code);
         }
         else {
-          g.verbatim.append(DBG_INFO_ARG0_FIRST  LIT_STR(v->code));
+          g.verbatim.append(DBG_INFO_ARG0_FIRST  v->code);
         }
       }
 
       ASTNEXT(TF_option, op) {
-        LocString const &name = op->name;
+        LocString const *name = op->name;
         int value = op->value;
         bool boolVal = !!value;
 
-        if (name.equals("useGCDefaults")) {
+        if (name->equals("useGCDefaults")) {
           g.useGCDefaults = boolVal;
         }
-        else if (name.equals("defaultMergeAborts")) {
+        else if (name->equals("defaultMergeAborts")) {
           g.defaultMergeAborts = boolVal;
         }
-        else if (name.equals("shift_reduce_conflicts")) {
+        else if (name->equals("shift_reduce_conflicts")) {
           g.expectedSR = value;
         }
-        else if (name.equals("reduce_reduce_conflicts")) {
+        else if (name->equals("reduce_reduce_conflicts")) {
           g.expectedRR = value;
         }
-        else if (name.equals("unreachable_nonterminals")) {
+        else if (name->equals("unreachable_nonterminals")) {
           g.expectedUNRNonterms = value;
         }
-        else if (name.equals("unreachable_terminals")) {
+        else if (name->equals("unreachable_terminals")) {
           g.expectedUNRTerms = value;
         }
-        else if (name.equals("lang_OCaml")) {
+        else if (name->equals("lang_OCaml")) {
           //g.targetLang = "OCaml";
           //
           // I'm retarded.. I need to know if we're parsing ocaml *before*
@@ -325,7 +325,7 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
                               "the `-ocaml' command-line switch.  Please use "
                               "that instead.  (Sorry for the inconvenience.)");
         }
-        else if (name.equals("allow_continued_nonterminals")) {
+        else if (name->equals("allow_continued_nonterminals")) {
           ast->allowContinuedNonterminals = boolVal;
         }
         else {
@@ -342,13 +342,13 @@ void astParseOptions(Grammar &g, GrammarAST *ast)
 // map the grammar definition AST into a Grammar data structure
 Nonterminal * createNonterm(Environment &env, GrammarAST *ast, TF_nonterm *nt) {
     // check for already declared
-    if (env.nontermDecls.isMapped(nt->name)) {
+    if (env.nontermDecls.isMapped(nt->name->str)) {
       if (!ast->allowContinuedNonterminals) {
-        astParseError(nt->name, "nonterminal already declared");
+        astParseError(nt->name, string("nonterminal already declared"));
       }
       else {
         // check for consistent type
-        if (!nt->type.equals(env.nontermDecls.queryf(nt->name)->type)) {
+        if (!nt->type->equals(*env.nontermDecls.queryf(*nt->name)->type)) {
           astParseError(nt->name, "continued nonterminal with different type");
         }
 
@@ -367,7 +367,7 @@ Nonterminal * createNonterm(Environment &env, GrammarAST *ast, TF_nonterm *nt) {
     // 12/09/04: As far as I can tell, 'nontermDecls' is in fact not
     // used except for right here, to check whether a nonterminal
     // declaration is duplicated.
-    env.nontermDecls.add(nt->name, nt);
+    env.nontermDecls.add(*nt->name, nt);
     return result;
 }
 
@@ -384,8 +384,8 @@ void astParseGrammar(Environment &env, GrammarAST *ast)
     FOREACH_ASTLIST_NC(TopForm, ast->forms, iter) {
 
       if (iter.data()->isTF_start()) {
-          constcast(env.startSymbol) = iter.data()->asTF_start()->symbol.clone(DBG_INFO_ARG0_FIRST  env.g.pool);
-          constcast(env.startLexer) = iter.data()->asTF_start()->lexer.clone(DBG_INFO_ARG0_FIRST  env.g.pool);
+          constcast(env.startSymbol) = iter.data()->asTF_start()->symbol->clone(DBG_INFO_ARG0_FIRST  env.g.pool);
+          constcast(env.startLexer) = iter.data()->asTF_start()->lexer->clone(DBG_INFO_ARG0_FIRST  env.g.pool);
       }
 
       if (!iter.data()->isTF_nonterm()) continue;
@@ -411,7 +411,7 @@ void astParseGrammar(Environment &env, GrammarAST *ast)
     }
   }
 
-  if (env.g.actionClassName.str.isempty()) {
+  if (env.g.actionClassName->str.isempty()) {
     astParseError("you must specify a context class; for example:\n"
                   "  context_class Context : public UserActions {};\n");
   }
@@ -424,14 +424,14 @@ void astParseGrammar(Environment &env, GrammarAST *ast)
 // validate 'name'
 TerminalOrSet astParseTokens(Environment &env, LocString const *name)
 {
-  Terminal *t = env.g.findTerminal(name);
+  Terminal *t = env.g.findTerminal(*name);
   TerminalOrSet s;
 
   if (t) {
     s.set = false;
     s.t = t;
   } else {
-    Nonterminal *nt = env.g.findNonterminal(name);
+    Nonterminal *nt = env.g.findNonterminal(*name);
     if (nt) {
         s.set = true;
         s.s = &nt->first;
@@ -474,12 +474,12 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
 
       // process the terminal declaration
       int code = term.code;
-      StringRef name = term.name;
+      LocString const* name = term.name;
       trace("grampar") << "token: code=" << code
                        << ", name=" << name << std::endl;
 
       if (!env.g.declareToken(DBG_INFO_ARG0_FIRST  term.name, code, term.alias)) {
-        astParseError(term.name, "token already declared");
+        astParseError(constcast(term).name, "token already declared");
       }
     }
 
@@ -505,11 +505,11 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
       // look up the name
       Terminal *t = astParseToken(env, type.name);
       if (t->type) {
-        astParseError(type.name, "this token already has a type");
+        astParseError(constcast(type).name, "this token already has a type");
       }
 
       // annotate with declared type
-      t->type = type.type;
+      t->type = type.type->strref();
 
       // parse the dup/del/merge spec
       astParseDDM(env, t, type.funcs);
@@ -521,8 +521,8 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
     FOREACH_ASTLIST(PrecSpec, terms.prec, iter) {
       PrecSpec const &spec = *(iter.data());
 
-      FOREACH_ASTLIST(LocString, spec.tokens, tokIter) {
-        LocString const &tokName = *(tokIter.data());
+      FOREACH_ASTLIST(LocString const, spec.tokens, tokIter) {
+        LocString const *tokName = tokIter.data();
         trace("grampar") << "prec: " << toString(spec.kind)
                          << " " << spec.prec << " " << tokName;
 
@@ -556,30 +556,30 @@ void astParseDDM(Environment &env, Symbol *sym,
   Nonterminal *nonterm = sym->ifNonterminal();
 
   FOREACH_ASTLIST(SpecFunc, funcs, iter) {
-    SpecFunc const &func = *(iter.data());
+    SpecFunc &func = *constcast(iter.data());
     int numFormals = func.formals.count();
 
     // decide what to do based on the name
 
-    if (func.name.equals("dup")) {
+    if (func.name->equals("dup")) {
       if (numFormals != 1) {
         astParseError(func.name, "'dup' function must have one formal parameter");
       }
       if (sym->dupParam) {
         astParseError(func.name, "duplicate 'dup' function");
       }
-      sym->dupParam = func.nthFormal(0);
+      sym->dupParam = func.nthFormal(0).strref();
       sym->dupCode = func.code;
     }
 
-    else if (func.name.equals("del")) {
+    else if (func.name->equals("del")) {
       if (numFormals == 0) {
         // not specified is ok, since it means the 'del' function
         // doesn't use its parameter
         sym->delParam = NULL;
       }
       else if (numFormals == 1) {
-        sym->delParam = func.nthFormal(0);
+        sym->delParam = func.nthFormal(0).strref();
       }
       else {
         astParseError(func.name, "'del' function must have either zero or one formal parameters");
@@ -591,7 +591,7 @@ void astParseDDM(Environment &env, Symbol *sym,
       sym->delCode = func.code;
     }
 
-    else if (func.name.equals("merge")) {
+    else if (func.name->equals("merge")) {
       if (nonterm) {
         if (numFormals != 2) {
           astParseError(func.name, "'merge' function must have two formal parameters");
@@ -599,8 +599,8 @@ void astParseDDM(Environment &env, Symbol *sym,
         if (nonterm->mergeParam1) {
           astParseError(func.name, "duplicate 'merge' function");
         }
-        nonterm->mergeParam1 = func.nthFormal(0);
-        nonterm->mergeParam2 = func.nthFormal(1);
+        nonterm->mergeParam1 = func.nthFormal(0).strref();
+        nonterm->mergeParam2 = func.nthFormal(1).strref();
         nonterm->mergeCode = func.code;
       }
       else {
@@ -608,7 +608,7 @@ void astParseDDM(Environment &env, Symbol *sym,
       }
     }
 
-    else if (func.name.equals("keep")) {
+    else if (func.name->equals("keep")) {
       if (nonterm) {
         if (numFormals != 1) {
           astParseError(func.name, "'keep' function must have one formal parameter");
@@ -616,7 +616,7 @@ void astParseDDM(Environment &env, Symbol *sym,
         if (nonterm->keepParam) {
           astParseError(func.name, "duplicate 'keep' function");
         }
-        nonterm->keepParam = func.nthFormal(0);
+        nonterm->keepParam = func.nthFormal(0).strref();
         nonterm->keepCode = func.code;
       }
       else {
@@ -624,7 +624,7 @@ void astParseDDM(Environment &env, Symbol *sym,
       }
     }
 
-    else if (func.name.equals("classify")) {
+    else if (func.name->equals("classify")) {
       if (term) {
         if (numFormals != 1) {
           astParseError(func.name, "'classify' function must have one formal parameter");
@@ -632,7 +632,7 @@ void astParseDDM(Environment &env, Symbol *sym,
         if (term->classifyParam) {
           astParseError(func.name, "duplicate 'classify' function");
         }
-        term->classifyParam = func.nthFormal(0);
+        term->classifyParam = func.nthFormal(0).strref();
         term->classifyCode = func.code;
       }
       else {
@@ -640,7 +640,7 @@ void astParseDDM(Environment &env, Symbol *sym,
       }
     }
 
-    else if (func.name.equals("maximal")) {
+    else if (func.name->equals("maximal")) {
       if (nonterm) {
         if (nonterm->maximal) {
           astParseError(func.name, "duplicate 'maximal' declaration");
@@ -751,8 +751,8 @@ void fillDefaultType(Nonterminal* nonterm) {
                 Production *p = constcast(syIter.data());
                 if (p->defaultSymbol) {
                     std::stringstream s;
-                    s<<"/* return "<< p->defaultSymbol ->tag.str <<";  /* inconsistent nonterm("<<nonterm->name<<") type*/";
-                    p->action = LIT_STR_2_ADD(p->action.loc, s.str().c_str());
+                    s<<"/* return "<< p->defaultSymbol ->tag->str <<";  /* inconsistent nonterm("<<*nonterm->name<<") type*/";
+                    p->action = LIT_STR_2_ADD(p->action->loc, s.str().c_str());
                 }
             }
         }
@@ -799,14 +799,14 @@ void addDefaultTypesActions(Environment &env, GrammarAST *ast, Nonterminal *nont
       prod->action = prodDecl->actionCode;
 
       // default action
-      if (forceDefaults || prod->action.isNull()) {
+      if (forceDefaults || (!prod->action||prod->action->isNull())) {
           if (prod->defaultSymbol) {
               std::stringstream s;
-              s<<"return "<< prod->defaultSymbol ->tag.str <<";";
+              s<<"return "<< prod->defaultSymbol ->tag->str <<";";
               rostring defaultTagAction = grammarStringTable.add(s.str().c_str());
-              prod->action = LIT_STR_2(prod->action.loc, defaultTagAction);
+              prod->action = LIT_STR_2(prod->action->loc, defaultTagAction);
           } else {
-              prod->action = LIT_STR_2(prod->action.loc, *defaultAction);
+              prod->action = LIT_STR_2(prod->action->loc, *defaultAction);
           }
       }
 
@@ -881,16 +881,16 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
     if (rhs->count()==2 && !startRuleAction) { // 1 + reof
         Symbol *s = NULL;
         if (rhs->first()->isRH_name())
-           s = g.findSymbol(rhs->first()->asRH_name()->name);
+           s = g.findSymbol(*rhs->first()->asRH_name()->name);
         else if (rhs->first()->isRH_string())
-           s = g.findSymbol(rhs->first()->asRH_string()->str);
+           s = g.findSymbol(*rhs->first()->asRH_string()->str);
 
         if (s && s->type) {
 
-            //grType = LIT_STR(s->type).clone(env.g.pool);
+            //grType = LIT_STR(s->type);
             grType = new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), SL_INIT, s->type);
 
-            usr = name = s->name;
+            usr = name = s->name->strref();
 
         }
     } else {
@@ -914,25 +914,27 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
         ProdDecl *newStart;
 
         if (startRuleAction) {
-            newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
+            newStart = new (env.g.pool) ProdDecl(DBG_INFO_ARG0_FIRST  env.g.pool, SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
                                     startRuleAction->clone(DBG_INFO_ARG0_FIRST  env.g.pool),
-                                    LIT_STR(name), grType->clone(DBG_INFO_ARG0_FIRST  env.g.pool));
+                                    LIT_STR(name.c_str()), grType->clone(DBG_INFO_ARG0_FIRST  env.g.pool));
         } else {
-            newStart = new ProdDecl(SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
+            newStart = new (env.g.pool) ProdDecl(DBG_INFO_ARG0_FIRST  env.g.pool, SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
                                     LIT_STR_2(SL_UNKNOWN, NULL),
-                                    LIT_STR(name), grType->clone(DBG_INFO_ARG0_FIRST  env.g.pool));
+                                    LIT_STR(name.c_str()), grType->clone(DBG_INFO_ARG0_FIRST  env.g.pool));
         }
         env.parserFuncs[name] = newStart;
 
         if (ast->childrenNT) {
-            ast->childrenNT->productions.append(newStart);
+            ast->childrenNT->productions.append(DBG_INFO_ARG0_FIRST  newStart);
         } else {
             ast->childrenNT
                     = new TF_nonterm(
-                        LIT_STR("__GeneratedChildren").clone(env.g.pool),   // name
-                        grType->clone(env.g.pool),          // type
+                        DBG_INFO_ARG0_FIRST
+                        env.g.pool,
+                        LIT_STR("__GeneratedChildren"),   // name
+                        grType,          // type
                         NULL,                                     // empty list of functions
-                        new ASTList<AbstractProdDecl>(newStart),          // productions
+                        new (env.g.pool) ASTList<AbstractProdDecl>(DBG_INFO_ARG0_FIRST  constcast(env.g.pool), newStart),          // productions
                         NULL                                      // subsets
                       );
         }
@@ -948,7 +950,7 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
     } else {
         std::stringstream s;
         FOREACH_ASTLIST(RHSElt, *rhs, iter) {
-            LocString symTag, symName;
+            LocString const *symTag, *symName;
             ASTSWITCHC(RHSElt, iter.data()) {
                 ASTCASEC(RH_name, tname) {
                     symTag = tname->tag;
@@ -964,10 +966,10 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
                 ASTENDCASEC
             }
 
-            if (symTag && symTag.isNonNull() && symTag.length()) {
-                s << symTag.str << ":" << symName.str;
+            if (symTag && symTag->isNonNull() && symTag->length()) {
+                s << symTag->str << ":" << symName->str;
             } else {
-                s << symName.str;
+                s << symName->str;
             }
             s << "  ";
         }
@@ -986,39 +988,41 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
     RH_name *rh_eof = 0;
     if (poss_eof && poss_eof->kind()==RH_name::RH_NAME) {
         rh_eof = poss_eof->asRH_name();
-        if (strcmp(rh_eof->name, eof->name)) {
+        if (rh_eof->name->equals(*eof->name)) {
           rh_eof = 0;
         }
     }
     if (!rh_eof) {
-        rh_eof = new RH_name(LIT_STR("").clone(env.g.pool), eof->name.clone(env.g.pool));
-        prod->rhs.append(rh_eof);
+        rh_eof = new (env.g.pool) RH_name(DBG_INFO_ARG0_FIRST  env.g.pool, LIT_STR(""), eof->name);
+        prod->rhs.append(DBG_INFO_ARG0_FIRST  rh_eof);
     }
     if (ast->earlyStartNT) {
         trace("prec") << "Replace "
                       << ast->earlyStartNT->productions.count() << " rules to  __EarlyStartSymbol -> "
-                      << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name:
-                         prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str: "?")
+                      << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name->strref():
+                         prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str->strref(): "?")
                       << (prod->rhs.count()>1?" ...":"")       << std::endl;
 
         ast->earlyStartNT->productions.removeAll_dontDelete();
-        ast->earlyStartNT->productions.prepend(prod);
-        ast->earlyStartNT->type.str = prod->type.str;
+        ast->earlyStartNT->productions.prepend(DBG_INFO_ARG0_FIRST  prod);
+        constcast(ast->earlyStartNT->type->str) = prod->type->str;
 
     } else {
         trace("prec") << "Create first  __EarlyStartSymbol -> "
-                      << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name:
-                         prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str: "?")
+                      << (prod->rhs.first()->isRH_name()?prod->rhs.first()->asRH_name()->name->strref():
+                         prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str->strref(): "?")
                                                         << std::endl;
         ast->earlyStartNT
                 = new TF_nonterm(
-                    LIT_STR("__EarlyStartSymbol").clone(env.g.pool),   // name
-                    prod->type.clone(env.g.pool)/*ast->firstNT->type.clone()*/,                   // type
+                    DBG_INFO_ARG0_FIRST
+                    env.g.pool,
+                    LIT_STR("__EarlyStartSymbol"),   // name
+                    prod->type/*ast->firstNT->type.clone()*/,                   // type
                     NULL,                                    // empty list of functions
-                    new ASTList<AbstractProdDecl>(prod, false),      // productions  TODO memleak?
+                    new (env.g.pool) ASTList<AbstractProdDecl>(DBG_INFO_ARG0_FIRST  env.g.pool, prod),      // productions  TODO memleak?
                     NULL                                     // subsets
                   );
-        ast->forms.prepend(ast->earlyStartNT);
+        ast->forms.prepend(DBG_INFO_ARG0_FIRST  ast->earlyStartNT);
 
     }
     env.g.startSymbol = complementNonterm(env, ast, ast->earlyStartNT, 0, eof);
@@ -1041,11 +1045,11 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
 
       // build a start production
       // zsf : default action filled later, in addDefaultTypesActions (which now also finds heuristic return types)
-      RHSElt *rhs1 = new RH_name(LIT_STR("top").clone(env.g.pool), starts ? env.startSymbol->clone(env.g.pool) : ast->firstNT->name.clone(env.g.pool));
-      RHSElt *rhs2 = new RH_name(LIT_STR("").clone(env.g.pool), eof->name.clone(env.g.pool));
-      ASTList<RHSElt> *rhs = new ASTList<RHSElt>();
-      rhs->append(rhs1);
-      rhs->append(rhs2);
+      RHSElt *rhs1 = new (env.g.pool) RH_name(DBG_INFO_ARG0_FIRST  env.g.pool, LIT_STR("top"), starts ? env.startSymbol : ast->firstNT->name);
+      RHSElt *rhs2 = new (env.g.pool) RH_name(DBG_INFO_ARG0_FIRST  env.g.pool, LIT_STR(""), eof->name);
+      ASTList<RHSElt> *rhs = new (env.g.pool) ASTList<RHSElt>(DBG_INFO_ARG0_FIRST  env.g.pool);
+      rhs->append(DBG_INFO_ARG0_FIRST  rhs1);
+      rhs->append(DBG_INFO_ARG0_FIRST  rhs2);
 
       LocString * start = NULL;
       synthesizeChildRule(env, ast, rhs, start, grType, name, usr);
@@ -1101,15 +1105,15 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           trace("prec") << "Traversing " << nonterm->name << " : " << tp << " : " << fvpref << std::endl;
 
           ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
-          LocString *origAction = prodDecl->actionCode.clone(env.g.pool);
+          LocString const*origAction = prodDecl->actionCode;
           LocString *startAction = NULL;
 
           ASTList<RHSElt> *rhs;
 
-          rhs = new ASTList<RHSElt>();
-          RHSElt *reof = new RH_name(LIT_STR("").clone(env.g.pool), eof->name.clone(env.g.pool));
-          rhs->steal(&orhs, false);
-          rhs->append(reof);
+          rhs = new (env.g.pool) ASTList<RHSElt>(DBG_INFO_ARG0_FIRST  env.g.pool);
+          RHSElt *reof = new (env.g.pool) RH_name(DBG_INFO_ARG0_FIRST  env.g.pool, LIT_STR(""), eof->name);
+          rhs->assign(&orhs, true);
+          rhs->append(DBG_INFO_ARG0_FIRST  reof);
 
           int vi = 0;
           LocString * type, * grType;
@@ -1119,7 +1123,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           std::string indp = indent + "   ";
 
           type = v0 && nonterm->type  ?
-                      LIT_STR(nonterm->type).clone(env.g.pool) : LIT_STR((tp+"*").c_str()).clone(env.g.pool);
+                      LIT_STR(nonterm->type) : LIT_STR((tp+"*").c_str());
 
           switch (prodDecl->pkind) {
           case PDK_TRAVERSE_VAL:
@@ -1257,7 +1261,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
               FOREACH_ASTLIST(MarkedAction, tprod->markedActs, ierr) {
                   if (ierr.data()->ekind == START_RULE) {
-                      startAction = ierr.data()->actionCode.clone(env.g.pool);
+                      startAction = ierr.data()->actionCode;
                       break;
                   }
               }

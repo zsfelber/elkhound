@@ -51,7 +51,7 @@ void BFlatten::xferSimple(void *var, unsigned len)
 }
 
 
-void BFlatten::noteOwner(void *ownerPtr)
+void BFlatten::noteOwner(void const *ownerPtr)
 {
   // make a new mapping
   OwnerMapping *map = new OwnerMapping;
@@ -70,7 +70,7 @@ void BFlatten::noteOwner(void *ownerPtr)
 }
 
 
-void BFlatten::xferSerf(void *&serfPtr, bool nullable)
+void BFlatten::xferSerf(void const *&serfPtr, bool nullable)
 {
   if (writing()) {
     xassert(nullable || serfPtr!=NULL);
@@ -128,10 +128,10 @@ void entry()
     flat.xferInt(x);
     flat.noteOwner(&x);
     s.xfer(flat);
-    flat.xferSerf((void*&)px);
+    flat.xferSerf((void const*&)px);
     flat.xferInt(y);
     flat.noteOwner(&y);
-    flat.xferSerf((void*&)py);
+    flat.xferSerf((void const*&)py);
   }
 
   // place to put the data we read
@@ -145,10 +145,10 @@ void entry()
     flat.xferInt(x2);
     flat.noteOwner(&x2);
     s2.xfer(flat);
-    flat.xferSerf((void*&)px2);
+    flat.xferSerf((void const*&)px2);
     flat.xferInt(y2);
     flat.noteOwner(&y2);
-    flat.xferSerf((void*&)py2);
+    flat.xferSerf((void const*&)py2);
   }
 
   // compare

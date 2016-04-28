@@ -28,8 +28,8 @@ xBase::xBase(rostring m)
 }
 
 
-xBase::xBase(xBase const &obj)
-  : msg(obj.msg)
+xBase::xBase(xBase const *obj)
+  : msg(obj->msg)
 {
   creationCount++;
 }

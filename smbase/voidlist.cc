@@ -137,14 +137,14 @@ void VoidList::checkUniqueDataPtrs() const
 
 
 // insert at front
-void VoidList::prepend(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
+void VoidList::prepend(DBG_INFO_FORMAL_FIRST  str::Storeable const *newitem)
 {
   top = new (npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  npool, newitem, top);
 }
 
 
 // insert at rear
-VoidNode* VoidList::append(DBG_INFO_FORMAL_FIRST  str::Storeable *newitem)
+VoidNode* VoidList::append(DBG_INFO_FORMAL_FIRST  str::Storeable const *newitem)
 {
   if (!top) {
     prepend(DBG_INFO_ARG_FWD_FIRST  newitem);
@@ -902,7 +902,7 @@ VoidListMutator&
 }
 
 
-void VoidListMutator::insertBefore(DBG_INFO_FORMAL_FIRST  str::Storeable *item)
+void VoidListMutator::insertBefore(DBG_INFO_FORMAL_FIRST  str::Storeable const *item)
 {
   if (prev == NULL) {
     // insert at start of list
@@ -915,14 +915,14 @@ void VoidListMutator::insertBefore(DBG_INFO_FORMAL_FIRST  str::Storeable *item)
 }
 
 
-void VoidListMutator::insertAfter(DBG_INFO_FORMAL_FIRST  str::Storeable *item)
+void VoidListMutator::insertAfter(DBG_INFO_FORMAL_FIRST  str::Storeable const *item)
 {
   xassert(!isDone());
   current->next = new (list.npool) VoidNode(DBG_INFO_ARG_FWD_FIRST  list.npool, item, current->next);
 }
 
 
-void VoidListMutator::append(DBG_INFO_FORMAL_FIRST  str::Storeable *item)
+void VoidListMutator::append(DBG_INFO_FORMAL_FIRST  str::Storeable const *item)
 {
   xassert(isDone());
   insertBefore(DBG_INFO_ARG_FWD_FIRST  item);

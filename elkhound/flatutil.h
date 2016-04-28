@@ -67,7 +67,7 @@ void xferObjList(str::StoragePool& pool, Flatten &flat, ObjList <T> &list)
     flat.writeInt(list.count());
 
     MUTATE_EACH_OBJLIST(T, list, iter) {
-      iter.data()->xfer(pool, flat);
+      constcast(iter.data())->xfer(pool, flat);
       flat.noteOwner(iter.data());
     }
   }
@@ -80,7 +80,7 @@ void xferObjList(str::StoragePool& pool, Flatten &flat, ObjList <T> &list)
       T *obj = new (pool) T(DBG_INFO_ARG0_FIRST  pool, flat);
 
       // read it
-      obj->xfer(pool, flat);
+      constcast(obj)->xfer(pool, flat);
       flat.noteOwner(obj);
 
       // add it to the list
@@ -390,13 +390,13 @@ void xferSObjList_twoLevelAccess(
 template <class T>
 void xferSerfPtr(Flatten &flat, T *&serfPtr)
 {
-  flat.xferSerf((void*&)serfPtr, false /*nullable*/);
+  flat.xferSerf((void const*&)serfPtr, false /*nullable*/);
 }
 
 template <class T>
 void xferNullableSerfPtr(Flatten &flat, T *&serfPtr)
 {
-  flat.xferSerf((void*&)serfPtr, true /*nullable*/);
+  flat.xferSerf((void const*&)serfPtr, true /*nullable*/);
 }
 
 

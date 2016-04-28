@@ -65,7 +65,7 @@ void emitMLActionCode(GrammarAnalysis const &g, rostring mliFname,
       ;
 
   // insert the stand-alone verbatim sections
-  {FOREACH_OBJLIST(LocString, g.verbatim, iter) {
+  {FOREACH_OBJLIST(LocString const, g.verbatim, iter) {
     emitMLUserCode(dcl, *(iter.data()), false /*braces*/);
   }}
 
@@ -75,7 +75,7 @@ void emitMLActionCode(GrammarAnalysis const &g, rostring mliFname,
   // the action functions are inserted as methods
   {
     int ct=0;
-    FOREACH_OBJLIST(LocString, g.actionClasses, iter) {
+    FOREACH_OBJLIST(LocString const, g.actionClasses, iter) {
       if (ct++ > 0) {
         // end the previous class; the following body will open
         // another one, and the brace following the action list
@@ -130,7 +130,7 @@ void emitMLActionCode(GrammarAnalysis const &g, rostring mliFname,
       ;
   
   // stand-alone verbatim sections go into .ml file *also*
-  {FOREACH_OBJLIST(LocString, g.verbatim, iter) {
+  {FOREACH_OBJLIST(LocString const, g.verbatim, iter) {
     emitMLUserCode(out, *(iter.data()), false /*braces*/);
   }}
 
@@ -171,7 +171,7 @@ void emitMLActionCode(GrammarAnalysis const &g, rostring mliFname,
   // 2005-06-23: Moved these to near the top of the file so that
   // the actions can refer to them.  This is especially important
   // in OCaml since you can't forward-declare in OCaml (!).
-  FOREACH_OBJLIST(LocString, g.implVerbatim, iter) {
+  FOREACH_OBJLIST(LocString const, g.implVerbatim, iter) {
     emitMLUserCode(out, *(iter.data()), false /*braces*/);
   }
 
