@@ -768,7 +768,7 @@ void ItemSet::changedItems()
 {
   // -- recompute dotsAtEnd --
   // collect all items
-  SObjList<LRItem> items;      // (constness) 'items' shouldn't be used to modify the elements
+  SObjList<LRItem> items(DBG_INFO_ARG0);      // (constness) 'items' shouldn't be used to modify the elements
   getAllItems(items);
 
   // count number with dots at end
@@ -849,7 +849,7 @@ void ItemSet::print(ostream &os, GrammarAnalysis const &g,
   os << "ItemSet " << id << ":\n";
 
   // collect all items
-  SObjList<LRItem> items;     // (constness) don't use 'item' to modify elements
+  SObjList<LRItem> items(DBG_INFO_ARG0);     // (constness) don't use 'item' to modify elements
   getAllItems(items, nonkernel);
 
   // for each item  
@@ -917,7 +917,7 @@ void ItemSet::writeGraph(ostream &os, GrammarAnalysis const &g) const
     // rest of desc will follow
 
   // collect all items
-  SObjList<LRItem> items;         // (constness) don't use 'items' to modify elements
+  SObjList<LRItem> items(DBG_INFO_ARG0);         // (constness) don't use 'items' to modify elements
   getAllItems(items);
 
   // for each item, print the item text
@@ -1336,8 +1336,10 @@ void GrammarAnalysis::resetFirstFollow()
 void GrammarAnalysis::computeProductionsByLHS()
 {
   // map: nonterminal -> productions with that nonterm on LHS
-  productionsByLHS = new SObjList<Production> [numNonterms];
-  
+  //productionsByLHS = new SObjList<Production> [numNonterms];
+    // TODO ? default init ? ->
+  productionsByLHS = (SObjList<Production>*) new uint8_t* [numNonterms*sizeof(SObjList<Production>)];
+
   // map: prodIndex -> production
   numProds = productions.count();
   indexedProds = new Production* [numProds];
