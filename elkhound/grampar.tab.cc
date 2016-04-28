@@ -103,28 +103,24 @@
 
 // return a locstring for 'str' with no location information
 #define noloc(str)                                                    \
-  new (__pool) LocString(SL_UNKNOWN,      /* unknown location */               \
+  LIT_STR_2(SL_UNKNOWN,      /* unknown location */               \
                 PARAM->lexer.strtable.add(str))
-                
-// locstring for NULL, with no location
-#define nolocNULL()                                                   \
-  new (__pool) LocString(SL_UNKNOWN, NULL)
 
 // return a locstring with same location info as something else
 // (passed as a pointer to a SourceLocation)
 #define sameloc(otherLoc, str)                                        \
-  new (__pool) LocString(otherLoc->loc, PARAM->lexer.strtable.add(str))
+  LIT_STR_2(otherLoc->loc, PARAM->lexer.strtable.add(str))
 
 // return a locstring with same location info as something else
 // (passed as a pointer to a SourceLocation)
 #define strloc(otherLoc, str)                                        \
-  new (__pool) LocString(otherLoc, PARAM->lexer.strtable.add(str))
+  LIT_STR_2(otherLoc, PARAM->lexer.strtable.add(str))
 
 // interpret the word into an associativity kind specification
 AssocKind whichKind(LocString * /*owner*/ kind);
 
 
-#line 128 "grampar.tab.c" /* yacc.c:339  */
+#line 124 "grampar.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -204,7 +200,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 128 "grampar.y" /* yacc.c:355  */
+#line 124 "grampar.y" /* yacc.c:355  */
 
   int num;
   LocString *str;
@@ -234,7 +230,7 @@ union YYSTYPE
   ASTList<MarkedAction> *markedActs;
   Name3 *name3;
 
-#line 238 "grampar.tab.c" /* yacc.c:355  */
+#line 234 "grampar.tab.c" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -248,7 +244,7 @@ int yyparse (void* parseParam);
 
 /* Copy the second part of user declarations.  */
 
-#line 252 "grampar.tab.c" /* yacc.c:358  */
+#line 248 "grampar.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -549,15 +545,15 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   201,   201,   206,   207,   211,   212,   213,   214,   215,
-     216,   220,   225,   226,   231,   232,   235,   236,   239,   240,
-     243,   244,   254,   259,   260,   268,   270,   275,   276,   280,
-     281,   285,   287,   292,   293,   298,   299,   304,   305,   309,
-     310,   316,   317,   321,   326,   327,   331,   332,   343,   346,
-     351,   352,   356,   357,   358,   359,   362,   363,   364,   367,
-     368,   371,   373,   375,   378,   379,   380,   381,   384,   385,
-     389,   390,   393,   394,   397,   398,   402,   403,   406,   407,
-     416,   417,   418,   421,   422,   423,   424,   428,   429
+       0,   197,   197,   202,   203,   207,   208,   209,   210,   211,
+     212,   216,   221,   222,   227,   228,   231,   232,   235,   236,
+     239,   240,   250,   255,   256,   264,   266,   271,   272,   276,
+     277,   281,   283,   288,   289,   294,   295,   300,   301,   305,
+     306,   312,   313,   317,   322,   323,   327,   328,   339,   342,
+     347,   348,   352,   353,   354,   355,   358,   359,   360,   363,
+     364,   367,   369,   371,   374,   375,   376,   377,   380,   381,
+     385,   386,   389,   390,   393,   394,   398,   399,   402,   403,
+     412,   413,   414,   417,   418,   419,   420,   424,   425
 };
 #endif
 
@@ -1452,526 +1448,526 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 202 "grampar.y" /* yacc.c:1646  */
+#line 198 "grampar.y" /* yacc.c:1646  */
     { ((ParseParams*)parseParam)->treeTop = new (__pool) GrammarAST((yyvsp[0].topFormList)); (yyval.num)=0; }
-#line 1458 "grampar.tab.c" /* yacc.c:1646  */
+#line 1454 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 206 "grampar.y" /* yacc.c:1646  */
+#line 202 "grampar.y" /* yacc.c:1646  */
     { (yyval.topFormList) = new (__pool) ASTList<TopForm>; }
-#line 1464 "grampar.tab.c" /* yacc.c:1646  */
+#line 1460 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 207 "grampar.y" /* yacc.c:1646  */
+#line 203 "grampar.y" /* yacc.c:1646  */
     { ((yyval.topFormList)=(yyvsp[-1].topFormList))->append((yyvsp[0].topForm)); }
-#line 1470 "grampar.tab.c" /* yacc.c:1646  */
+#line 1466 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 211 "grampar.y" /* yacc.c:1646  */
+#line 207 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = (yyvsp[0].topForm); }
-#line 1476 "grampar.tab.c" /* yacc.c:1646  */
+#line 1472 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 212 "grampar.y" /* yacc.c:1646  */
+#line 208 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = (yyvsp[0].topForm); }
-#line 1482 "grampar.tab.c" /* yacc.c:1646  */
+#line 1478 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 213 "grampar.y" /* yacc.c:1646  */
+#line 209 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = (yyvsp[0].topForm); }
-#line 1488 "grampar.tab.c" /* yacc.c:1646  */
+#line 1484 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 214 "grampar.y" /* yacc.c:1646  */
+#line 210 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = (yyvsp[0].start); }
-#line 1494 "grampar.tab.c" /* yacc.c:1646  */
+#line 1490 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 215 "grampar.y" /* yacc.c:1646  */
+#line 211 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = (yyvsp[0].topForm); }
-#line 1500 "grampar.tab.c" /* yacc.c:1646  */
+#line 1496 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 216 "grampar.y" /* yacc.c:1646  */
+#line 212 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = (yyvsp[0].topForm); }
-#line 1506 "grampar.tab.c" /* yacc.c:1646  */
+#line 1502 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 221 "grampar.y" /* yacc.c:1646  */
+#line 217 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = new (__pool) TF_context((yyvsp[-1].str)); }
-#line 1512 "grampar.tab.c" /* yacc.c:1646  */
+#line 1508 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 225 "grampar.y" /* yacc.c:1646  */
+#line 221 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = new (__pool) TF_verbatim(false, (yyvsp[0].str)); }
-#line 1518 "grampar.tab.c" /* yacc.c:1646  */
+#line 1514 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 226 "grampar.y" /* yacc.c:1646  */
+#line 222 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = new (__pool) TF_verbatim(true, (yyvsp[0].str)); }
-#line 1524 "grampar.tab.c" /* yacc.c:1646  */
+#line 1520 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 231 "grampar.y" /* yacc.c:1646  */
+#line 227 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = new (__pool) TF_option((yyvsp[-1].str), 1); }
-#line 1530 "grampar.tab.c" /* yacc.c:1646  */
+#line 1526 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 232 "grampar.y" /* yacc.c:1646  */
+#line 228 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = new (__pool) TF_option((yyvsp[-2].str), (yyvsp[-1].num)); }
-#line 1536 "grampar.tab.c" /* yacc.c:1646  */
+#line 1532 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 235 "grampar.y" /* yacc.c:1646  */
+#line 231 "grampar.y" /* yacc.c:1646  */
     { (yyval.start) = new (__pool) TF_start((yyvsp[-2].str), (yyvsp[-1].str)); }
-#line 1542 "grampar.tab.c" /* yacc.c:1646  */
+#line 1538 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 236 "grampar.y" /* yacc.c:1646  */
+#line 232 "grampar.y" /* yacc.c:1646  */
     { (yyval.start) = new (__pool) TF_start((yyvsp[-1].str), (yyvsp[-2].str)); }
-#line 1548 "grampar.tab.c" /* yacc.c:1646  */
+#line 1544 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 239 "grampar.y" /* yacc.c:1646  */
-    { (yyval.str) = nolocNULL(); }
-#line 1554 "grampar.tab.c" /* yacc.c:1646  */
+#line 235 "grampar.y" /* yacc.c:1646  */
+    { (yyval.str) = NOLOC_NULL(); }
+#line 1550 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 240 "grampar.y" /* yacc.c:1646  */
+#line 236 "grampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[-1].str); }
-#line 1560 "grampar.tab.c" /* yacc.c:1646  */
+#line 1556 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 243 "grampar.y" /* yacc.c:1646  */
-    { (yyval.str) = nolocNULL(); }
-#line 1566 "grampar.tab.c" /* yacc.c:1646  */
+#line 239 "grampar.y" /* yacc.c:1646  */
+    { (yyval.str) = NOLOC_NULL(); }
+#line 1562 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 244 "grampar.y" /* yacc.c:1646  */
+#line 240 "grampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[-1].str); }
-#line 1572 "grampar.tab.c" /* yacc.c:1646  */
+#line 1568 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 255 "grampar.y" /* yacc.c:1646  */
+#line 251 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = new (__pool) TF_terminals((yyvsp[-3].termDecls), (yyvsp[-2].termTypes), (yyvsp[-1].precSpecs)); }
-#line 1578 "grampar.tab.c" /* yacc.c:1646  */
+#line 1574 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 259 "grampar.y" /* yacc.c:1646  */
+#line 255 "grampar.y" /* yacc.c:1646  */
     { (yyval.termDecls) = new (__pool) ASTList<TermDecl>; }
-#line 1584 "grampar.tab.c" /* yacc.c:1646  */
+#line 1580 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 260 "grampar.y" /* yacc.c:1646  */
+#line 256 "grampar.y" /* yacc.c:1646  */
     { ((yyval.termDecls)=(yyvsp[-1].termDecls))->append((yyvsp[0].termDecl)); }
-#line 1590 "grampar.tab.c" /* yacc.c:1646  */
+#line 1586 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 269 "grampar.y" /* yacc.c:1646  */
+#line 265 "grampar.y" /* yacc.c:1646  */
     { (yyval.termDecl) = new (__pool) TermDecl((yyvsp[-3].num), (yyvsp[-1].str), sameloc((yyvsp[-1].str), "")); }
-#line 1596 "grampar.tab.c" /* yacc.c:1646  */
+#line 1592 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 271 "grampar.y" /* yacc.c:1646  */
+#line 267 "grampar.y" /* yacc.c:1646  */
     { (yyval.termDecl) = new (__pool) TermDecl((yyvsp[-4].num), (yyvsp[-2].str), (yyvsp[-1].str)); }
-#line 1602 "grampar.tab.c" /* yacc.c:1646  */
+#line 1598 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 275 "grampar.y" /* yacc.c:1646  */
+#line 271 "grampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 1608 "grampar.tab.c" /* yacc.c:1646  */
+#line 1604 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 276 "grampar.y" /* yacc.c:1646  */
-    { (yyval.str) = nolocNULL(); }
-#line 1614 "grampar.tab.c" /* yacc.c:1646  */
+#line 272 "grampar.y" /* yacc.c:1646  */
+    { (yyval.str) = NOLOC_NULL(); }
+#line 1610 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 280 "grampar.y" /* yacc.c:1646  */
+#line 276 "grampar.y" /* yacc.c:1646  */
     { (yyval.termTypes) = new (__pool) ASTList<TermType>; }
-#line 1620 "grampar.tab.c" /* yacc.c:1646  */
+#line 1616 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 281 "grampar.y" /* yacc.c:1646  */
+#line 277 "grampar.y" /* yacc.c:1646  */
     { ((yyval.termTypes)=(yyvsp[-1].termTypes))->append((yyvsp[0].termType)); }
-#line 1626 "grampar.tab.c" /* yacc.c:1646  */
+#line 1622 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 286 "grampar.y" /* yacc.c:1646  */
+#line 282 "grampar.y" /* yacc.c:1646  */
     { (yyval.termType) = new (__pool) TermType((yyvsp[-1].str), (yyvsp[-2].str), new (__pool) ASTList<SpecFunc>); }
-#line 1632 "grampar.tab.c" /* yacc.c:1646  */
+#line 1628 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 288 "grampar.y" /* yacc.c:1646  */
+#line 284 "grampar.y" /* yacc.c:1646  */
     { (yyval.termType) = new (__pool) TermType((yyvsp[-3].str), (yyvsp[-4].str), (yyvsp[-1].specFuncs)); }
-#line 1638 "grampar.tab.c" /* yacc.c:1646  */
+#line 1634 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 292 "grampar.y" /* yacc.c:1646  */
+#line 288 "grampar.y" /* yacc.c:1646  */
     { (yyval.precSpecs) = new (__pool) ASTList<PrecSpec>; }
-#line 1644 "grampar.tab.c" /* yacc.c:1646  */
+#line 1640 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 293 "grampar.y" /* yacc.c:1646  */
+#line 289 "grampar.y" /* yacc.c:1646  */
     { (yyval.precSpecs) = (yyvsp[-1].precSpecs); }
-#line 1650 "grampar.tab.c" /* yacc.c:1646  */
+#line 1646 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 298 "grampar.y" /* yacc.c:1646  */
+#line 294 "grampar.y" /* yacc.c:1646  */
     { (yyval.precSpecs) = new (__pool) ASTList<PrecSpec>; }
-#line 1656 "grampar.tab.c" /* yacc.c:1646  */
+#line 1652 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 300 "grampar.y" /* yacc.c:1646  */
+#line 296 "grampar.y" /* yacc.c:1646  */
     { ((yyval.precSpecs)=(yyvsp[-4].precSpecs))->append(new (__pool) PrecSpec(whichKind((yyvsp[-3].str)), (yyvsp[-2].num), (yyvsp[-1].stringList))); }
-#line 1662 "grampar.tab.c" /* yacc.c:1646  */
+#line 1658 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 304 "grampar.y" /* yacc.c:1646  */
+#line 300 "grampar.y" /* yacc.c:1646  */
     { (yyval.stringList) = new (__pool) ASTList<LocString>; }
-#line 1668 "grampar.tab.c" /* yacc.c:1646  */
+#line 1664 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 305 "grampar.y" /* yacc.c:1646  */
+#line 301 "grampar.y" /* yacc.c:1646  */
     { ((yyval.stringList)=(yyvsp[-1].stringList))->append((yyvsp[0].str)); }
-#line 1674 "grampar.tab.c" /* yacc.c:1646  */
+#line 1670 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 309 "grampar.y" /* yacc.c:1646  */
+#line 305 "grampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 1680 "grampar.tab.c" /* yacc.c:1646  */
+#line 1676 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 310 "grampar.y" /* yacc.c:1646  */
+#line 306 "grampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 1686 "grampar.tab.c" /* yacc.c:1646  */
+#line 1682 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 316 "grampar.y" /* yacc.c:1646  */
+#line 312 "grampar.y" /* yacc.c:1646  */
     { (yyval.specFuncs) = new (__pool) ASTList<SpecFunc>; }
-#line 1692 "grampar.tab.c" /* yacc.c:1646  */
+#line 1688 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 317 "grampar.y" /* yacc.c:1646  */
+#line 313 "grampar.y" /* yacc.c:1646  */
     { ((yyval.specFuncs)=(yyvsp[-1].specFuncs))->append((yyvsp[0].specFunc)); }
-#line 1698 "grampar.tab.c" /* yacc.c:1646  */
+#line 1694 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 322 "grampar.y" /* yacc.c:1646  */
+#line 318 "grampar.y" /* yacc.c:1646  */
     { (yyval.specFunc) = new (__pool) SpecFunc((yyvsp[-4].str), (yyvsp[-2].stringList), (yyvsp[0].str)); }
-#line 1704 "grampar.tab.c" /* yacc.c:1646  */
+#line 1700 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 326 "grampar.y" /* yacc.c:1646  */
+#line 322 "grampar.y" /* yacc.c:1646  */
     { (yyval.stringList) = new (__pool) ASTList<LocString>; }
-#line 1710 "grampar.tab.c" /* yacc.c:1646  */
+#line 1706 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 327 "grampar.y" /* yacc.c:1646  */
+#line 323 "grampar.y" /* yacc.c:1646  */
     { (yyval.stringList) = (yyvsp[0].stringList); }
-#line 1716 "grampar.tab.c" /* yacc.c:1646  */
+#line 1712 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 331 "grampar.y" /* yacc.c:1646  */
+#line 327 "grampar.y" /* yacc.c:1646  */
     { (yyval.stringList) = new (__pool) ASTList<LocString>((yyvsp[0].str)); }
-#line 1722 "grampar.tab.c" /* yacc.c:1646  */
+#line 1718 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 332 "grampar.y" /* yacc.c:1646  */
+#line 328 "grampar.y" /* yacc.c:1646  */
     { ((yyval.stringList)=(yyvsp[-2].stringList))->append((yyvsp[0].str)); }
-#line 1728 "grampar.tab.c" /* yacc.c:1646  */
+#line 1724 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 344 "grampar.y" /* yacc.c:1646  */
+#line 340 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = new (__pool) TF_nonterm((yyvsp[-1].str), (yyvsp[-2].str), new (__pool) ASTList<SpecFunc>,
                                      new (__pool) ASTList<AbstractProdDecl>((yyvsp[0].absProdDecl)), NULL); }
-#line 1735 "grampar.tab.c" /* yacc.c:1646  */
+#line 1731 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 347 "grampar.y" /* yacc.c:1646  */
+#line 343 "grampar.y" /* yacc.c:1646  */
     { (yyval.topForm) = new (__pool) TF_nonterm((yyvsp[-5].str), (yyvsp[-6].str), (yyvsp[-3].specFuncs), (yyvsp[-2].absProdDecls), (yyvsp[-1].stringList)); }
-#line 1741 "grampar.tab.c" /* yacc.c:1646  */
+#line 1737 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 351 "grampar.y" /* yacc.c:1646  */
+#line 347 "grampar.y" /* yacc.c:1646  */
     { (yyval.absProdDecls) = new (__pool) ASTList<AbstractProdDecl>; }
-#line 1747 "grampar.tab.c" /* yacc.c:1646  */
+#line 1743 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 352 "grampar.y" /* yacc.c:1646  */
+#line 348 "grampar.y" /* yacc.c:1646  */
     { ((yyval.absProdDecls)=(yyvsp[-1].absProdDecls))->append((yyvsp[0].absProdDecl)); }
-#line 1753 "grampar.tab.c" /* yacc.c:1646  */
+#line 1749 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 356 "grampar.y" /* yacc.c:1646  */
-    { (yyval.absProdDecl) = new (__pool) ProdDecl((yyvsp[-2].loc), PDK_NEW, (yyvsp[-1].rhsList), (yyvsp[0].str), nolocNULL(), nolocNULL()); }
-#line 1759 "grampar.tab.c" /* yacc.c:1646  */
+#line 352 "grampar.y" /* yacc.c:1646  */
+    { (yyval.absProdDecl) = new (__pool) ProdDecl((yyvsp[-2].loc), PDK_NEW, (yyvsp[-1].rhsList), (yyvsp[0].str), NOLOC_NULL(), NOLOC_NULL()); }
+#line 1755 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 357 "grampar.y" /* yacc.c:1646  */
-    { (yyval.absProdDecl) = new (__pool) ProdDecl((yyvsp[-2].loc), PDK_REPLACE,(yyvsp[-1].rhsList), (yyvsp[0].str), nolocNULL(), nolocNULL()); }
-#line 1765 "grampar.tab.c" /* yacc.c:1646  */
+#line 353 "grampar.y" /* yacc.c:1646  */
+    { (yyval.absProdDecl) = new (__pool) ProdDecl((yyvsp[-2].loc), PDK_REPLACE,(yyvsp[-1].rhsList), (yyvsp[0].str), NOLOC_NULL(), NOLOC_NULL()); }
+#line 1761 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 358 "grampar.y" /* yacc.c:1646  */
-    { (yyval.absProdDecl) = new (__pool) ProdDecl((yyvsp[-2].loc), PDK_DELETE, (yyvsp[-1].rhsList), nolocNULL(), nolocNULL(), nolocNULL()); }
-#line 1771 "grampar.tab.c" /* yacc.c:1646  */
+#line 354 "grampar.y" /* yacc.c:1646  */
+    { (yyval.absProdDecl) = new (__pool) ProdDecl((yyvsp[-2].loc), PDK_DELETE, (yyvsp[-1].rhsList), NOLOC_NULL(), NOLOC_NULL(), NOLOC_NULL()); }
+#line 1767 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 359 "grampar.y" /* yacc.c:1646  */
+#line 355 "grampar.y" /* yacc.c:1646  */
     { (yyval.absProdDecl) = (yyvsp[0].treeProdDecl); }
-#line 1777 "grampar.tab.c" /* yacc.c:1646  */
+#line 1773 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 56:
-#line 362 "grampar.y" /* yacc.c:1646  */
+#line 358 "grampar.y" /* yacc.c:1646  */
     { (yyval.treeProdDecl) = new (__pool) TreeProdDecl((yyvsp[-5].loc), PDK_TRAVERSE_VAL, NULL, (yyvsp[-1].str), (yyvsp[-6].name3)->name.clone(), sameloc((&(yyvsp[-6].name3)->name), ""), (yyvsp[-6].name3)->label.clone(), (yyvsp[-6].name3)->tag.clone(), (yyvsp[-3].treeProdDecls), (yyvsp[0].markedActs)); }
-#line 1783 "grampar.tab.c" /* yacc.c:1646  */
+#line 1779 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 363 "grampar.y" /* yacc.c:1646  */
+#line 359 "grampar.y" /* yacc.c:1646  */
     { (yyval.treeProdDecl) = new (__pool) TreeProdDecl((yyvsp[-3].loc), PDK_TRAVERSE_TKNS, (yyvsp[-2].rhsList),  (yyvsp[-1].str), (yyvsp[-4].name3)->name.clone(), sameloc((&(yyvsp[-4].name3)->name), ""), (yyvsp[-4].name3)->label.clone(), (yyvsp[-4].name3)->tag.clone(), NULL, (yyvsp[0].markedActs)); }
-#line 1789 "grampar.tab.c" /* yacc.c:1646  */
+#line 1785 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 364 "grampar.y" /* yacc.c:1646  */
+#line 360 "grampar.y" /* yacc.c:1646  */
     { (yyval.treeProdDecl) = new (__pool) TreeProdDecl((yyvsp[-3].loc), PDK_TRAVERSE_GR, (yyvsp[-2].rhsList),    (yyvsp[-1].str), (yyvsp[-4].name3)->name.clone(), sameloc((&(yyvsp[-4].name3)->name), ""), (yyvsp[-4].name3)->label.clone(), (yyvsp[-4].name3)->tag.clone(), NULL, (yyvsp[0].markedActs)); }
-#line 1795 "grampar.tab.c" /* yacc.c:1646  */
+#line 1791 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 367 "grampar.y" /* yacc.c:1646  */
+#line 363 "grampar.y" /* yacc.c:1646  */
     { (yyval.treeProdDecls) = new (__pool) ASTList<TreeProdDecl>; }
-#line 1801 "grampar.tab.c" /* yacc.c:1646  */
+#line 1797 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 368 "grampar.y" /* yacc.c:1646  */
+#line 364 "grampar.y" /* yacc.c:1646  */
     { ((yyval.treeProdDecls)=(yyvsp[-1].treeProdDecls))->append((yyvsp[0].treeProdDecl)); }
-#line 1807 "grampar.tab.c" /* yacc.c:1646  */
+#line 1803 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 371 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new (__pool) TreeProdDecl((yyvsp[-2].name3)->name.loc, PDK_TRAVERSE_VAL,  NULL, nolocNULL(), (yyvsp[-2].name3)->name.clone(),
+#line 367 "grampar.y" /* yacc.c:1646  */
+    { (yyval.treeProdDecl) = new (__pool) TreeProdDecl((yyvsp[-2].name3)->name.loc, PDK_TRAVERSE_VAL,  NULL, NOLOC_NULL(), (yyvsp[-2].name3)->name.clone(),
                                                                          sameloc((&(yyvsp[-2].name3)->name), ""), (yyvsp[-2].name3)->label.clone(), (yyvsp[-2].name3)->tag.clone(), NULL, (yyvsp[0].markedActs)); }
-#line 1814 "grampar.tab.c" /* yacc.c:1646  */
+#line 1810 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 373 "grampar.y" /* yacc.c:1646  */
-    { (yyval.treeProdDecl) = new (__pool) TreeProdDecl((yyvsp[-2].name3)->name.loc, PDK_TRAVERSE_NULL, NULL, nolocNULL(), (yyvsp[-2].name3)->name.clone(),
+#line 369 "grampar.y" /* yacc.c:1646  */
+    { (yyval.treeProdDecl) = new (__pool) TreeProdDecl((yyvsp[-2].name3)->name.loc, PDK_TRAVERSE_NULL, NULL, NOLOC_NULL(), (yyvsp[-2].name3)->name.clone(),
                                                                          sameloc(((yyvsp[-2].name3)->name.clone()), ""), (yyvsp[-2].name3)->label.clone(), (yyvsp[-2].name3)->tag.clone(), NULL, (yyvsp[0].markedActs)); }
-#line 1821 "grampar.tab.c" /* yacc.c:1646  */
+#line 1817 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 63:
-#line 375 "grampar.y" /* yacc.c:1646  */
+#line 371 "grampar.y" /* yacc.c:1646  */
     { (yyval.treeProdDecl) = (yyvsp[0].treeProdDecl); }
-#line 1827 "grampar.tab.c" /* yacc.c:1646  */
+#line 1823 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 378 "grampar.y" /* yacc.c:1646  */
+#line 374 "grampar.y" /* yacc.c:1646  */
     { (yyval.name3)=new (__pool) Name3(sameloc((yyvsp[0].str), NULL), sameloc((yyvsp[0].str), NULL), (yyvsp[0].str)); }
-#line 1833 "grampar.tab.c" /* yacc.c:1646  */
+#line 1829 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 379 "grampar.y" /* yacc.c:1646  */
+#line 375 "grampar.y" /* yacc.c:1646  */
     { (yyval.name3)=new (__pool) Name3(sameloc((yyvsp[-2].str), NULL), (yyvsp[-2].str),                (yyvsp[0].str)); }
-#line 1839 "grampar.tab.c" /* yacc.c:1646  */
+#line 1835 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 380 "grampar.y" /* yacc.c:1646  */
+#line 376 "grampar.y" /* yacc.c:1646  */
     { (yyval.name3)=new (__pool) Name3((yyvsp[-2].str),                sameloc((yyvsp[-2].str), NULL), (yyvsp[0].str)); }
-#line 1845 "grampar.tab.c" /* yacc.c:1646  */
+#line 1841 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 381 "grampar.y" /* yacc.c:1646  */
+#line 377 "grampar.y" /* yacc.c:1646  */
     { (yyval.name3)=new (__pool) Name3((yyvsp[-4].str),                (yyvsp[-2].str),                (yyvsp[0].str)); }
-#line 1851 "grampar.tab.c" /* yacc.c:1646  */
+#line 1847 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 384 "grampar.y" /* yacc.c:1646  */
+#line 380 "grampar.y" /* yacc.c:1646  */
     { (yyval.name3)=new (__pool) Name3(strloc((yyvsp[-2].loc), NULL),  strloc((yyvsp[-2].loc), NULL),  (yyvsp[0].str)); }
-#line 1857 "grampar.tab.c" /* yacc.c:1646  */
+#line 1853 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 385 "grampar.y" /* yacc.c:1646  */
+#line 381 "grampar.y" /* yacc.c:1646  */
     { (yyval.name3)=new (__pool) Name3((yyvsp[-4].str),                strloc((yyvsp[-2].loc), NULL),  (yyvsp[0].str)); }
-#line 1863 "grampar.tab.c" /* yacc.c:1646  */
+#line 1859 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 389 "grampar.y" /* yacc.c:1646  */
+#line 385 "grampar.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 1869 "grampar.tab.c" /* yacc.c:1646  */
+#line 1865 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 390 "grampar.y" /* yacc.c:1646  */
-    { (yyval.str) = nolocNULL(); }
-#line 1875 "grampar.tab.c" /* yacc.c:1646  */
+#line 386 "grampar.y" /* yacc.c:1646  */
+    { (yyval.str) = NOLOC_NULL(); }
+#line 1871 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 393 "grampar.y" /* yacc.c:1646  */
+#line 389 "grampar.y" /* yacc.c:1646  */
     { (yyval.markedActs) = new (__pool) ASTList<MarkedAction>; }
-#line 1881 "grampar.tab.c" /* yacc.c:1646  */
+#line 1877 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 394 "grampar.y" /* yacc.c:1646  */
+#line 390 "grampar.y" /* yacc.c:1646  */
     { ((yyval.markedActs)=(yyvsp[-1].markedActs))->append((yyvsp[0].markedAct)); }
-#line 1887 "grampar.tab.c" /* yacc.c:1646  */
+#line 1883 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 397 "grampar.y" /* yacc.c:1646  */
-    { (yyval.markedAct) = new (__pool) MarkedAction(ERR_PARSE, nolocNULL(), (yyvsp[0].str)); }
-#line 1893 "grampar.tab.c" /* yacc.c:1646  */
+#line 393 "grampar.y" /* yacc.c:1646  */
+    { (yyval.markedAct) = new (__pool) MarkedAction(ERR_PARSE, NOLOC_NULL(), (yyvsp[0].str)); }
+#line 1889 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 398 "grampar.y" /* yacc.c:1646  */
-    { (yyval.markedAct) = new (__pool) MarkedAction(START_RULE, nolocNULL(), (yyvsp[0].str)); }
-#line 1899 "grampar.tab.c" /* yacc.c:1646  */
+#line 394 "grampar.y" /* yacc.c:1646  */
+    { (yyval.markedAct) = new (__pool) MarkedAction(START_RULE, NOLOC_NULL(), (yyvsp[0].str)); }
+#line 1895 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 402 "grampar.y" /* yacc.c:1646  */
+#line 398 "grampar.y" /* yacc.c:1646  */
     { (yyval.rhsList) = new (__pool) ASTList<RHSElt>; }
-#line 1905 "grampar.tab.c" /* yacc.c:1646  */
+#line 1901 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 403 "grampar.y" /* yacc.c:1646  */
+#line 399 "grampar.y" /* yacc.c:1646  */
     { ((yyval.rhsList)=(yyvsp[-1].rhsList))->append((yyvsp[0].rhsElt)); }
-#line 1911 "grampar.tab.c" /* yacc.c:1646  */
+#line 1907 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 406 "grampar.y" /* yacc.c:1646  */
+#line 402 "grampar.y" /* yacc.c:1646  */
     { (yyval.rhsList) = new (__pool) ASTList<RHSElt>; }
-#line 1917 "grampar.tab.c" /* yacc.c:1646  */
+#line 1913 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 407 "grampar.y" /* yacc.c:1646  */
+#line 403 "grampar.y" /* yacc.c:1646  */
     { ((yyval.rhsList)=(yyvsp[-1].rhsList))->append((yyvsp[0].rhsElt)); }
-#line 1923 "grampar.tab.c" /* yacc.c:1646  */
+#line 1919 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 417 "grampar.y" /* yacc.c:1646  */
+#line 413 "grampar.y" /* yacc.c:1646  */
     { (yyval.rhsElt) = new (__pool) RH_prec((yyvsp[-1].str)); }
-#line 1929 "grampar.tab.c" /* yacc.c:1646  */
+#line 1925 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 418 "grampar.y" /* yacc.c:1646  */
+#line 414 "grampar.y" /* yacc.c:1646  */
     { (yyval.rhsElt) = new (__pool) RH_forbid((yyvsp[-1].str)); }
-#line 1935 "grampar.tab.c" /* yacc.c:1646  */
+#line 1931 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 421 "grampar.y" /* yacc.c:1646  */
+#line 417 "grampar.y" /* yacc.c:1646  */
     { (yyval.rhsElt) = new (__pool) RH_name(sameloc((yyvsp[0].str), ""), (yyvsp[0].str)); }
-#line 1941 "grampar.tab.c" /* yacc.c:1646  */
+#line 1937 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 422 "grampar.y" /* yacc.c:1646  */
+#line 418 "grampar.y" /* yacc.c:1646  */
     { (yyval.rhsElt) = new (__pool) RH_name((yyvsp[-2].str), (yyvsp[0].str)); }
-#line 1947 "grampar.tab.c" /* yacc.c:1646  */
+#line 1943 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 423 "grampar.y" /* yacc.c:1646  */
+#line 419 "grampar.y" /* yacc.c:1646  */
     { (yyval.rhsElt) = new (__pool) RH_string(sameloc((yyvsp[0].str), ""), (yyvsp[0].str)); }
-#line 1953 "grampar.tab.c" /* yacc.c:1646  */
+#line 1949 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 424 "grampar.y" /* yacc.c:1646  */
+#line 420 "grampar.y" /* yacc.c:1646  */
     { (yyval.rhsElt) = new (__pool) RH_string((yyvsp[-2].str), (yyvsp[0].str)); }
-#line 1959 "grampar.tab.c" /* yacc.c:1646  */
+#line 1955 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 428 "grampar.y" /* yacc.c:1646  */
+#line 424 "grampar.y" /* yacc.c:1646  */
     { (yyval.stringList) = NULL; }
-#line 1965 "grampar.tab.c" /* yacc.c:1646  */
+#line 1961 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 429 "grampar.y" /* yacc.c:1646  */
+#line 425 "grampar.y" /* yacc.c:1646  */
     { (yyval.stringList) = (yyvsp[-1].stringList); }
-#line 1971 "grampar.tab.c" /* yacc.c:1646  */
+#line 1967 "grampar.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1975 "grampar.tab.c" /* yacc.c:1646  */
+#line 1971 "grampar.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2199,7 +2195,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 433 "grampar.y" /* yacc.c:1906  */
+#line 429 "grampar.y" /* yacc.c:1906  */
 
 /* ------------------ extra C code ------------------ */
 AssocKind whichKind(LocString * /*owner*/ kind)

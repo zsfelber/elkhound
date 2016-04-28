@@ -4063,7 +4063,7 @@ void GrammarAnalysis::addTreebuildingActions()
     code << ");";
 
     // insert the code into the production    
-    p->action = LocString(SL_UNKNOWN, 
+    p->action = LIT_STR_2(SL_UNKNOWN,
                           grammarStringTable.add(code));
   }
 

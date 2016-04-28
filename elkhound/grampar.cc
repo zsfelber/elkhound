@@ -875,7 +875,7 @@ inline void generateJumpToErrorHandler(std::stringstream &buf, std::string &erro
 }
 
 
-ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString *startRuleAction, LocString *& grType, std::string& name, std::string& usr) {
+ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt> *rhs, LocString const*startRuleAction, LocString const*& grType, std::string& name, std::string& usr) {
     Grammar &g = env.g;
 
     if (rhs->count()==2 && !startRuleAction) { // 1 + reof
@@ -888,7 +888,7 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
         if (s && s->type) {
 
             //grType = LIT_STR(s->type);
-            grType = new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), SL_INIT, s->type);
+            grType = LIT_STR(s->type);
 
             usr = name = s->name->strref();
 
@@ -1029,7 +1029,7 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
     xassert(env.g.startSymbol);
 }
 
-void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof, int &multiIndex, LocString *& grType, std::string &name, std::string &usr)
+void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof, int &multiIndex, LocString const*& grType, std::string &name, std::string &usr)
 {
 
   if (multiIndex > 0) {
@@ -1051,7 +1051,7 @@ void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof,
       rhs->append(DBG_INFO_ARG0_FIRST  rhs1);
       rhs->append(DBG_INFO_ARG0_FIRST  rhs2);
 
-      LocString * start = NULL;
+      LocString const* start = NULL;
       synthesizeChildRule(env, ast, rhs, start, grType, name, usr);
   }
 
@@ -1106,7 +1106,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           ASTList<RHSElt> &orhs = constcast(prodDecl->rhs);
           LocString const*origAction = prodDecl->actionCode;
-          LocString *startAction = NULL;
+          LocString const*startAction = NULL;
 
           ASTList<RHSElt> *rhs;
 
@@ -1116,7 +1116,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
           rhs->append(DBG_INFO_ARG0_FIRST  reof);
 
           int vi = 0;
-          LocString * type, * grType;
+          LocString const* type, * grType;
           std::stringstream nms;
           std::stringstream us;
           std::string name, usr;
@@ -1132,8 +1132,8 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               FOREACH_ASTLIST(TreeProdDecl, tprod->treeValidations, iter) {
                   TreeProdDecl const * prod = iter.data();
 
-                  if (prod->label && prod->label.isNonNull()) {
-                      buf << indent << prod->label.str << ":" << std::endl;
+                  if (prod->label && prod->label->isNonNull()) {
+                      buf << indent << prod->label->str << ":" << std::endl;
                   }
 
                   buf << indent << tpref << prod->name << "_star tag" << vpref << "_" << vi
@@ -1149,7 +1149,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   sfv << fvpref << "->" << prod->name << std::flush;
                   ind << indp << std::flush;
 
-                  if (prod->tag && prod->tag.isNonNull()) {
+                  if (prod->tag && prod->tag->isNonNull()) {
                       bufAct << "   " << tpref << prod->name << "_star "
                              << prod->tag << " = NULL;" << std::endl;
                       buf << indp << prod->tag << " = tag"
@@ -1199,7 +1199,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               buf << indent << "AstTreeNodeLexer treeLexer" << vpref << "(tag" << vpref << ", charLexer, false);" << std::endl;
               buf << std::endl;
               FOREACH_ASTLIST(RHSElt, *rhs, iter) {
-                    LocString symTag, symName;
+                    LocString const *symTag, *symName;
                     ASTSWITCHC(RHSElt, iter.data()) {
                         ASTCASEC(RH_name, tname) {
                             symTag = tname->tag;
@@ -1214,18 +1214,18 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                         }
                         ASTENDCASEC
                     }
-                    Terminal *term = g.findTerminal(symName);
+                    Terminal *term = g.findTerminal(*symName);
                     if (!term) {
                         astParseError(symName, "It is nonterminal. Traverse mode '>' should be followed by terminals.");
                     }
                     // NOTE We don't skip EOF !
                     buf << indent << "treeLexer" << vpref << ".adv();" << std::endl;
-                    if (symTag && symTag.isNonNull() && symTag.length()) {
+                    if (symTag && symTag->isNonNull() && symTag->length()) {
                         bufAct << "   " << term->type << " "
-                               << symTag.str << " = NULL;" << std::endl;
+                               << symTag->str << " = NULL;" << std::endl;
 
                         buf << indent << "if (treeLexer" << vpref << ".type == " << term->name << ") {" << std::endl;
-                        buf << indp << symTag.str << " = (" << term->type << ") treeLexer" << vpref << ".sval;" << std::endl;
+                        buf << indp << symTag->str << " = (" << term->type << ") treeLexer" << vpref << ".sval;" << std::endl;
                         buf << indent << "} else {" << std::endl;
                         generateJumpToErrorHandler(buf, errorHandler, indp);
                         buf << indent << "}" << std::endl;
@@ -1240,8 +1240,8 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
           case PDK_TRAVERSE_GR:
 
-              if (v0 && tprod->label && tprod->label.isNonNull()) {
-                  buf << indent << tprod->label.str << ":" << std::endl;
+              if (v0 && tprod->label && tprod->label->isNonNull()) {
+                  buf << indent << tprod->label->str << ":" << std::endl;
               }
 
               buf << indent << "AstTreeNodeLexer treeLexer" << vpref << "(tag" << vpref << ", charLexer);" << std::endl;
@@ -1289,7 +1289,7 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
                   buf << indp << origAction->str << std::endl;
               }
 
-              if (tprod->label && tprod->label.isNonNull()) {
+              if (tprod->label && tprod->label->isNonNull()) {
                   buf << indp << "goto done;" << std::endl;
               } else {
                   buf << indp << "// Nothing to do" << std::endl;
@@ -1350,8 +1350,8 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
               s << "   " << type->str << " result = parsers->parse_" << usr << "(tag);" << std::endl;
               s << "   return result;" << std::endl;
 
-              constcast(prodDecl->actionCode) = LIT_STR(s.str().c_str());
-              orhs.append(new RH_name(new LocString(SL_UNKNOWN, NULL), LIT_STR(prodDecl->name)));
+              constcast(prodDecl)->actionCode = LIT_STR(s.str().c_str());
+              orhs.append(new (env.g.pool) RH_name(NOLOC_NULL, LIT_STR(prodDecl->name)));
 
           }
 
@@ -1365,13 +1365,13 @@ void traverseProduction(Environment &env, GrammarAST *ast, Nonterminal *nonterm,
 
 void astParseNonterm(Environment &env, TF_nonterm const *nt, int ntIndex)
 {
-  LocString const &name = nt->name;
+  LocString const *name = nt->name;
 
   // get the Grammar object that represents the nonterminal
-  Nonterminal *nonterm = env.g.findNonterminal(name);
+  Nonterminal *nonterm = env.g.findNonterminal(*name);
   xassert(nonterm);
 
-  nonterm->type = nt->type;
+  nonterm->type = nt->type->strref();
   nonterm->ntIndex = ntIndex;
 
 
@@ -1391,13 +1391,13 @@ void astParseNonterm(Environment &env, TF_nonterm const *nt, int ntIndex)
       LocString const *ls = iter.data();
       Nonterminal *sub = env.g.findNonterminal(*ls);
       if (!sub) {
-        astParseError(*ls, "nonexistent nonterminal");
+        astParseError(ls, "nonexistent nonterminal");
       }
 
       // note that, since context-free language inclusion is
       // undecidable (Hopcroft/Ullman), we can't actually check that
       // the given nonterminals really are in the subset relation
-      nonterm->subsets.prepend(sub);
+      nonterm->subsets.prepend(DBG_INFO_ARG0_FIRST  sub);
     }
   }
 }
@@ -1409,10 +1409,10 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
       Grammar &g = env.g;
 
       // is this the special start symbol I inserted?
-      bool synthesizedStart = nonterm->name.equals("__EarlyStartSymbol");
+      bool synthesizedStart = nonterm->name->equals("__EarlyStartSymbol");
 
       // build a production; use 'this' as the tag for LHS elements
-      Production *prod = new (g.pool) Production(nonterm, "this");
+      Production *prod = new (g.pool) Production(DBG_INFO_ARG0_FIRST g.pool, nonterm, "this");
       prod->prodDecl = prodDecl;
 
       int tags = 0;
@@ -1458,7 +1458,8 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
                  prod->addForbid(DBG_INFO_ARG0_FIRST  g, s.t, g.numTerminals());
               }
             } catch (std::exception) {
-               astParseError(f->tokName, "forbid_next : only single noneterminal allowed");
+               astParseError(const_cast<LocString const *&>(f->tokName),
+                             "forbid_next : only single noneterminal allowed");
             }
             isAnnotation = true;
           }
@@ -1580,15 +1581,15 @@ int grampar_yylex(YYSTYPE *lvalp, void *parseParam)
         break;
 
       case TOK_STRING:
-        lvalp->str = new LocString(lexer.curLoc(), lexer.stringLiteral);
+        lvalp->str = LIT_STR_2(lexer.curLoc(), lexer.stringLiteral);
         break;
 
       case TOK_NAME:
-        lvalp->str = new LocString(lexer.curLoc(), lexer.curToken());
+        lvalp->str = LIT_STR_2(lexer.curLoc(), lexer.curToken());
         break;
 
       case TOK_LIT_CODE:
-        lvalp->str = new LocString(lexer.curLoc(), lexer.curFuncBody());
+        lvalp->str = LIT_STR_2(lexer.curLoc(), lexer.curFuncBody());
         break;
 
       case TOK_ARROW:

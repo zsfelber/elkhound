@@ -43,22 +43,18 @@
 
 // return a locstring for 'str' with no location information
 #define noloc(str)                                                    \
-  new (__pool) LocString(SL_UNKNOWN,      /* unknown location */               \
+  LIT_STR_2(SL_UNKNOWN,      /* unknown location */               \
                 PARAM->lexer.strtable.add(str))
-                
-// locstring for NULL, with no location
-#define nolocNULL()                                                   \
-  new (__pool) LocString(SL_UNKNOWN, NULL)
 
 // return a locstring with same location info as something else
 // (passed as a pointer to a SourceLocation)
 #define sameloc(otherLoc, str)                                        \
-  new (__pool) LocString(otherLoc->loc, PARAM->lexer.strtable.add(str))
+  LIT_STR_2(otherLoc->loc, PARAM->lexer.strtable.add(str))
 
 // return a locstring with same location info as something else
 // (passed as a pointer to a SourceLocation)
 #define strloc(otherLoc, str)                                        \
-  new (__pool) LocString(otherLoc, PARAM->lexer.strtable.add(str))
+  LIT_STR_2(otherLoc, PARAM->lexer.strtable.add(str))
 
 // interpret the word into an associativity kind specification
 AssocKind whichKind(LocString * /*owner*/ kind);
@@ -236,11 +232,11 @@ Start:  "start" "{" StartS StartL "}"        { $$ = new (__pool) TF_start($3, $4
       | "start" "{" StartL StartS "}"        { $$ = new (__pool) TF_start($4, $3); }
       ;
 
-StartS : /* empty */                         { $$ = nolocNULL(); } 
+StartS : /* empty */                         { $$ = NOLOC_NULL(); } 
       | "symbol" TOK_NAME ";"                { $$ = $2; }
       ;
 
-StartL : /* empty */                         { $$ = nolocNULL(); }
+StartL : /* empty */                         { $$ = NOLOC_NULL(); }
       | "lexer" TOK_NAME  ";"                { $$ = $2; }
       ;
 
@@ -273,7 +269,7 @@ TerminalDecl: TOK_INTEGER ":" TOK_NAME ";"
 
 /* yields: LocString */
 Type: TOK_LIT_CODE                    { $$ = $1; }
-    | /* empty */                     { $$ = nolocNULL(); }
+    | /* empty */                     { $$ = NOLOC_NULL(); }
     ;
 
 /* yields: ASTList<TermType> */
@@ -353,9 +349,9 @@ Productions: /* empty */                   { $$ = new (__pool) ASTList<AbstractP
            ;
 
 /* yields: ProdDecl */
-Production: "->" RHS Action                { $$ = new (__pool) ProdDecl($1, PDK_NEW, $2, $3, nolocNULL(), nolocNULL()); }
-          | "replace" "->" RHS Action      { $$ = new (__pool) ProdDecl($2, PDK_REPLACE,$3, $4, nolocNULL(), nolocNULL()); }
-          | "delete"  "->" RHS ";"         { $$ = new (__pool) ProdDecl($2, PDK_DELETE, $3, nolocNULL(), nolocNULL(), nolocNULL()); }
+Production: "->" RHS Action                { $$ = new (__pool) ProdDecl($1, PDK_NEW, $2, $3, NOLOC_NULL(), NOLOC_NULL()); }
+          | "replace" "->" RHS Action      { $$ = new (__pool) ProdDecl($2, PDK_REPLACE,$3, $4, NOLOC_NULL(), NOLOC_NULL()); }
+          | "delete"  "->" RHS ";"         { $$ = new (__pool) ProdDecl($2, PDK_DELETE, $3, NOLOC_NULL(), NOLOC_NULL(), NOLOC_NULL()); }
           | "tree" "->" TreeValidation0    { $$ = $3; }
           ;
 
@@ -368,9 +364,9 @@ TreeValidations: /* empty */                                           { $$ = ne
           | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
           ;
 
-TreeValidation: Name3 ";" MarkedActions                                 { $$ = new (__pool) TreeProdDecl($1->name.loc, PDK_TRAVERSE_VAL,  NULL, nolocNULL(), $1->name.clone(),
+TreeValidation: Name3 ";" MarkedActions                                 { $$ = new (__pool) TreeProdDecl($1->name.loc, PDK_TRAVERSE_VAL,  NULL, NOLOC_NULL(), $1->name.clone(),
                                                                          sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $3); }
-          | Name3N ";" MarkedActions                                    { $$ = new (__pool) TreeProdDecl($1->name.loc, PDK_TRAVERSE_NULL, NULL, nolocNULL(), $1->name.clone(),
+          | Name3N ";" MarkedActions                                    { $$ = new (__pool) TreeProdDecl($1->name.loc, PDK_TRAVERSE_NULL, NULL, NOLOC_NULL(), $1->name.clone(),
                                                                          sameloc(($1->name.clone()), ""), $1->label.clone(), $1->tag.clone(), NULL, $3); }
           | TreeValidation0                                            { $$ = $1; }
           ;
@@ -387,15 +383,15 @@ Name3N:   "null" ":" TOK_NAME                                          { $$=new 
 
 /* yields: LocString */
 Action: TOK_LIT_CODE                       { $$ = $1; }
-      | ";"                                { $$ = nolocNULL(); }
+      | ";"                                { $$ = NOLOC_NULL(); }
       ;
 
 MarkedActions: /*empty*/                   { $$ = new (__pool) ASTList<MarkedAction>; }
       | MarkedActions MarkedAction         { ($$=$1)->append($2); }
       ;
 
-MarkedAction: "#parse" TOK_LIT_CODE        { $$ = new (__pool) MarkedAction(ERR_PARSE, nolocNULL(), $2); }
-      | "$start" TOK_LIT_CODE              { $$ = new (__pool) MarkedAction(START_RULE, nolocNULL(), $2); }
+MarkedAction: "#parse" TOK_LIT_CODE        { $$ = new (__pool) MarkedAction(ERR_PARSE, NOLOC_NULL(), $2); }
+      | "$start" TOK_LIT_CODE              { $$ = new (__pool) MarkedAction(START_RULE, NOLOC_NULL(), $2); }
       ;
 
 /* yields: ASTList<RHSElt> */

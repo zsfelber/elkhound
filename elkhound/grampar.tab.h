@@ -90,7 +90,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 128 "grampar.y" /* yacc.c:1909  */
+#line 124 "grampar.y" /* yacc.c:1909  */
 
   int num;
   LocString *str;

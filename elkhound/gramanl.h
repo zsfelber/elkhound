@@ -48,6 +48,8 @@ extern SourceLocManager mgr;
 #define LIT_STR_2_ADD(l,s) LIT_STR_2(l, grammarStringTable.add(s))
 #define LIT_STR(s) LIT_STR_2(SL_INIT, s)
 #define LIT_STR_ADD(s) LIT_STR_2_ADD(SL_INIT, s)
+// locstring for NULL, with no location
+#define NOLOC_NULL LIT_STR_2(SL_UNKNOWN, NULL)
 
 
 // ---------------- DottedProduction --------------------
