@@ -9,6 +9,7 @@
 #include "gramast.ast.gen.h"// grammar syntax AST definition
 #include "gramlex.h"        // GrammarLexer
 #include "owner.h"          // Owner
+#include "gramanl.h"
 
 #include <stdlib.h>         // malloc, free
 #include <iostream>       // cout
@@ -195,12 +196,12 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 /* start symbol */
 /* yields: int (dummy value) */
 StartSymbol: TopFormList     
-               { ((ParseParams*)parseParam)->treeTop = new (__pool) GrammarAST($1); $$=0; }
+               { ((ParseParams*)parseParam)->treeTop = new (gramanl_pool) GrammarAST(DBG_INFO_ARG0_FIRST  gramanl_pool, $1); $$=0; }
            ;
 
 /* yields: ASTList<TopForm> */
-TopFormList: /*empty*/              { $$ = new (__pool) ASTList<TopForm>; }
-           | TopFormList TopForm    { ($$=$1)->append($2); }
+TopFormList: /*empty*/              { $$ = new (gramanl_pool) ASTList<TopForm>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+           | TopFormList TopForm    { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
            ;
            
 /* yields: TopForm */
@@ -214,29 +215,29 @@ TopForm: ContextClass               { $$ = $1; }
  
 /* yields: TopForm (always TF_context) */
 ContextClass: "context_class" TOK_LIT_CODE ";"
-                { $$ = new (__pool) TF_context($2); }
+                { $$ = new (gramanl_pool) TF_context(DBG_INFO_ARG0_FIRST  gramanl_pool, $2); }
             ;
 
 /* yields: TopForm (always TF_verbatim) */
-Verbatim: "verbatim" TOK_LIT_CODE          { $$ = new (__pool) TF_verbatim(false, $2); }
-        | "impl_verbatim" TOK_LIT_CODE     { $$ = new (__pool) TF_verbatim(true, $2); }
+Verbatim: "verbatim" TOK_LIT_CODE          { $$ = new (gramanl_pool) TF_verbatim(DBG_INFO_ARG0_FIRST  gramanl_pool, false, $2); }
+        | "impl_verbatim" TOK_LIT_CODE     { $$ = new (gramanl_pool) TF_verbatim(DBG_INFO_ARG0_FIRST  gramanl_pool, true, $2); }
         ;
 
 /* yields: TopForm (always TF_option) */
 /* options without specified values default to a value of 1 */
-Option: "option" TOK_NAME ";"              { $$ = new (__pool) TF_option($2, 1); }
-      | "option" TOK_NAME TOK_INTEGER ";"  { $$ = new (__pool) TF_option($2, $3); }
+Option: "option" TOK_NAME ";"              { $$ = new (gramanl_pool) TF_option(DBG_INFO_ARG0_FIRST  gramanl_pool, $2, 1); }
+      | "option" TOK_NAME TOK_INTEGER ";"  { $$ = new (gramanl_pool) TF_option(DBG_INFO_ARG0_FIRST  gramanl_pool, $2, $3); }
       ;
 
-Start:  "start" "{" StartS StartL "}"        { $$ = new (__pool) TF_start($3, $4); }
-      | "start" "{" StartL StartS "}"        { $$ = new (__pool) TF_start($4, $3); }
+Start:  "start" "{" StartS StartL "}"        { $$ = new (gramanl_pool) TF_start(DBG_INFO_ARG0_FIRST  gramanl_pool, $3, $4); }
+      | "start" "{" StartL StartS "}"        { $$ = new (gramanl_pool) TF_start(DBG_INFO_ARG0_FIRST  gramanl_pool, $4, $3); }
       ;
 
-StartS : /* empty */                         { $$ = NOLOC_NULL(); } 
+StartS : /* empty */                         { $$ = NOLOC_NULL; }
       | "symbol" TOK_NAME ";"                { $$ = $2; }
       ;
 
-StartL : /* empty */                         { $$ = NOLOC_NULL(); }
+StartL : /* empty */                         { $$ = NOLOC_NULL; }
       | "lexer" TOK_NAME  ";"                { $$ = $2; }
       ;
 
@@ -248,12 +249,12 @@ StartL : /* empty */                         { $$ = NOLOC_NULL(); }
  */
 /* yields: TopForm (always TF_terminals) */
 Terminals: "terminals" "{" TermDecls TermTypes Precedence "}"
-             { $$ = new (__pool) TF_terminals($3, $4, $5); }
+             { $$ = new (gramanl_pool) TF_terminals(DBG_INFO_ARG0_FIRST  gramanl_pool, $3, $4, $5); }
          ;
 
 /* yields: ASTList<TermDecl> */
-TermDecls: /* empty */                             { $$ = new (__pool) ASTList<TermDecl>; }
-         | TermDecls TerminalDecl                  { ($$=$1)->append($2); }
+TermDecls: /* empty */                             { $$ = new (gramanl_pool) ASTList<TermDecl>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+         | TermDecls TerminalDecl                  { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
          ;
 
 /* each terminal has an integer code which is the integer value the
@@ -262,43 +263,43 @@ TermDecls: /* empty */                             { $$ = new (__pool) ASTList<T
  * the forms, rather than the integer code itself */
 /* yields: TermDecl */
 TerminalDecl: TOK_INTEGER ":" TOK_NAME ";"
-                { $$ = new (__pool) TermDecl($1, $3, sameloc($3, "")); }
+                { $$ = new (gramanl_pool) TermDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $1, $3, sameloc($3, "")); }
             | TOK_INTEGER ":" TOK_NAME TOK_STRING ";"
-                { $$ = new (__pool) TermDecl($1, $3, $4); }
+                { $$ = new (gramanl_pool) TermDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $1, $3, $4); }
             ;
 
 /* yields: LocString */
 Type: TOK_LIT_CODE                    { $$ = $1; }
-    | /* empty */                     { $$ = NOLOC_NULL(); }
+    | /* empty */                     { $$ = NOLOC_NULL; }
     ;
 
 /* yields: ASTList<TermType> */
-TermTypes: /* empty */                { $$ = new (__pool) ASTList<TermType>; }
-         | TermTypes TermType         { ($$=$1)->append($2); }
+TermTypes: /* empty */                { $$ = new (gramanl_pool) ASTList<TermType>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+         | TermTypes TermType         { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
          ;
 
 /* yields: TermType */
 TermType: "token" Type TOK_NAME ";"
-            { $$ = new (__pool) TermType($3, $2, new (__pool) ASTList<SpecFunc>); }
+            { $$ = new (gramanl_pool) TermType(DBG_INFO_ARG0_FIRST  gramanl_pool, $3, $2, &ASTList<SpecFunc>::EMPTY); }
         | "token" Type TOK_NAME "{" SpecFuncs "}"
-            { $$ = new (__pool) TermType($3, $2, $5); }
+            { $$ = new (gramanl_pool) TermType(DBG_INFO_ARG0_FIRST  gramanl_pool, $3, $2, $5); }
         ;
 
 /* yields: ASTList<PrecSpec> */
-Precedence: /* empty */                      { $$ = new (__pool) ASTList<PrecSpec>; }
+Precedence: /* empty */                      { $$ = new (gramanl_pool) ASTList<PrecSpec>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
           | "precedence" "{" PrecSpecs "}"   { $$ = $3; }
           ;
 
 /* yields: ASTList<PrecSpec> */
 PrecSpecs: /* empty */
-             { $$ = new (__pool) ASTList<PrecSpec>; }
+             { $$ = new (gramanl_pool) ASTList<PrecSpec>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
          | PrecSpecs TOK_NAME TOK_INTEGER NameOrStringList ";"
-             { ($$=$1)->append(new (__pool) PrecSpec(whichKind($2), $3, $4)); }
+             { ($$=$1)->append(DBG_INFO_ARG0_FIRST  new (gramanl_pool) PrecSpec(DBG_INFO_ARG0_FIRST  gramanl_pool, whichKind($2), $3, $4)); }
          ;
 
 /* yields: ASTList<LocString> */
-NameOrStringList: /* empty */                     { $$ = new (__pool) ASTList<LocString>; }
-                | NameOrStringList NameOrString   { ($$=$1)->append($2); }
+NameOrStringList: /* empty */                     { $$ = new (gramanl_pool) ASTList<LocString>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+                | NameOrStringList NameOrString   { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
                 ;
 
 /* yields: LocString */
@@ -309,23 +310,23 @@ NameOrString: TOK_NAME       { $$ = $1; }
 
 /* ------ specification functions ------ */
 /* yields: ASTList<SpecFunc> */
-SpecFuncs: /* empty */                { $$ = new (__pool) ASTList<SpecFunc>; }
-         | SpecFuncs SpecFunc         { ($$=$1)->append($2); }
+SpecFuncs: /* empty */                { $$ = new (gramanl_pool) ASTList<SpecFunc>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+         | SpecFuncs SpecFunc         { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
          ;
 
 /* yields: SpecFunc */
 SpecFunc: TOK_FUN TOK_NAME "(" FormalsOpt ")" TOK_LIT_CODE
-            { $$ = new (__pool) SpecFunc($2, $4, $6); }
+            { $$ = new (gramanl_pool) SpecFunc(DBG_INFO_ARG0_FIRST  gramanl_pool, $2, $4, $6); }
         ;
 
 /* yields: ASTList<LocString> */
-FormalsOpt: /* empty */               { $$ = new (__pool) ASTList<LocString>; }
+FormalsOpt: /* empty */               { $$ = new (gramanl_pool) ASTList<LocString>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
           | Formals                   { $$ = $1; }
           ;
 
 /* yields: ASTList<LocString> */
-Formals: TOK_NAME                     { $$ = new (__pool) ASTList<LocString>($1); }
-       | Formals "," TOK_NAME         { ($$=$1)->append($3); }
+Formals: TOK_NAME                     { $$ = new (gramanl_pool) ASTList<LocString>(DBG_INFO_ARG0_FIRST  gramanl_pool, $1); }
+       | Formals "," TOK_NAME         { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $3); }
        ;
 
 
@@ -337,70 +338,70 @@ Formals: TOK_NAME                     { $$ = new (__pool) ASTList<LocString>($1)
  */
 /* yields: TopForm (always TF_nonterm) */
 Nonterminal: "nonterm" Type TOK_NAME Production
-               { $$ = new (__pool) TF_nonterm($3, $2, new (__pool) ASTList<SpecFunc>,
-                                     new (__pool) ASTList<AbstractProdDecl>($4), NULL); }
+               { $$ = new (gramanl_pool) TF_nonterm(DBG_INFO_ARG0_FIRST  gramanl_pool, $3, $2, &ASTList<SpecFunc>::EMPTY,
+                                     new (gramanl_pool) ASTList<AbstractProdDecl>(DBG_INFO_ARG0_FIRST  gramanl_pool, $4), &ASTList <LocString >::EMPTY); }
            | "nonterm" Type TOK_NAME "{" SpecFuncs Productions Subsets "}"
-               { $$ = new (__pool) TF_nonterm($3, $2, $5, $6, $7); }
+               { $$ = new (gramanl_pool) TF_nonterm(DBG_INFO_ARG0_FIRST  gramanl_pool, $3, $2, $5, $6, $7); }
            ;
 
 /* yields: ASTList<ProdDecl> */
-Productions: /* empty */                   { $$ = new (__pool) ASTList<AbstractProdDecl>; }
-           | Productions Production        { ($$=$1)->append($2); }
+Productions: /* empty */                   { $$ = new (gramanl_pool) ASTList<AbstractProdDecl>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+           | Productions Production        { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
            ;
 
 /* yields: ProdDecl */
-Production: "->" RHS Action                { $$ = new (__pool) ProdDecl($1, PDK_NEW, $2, $3, NOLOC_NULL(), NOLOC_NULL()); }
-          | "replace" "->" RHS Action      { $$ = new (__pool) ProdDecl($2, PDK_REPLACE,$3, $4, NOLOC_NULL(), NOLOC_NULL()); }
-          | "delete"  "->" RHS ";"         { $$ = new (__pool) ProdDecl($2, PDK_DELETE, $3, NOLOC_NULL(), NOLOC_NULL(), NOLOC_NULL()); }
+Production: "->" RHS Action                { $$ = new (gramanl_pool) ProdDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $1, PDK_NEW, $2, $3, NOLOC_NULL, NOLOC_NULL); }
+          | "replace" "->" RHS Action      { $$ = new (gramanl_pool) ProdDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $2, PDK_REPLACE,$3, $4, NOLOC_NULL, NOLOC_NULL); }
+          | "delete"  "->" RHS ";"         { $$ = new (gramanl_pool) ProdDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $2, PDK_DELETE, $3, NOLOC_NULL, NOLOC_NULL, NOLOC_NULL); }
           | "tree" "->" TreeValidation0    { $$ = $3; }
           ;
 
-TreeValidation0: Name3 "=" "(" TreeValidations ")" Action MarkedActions { $$ = new (__pool) TreeProdDecl($2, PDK_TRAVERSE_VAL, NULL, $6, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), $4, $7); }
-          | Name3 ">" RHS2  Action MarkedActions                        { $$ = new (__pool) TreeProdDecl($2, PDK_TRAVERSE_TKNS, $3,  $4, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $5); }
-          | Name3 "~>" RHS Action MarkedActions                         { $$ = new (__pool) TreeProdDecl($2, PDK_TRAVERSE_GR, $3,    $4, $1->name.clone(), sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $5); }
+TreeValidation0: Name3 "=" "(" TreeValidations ")" Action MarkedActions { $$ = new (gramanl_pool) TreeProdDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $2, PDK_TRAVERSE_VAL, &ASTList <RHSElt >::EMPTY, $6, $1->name, sameloc($1->name, ""), $1->label, $1->tag, $4, $7); }
+          | Name3 ">" RHS2  Action MarkedActions                        { $$ = new (gramanl_pool) TreeProdDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $2, PDK_TRAVERSE_TKNS, $3,  $4, $1->name, sameloc($1->name, ""), $1->label, $1->tag, &ASTList <TreeProdDecl >::EMPTY, $5); }
+          | Name3 "~>" RHS Action MarkedActions                         { $$ = new (gramanl_pool) TreeProdDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $2, PDK_TRAVERSE_GR, $3,    $4, $1->name, sameloc($1->name, ""), $1->label, $1->tag, &ASTList <TreeProdDecl >::EMPTY, $5); }
           ;
 
-TreeValidations: /* empty */                                           { $$ = new (__pool) ASTList<TreeProdDecl>; }
-          | TreeValidations TreeValidation                             { ($$=$1)->append($2); }
+TreeValidations: /* empty */                                           { $$ = new (gramanl_pool) ASTList<TreeProdDecl>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+          | TreeValidations TreeValidation                             { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
           ;
 
-TreeValidation: Name3 ";" MarkedActions                                 { $$ = new (__pool) TreeProdDecl($1->name.loc, PDK_TRAVERSE_VAL,  NULL, NOLOC_NULL(), $1->name.clone(),
-                                                                         sameloc((&$1->name), ""), $1->label.clone(), $1->tag.clone(), NULL, $3); }
-          | Name3N ";" MarkedActions                                    { $$ = new (__pool) TreeProdDecl($1->name.loc, PDK_TRAVERSE_NULL, NULL, NOLOC_NULL(), $1->name.clone(),
-                                                                         sameloc(($1->name.clone()), ""), $1->label.clone(), $1->tag.clone(), NULL, $3); }
+TreeValidation: Name3 ";" MarkedActions                                 { $$ = new (gramanl_pool) TreeProdDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $1->name->loc, PDK_TRAVERSE_VAL,  &ASTList <RHSElt >::EMPTY, NOLOC_NULL, $1->name,
+                                                                         sameloc($1->name, ""), $1->label, $1->tag, &ASTList <TreeProdDecl >::EMPTY, $3); }
+          | Name3N ";" MarkedActions                                    { $$ = new (gramanl_pool) TreeProdDecl(DBG_INFO_ARG0_FIRST  gramanl_pool, $1->name->loc, PDK_TRAVERSE_NULL, &ASTList <RHSElt >::EMPTY, NOLOC_NULL, $1->name,
+                                                                         sameloc($1->name, ""), $1->label, $1->tag, &ASTList <TreeProdDecl >::EMPTY, $3); }
           | TreeValidation0                                            { $$ = $1; }
           ;
 
-Name3:    TOK_NAME                                                     { $$=new (__pool) Name3(sameloc($1, NULL), sameloc($1, NULL), $1); }
-          | TOK_NAME ":" TOK_NAME                                      { $$=new (__pool) Name3(sameloc($1, NULL), $1,                $3); }
-          | TOK_NAME "::" TOK_NAME                                     { $$=new (__pool) Name3($1,                sameloc($1, NULL), $3); }
-          | TOK_NAME "::" TOK_NAME ":" TOK_NAME                        { $$=new (__pool) Name3($1,                $3,                $5); }
+Name3:    TOK_NAME                                                     { $$=new (gramanl_pool) Name3(DBG_INFO_ARG0_FIRST  gramanl_pool, sameloc($1, NULL), sameloc($1, NULL), $1); }
+          | TOK_NAME ":" TOK_NAME                                      { $$=new (gramanl_pool) Name3(DBG_INFO_ARG0_FIRST  gramanl_pool, sameloc($1, NULL), $1,                $3); }
+          | TOK_NAME "::" TOK_NAME                                     { $$=new (gramanl_pool) Name3(DBG_INFO_ARG0_FIRST  gramanl_pool, $1,                sameloc($1, NULL), $3); }
+          | TOK_NAME "::" TOK_NAME ":" TOK_NAME                        { $$=new (gramanl_pool) Name3(DBG_INFO_ARG0_FIRST  gramanl_pool, $1,                $3,                $5); }
           ;
 
-Name3N:   "null" ":" TOK_NAME                                          { $$=new (__pool) Name3(strloc($1, NULL),  strloc($1, NULL),  $3); }
-          | TOK_NAME "::" "null" ":" TOK_NAME                          { $$=new (__pool) Name3($1,                strloc($3, NULL),  $5); }
+Name3N:   "null" ":" TOK_NAME                                          { $$=new (gramanl_pool) Name3(DBG_INFO_ARG0_FIRST  gramanl_pool, strloc($1, NULL),  strloc($1, NULL),  $3); }
+          | TOK_NAME "::" "null" ":" TOK_NAME                          { $$=new (gramanl_pool) Name3(DBG_INFO_ARG0_FIRST  gramanl_pool, $1,                strloc($3, NULL),  $5); }
           ;
 
 /* yields: LocString */
 Action: TOK_LIT_CODE                       { $$ = $1; }
-      | ";"                                { $$ = NOLOC_NULL(); }
+      | ";"                                { $$ = NOLOC_NULL; }
       ;
 
-MarkedActions: /*empty*/                   { $$ = new (__pool) ASTList<MarkedAction>; }
-      | MarkedActions MarkedAction         { ($$=$1)->append($2); }
+MarkedActions: /*empty*/                   { $$ = new (gramanl_pool) ASTList<MarkedAction>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+      | MarkedActions MarkedAction         { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
       ;
 
-MarkedAction: "#parse" TOK_LIT_CODE        { $$ = new (__pool) MarkedAction(ERR_PARSE, NOLOC_NULL(), $2); }
-      | "$start" TOK_LIT_CODE              { $$ = new (__pool) MarkedAction(START_RULE, NOLOC_NULL(), $2); }
+MarkedAction: "#parse" TOK_LIT_CODE        { $$ = new (gramanl_pool) MarkedAction(DBG_INFO_ARG0_FIRST  gramanl_pool, ERR_PARSE, NOLOC_NULL, $2); }
+      | "$start" TOK_LIT_CODE              { $$ = new (gramanl_pool) MarkedAction(DBG_INFO_ARG0_FIRST  gramanl_pool, START_RULE, NOLOC_NULL, $2); }
       ;
 
 /* yields: ASTList<RHSElt> */
-RHS: /* empty */                           { $$ = new (__pool) ASTList<RHSElt>; }
-   | RHS RHSElt                            { ($$=$1)->append($2); }
+RHS: /* empty */                           { $$ = new (gramanl_pool) ASTList<RHSElt>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+   | RHS RHSElt                            { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
    ;
 
-RHS2: /* empty */                           { $$ = new (__pool) ASTList<RHSElt>; }
-   | RHS2 RHSElt2                           { ($$=$1)->append($2); }
+RHS2: /* empty */                           { $$ = new (gramanl_pool) ASTList<RHSElt>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
+   | RHS2 RHSElt2                           { ($$=$1)->append(DBG_INFO_ARG0_FIRST  $2); }
    ;
 
 /*
@@ -410,14 +411,14 @@ RHS2: /* empty */                           { $$ = new (__pool) ASTList<RHSElt>;
  */
 /* yields: RHSElt */
 RHSElt: RHSElt2
-      | "precedence" "(" NameOrString ")"    { $$ = new (__pool) RH_prec($3); }
-      | "forbid_next" "(" NameOrString ")"   { $$ = new (__pool) RH_forbid($3); }
+      | "precedence" "(" NameOrString ")"    { $$ = new (gramanl_pool) RH_prec(DBG_INFO_ARG0_FIRST  gramanl_pool, $3); }
+      | "forbid_next" "(" NameOrString ")"   { $$ = new (gramanl_pool) RH_forbid(DBG_INFO_ARG0_FIRST  gramanl_pool, $3); }
       ;
 
-RHSElt2:  TOK_NAME                { $$ = new (__pool) RH_name(sameloc($1, ""), $1); }
-      | TOK_NAME ":" TOK_NAME   { $$ = new (__pool) RH_name($1, $3); }
-      | TOK_STRING              { $$ = new (__pool) RH_string(sameloc($1, ""), $1); }
-      | TOK_NAME ":" TOK_STRING { $$ = new (__pool) RH_string($1, $3); }
+RHSElt2:  TOK_NAME                { $$ = new (gramanl_pool) RH_name(DBG_INFO_ARG0_FIRST  gramanl_pool, sameloc($1, ""), $1); }
+      | TOK_NAME ":" TOK_NAME   { $$ = new (gramanl_pool) RH_name(DBG_INFO_ARG0_FIRST  gramanl_pool, $1, $3); }
+      | TOK_STRING              { $$ = new (gramanl_pool) RH_string(DBG_INFO_ARG0_FIRST  gramanl_pool, sameloc($1, ""), $1); }
+      | TOK_NAME ":" TOK_STRING { $$ = new (gramanl_pool) RH_string(DBG_INFO_ARG0_FIRST  gramanl_pool, $1, $3); }
       ;
         
 /* yields: ASTList<LocString> */

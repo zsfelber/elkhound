@@ -59,6 +59,7 @@ static bool const LR1 = false;
 static bool const LALR1 = true;
 
 SourceLocManager mgr;
+str::StoragePool gramanl_pool;
 
 #if !defined(NDEBUG)     // track unauthorized malloc's
   #define TRACK_MALLOC
