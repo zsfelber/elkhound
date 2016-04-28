@@ -915,12 +915,12 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
 
         if (startRuleAction) {
             newStart = new (env.g.pool) ProdDecl(DBG_INFO_ARG0_FIRST  env.g.pool, SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
-                                    startRuleAction->clone(DBG_INFO_ARG0_FIRST  env.g.pool),
-                                    LIT_STR(name.c_str()), grType->clone(DBG_INFO_ARG0_FIRST  env.g.pool));
+                                    startRuleAction,
+                                    LIT_STR(name.c_str()), grType);
         } else {
             newStart = new (env.g.pool) ProdDecl(DBG_INFO_ARG0_FIRST  env.g.pool, SL_INIT, PDK_NEW/*prodDecl->pkind*/, rhs,
                                     LIT_STR_2(SL_UNKNOWN, NULL),
-                                    LIT_STR(name.c_str()), grType->clone(DBG_INFO_ARG0_FIRST  env.g.pool));
+                                    LIT_STR(name.c_str()), grType);
         }
         env.parserFuncs[name] = newStart;
 
@@ -933,9 +933,9 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
                         env.g.pool,
                         LIT_STR("__GeneratedChildren"),   // name
                         grType,          // type
-                        NULL,                                     // empty list of functions
+                        &ASTList <SpecFunc >::EMPTY,                                     // empty list of functions
                         new (env.g.pool) ASTList<AbstractProdDecl>(DBG_INFO_ARG0_FIRST  env.g.pool, constcast(newStart)),          // productions
-                        NULL                                      // subsets
+                        &ASTList <LocString >::EMPTY                                      // subsets
                       );
         }
 
@@ -1018,9 +1018,9 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
                     env.g.pool,
                     LIT_STR("__EarlyStartSymbol"),   // name
                     prod->type/*ast->firstNT->type.clone()*/,                   // type
-                    NULL,                                    // empty list of functions
+                    &ASTList <SpecFunc >::EMPTY,                                    // empty list of functions
                     new (env.g.pool) ASTList<AbstractProdDecl>(DBG_INFO_ARG0_FIRST  env.g.pool, prod),      // productions  TODO memleak?
-                    NULL                                     // subsets
+                    &ASTList <LocString >::EMPTY                                     // subsets
                   );
         ast->forms.prepend(DBG_INFO_ARG0_FIRST  ast->earlyStartNT);
 
