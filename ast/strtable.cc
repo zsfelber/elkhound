@@ -27,8 +27,8 @@ rostring StringTable::add(StringRef src) {
     return *r->rs;
 }
 
-/*
 StringTable *flattenStrTable = NULL;
+/*
 
 
 STATICDEF char const *StringTable::identity(void *data)

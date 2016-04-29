@@ -525,7 +525,7 @@ void ParseTables::mergeActionColumns()
 
   // compute graph of conflicting 'action' columns
   // (will be symmetric)
-  Bit2d graph(point(numTerms, numTerms));
+  Bit2d graph(DBG_INFO_ARG0_FIRST  point(numTerms, numTerms));
   graph.setall(0);
 
   // fill it in
@@ -616,7 +616,7 @@ void ParseTables::mergeActionRows()
 
   // compute graph of conflicting 'action' rows
   // (will be symmetric)
-  Bit2d graph(point(numStates, numStates));
+  Bit2d graph(DBG_INFO_ARG0_FIRST  point(numStates, numStates));
   graph.setall(0);
 
   // fill it in
@@ -746,7 +746,7 @@ void ParseTables::mergeGotoColumns()
   xassert(!gotoIndexMap);
 
   // compute graph of conflicting 'goto' columns
-  Bit2d graph(point(numNonterms, numNonterms));
+  Bit2d graph(DBG_INFO_ARG0_FIRST  point(numNonterms, numNonterms));
   graph.setall(0);
 
   // fill it in
@@ -834,7 +834,7 @@ void ParseTables::mergeGotoRows()
   xassert(!gotoRowPointers);
 
   // compute graph of conflicting 'goto' rows
-  Bit2d graph(point(numStates, numStates));
+  Bit2d graph(DBG_INFO_ARG0_FIRST  point(numStates, numStates));
   graph.setall(0);
 
   // fill it in

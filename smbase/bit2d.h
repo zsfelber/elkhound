@@ -10,7 +10,7 @@
 
 class Flatten;
 
-class Bit2d : str::Storeable {
+class Bit2d : public str::Storeable {
 private:     // data
   byte *data;  	    // bits; [0..stride-1] is first row, etc.
   bool owning;      // when false, 'data' is not owned by this object
@@ -29,9 +29,10 @@ public:      // funcs
   // NOTE: does *not* clear the bitmap!  use 'setall' to do that
   Bit2d(DBG_INFO_FORMAL_FIRST  point const &aSize);
   Bit2d(DBG_INFO_FORMAL_FIRST  Bit2d const &obj);
+  Bit2d(DBG_INFO_FORMAL_FIRST  Flatten&);
   Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, point const &aSize);
   Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Bit2d const &obj);
-  Bit2d(DBG_INFO_FORMAL_FIRST  Flatten&);
+  Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
 
   Bit2d& operator= (Bit2d const &obj);     // sizes must be equal already
   ~Bit2d();

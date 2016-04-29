@@ -121,7 +121,7 @@ public:
 void readGrammarFile(Environment &env, rostring fname);
 
 // just do the parsing stage
-GrammarAST *parseGrammarFile(rostring fname, bool useML);
+GrammarAST *parseGrammarFile(Environment &env, rostring fname, bool useML);
 
 // merge two grammar descriptions; neither argument is consumed,
 // but subtrees of the 2nd argument get moved into the first tree
@@ -131,7 +131,7 @@ void setAnnotations(GrammarAST *ast);
 
 // GrammarAST -> Grammar
 void parseGrammarAST(Environment &g, GrammarAST *treeTop, TermDecl const *& eof);
-void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof, int &multiIndex, LocString *& grType, std::string &name, std::string &usr);
+void synthesizeStartRule(Environment &env, GrammarAST *ast, TermDecl const *eof, int &multiIndex, LocString const*& grType, std::string &name, std::string &usr);
 
 class Nonterminal;
 Nonterminal * complementNonterm(Environment &env, GrammarAST *ast, TF_nonterm * nt, int ntIndex, TermDecl const *eof);

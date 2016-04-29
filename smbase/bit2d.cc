@@ -29,6 +29,10 @@ Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  Bit2d const &obj)
   memcpy(data, obj.data, datasize());
 }
 
+Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  Flatten &)
+  : Storeable(DBG_INFO_ARG0), data(NULL),
+    owning(true)
+{}
 
 Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, point const &aSize)
   : Storeable(DBG_INFO_ARG0_FIRST  pool), owning(true),
@@ -50,11 +54,11 @@ Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Bit2d const &obj)
   memcpy(data, obj.data, datasize());
 }
 
-
-Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  Flatten &)
-  : Storeable(DBG_INFO_ARG0), data(NULL),
+Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten &)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool), data(NULL),
     owning(true)
 {}
+
 
 
 Bit2d::~Bit2d()

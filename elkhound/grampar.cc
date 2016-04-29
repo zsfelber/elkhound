@@ -568,7 +568,7 @@ void astParseDDM(Environment &env, Symbol *sym,
       if (sym->dupParam) {
         astParseError(func.name, "duplicate 'dup' function");
       }
-      sym->dupParam = &func.nthFormal(0).str;
+      sym->dupParam = &func.nthFormal(0)->str;
       sym->dupCode = func.code;
     }
 
@@ -579,7 +579,7 @@ void astParseDDM(Environment &env, Symbol *sym,
         sym->delParam = NULL;
       }
       else if (numFormals == 1) {
-        sym->delParam = &func.nthFormal(0).str;
+        sym->delParam = &func.nthFormal(0)->str;
       }
       else {
         astParseError(func.name, "'del' function must have either zero or one formal parameters");
@@ -599,8 +599,8 @@ void astParseDDM(Environment &env, Symbol *sym,
         if (nonterm->mergeParam1) {
           astParseError(func.name, "duplicate 'merge' function");
         }
-        nonterm->mergeParam1 = &func.nthFormal(0).str;
-        nonterm->mergeParam2 = &func.nthFormal(1).str;
+        nonterm->mergeParam1 = &func.nthFormal(0)->str;
+        nonterm->mergeParam2 = &func.nthFormal(1)->str;
         nonterm->mergeCode = func.code;
       }
       else {
@@ -616,7 +616,7 @@ void astParseDDM(Environment &env, Symbol *sym,
         if (nonterm->keepParam) {
           astParseError(func.name, "duplicate 'keep' function");
         }
-        nonterm->keepParam = func.nthFormal(0).strref();
+        nonterm->keepParam = func.nthFormal(0)->strref();
         nonterm->keepCode = func.code;
       }
       else {
@@ -632,7 +632,7 @@ void astParseDDM(Environment &env, Symbol *sym,
         if (term->classifyParam) {
           astParseError(func.name, "duplicate 'classify' function");
         }
-        term->classifyParam = func.nthFormal(0).strref();
+        term->classifyParam = func.nthFormal(0)->strref();
         term->classifyCode = func.code;
       }
       else {
@@ -1998,7 +1998,7 @@ void parseGrammarAST(Environment &env, GrammarAST *treeTop, TermDecl const *& eo
 void readGrammarFile(Environment &env, rostring fname)
 {
   // make sure the tree gets deleted
-  Owner<GrammarAST> treeTop(parseGrammarFile(fname, false /*useML*/));
+  Owner<GrammarAST> treeTop(parseGrammarFile(env, fname, false /*useML*/));
 
   TermDecl const *eof = NULL;
 

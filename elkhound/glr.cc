@@ -314,7 +314,7 @@ int StackNode::maxStackNodesAllocd=0;
 
 StackNode::StackNode()
   : state(STATE_INVALID),
-    leftSiblings(),
+    leftSiblings(DBG_INFO_ARG0),
     firstSib(NULL, NULL_SVAL  SOURCELOCARG( SL_UNKNOWN ) ),
     referenceCount(0),
     determinDepth(0),
@@ -457,7 +457,7 @@ SiblingLink *StackNode::
   determinDepth = 0;
 
   SiblingLink *link = new SiblingLink(leftSib, sval  SOURCELOCARG( loc ) );
-  leftSiblings.prepend(link);   // dsw: don't append; it becomes quadratic!
+  leftSiblings.prepend(DBG_INFO_ARG0_FIRST  link);   // dsw: don't append; it becomes quadratic!
   return link;
 }
 
@@ -1636,14 +1636,14 @@ void GLR::dumpGSS(int tokenNumber) const
 
   // list of nodes we've already printed, to avoid printing any
   // node more than once
-  SObjList<StackNode> printed;
+  SObjList<StackNode> printed(DBG_INFO_ARG0);
 
   // list of nodes to print; might intersect 'printed', in which case
   // such nodes should be discarded; initially contains all the active
   // parsers (tops of stacks)
-  SObjList<StackNode> queue;
+  SObjList<StackNode> queue(DBG_INFO_ARG0);
   for (int i=0; i < topmostParsers.length(); i++) {
-    queue.append(topmostParsers[i]);
+    queue.append(DBG_INFO_ARG0_FIRST  topmostParsers[i]);
   }
 
   // keep printing nodes while there are still some to print
@@ -1652,7 +1652,7 @@ void GLR::dumpGSS(int tokenNumber) const
     if (printed.contains(node)) {
       continue;
     }
-    printed.append(node);
+    printed.append(DBG_INFO_ARG0_FIRST  node);
 
     // only edges actually get printed (since the node names
     // encode all the important information); so iterate over
@@ -1660,11 +1660,11 @@ void GLR::dumpGSS(int tokenNumber) const
     // nodes to the queue so we'll print them too
     if (node->firstSib.sib != NULL) {
       dumpGSSEdge(dest, node, node->firstSib.sib);
-      queue.append(node->firstSib.sib);
+      queue.append(DBG_INFO_ARG0_FIRST  node->firstSib.sib);
 
       FOREACH_OBJLIST(SiblingLink, node->leftSiblings, iter) {
         dumpGSSEdge(dest, node, iter.data()->sib);
-        queue.append(const_cast<StackNode*>( iter.data()->sib.getC() ));
+        queue.append(DBG_INFO_ARG0_FIRST  const_cast<StackNode*>( iter.data()->sib.getC() ));
       }
     }
   }
@@ -1685,11 +1685,11 @@ void GLR::dumpGSSEdge(FILE *dest, StackNode const *src,
 // alternative to above: stack info in a single string
 string GLR::stackSummary() const
 {
-  stringBuilder sb;
+  stringBuilder sb(DBG_INFO_ARG0);
 
   // list of nodes we've already printed, to avoid printing any
   // node more than once
-  SObjList<StackNode const> printed;
+  SObjList<StackNode const> printed(DBG_INFO_ARG0);
 
   for (int i=0; i < topmostParsers.length(); i++) {
     sb << " (" << i << ": ";
@@ -1716,7 +1716,7 @@ void GLR::innerStackSummary(stringBuilder &sb, SObjList<StackNode const> &printe
   }
 
   nodeSummary(sb, node);
-  printed.append(node);
+  printed.append(DBG_INFO_ARG0_FIRST  node);
 
   if (!node->firstSib.sib) {
     return;   // no siblings

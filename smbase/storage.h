@@ -401,24 +401,24 @@ public:
    typedef DataPtr* ExternalPtr;
 
 
-   void* operator new (std::size_t size);
-   void* operator new (std::size_t size, void* ptr);
-   void* operator new (std::size_t size, const std::nothrow_t& nothrow_value);
-   void* operator new[] (std::size_t size);
-   void* operator new[] (std::size_t size, void* ptr);
-   void* operator new[] (std::size_t size, const std::nothrow_t& nothrow_value);
+   static void* operator new (std::size_t size);
+   static void* operator new (std::size_t size, void* ptr);
+   static void* operator new (std::size_t size, const std::nothrow_t& nothrow_value);
+   static void* operator new[] (std::size_t size);
+   static void* operator new[] (std::size_t size, void* ptr);
+   static void* operator new[] (std::size_t size, const std::nothrow_t& nothrow_value);
 
-   void* operator new (std::size_t size, StoragePool const & pool);
-   void* operator new[] (std::size_t size, StoragePool const & pool);
+   static void* operator new (std::size_t size, StoragePool const & pool);
+   static void* operator new[] (std::size_t size, StoragePool const & pool);
 
-   void operator delete (void* ptr);
-   void operator delete (void* ptr, const std::nothrow_t& nothrow_constant);
-   void operator delete (void* ptr, void* voidptr2);
-   void operator delete (void* ptr, size_t size);
-   void operator delete[] (void* ptr);
-   void operator delete[] (void* ptr, const std::nothrow_t& nothrow_constant);
-   void operator delete[] (void* ptr, void* voidptr2);
-   void operator delete[] (void* ptr, size_t size);
+   static void operator delete (void* ptr);
+   static void operator delete (void* ptr, const std::nothrow_t& nothrow_constant);
+   static void operator delete (void* ptr, void* voidptr2);
+   static void operator delete (void* ptr, size_t size);
+   static void operator delete[] (void* ptr);
+   static void operator delete[] (void* ptr, const std::nothrow_t& nothrow_constant);
+   static void operator delete[] (void* ptr, void* voidptr2);
+   static void operator delete[] (void* ptr, size_t size);
 
 
    Storeable(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing);

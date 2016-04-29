@@ -380,7 +380,7 @@ void TerminalSet::convert(GrammarAnalysis& g) {
   xassert(bitmapLen == ((oldts.count()+7)>>3));
 
 
-  TerminalSet dup(*this);
+  TerminalSet dup(DBG_INFO_ARG0_FIRST  *this);
   init(newts.count());
 
   unsigned char const bits[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};

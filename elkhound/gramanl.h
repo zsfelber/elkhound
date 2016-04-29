@@ -304,10 +304,11 @@ private:    // funcs
 #endif
 
 public:     // funcs
-  ItemSet(StateId id, int numTerms, int numNonterms);
+  ItemSet(DBG_INFO_FORMAL_FIRST  StateId id, int numTerms, int numNonterms);
   ~ItemSet();
 
-  ItemSet(Flatten&);
+  ItemSet(DBG_INFO_FORMAL_FIRST  Flatten&);
+  ItemSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&);
   void xfer(str::StoragePool &pool, Flatten &flat);
   void xferSerfs(Flatten &flat, GrammarAnalysis &g);
 

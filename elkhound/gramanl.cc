@@ -307,9 +307,9 @@ string LRItem::toString(Grammar const &g) const
 
 
 // ----------------- ItemSet -------------------
-ItemSet::ItemSet(StateId anId, int numTerms, int numNonterms)
-  : Storeable(DBG_INFO_ARG0), kernelItems(DBG_INFO_ARG0),
-    nonkernelItems(DBG_INFO_ARG0),
+ItemSet::ItemSet(DBG_INFO_FORMAL_FIRST  StateId anId, int numTerms, int numNonterms)
+  : Storeable(DBG_INFO_ARG_FWD), kernelItems(DBG_INFO_ARG_FWD),
+    nonkernelItems(DBG_INFO_ARG_FWD),
     termTransition(NULL),      // inited below
     nontermTransition(NULL),   // inited below
     terms(numTerms),
@@ -348,9 +348,9 @@ ItemSet::~ItemSet()
 }
 
 
-ItemSet::ItemSet(Flatten &flat)
-  : Storeable(DBG_INFO_ARG0), kernelItems(DBG_INFO_ARG0),
-    nonkernelItems(DBG_INFO_ARG0),
+ItemSet::ItemSet(DBG_INFO_FORMAL_FIRST  Flatten &flat)
+  : Storeable(DBG_INFO_ARG_FWD), kernelItems(DBG_INFO_ARG_FWD),
+    nonkernelItems(DBG_INFO_ARG_FWD),
     termTransition(NULL),
     nontermTransition(NULL),
     dotsAtEnd(NULL),
@@ -358,6 +358,19 @@ ItemSet::ItemSet(Flatten &flat)
     stateSymbol(NULL),
     BFSparent(NULL)
 {}
+
+ItemSet::ItemSet(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Flatten&)
+    : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), kernelItems(DBG_INFO_ARG_FWD),
+      nonkernelItems(DBG_INFO_ARG_FWD),
+      termTransition(NULL),
+      nontermTransition(NULL),
+      dotsAtEnd(NULL),
+      numDotsAtEnd(0),
+      stateSymbol(NULL),
+      BFSparent(NULL)
+{
+
+}
 
 
 Production *getNthProduction(Grammar *g, int n)
@@ -1221,7 +1234,7 @@ bool GrammarAnalysis::canDerive(int left, int right) const
 void GrammarAnalysis::initDerivableRelation()
 {
   // two-dimensional matrix to represent token derivabilities
-  derivable = new Bit2d(point(numNonterms, numNonterms));
+  derivable = new Bit2d(DBG_INFO_ARG0_FIRST  point(numNonterms, numNonterms));
 
   // initialize it
   derivable->setall(0);
@@ -2303,7 +2316,7 @@ void GrammarAnalysis
 // -------------- START of construct LR item sets -------------------
 ItemSet *GrammarAnalysis::makeItemSet()
 {
-  return new ItemSet((StateId)(nextItemSetId++), 
+  return new ItemSet(DBG_INFO_ARG0_FIRST  (StateId)(nextItemSetId++),
                      numTerminals(), numNonterminals());
 }
 
@@ -2463,7 +2476,7 @@ void GrammarAnalysis::constructLRItemSets()
   // make a new state, and if it turns out we really do need a new
   // state, then the kernel items in this one will be copied elsewhere
   Owner<ItemSet> scratchState(
-    new ItemSet((StateId)-1 /*id*/, numTerms, numNonterms));
+    new ItemSet(DBG_INFO_ARG0_FIRST  (StateId)-1 /*id*/, numTerms, numNonterms));
 
   // fill the scratch state with lots of kernel items to start with;
   // since these items will be re-used over and over, filling it now
@@ -4390,7 +4403,7 @@ void GrammarAnalysis::runAnalyses(char const *setsFname, int reportReachable)
 void emitDescriptions(GrammarAnalysis const &g, EmitCode &out);
 void emitActionCode(GrammarAnalysis const &g, rostring hFname,
                     rostring ccFname, rostring srcFname);
-void emitUserCode(EmitCode &out, LocString const &code, bool braces = true);
+void emitUserCode(EmitCode &out, LocString const *code, bool braces = true);
 void emitActions(Grammar const &g, EmitCode &out, EmitCode &dcl);
 void emitDupDelMerge(GrammarAnalysis const &g, EmitCode &out, EmitCode &dcl);
 void emitFuncDecl(Grammar const &g, EmitCode &out, EmitCode &dcl,
@@ -4444,7 +4457,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
 
   // insert the stand-alone verbatim sections
   {FOREACH_OBJLIST(LocString const, g.verbatim, iter) {
-    emitUserCode(dcl, *(iter.data()), false /*braces*/);
+    emitUserCode(dcl, iter.data(), false /*braces*/);
   }}
 
   // insert each of the context class definitions; the last one
@@ -4472,7 +4485,7 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
       }
 
       s = STR(code.c_str());
-      emitUserCode(dcl, *s, false /*braces*/);
+      emitUserCode(dcl, s, false /*braces*/);
   }}
 
   if (g.terminalCodeMapped) {
@@ -4576,8 +4589,8 @@ void emitActionCode(GrammarAnalysis const &g, rostring hFname,
   //
   // 2005-06-23: Moved these to near the top of the file so that
   // the actions can easily refer to them.
-  FOREACH_OBJLIST(LocString, g.implVerbatim, iter) {
-    emitUserCode(out, *(iter.data()), false /*braces*/);
+  FOREACH_OBJLIST(LocString const, g.implVerbatim, iter) {
+    emitUserCode(out, iter.data(), false /*braces*/);
   }
 
   emitActions(g, out, dcl);
@@ -4851,7 +4864,7 @@ void emitActions(Grammar const &g, EmitCode &out, EmitCode &dcl)
 
     // now insert the user's code, to execute in this environment of
     // properly-typed semantic values
-    emitUserCode(out, *prod.action);
+    emitUserCode(out, prod.action);
   }}
 
   out << "\n";
@@ -5048,7 +5061,7 @@ void emitDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
     emitFuncDecl(g, out, dcl, symType,
       stringc << "dup_" << sym.name
               << "(" << symType << " " << sym.dupParam << ") ");
-    emitUserCode(out, *sym.dupCode);
+    emitUserCode(out, sym.dupCode);
   }
 
   if (sym.delCode) {
@@ -5056,7 +5069,7 @@ void emitDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
       stringc << "del_" << sym.name
               << "(" << symType << " "
               << (sym.delParam? sym.delParam->c_str() : "") << ") ");
-    emitUserCode(out, *sym.delCode);
+    emitUserCode(out, sym.delCode);
   }
 
   if (nonterm && nonterm->mergeCode) {
@@ -5064,21 +5077,21 @@ void emitDDMInlines(Grammar const &g, EmitCode &out, EmitCode &dcl,
       stringc << "merge_" << sym.name
               << "(" << symType << " " << nonterm->mergeParam1
               << ", " << symType << " " << nonterm->mergeParam2 << ") ");
-    emitUserCode(out, *nonterm->mergeCode);
+    emitUserCode(out, nonterm->mergeCode);
   }
 
   if (nonterm && nonterm->keepCode) {
     emitFuncDecl(g, out, dcl, "bool",
       stringc << "keep_" << sym.name
               << "(" << symType << " " << nonterm->keepParam << ") ");
-    emitUserCode(out, *nonterm->keepCode);
+    emitUserCode(out, nonterm->keepCode);
   }
 
   if (term && term->classifyCode) {
     emitFuncDecl(g, out, dcl, "int",
       stringc << "classify_" << sym.name
               << "(int oldTokenType, " << symType << " " << term->classifyParam << ", int* multipleTokens) ");
-    emitUserCode(out, *term->classifyCode);
+    emitUserCode(out, term->classifyCode);
   }
 }
 
@@ -5256,7 +5269,7 @@ void analyzse(Environment &env, GrammarAST *ast, TermDecl const *eof, bool useML
     G.pref = pref;
     G.prefix0 = prefix0;
 
-    LocString * grType = NULL;
+    LocString const* grType = NULL;
     std::string name, usr;
 
     synthesizeStartRule(env, ast, eof, multiIndex, grType, name, usr);
@@ -5391,11 +5404,11 @@ int inner_entry(int argc, char **argv)
   // parse the grammar
   string grammarFname = argv[0];
   SHIFT;
-  Owner<GrammarAST> ast(parseGrammarFile(grammarFname, useML));
+  Owner<GrammarAST> ast(parseGrammarFile(env0, grammarFname, useML));
 
   // parse and merge its extension modules
   while (argv[0]) {
-    Owner<GrammarAST> ext(parseGrammarFile(argv[0], useML));
+    Owner<GrammarAST> ext(parseGrammarFile(env0, argv[0], useML));
 
     traceProgress() << "merging module: " << argv[0] << endl;
     mergeGrammar(ast, ext);
@@ -5404,7 +5417,7 @@ int inner_entry(int argc, char **argv)
   }
 
   TermDecl const * eof;
-  LocString * grType0 = NULL;
+  LocString const * grType0 = NULL;
   std::string name0, usr0;
   int multiIndex = 0;
   int result = 0;
@@ -5596,7 +5609,7 @@ int inner_entry(int argc, char **argv)
       ast->childrenNT = NULL;
       ast->earlyStartNT = NULL;
 
-      LocString * grType = NULL;
+      LocString const * grType = NULL;
       std::string name, usr;
       GrammarAnalysis tot_g(g0);
       Environment tot_env(env0, tot_g);
