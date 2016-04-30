@@ -61,7 +61,7 @@ void PTreeNode::innerPrintTree(ostream &out, int indentation,
                                PrintFlags pf) const
 {
   int alts = 1;
-  string LHS;
+  string LHS(DBG_INFO_ARG0);
 
   if (merged) {
     // this is an ambiguity node

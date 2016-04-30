@@ -106,7 +106,8 @@ inline T *ObjectPool<T>::alloc()
 template <class T>
 void ObjectPool<T>::expandPool()
 {
-  T *rack = new T[rackSize];
+  // TODO default init? new T[] ->
+  T *rack = (T*) new uint8_t[rackSize*sizeof(T)];
   racks.push(rack);
 
   // thread new nodes into a free list

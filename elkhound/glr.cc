@@ -295,9 +295,17 @@ void GLR::deallocateSemanticValue(SymbolId sym, SemanticValue sval)
 
 
 // ------------------ SiblingLink ------------------
-inline SiblingLink::SiblingLink(StackNode *s, SemanticValue sv
+inline SiblingLink::SiblingLink(DBG_INFO_FORMAL_FIRST  StackNode *s, SemanticValue sv
                                 SOURCELOCARG( SourceLoc L ) )
-  : sib(s), sval(sv)
+  : Storeable(DBG_INFO_ARG_FWD), sib(s), sval(sv)
+    SOURCELOCARG( loc(L) )
+{
+  YIELD_COUNT( yieldCount = 0; )
+}
+
+inline SiblingLink::SiblingLink(DBG_INFO_FORMAL_FIRST  str::StoragePool & pool, StackNode *s, SemanticValue sv
+                                SOURCELOCARG( SourceLoc L ) )
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), sib(s), sval(sv)
     SOURCELOCARG( loc(L) )
 {
   YIELD_COUNT( yieldCount = 0; )
@@ -312,10 +320,21 @@ int StackNode::numStackNodesAllocd=0;
 int StackNode::maxStackNodesAllocd=0;
 
 
-StackNode::StackNode()
-  : state(STATE_INVALID),
+StackNode::StackNode(DBG_INFO_FORMAL)
+  : Storeable(DBG_INFO_ARG0), state(STATE_INVALID),
     leftSiblings(DBG_INFO_ARG0),
-    firstSib(NULL, NULL_SVAL  SOURCELOCARG( SL_UNKNOWN ) ),
+    firstSib(DBG_INFO_ARG_FWD_FIRST  NULL, NULL_SVAL  SOURCELOCARG( SL_UNKNOWN ) ),
+    referenceCount(0),
+    determinDepth(0),
+    glr(NULL)
+{
+  // the interesting stuff happens in init()
+}
+
+StackNode::StackNode(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
+  : Storeable(DBG_INFO_ARG_FWD_FIRST  pool), state(STATE_INVALID),
+    leftSiblings(DBG_INFO_ARG_FWD),
+    firstSib(DBG_INFO_ARG_FWD_FIRST  NULL, NULL_SVAL  SOURCELOCARG( SL_UNKNOWN ) ),
     referenceCount(0),
     determinDepth(0),
     glr(NULL)
@@ -456,7 +475,7 @@ SiblingLink *StackNode::
   // most likely will catch that when we use the stale info)
   determinDepth = 0;
 
-  SiblingLink *link = new SiblingLink(leftSib, sval  SOURCELOCARG( loc ) );
+  SiblingLink *link = new SiblingLink(DBG_INFO_ARG0_FIRST  leftSib, sval  SOURCELOCARG( loc ) );
   leftSiblings.prepend(DBG_INFO_ARG0_FIRST  link);   // dsw: don't append; it becomes quadratic!
   return link;
 }

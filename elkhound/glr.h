@@ -71,7 +71,7 @@ class GLR;                 // main class for GLR parsing
 // a pointer from a stacknode to one 'below' it (in the LR
 // parse stack sense); also has a link to the parse graph
 // we're constructing
-class SiblingLink {
+class SiblingLink : public str::Storeable {
 public:
   // the stack node being pointed-at; it was created eariler
   // than the one doing the pointing
@@ -98,7 +98,9 @@ public:
   // constructor *and* in StackNode::addFirstSiblingLink_noRefCt
 
 public:
-  SiblingLink(StackNode *s, SemanticValue sv
+  SiblingLink(DBG_INFO_FORMAL_FIRST  StackNode *s, SemanticValue sv
+              SOURCELOCARG( SourceLoc L ) );
+  SiblingLink(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, StackNode *s, SemanticValue sv
               SOURCELOCARG( SourceLoc L ) );
   ~SiblingLink();
   
@@ -115,7 +117,7 @@ public:
 // normal LR parser; GLR nodes form a graph instead of a linear
 // stack because choice points (real or potential ambiguities)
 // are represented as multiple left-siblings
-class StackNode {
+class StackNode : public str::Storeable {
 public:
   // the LR state the parser is in when this node is at the
   // top ("at the top" means that nothing, besides perhaps itself,
@@ -178,7 +180,8 @@ private:    // funcs
                              SOURCELOCARG( SourceLoc loc ) );
 
 public:     // funcs
-  StackNode();
+  StackNode(DBG_INFO_FORMAL);
+  StackNode(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool);
   ~StackNode();
 
   // ctor/dtor from point of view of the object pool user
