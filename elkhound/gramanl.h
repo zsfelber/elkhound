@@ -41,8 +41,8 @@ class EmitCode;           // emitcode.h
 class GrammarAnalysis;
 
 
-extern SourceLocManager mgr;
 extern str::StoragePool gramanl_pool;
+extern SourceLocManager &mgr;
 
 #define LIT_STR_1(x) new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), x)
 #define LIT_STR_2(l,s) new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), l, s)
