@@ -580,6 +580,7 @@ public:	    // data
 
 public:     // funcs
   Grammar(DBG_INFO_FORMAL);                            // set everything manually
+  Grammar(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool);                            // set everything manually
   Grammar(DBG_INFO_FORMAL_FIRST  Grammar const &cpy);                            // set everything manually
   ~Grammar();
 

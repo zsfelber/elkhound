@@ -939,9 +939,9 @@ Grammar::Grammar(DBG_INFO_FORMAL)
   :
     Storeable(DBG_INFO_ARG0),
     pool(DBG_INFO_ARG_FWD),
-    nonterminals(DBG_INFO_ARG_FWD_FIRST  pool),
-    terminals(DBG_INFO_ARG_FWD_FIRST  pool),
-    productions(DBG_INFO_ARG_FWD_FIRST  pool),
+    nonterminals(DBG_INFO_ARG_FWD),
+    terminals(DBG_INFO_ARG_FWD),
+    productions(DBG_INFO_ARG_FWD),
     prefix0(DBG_INFO_ARG_FWD), pref(DBG_INFO_ARG_FWD),
     startSymbol(NULL),
     targetLang(DBG_INFO_ARG_FWD_FIRST  "C++"),
@@ -953,10 +953,39 @@ Grammar::Grammar(DBG_INFO_FORMAL)
     expectedUNRTerms(-1),
     terminalCodeMapped(0),
     maxCode(0),
-    verbatim(DBG_INFO_ARG_FWD_FIRST  pool),
+    verbatim(DBG_INFO_ARG_FWD),
     actionClassName(NULL),
-    actionClasses(DBG_INFO_ARG_FWD_FIRST  pool),
-    implVerbatim(DBG_INFO_ARG_FWD_FIRST  pool)
+    actionClasses(DBG_INFO_ARG_FWD),
+    implVerbatim(DBG_INFO_ARG_FWD)
+{
+    emptyString = new (pool)
+      Nonterminal(DBG_INFO_ARG_FWD_FIRST  pool, LIT_STR_2(HERE_SOURCELOC, "empty"),
+                true /*isEmptyString*/);
+    pool.addPointer(emptyString);
+}
+
+Grammar::Grammar(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
+  :
+    Storeable(DBG_INFO_ARG_FWD_FIRST  pool),
+    pool(DBG_INFO_ARG_FWD_FIRST  pool, true),
+    nonterminals(DBG_INFO_ARG_FWD_FIRST  *this),
+    terminals(DBG_INFO_ARG_FWD_FIRST  *this),
+    productions(DBG_INFO_ARG_FWD_FIRST  *this),
+    prefix0(DBG_INFO_ARG_FWD), pref(DBG_INFO_ARG_FWD),
+    startSymbol(NULL),
+    targetLang(DBG_INFO_ARG_FWD_FIRST  "C++"),
+    useGCDefaults(false),
+    defaultMergeAborts(false),
+    expectedSR(-1),
+    expectedRR(-1),
+    expectedUNRNonterms(-1),
+    expectedUNRTerms(-1),
+    terminalCodeMapped(0),
+    maxCode(0),
+    verbatim(DBG_INFO_ARG_FWD_FIRST  *this),
+    actionClassName(NULL),
+    actionClasses(DBG_INFO_ARG_FWD_FIRST  *this),
+    implVerbatim(DBG_INFO_ARG_FWD_FIRST  *this)
 {
     emptyString = new (pool)
       Nonterminal(DBG_INFO_ARG_FWD_FIRST  pool, LIT_STR_2(HERE_SOURCELOC, "empty"),
