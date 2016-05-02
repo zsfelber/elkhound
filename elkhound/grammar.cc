@@ -233,12 +233,12 @@ Nonterminal::Nonterminal(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, Lo
     keepParam(NULL),
     keepCode(NULL),
     maximal(false),
-    subsets(DBG_INFO_ARG_FWD_FIRST  pool),
+    subsets(DBG_INFO_ARG_FWD_FIRST  *this),
     ntIndex(-1),
     cyclic(false),
-    first(DBG_INFO_ARG_FWD_FIRST  pool,0),
-    follow(DBG_INFO_ARG_FWD_FIRST  pool,0),
-    productions(DBG_INFO_ARG_FWD_FIRST  pool),
+    first(DBG_INFO_ARG_FWD_FIRST  *this,0),
+    follow(DBG_INFO_ARG_FWD_FIRST  *this,0),
+    productions(DBG_INFO_ARG_FWD_FIRST  *this),
     superset(NULL)
 {}
 
@@ -937,7 +937,7 @@ string Production::toStringMore(bool printCode) const
 // ------------------ Grammar -----------------
 Grammar::Grammar(DBG_INFO_FORMAL)
   :
-    Storeable(DBG_INFO_ARG0),
+    Storeable(DBG_INFO_ARG_FWD),
     pool(DBG_INFO_ARG_FWD),
     nonterminals(DBG_INFO_ARG_FWD),
     terminals(DBG_INFO_ARG_FWD),
@@ -966,7 +966,7 @@ Grammar::Grammar(DBG_INFO_FORMAL)
 
 Grammar::Grammar(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
   :
-    Storeable(DBG_INFO_ARG_FWD_FIRST  pool),
+    Storeable(DBG_INFO_ARG_FWD_FIRST  pool, false, sizeof(Grammar)),
     pool(DBG_INFO_ARG_FWD_FIRST  pool, true),
     nonterminals(DBG_INFO_ARG_FWD_FIRST  *this),
     terminals(DBG_INFO_ARG_FWD_FIRST  *this),
@@ -993,20 +993,7 @@ Grammar::Grammar(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
     pool.addPointer(emptyString);
 }
 
-Grammar::Grammar(DBG_INFO_FORMAL_FIRST  Grammar const &cpy) :
-    Storeable(DBG_INFO_ARG0_FIRST  cpy, false), pool(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
-    nonterminals(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
-    terminals(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
-    productions(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
-    prefix0(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr), pref(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
-    verbatim(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
-    actionClasses(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
-    implVerbatim(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
-    targetLang(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr) {
-
-    pool.assigned(cpy.pool, str::StoragePool::Cp_All);
-}
-
+//Grammar::Grammar(DBG_INFO_FORMAL_FIRST  Grammar const &cpy) :
 
 
 Grammar::~Grammar()

@@ -1010,6 +1010,7 @@ GrammarAnalysis::GrammarAnalysis()
     errors(0),
     tables(NULL),sr(0),rr(0)
 {
+   __store_size = str::getStoreSize(sizeof(GrammarAnalysis));
 }
 
 GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(DBG_INFO_ARG0_FIRST  cpy),

@@ -50,10 +50,9 @@ void* string::operator new (size_t size, str::StoragePool &pool) {
 
 void string::dup(char const *src)
 {
-  // std::string does not accept NULL pointers
-  xassert(src != NULL);
-
-  if (src[0]==0) {
+  if (!src) {
+    s = nullString;
+  } else if (src[0]==0) {
     s = emptyString;
   }
   else {

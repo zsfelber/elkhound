@@ -891,7 +891,7 @@ void HGen::emitCtorDefn(ASTClass const &cls, ASTClass const *parent)
         ct++;     // make sure we print a comma, below
         out << ")";
       } else {
-        out << " : Storeable(DBG_INFO_ARG_FWD_FIRST  pool, true)  ";
+        out << " : Storeable(DBG_INFO_ARG_FWD_FIRST  _pool)  ";
         ct++;     // make sure we print a comma, below
       }
 

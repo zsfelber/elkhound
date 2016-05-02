@@ -422,7 +422,7 @@ RHSElt2:  TOK_NAME                { $$ = new (gramanl_pool) RH_name(DBG_INFO_ARG
       ;
         
 /* yields: ASTList<LocString> */
-Subsets: /*empty*/                  { $$ = NULL; }
+Subsets: /*empty*/                  { $$ = new (gramanl_pool) ASTList<LocString>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
        | "subsets" Formals ";"      { $$ = $2; }
        ;
 

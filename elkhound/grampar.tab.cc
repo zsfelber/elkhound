@@ -1957,7 +1957,7 @@ yyreduce:
 
   case 87:
 #line 425 "grampar.y" /* yacc.c:1646  */
-    { (yyval.stringList) = NULL; }
+    { (yyval.stringList) = new (gramanl_pool) ASTList<LocString>(DBG_INFO_ARG0_FIRST  gramanl_pool); }
 #line 1962 "grampar.tab.c" /* yacc.c:1646  */
     break;
 

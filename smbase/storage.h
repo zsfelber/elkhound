@@ -25,6 +25,7 @@ static struct __StoreAlreadyConstr {
 class VoidList;
 class VoidTailList;
 class VoidNode;
+class GrammarAnalysis;
 
 #define S1(x) #x
 #define S2(x) S1(x)
@@ -351,6 +352,7 @@ friend class StoragePool;
 friend class ::VoidList;
 friend class ::VoidTailList;
 friend class ::VoidNode;
+friend class ::GrammarAnalysis;
 
 DBG_INFO_FWD(__DbgStr objectName;)
 
@@ -426,7 +428,7 @@ public:
    Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of = 0);
 
    /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-   Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool = false);
+   Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool = false, size_t size_of = 0);
 
    /**
     * src: source object argument of copy constructor
@@ -1221,7 +1223,7 @@ private:
 
    void addVariable(DataPtr dataVariable) {
        xassert(ownerPool == this && dataVariable && dataVariable->__kind == ST_PARENT);
-       __kind = ST_CHILD;
+       dataVariable->__kind = ST_CHILD;
        /*if (ownerPool != this) {
            ownerPool->addVariable(dataVariable);
            return;
@@ -2038,7 +2040,7 @@ DBG_INFO_FWD(lastObjName = objectName.str;)
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool)
+inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool, size_t size_of)
 DBG_INFO_FWD(: objectName(objectName))
 {
     DBG_INFO_FWD(lastObjName = objectName.str;)
@@ -2047,7 +2049,7 @@ DBG_INFO_FWD(: objectName(objectName))
     } else {
         __kind = ST_NONE;
         __parent = NULL;
-        __store_size  = 0;
+        __store_size  = getStoreSize(size_of);
     }
 }
 

@@ -19,8 +19,11 @@
 #include <ctype.h>           // isspace, isalnum
 #include <sstream>           // stringstream
 
-inline bool isVoid(char const * tp) {
+inline bool _isVoid(char const * tp) {
     return !tp || !strcmp("void", tp);
+}
+inline bool isVoid(string const * tp) {
+    return !tp || _isVoid(tp->c_str());
 }
 
 
@@ -226,7 +229,7 @@ LocString* extractActionClassName(LocString const *body)
   while (isalnum(*p) || *p=='_') p++;
   
   // yield that, with the same source location
-  return LIT_STR_2_ADD(body->loc, substring(start, p-start).c_str());
+  return LIT_STR_2_L_ADD(body, substring(start, p-start).c_str());
 }
 
 
@@ -671,7 +674,7 @@ void fillDefaultType(Nonterminal* nonterm) {
 
         bool err_concur = false;
         bool err_in_one = false;
-        bool init_void = isVoid(nonterm->type->c_str());
+        bool init_void = isVoid(nonterm->type);
         std::string concur_types;
         // loop over default type providing single productions
         // (their single symbols were collected into 'defaults')
@@ -695,7 +698,7 @@ void fillDefaultType(Nonterminal* nonterm) {
                 fillDefaultType(&nt);
             }
 
-            if (isVoid(sym->type->c_str())) {
+            if (isVoid(sym->type)) {
                 // remove "tag" for void args:
                 //TODO ? p->defaultSymbol->tag.str = empty;
                 p->defaultSymbol = NULL;
@@ -709,7 +712,7 @@ void fillDefaultType(Nonterminal* nonterm) {
 
                 //trace("prec") << "Nonterminal: " << nonterm->name << " default type candidate:" << sym->type << std::endl;
 
-                if (!isVoid(nonterm->type->c_str()) && nonterm->type != sym->type) {
+                if (!isVoid(nonterm->type) && nonterm->type != sym->type) {
                     if (!err_concur) {
                         concur_types = concur_types + nonterm->type->c_str();
                     }
@@ -733,7 +736,7 @@ void fillDefaultType(Nonterminal* nonterm) {
             //errors++;
         }
 
-        if (!err_in_one && !err_concur && isVoid(nonterm->type->c_str())) {
+        if (!err_in_one && !err_concur && isVoid(nonterm->type)) {
             trace("prec") << "Nonterminal " << nonterm->name << " has an undefined (default) type, but after looking for default type it is still void." << std::endl;
             //errors++;
         }
@@ -752,7 +755,7 @@ void fillDefaultType(Nonterminal* nonterm) {
                 if (p->defaultSymbol) {
                     std::stringstream s;
                     s<<"/* return "<< p->defaultSymbol ->tag->str <<";  /* inconsistent nonterm("<<*nonterm->name<<") type*/";
-                    p->action = LIT_STR_2_ADD(p->action->loc, s.str().c_str());
+                    p->action = LIT_STR_2_L_ADD(p->action, s.str().c_str());
                 }
             }
         }
@@ -928,7 +931,7 @@ ProdDecl *synthesizeChildRule(Environment &env, GrammarAST *ast, ASTList<RHSElt>
             ast->childrenNT->productions.append(DBG_INFO_ARG0_FIRST  newStart);
         } else {
             ast->childrenNT
-                    = new TF_nonterm(
+                    = new (env.g.pool) TF_nonterm(
                         DBG_INFO_ARG0_FIRST
                         env.g.pool,
                         LIT_STR("__GeneratedChildren"),   // name
@@ -1013,7 +1016,7 @@ void createEarlyRule(Environment &env, GrammarAST *ast, AbstractProdDecl *prod, 
                          prod->rhs.first()->isRH_string()?prod->rhs.first()->asRH_string()->str->strref(): "?")
                                                         << std::endl;
         ast->earlyStartNT
-                = new TF_nonterm(
+                = new (env.g.pool) TF_nonterm(
                     DBG_INFO_ARG0_FIRST
                     env.g.pool,
                     LIT_STR("__EarlyStartSymbol"),   // name
@@ -1545,7 +1548,7 @@ void astParseProduction(Environment &env, Nonterminal *nonterm,
            constcast(first->tag->str) = synthesizedStart ? "top" : "tag";
         }
         prod->defaultSymbol = first;
-      } else if (synthesizedStart && isVoid(nonterm->type->c_str())) {
+      } else if (synthesizedStart && isVoid(nonterm->type)) {
         traceProgress() << "tags: " << tags << std::endl;
         astParseErrorCont(env, nonterm->name, "Synthetic start is missing type, and unable to determine default.");
       }
