@@ -7,6 +7,7 @@
 #include "int.h"     // checkHeap
 #include "ckheap.h"     // checkHeap
 #include "diff.h"
+#include "owner.h"
 
 #include <stdlib.h>     // rand()
 #include <stdio.h>      // printf()
@@ -589,8 +590,6 @@ void VoidList::stealTailAt(int index, VoidList &source)
   // TODO fixme : ownerPool == NULL is ok?  see StoragePool.assignImpl
   str::StoragePool * stealSP =
   new (npool)  str::StoragePool(DBG_INFO_ARG0_FIRST  source.npool, false,  str::StoragePool::Cp_TmpDuplicate);
-  stealSP->assignParent(&npool, ST_STORAGE_POOL);
-  npool.addChildPool(stealSP);
 
   stealSP->selfCheck();
 
@@ -1027,7 +1026,7 @@ void testSorting()
   enum { ITERS=100, ITEMS=20 };
 
   loopi(ITERS) {
-    str::StoragePool *_p2 = new (pool) str::StoragePool(DBG_INFO_ARG0_FIRST  pool, true);
+    Owner<str::StoragePool> _p2(new (pool) str::StoragePool(DBG_INFO_ARG0_FIRST  pool, true));
     str::StoragePool &p2 = *_p2;
     // construct a list (and do it again if it ends up already sorted)
     _list1 = new (p2) VoidList(DBG_INFO_ARG0_FIRST  p2);
@@ -1084,7 +1083,6 @@ void testSorting()
       {}     // remove all occurrances of 'first'
     xassert(!list1.equalAsPointerSets(list2));
 
-    delete _p2;
   }
 }
 
@@ -1244,7 +1242,7 @@ void entry()
 
     _list = NULL;
     _thief = NULL;
-    pool.del();
+
   } catch (x_assert const & ex) {
     debugEverything();
   }

@@ -393,17 +393,19 @@ public:
         ST_NONE = 0,
         ST_VALUE = 1,
         ST_STORAGE_POOL = 2,
+        ST_PARENT = ST_VALUE | ST_STORAGE_POOL,
         ST_REMAINDER = 4,
+        ST_IN_POOL = ST_VALUE | ST_STORAGE_POOL | ST_REMAINDER,
         ST_CHILD = 8,
-        ST_VALUE_CHILD = 9,
-        ST_POOL_CHILD = 10,
+        ST_VALUE_CHILD = ST_VALUE | ST_CHILD,
+        ST_POOL_CHILD = ST_STORAGE_POOL | ST_CHILD,
         ST_DELETED = 16,
-        ST_VALUE_DELETED = 17,
-        ST_POOL_DELETED = 18,
-        ST_REMAIN_DELETED = 20,
-        ST_CHILD_DELETED = 24,
-        ST_VALUE_CHILD_DELETED = 25,
-        ST_POOL_CHILD_DELETED = 26,
+        ST_VALUE_DELETED = ST_VALUE | ST_DELETED,
+        ST_POOL_DELETED = ST_STORAGE_POOL | ST_DELETED,
+        ST_REMAIN_DELETED = ST_REMAINDER | ST_DELETED,
+        ST_CHILD_DELETED = ST_CHILD | ST_DELETED,
+        ST_VALUE_CHILD_DELETED = ST_VALUE | ST_CHILD | ST_DELETED,
+        ST_POOL_CHILD_DELETED = ST_STORAGE_POOL | ST_CHILD | ST_DELETED,
     };
 
    typedef StoragePool* PtrToMe;
@@ -463,7 +465,7 @@ public:
 
    void assign(Storeable const & srcOrParent, size_t size_of);
 
-   void assignSameParent(Storeable const & srcOrParent, StoragePool const * oldPool = NULL);
+   void assignSameParent(Storeable const & srcOrParent, __Kind def = ST_VALUE, StoragePool const * oldPool = NULL);
 
    void assignParent(StoragePool const * srcPool, __Kind def = ST_VALUE, StoragePool const * oldPool = NULL);
 
@@ -926,7 +928,7 @@ private:
        xassert(bool(ptr)==bool(src_ptr));
        if (ptr) {
            xassert(ptr->__kind==src_ptr->__kind);
-           xassert(ptr->__kind & (ST_VALUE|ST_STORAGE_POOL));
+           xassert(ptr->__kind & ST_PARENT);
            xassert(!(ptr->__kind & ST_DELETED));
            xassert( (d+(uint8_t*)src_ptr) == (uint8_t*)ptr);
            xassert( source.contains(src_ptr) );
@@ -1282,26 +1284,18 @@ public:
        Storeable(DBG_INFO_ARG_FWD_FIRST srcOrParent, sizeof(StoragePool), childOfParent, true) {
 
        xassert(!isParentOf(srcOrParent));
-       xassert(__store_size == STORAGE_POOL_SIZE);
+       xassert(__store_size == STORAGE_POOL_SIZE && !(__kind & ST_REMAIN_DELETED));
 
        if (childOfParent) {
            memset(((uint8_t*)this)+sizeof(Storeable), 0, sizeof(StoragePool)-sizeof(Storeable));
-           xassert((__kind & (ST_STORAGE_POOL|ST_VALUE)) && copyMode == Cp_All);
+           xassert((__kind & ST_PARENT) && copyMode == Cp_All);
            __kind = ST_STORAGE_POOL;
            first_del_var = npos;
            ownerPool = this;
        } else {
-           xassert(__kind & ST_STORAGE_POOL && !(__kind & (ST_CHILD_DELETED)));
            StoragePool & srcOrParentPool = (StoragePool &) srcOrParent;
            ownerPool = &srcOrParentPool;
            assigned(srcOrParentPool, copyMode);
-       }
-
-       if (copyMode != Cp_TmpDuplicate) {
-           StoragePool * pool = constcast(__parent);
-           if (pool) {
-               pool->addChildPool(this);
-           }
        }
    }
 
@@ -1334,8 +1328,6 @@ public:
        switch (copyMode) {
        case Cp_TmpDuplicate:
        {
-           xassert((__kind & ST_STORAGE_POOL && !(__kind & ST_VALUE)) && (src.__kind & ST_STORAGE_POOL && !(src.__kind & ST_VALUE)));
-
            ownerPool = (StoragePool*) &src;
 
            removeChildPool(&src);
@@ -1346,7 +1338,6 @@ public:
        case Cp_Move:
        {
            xassert(__parent == src.__parent);
-           xassert((__kind & ST_STORAGE_POOL && !(__kind & ST_VALUE)) && (src.__kind & ST_STORAGE_POOL && !(src.__kind & ST_VALUE)));
 
            ownerPool = this;
 
@@ -1362,7 +1353,7 @@ public:
        case Cp_All:
        {
            size_t bufsz = getMemBufSize(memlength);
-           xassert((__kind & ST_STORAGE_POOL && !(__kind & ST_VALUE)) && (src.__kind & ST_STORAGE_POOL && !(src.__kind & ST_VALUE)) && bufsz==memcapacity);
+           xassert(bufsz==memcapacity);
 
            reassign(src);
            break;
@@ -1757,7 +1748,7 @@ public:
 #ifdef DEBUG
        xassert(__store_size == getStoreSize(sizeof(StoragePool)));
        xassert(__kind < ST_DELETED);
-       xassert(bool(__kind&(ST_VALUE|ST_STORAGE_POOL|ST_REMAINDER)) == bool(__parent));
+       xassert(bool(__kind&ST_IN_POOL) == bool(__parent));
        xassert(ownerPool);
        xassert(bool(memory) == bool(memlength));
        xassert(bool(memcapacity) == bool(memlength));
@@ -1833,7 +1824,7 @@ public:
        }
        for (iterator it = begin(); it != -1; it++) {
            Storeable *cur = *it;
-           if (cur->__kind & (ST_VALUE|ST_STORAGE_POOL)) {
+           if (cur->__kind & ST_PARENT) {
                xassert(cur->__parent == this || cur->__parent == ownerPool);
            }
        }
@@ -2049,13 +2040,13 @@ DBG_INFO_FWD(: objectName(objectName))
 }
 
 inline Storeable::~Storeable() {
-    if (__kind & ST_DELETED) {
-        x_assert_fail("Already deleted.", __FILE__, __LINE__);
-    }
     if (__kind & ST_VALUE) {
+        if (__kind & ST_DELETED) {
+            x_assert_fail("Already deleted.", __FILE__, __LINE__);
+        }
         removeInParent();
+        __kind |= ST_DELETED;
     }
-    __kind |= ST_DELETED;
 }
 
 inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool) {
@@ -2070,11 +2061,14 @@ inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool 
         __next = 0;
         __parent->regChild(this);
     #endif
+        if (!isPool) {
+            constcast(getParentRef()).addVariable(this);
+        } else {
+            constcast(getParentRef()).addChildPool((CPtrToMe)this);
+        }
     } else {
+        __parent = NULL;
         assign(srcOrParent, size_of);
-    }
-    if (!isPool && __kind) {
-        constcast(getParentRef()).addVariable(this);
     }
 }
 
@@ -2105,22 +2099,25 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
 #endif
 
     // transfer __parentVector (we keep parent)
-    if (__kind & (ST_VALUE|ST_STORAGE_POOL)) {
+    if (__kind & ST_VALUE) {
         xassert(__parent);
-        assignSameParent(src, oldpar);
+        assignSameParent(src, ST_VALUE, oldpar);
+    } else if (__kind & ST_STORAGE_POOL) {
+        xassert(__parent);
+        assignSameParent(src, ST_STORAGE_POOL, oldpar);
     } else {
         xassert(!__parent);
     }
 
-    if (__kind & ST_CHILD_DELETED) {
+    if (__kind & ST_REMAIN_DELETED) {
         x_assert_fail("Invalid kind.", __FILE__, __LINE__);
     }
 }
 
-inline void Storeable::assignSameParent(Storeable const & src, StoragePool const * oldPool) {
+inline void Storeable::assignSameParent(Storeable const & src, __Kind def, StoragePool const * oldPool) {
     StoragePool const * srcPool = src.__parent;
     if (srcPool) {
-        assignParent(srcPool);
+        assignParent(srcPool, def, oldPool);
     } else {
         if (__parent || __kind) {
             std::cout << "Warning  Storeable.assignSameParent(" << getKind()
@@ -2146,7 +2143,7 @@ inline void Storeable::assignParent(StoragePool const * srcPool, __Kind def, Sto
             if (__kind & ST_VALUE) {
                 par0->removeVariable(this);
             } else if (__kind & ST_STORAGE_POOL) {
-                par0->removeChildPool(asPool());
+                par0->removeChildPool((CPtrToMe)this);
             } else {
                 x_assert_fail("wrong kind", __FILE__, __LINE__);
             }
@@ -2164,7 +2161,7 @@ inline void Storeable::assignParent(StoragePool const * srcPool, __Kind def, Sto
             if (__kind & ST_VALUE) {
                 constcast(par)->addVariable(this);
             } else if (__kind & ST_STORAGE_POOL) {
-                constcast(par)->addChildPool(asPool());
+                constcast(par)->addChildPool((CPtrToMe)this);
             } else {
                 x_assert_fail("wrong kind", __FILE__, __LINE__);
             }
@@ -2229,7 +2226,7 @@ inline void* Storeable::operator new[] (std::size_t size, StoragePool const & po
 
 inline void Storeable::operator delete (void* _ptr) {
     DataPtr ptr = (DataPtr) _ptr;
-    if (!(ptr->__kind & (ST_VALUE|ST_STORAGE_POOL|ST_REMAINDER))) {
+    if (!(ptr->__kind & ST_IN_POOL)) {
         free(_ptr);
     }
     // else Nothing to do here, everything is in ~Storeable
@@ -2237,7 +2234,7 @@ inline void Storeable::operator delete (void* _ptr) {
 
 inline void Storeable::operator delete[] (void* _ptr) {
     DataPtr ptr = (DataPtr) _ptr;
-    if (!(ptr->__kind & (ST_VALUE|ST_STORAGE_POOL|ST_REMAINDER))) {
+    if (!(ptr->__kind & ST_IN_POOL)) {
         free(_ptr);
     }
     // else Nothing to do here, everything is in ~Storeable
