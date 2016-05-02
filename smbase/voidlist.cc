@@ -26,7 +26,7 @@ VoidList::VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &src, size_t size_of, b
 
 void VoidList::assignParent(str::StoragePool const *pool0) {
     Storeable::assignParent(pool0);
-    npool.assignParent(pool0, Storeable::ST_STORAGE_POOL);
+    npool.assignParent(pool0, true);
 }
 
 void VoidList::assign(VoidList const &src, size_t size_of, bool move) {
@@ -38,7 +38,7 @@ void VoidList::assign(VoidList const &src, size_t size_of, bool move) {
 void VoidList::chk_assign(VoidList const &src, bool move) {
     npool.assigned(src.npool, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All);
 
-    xassert(src.__kind ? __kind == src.__kind /*&& getParent() == src.getParent()*/ : (!__kind || __kind == ST_VALUE || __kind == ST_CHILD));
+    xassert(src.__kind ? __kind == src.__kind /*&& getParent() == src.getParent()*/ : (!(__kind&ST_IN_POOL) || __kind&ST_VALUE));
 
     top = src.top;
     ExternalPtr ptrs[] = { (ExternalPtr)&top };

@@ -465,9 +465,9 @@ public:
 
    void assign(Storeable const & srcOrParent, size_t size_of);
 
-   void assignSameParent(Storeable const & srcOrParent, __Kind def = ST_VALUE, StoragePool const * oldPool = NULL);
+   void assignSameParent(Storeable const & srcOrParent, bool isPool = false, StoragePool const * oldPool = NULL);
 
-   void assignParent(StoragePool const * srcPool, __Kind def = ST_VALUE, StoragePool const * oldPool = NULL);
+   void assignParent(StoragePool const * srcPool, bool isPool = false, StoragePool const * oldPool = NULL);
 
    inline __Kind getKind() const {
        return (__Kind)__kind;
@@ -2101,10 +2101,10 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     // transfer __parentVector (we keep parent)
     if (__kind & ST_VALUE) {
         xassert(__parent);
-        assignSameParent(src, ST_VALUE, oldpar);
+        assignSameParent(src, false, oldpar);
     } else if (__kind & ST_STORAGE_POOL) {
         xassert(__parent);
-        assignSameParent(src, ST_STORAGE_POOL, oldpar);
+        assignSameParent(src, true, oldpar);
     } else {
         xassert(!__parent);
     }
@@ -2114,10 +2114,10 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     }
 }
 
-inline void Storeable::assignSameParent(Storeable const & src, __Kind def, StoragePool const * oldPool) {
+inline void Storeable::assignSameParent(Storeable const & src, bool isPool, StoragePool const * oldPool) {
     StoragePool const * srcPool = src.__parent;
     if (srcPool) {
-        assignParent(srcPool, def, oldPool);
+        assignParent(srcPool, isPool, oldPool);
     } else {
         if (__parent || __kind) {
             std::cout << "Warning  Storeable.assignSameParent(" << getKind()
@@ -2132,12 +2132,12 @@ inline void Storeable::assignSameParent(Storeable const & src, __Kind def, Stora
     }
 }
 
-inline void Storeable::assignParent(StoragePool const * srcPool, __Kind def, StoragePool const * oldPool) {
+inline void Storeable::assignParent(StoragePool const * srcPool, bool isPool, StoragePool const * oldPool) {
     StoragePool const * par = srcPool->findChild(this);
     StoragePool * par0 = NULL;
 
-    if (__parent && __kind) {
-        par0 = constcast(oldPool ? oldPool->findChild(this) : __parent);
+    if (__parent && __kind && oldPool) {
+        par0 = constcast(oldPool->findChild(this));
         xassert(par0);
         if (par0 != par) {
             if (__kind & ST_VALUE) {
@@ -2157,20 +2157,23 @@ inline void Storeable::assignParent(StoragePool const * srcPool, __Kind def, Sto
     if (par) {
         __parent = par;
         if (!__kind || par0 != par) {
-            __kind = def;
-            if (__kind & ST_VALUE) {
-                constcast(par)->addVariable(this);
-            } else if (__kind & ST_STORAGE_POOL) {
+            if (__kind) {
+                if (isPool?!(__kind&ST_STORAGE_POOL):!(__kind&ST_VALUE)) {
+                    x_assert_fail("wrong kind", __FILE__, __LINE__);
+                }
+                if (__kind & ST_DELETED) {
+                    x_assert_fail("wrong kind", __FILE__, __LINE__);
+                }
+            }
+            if (isPool) {
+                __kind = ST_STORAGE_POOL;
                 constcast(par)->addChildPool((CPtrToMe)this);
             } else {
-                x_assert_fail("wrong kind", __FILE__, __LINE__);
-            }
-
-            if (__kind & ST_DELETED) {
-                x_assert_fail("wrong kind", __FILE__, __LINE__);
+                __kind = ST_VALUE;
+                constcast(par)->addVariable(this);
             }
         } else {
-            xassert(__kind == def);
+            xassert(isPool ? (__kind&ST_STORAGE_POOL) : __kind&ST_VALUE);
         }
     } else {
         std::cout << "Warning  Storeable.assignParent(" << getKind()
