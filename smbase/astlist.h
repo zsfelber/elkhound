@@ -54,7 +54,7 @@ public:
   void assign(ASTList<T> const *src, bool move)           { list.assign(NN(src).list, move); }
 
   inline void assignParent(str::StoragePool const *pool0) {
-      Storeable::assignParent(pool0);
+      Storeable::assignParent(pool0, ST_CHILD);
       list.assignParent(pool0);
   }
 
