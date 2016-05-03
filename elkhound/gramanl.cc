@@ -18,6 +18,7 @@
 #include "genml.h"       // emitMLActionCode
 #include "util.h"
 #include "asthelp.h"
+#include "diff.h"
 
 #include <fstream>     // ofstream
 #include <stdlib.h>      // getenv
@@ -61,6 +62,48 @@ static bool const LALR1 = true;
 str::StoragePool gramanl_pool(DBG_INFO_ARG0);
 SourceLocManager * _mgr = new (gramanl_pool) SourceLocManager(gramanl_pool);
 SourceLocManager &mgr = *_mgr;
+GrammarAnalysis *_g0 = NULL;
+GrammarAnalysis *_g = NULL;
+GrammarAnalysis *_tot_g = NULL;
+Environment *_env0 = NULL;
+Environment *_env = NULL;
+Environment *_tot_env = NULL;
+
+int debugEverything() {
+    DEBUG_MEMORY_TREE(gramanl_pool,
+      if (_g0) {
+          s<<"g0:\n";
+          _g0->debugItm(s, 0);
+          s<<"\n";
+      }
+      if (_env0) {
+          s<<"env0:\n";
+          _env0->debugItm(s, 0);
+          s<<"\n";
+      }
+      if (_g) {
+          s<<"g:\n";
+          _g->debugItm(s, 0);
+          s<<"\n";
+      }
+      if (_env) {
+          s<<"env:\n";
+          _env->debugItm(s, 0);
+          s<<"\n";
+      }
+      if (_tot_g) {
+          s<<"tot_g:\n";
+          _tot_g->debugItm(s, 0);
+          s<<"\n";
+      }
+      if (_tot_env) {
+          s<<"tot_env:\n";
+          _tot_env->debugItm(s, 0                                                                                                                                                                                           );
+          s<<"\n";
+      }
+                      );
+    return 0;
+}
 
 #if !defined(NDEBUG)     // track unauthorized malloc's
   #define TRACK_MALLOC
@@ -982,15 +1025,15 @@ void ItemSet::writeGraph(ostream &os, GrammarAnalysis const &g) const
 
 
 // ------------------------ GrammarAnalysis --------------------
-GrammarAnalysis::GrammarAnalysis()
+GrammarAnalysis::GrammarAnalysis(DBG_INFO_FORMAL)
     :
-    Grammar(DBG_INFO_ARG0),
-    allNonterminals(DBG_INFO_ARG0),
-    allTerminals(DBG_INFO_ARG0),
-    allProductions(DBG_INFO_ARG0),
-    urNonterminals(DBG_INFO_ARG0),
-    urTerminals(DBG_INFO_ARG0),
-    urProductions(DBG_INFO_ARG0),
+    Grammar(DBG_INFO_ARG_FWD),
+    allNonterminals(DBG_INFO_ARG_FWD),
+    allTerminals(DBG_INFO_ARG_FWD),
+    allProductions(DBG_INFO_ARG_FWD),
+    urNonterminals(DBG_INFO_ARG_FWD),
+    urTerminals(DBG_INFO_ARG_FWD),
+    urProductions(DBG_INFO_ARG_FWD),
     codeHasTerm(0),
     derivable(NULL),
     indexedNonterms(NULL),
@@ -1003,7 +1046,7 @@ GrammarAnalysis::GrammarAnalysis()
     numProds(0),
     initialized(false),
     nextItemSetId(0),    // [ASU] starts at 0 too
-    itemSets(DBG_INFO_ARG0),
+    itemSets(DBG_INFO_ARG_FWD),
     startState(NULL),
     cyclic(false),
     symOfInterest(NULL),
@@ -1013,13 +1056,14 @@ GrammarAnalysis::GrammarAnalysis()
    __store_size = str::getStoreSize(sizeof(GrammarAnalysis));
 }
 
-GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(DBG_INFO_ARG0_FIRST  cpy),
-    allNonterminals(DBG_INFO_ARG0_FIRST  cpy.allNonterminals),
-    allTerminals(DBG_INFO_ARG0_FIRST  cpy.allTerminals),
-    allProductions(DBG_INFO_ARG0_FIRST  cpy.allProductions),
-    urNonterminals(DBG_INFO_ARG0_FIRST  cpy.urNonterminals),
-    urTerminals(DBG_INFO_ARG0_FIRST  cpy.urTerminals),
-    urProductions(DBG_INFO_ARG0_FIRST  cpy.urProductions),
+GrammarAnalysis::GrammarAnalysis(DBG_INFO_FORMAL_FIRST  GrammarAnalysis const &cpy) :
+    Grammar(DBG_INFO_ARG_FWD_FIRST  cpy),
+    allNonterminals(DBG_INFO_ARG_FWD_FIRST  cpy.allNonterminals),
+    allTerminals(DBG_INFO_ARG_FWD_FIRST  cpy.allTerminals),
+    allProductions(DBG_INFO_ARG_FWD_FIRST  cpy.allProductions),
+    urNonterminals(DBG_INFO_ARG_FWD_FIRST  cpy.urNonterminals),
+    urTerminals(DBG_INFO_ARG_FWD_FIRST  cpy.urTerminals),
+    urProductions(DBG_INFO_ARG_FWD_FIRST  cpy.urProductions),
     codeHasTerm(0),
     derivable(NULL),
     indexedNonterms(NULL),
@@ -1032,7 +1076,69 @@ GrammarAnalysis::GrammarAnalysis(GrammarAnalysis const &cpy) : Grammar(DBG_INFO_
     numProds(0),
     initialized(false),
     nextItemSetId(0),    // [ASU] starts at 0 too
-    itemSets(DBG_INFO_ARG0),
+    itemSets(DBG_INFO_ARG_FWD),
+    startState(NULL),
+    cyclic(false),
+    symOfInterest(NULL),
+    errors(0),
+    tables(NULL),sr(0),rr(0)
+{
+}
+
+
+
+GrammarAnalysis::GrammarAnalysis(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool)
+    :
+    Grammar(DBG_INFO_ARG_FWD_FIRST  pool),
+    allNonterminals(DBG_INFO_ARG_FWD_FIRST  *this),
+    allTerminals(DBG_INFO_ARG_FWD_FIRST  *this),
+    allProductions(DBG_INFO_ARG_FWD_FIRST  *this),
+    urNonterminals(DBG_INFO_ARG_FWD_FIRST  *this),
+    urTerminals(DBG_INFO_ARG_FWD_FIRST  *this),
+    urProductions(DBG_INFO_ARG_FWD_FIRST  *this),
+    codeHasTerm(0),
+    derivable(NULL),
+    indexedNonterms(NULL),
+    indexedTerms(NULL),
+    numNonterms(0),
+    numTerms(0),
+    productionsByLHS(NULL),
+    dottedProds(NULL),
+    indexedProds(NULL),
+    numProds(0),
+    initialized(false),
+    nextItemSetId(0),    // [ASU] starts at 0 too
+    itemSets(DBG_INFO_ARG_FWD_FIRST  *this),
+    startState(NULL),
+    cyclic(false),
+    symOfInterest(NULL),
+    errors(0),
+    tables(NULL),sr(0),rr(0)
+{
+   __store_size = str::getStoreSize(sizeof(GrammarAnalysis));
+}
+
+GrammarAnalysis::GrammarAnalysis(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, GrammarAnalysis const &cpy) :
+    Grammar(DBG_INFO_ARG_FWD_FIRST  pool, cpy),
+    allNonterminals(DBG_INFO_ARG_FWD_FIRST  cpy.allNonterminals),
+    allTerminals(DBG_INFO_ARG_FWD_FIRST  cpy.allTerminals),
+    allProductions(DBG_INFO_ARG_FWD_FIRST  cpy.allProductions),
+    urNonterminals(DBG_INFO_ARG_FWD_FIRST  cpy.urNonterminals),
+    urTerminals(DBG_INFO_ARG_FWD_FIRST  cpy.urTerminals),
+    urProductions(DBG_INFO_ARG_FWD_FIRST  cpy.urProductions),
+    codeHasTerm(0),
+    derivable(NULL),
+    indexedNonterms(NULL),
+    indexedTerms(NULL),
+    numNonterms(0),
+    numTerms(0),
+    productionsByLHS(NULL),
+    dottedProds(NULL),
+    indexedProds(NULL),
+    numProds(0),
+    initialized(false),
+    nextItemSetId(0),    // [ASU] starts at 0 too
+    itemSets(DBG_INFO_ARG_FWD),
     startState(NULL),
     cyclic(false),
     symOfInterest(NULL),
@@ -4127,7 +4233,7 @@ void pretendUsed(...)
 
 void GrammarAnalysis::exampleGrammar()
 {
-  Environment env(*this);
+  Environment env(DBG_INFO_ARG0_FIRST  *this);
   // at one time I was using this to verify my LR item set
   // construction code; this function isn't even called anymore..
   readGrammarFile(env, "examples/asu419.gr");
@@ -5393,7 +5499,10 @@ int inner_entry(int argc, char **argv)
     prefix0 = replace(argv[0], ".gr", "");
   }
 
-  GrammarAnalysis g0;
+  _g0 = new (gramanl_pool) GrammarAnalysis(DBG_INFO_ARG0_FIRST  gramanl_pool);
+  Owner<GrammarAnalysis> __g0(_g0);
+  GrammarAnalysis &g0 = *_g0;
+
   if (useML) {
     g0.targetLang = "OCaml";
   }
@@ -5401,12 +5510,18 @@ int inner_entry(int argc, char **argv)
   g0.prefix0 = prefix0;
 
   // default, empty environment
-  Environment env0(g0);
+  _env0 = new (gramanl_pool) Environment(DBG_INFO_ARG0_FIRST  gramanl_pool, g0);
+  Owner<Environment> __env0(_env0);
+  Environment &env0 = *_env0;
+  std::cout<<"1."<<std::endl;
+  debugEverything();
 
   // parse the grammar
   string grammarFname = argv[0];
   SHIFT;
   Owner<GrammarAST> ast(parseGrammarFile(env0, grammarFname, useML));
+  std::cout<<"2."<<std::endl;
+  debugEverything();
 
   // parse and merge its extension modules
   while (argv[0]) {
@@ -5416,6 +5531,8 @@ int inner_entry(int argc, char **argv)
     mergeGrammar(ast, ext);
 
     SHIFT;
+    std::cout<<"3."<<std::endl;
+    debugEverything();
   }
 
   TermDecl const * eof;
@@ -5469,6 +5586,8 @@ int inner_entry(int argc, char **argv)
   g0.allNonterminals.concat(g0.nonterminals);
   g0.allProductions.concat(g0.productions);
 
+  std::cout<<"4."<<std::endl;
+  debugEverything();
 
   do {
 
@@ -5499,11 +5618,24 @@ int inner_entry(int argc, char **argv)
 
       // parse the AST into a Grammar
       //g0.itemSets
-      GrammarAnalysis g(g0);
-      Environment env(env0, g);
+      _g = new (gramanl_pool) GrammarAnalysis(DBG_INFO_ARG0_FIRST  gramanl_pool, g0);
+      Owner<GrammarAnalysis> __g(_g);
+      GrammarAnalysis &g = *_g;
+      std::cout<<"5."<<std::endl;
+      debugEverything();
+
+      _env = new (gramanl_pool) Environment(DBG_INFO_ARG0_FIRST  gramanl_pool, env0, g);
+      Owner<Environment> __env(_env);
+      Environment &env = *_env;
+      std::cout<<"6."<<std::endl;
+      debugEverything();
 
       reset(g);
       analyzse(env, ast, eof, useML, pref, prefix0, prefix, multiIndex, true);
+
+      std::cout<<"7."<<std::endl;
+      debugEverything();
+
       maxSr=max(maxSr, g.sr) ;
       maxRr=max(maxRr, g.rr);
 
@@ -5521,6 +5653,8 @@ int inner_entry(int argc, char **argv)
 
         try {
           emitActionCode(g, hFname, ccFname, grammarFname);
+          std::cout<<"8."<<std::endl;
+          debugEverything();
         }
         catch (...) {
           if (!leavePartialOutputs) {
@@ -5544,6 +5678,8 @@ int inner_entry(int argc, char **argv)
 
         try {
           emitMLActionCode(g, mliFname, mlFname, grammarFname);
+          std::cout<<"8camil."<<std::endl;
+          debugEverything();
         }
         catch (...) {
           if (!leavePartialOutputs) {
@@ -5583,8 +5719,12 @@ int inner_entry(int argc, char **argv)
 
   traceProgress() << "emitting C++ code to " << ccFname
                   << " and " << hFname << " ...\n";
+  std::cout<<"9."<<std::endl;
+  debugEverything();
 
   emitCommon(env0, prefix0, bufHead0, bufConsBase0, bufHeadFun0, hFname, ccFname, grammarFname);
+  std::cout<<"10."<<std::endl;
+  debugEverything();
 
   if (ast->childrenNT->productions.count() > 1) {
       string prefix(DBG_INFO_ARG0), pref(DBG_INFO_ARG0);
@@ -5593,6 +5733,8 @@ int inner_entry(int argc, char **argv)
       traceRemoveAll();
 
       std::cout << std::endl << "Total : " << std::endl;
+      std::cout<<"11."<<std::endl;
+      debugEverything();
 
       FOREACH_ASTLIST(AbstractProdDecl, ast->childrenNT->productions, iter) {
           AbstractProdDecl * prod = constcast(iter.data());
@@ -5613,26 +5755,46 @@ int inner_entry(int argc, char **argv)
 
       LocString const * grType = NULL;
       std::string name, usr;
-      GrammarAnalysis tot_g(g0);
-      Environment tot_env(env0, tot_g);
+
+      _tot_g = new (gramanl_pool) GrammarAnalysis(DBG_INFO_ARG0_FIRST  gramanl_pool, g0);
+      Owner<GrammarAnalysis> __tot_g(_tot_g);
+      GrammarAnalysis &tot_g = *_tot_g;
+      std::cout<<"12."<<std::endl;
+      debugEverything();
+
+      _tot_env = new (gramanl_pool) Environment(DBG_INFO_ARG0_FIRST  gramanl_pool, env0, tot_g);
+      Owner<Environment> __tot_env(_tot_env);
+      Environment &tot_env = *_tot_env;
+      std::cout<<"13."<<std::endl;
+      debugEverything();
+
+
       constcast(tot_env.startSymbol) = NULL;
       tot_env.g.startSymbol = NULL;
+      std::cout<<"14."<<std::endl;
+      debugEverything();
 
       reset(tot_g);
 
       //Nonterminal * theStart =
       complementNonterm(tot_env, ast, ast->firstNT, 0, eof);
+      std::cout<<"15."<<std::endl;
+      debugEverything();
 
       multiIndex = 0;
       synthesizeStartRule(tot_env, ast, eof, multiIndex, grType, name, usr);
       xassert (multiIndex == 1);
       xassert (!ast->earlyStartNT);
       xassert (ast->childrenNT);
+      std::cout<<"16."<<std::endl;
+      debugEverything();
 
       analyzse(tot_env, ast, eof, useML, pref, prefix0, prefix, multiIndex, false);
 
       reportUnexpected(maxSr, tot_g.expectedSR, "max branch shift/reduce conflicts");
       reportUnexpected(maxRr, tot_g.expectedRR, "max branch reduce/reduce conflicts");
+      std::cout<<"17."<<std::endl;
+      debugEverything();
   }
 
   ast.del();              // done with it

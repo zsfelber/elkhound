@@ -395,7 +395,10 @@ void stringBuilder::readdelim(std::istream &is, char const *delim)
   string toString(type val)   \
   {                           \
     return stringc << val;    \
-  }
+  }                           \
+  void debugString(std::ostream &os, type i, int level) { \
+    os <<  i;                                             \
+  }                                                       \
 
 TOSTRING(int)
 TOSTRING(unsigned)

@@ -395,6 +395,20 @@ BaseClass *BaseClass::clone(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool,
 
 #include "strutil.h"      // stringToupper
 
+void debugString(std::ostream& os, AccessCtl acc, int level) {
+    char const *arr[] = {
+      "public",
+      "private",
+      "protected",
+      "ctor",
+      "dtor",
+      "pure_virtual"
+    };
+    STATIC_ASSERT(TABLESIZE(arr) == NUM_ACCESSCTLS);
+    xassert((unsigned)acc < NUM_ACCESSCTLS);
+    os << arr[acc];
+}
+
 string toString(AccessCtl acc)
 {
   char const *arr[] = {

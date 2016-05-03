@@ -623,8 +623,10 @@ private:    // funcs
                          LRItem const *item, TerminalSet &scratchSet);
 
 public:	    // funcs
-  GrammarAnalysis();
-  GrammarAnalysis(GrammarAnalysis const &cpy);
+  GrammarAnalysis(DBG_INFO_FORMAL);
+  GrammarAnalysis(DBG_INFO_FORMAL_FIRST  GrammarAnalysis const &cpy);
+  GrammarAnalysis(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool);
+  GrammarAnalysis(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, GrammarAnalysis const &cpy);
   ~GrammarAnalysis();
 
   // access symbols by index

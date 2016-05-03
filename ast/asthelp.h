@@ -175,19 +175,19 @@
 
 
 // ------------------- debug print helpers -----------------
-std::ostream &ind(std::ostream &os, int indent);
+//std::ostream &ind(std::ostream &os, int indent);
 
 // I occasionally want to see addresses, so I just throw this
 // switch and recompile..
 #if 1
   // headers w/o addresses
   #define PRINT_HEADER(subtreeName, clsname)                 \
-    str::ind(os, indent) << (subtreeName?subtreeName:"") << " = " #clsname ":\n";  \
+    str::ind(os, indent) << (subtreeName?subtreeName:"") << " = " #clsname ":";  \
     indent += 2   /* user ; */
 #else
   // headers w/ addresses
   #define PRINT_HEADER(subtreeName, clsname)                                           \
-    str::ind(os, indent) << (subtreeName?subtreeName:"") << " = " #clsname " (" << ((void*)this) << "):\n";  \
+    str::ind(os, indent) << (subtreeName?subtreeName:"") << " = " #clsname " (" << ((void*)this) << "):";  \
     indent += 2   /* user ; */
 #endif
 
@@ -215,7 +215,7 @@ template <class T>
 void debugPrintList(ASTList<T> const &list, char const *name,
                     std::ostream &os, int indent)
 {
-  str::ind(os, indent) << name << ":\n";
+  str::ind(os, indent) << name << ":";
   int ct=0;
   {
     FOREACH_ASTLIST(T, list, iter) {
@@ -239,7 +239,7 @@ template <class T>
 void debugPrintFakeList(FakeList<T> const *list, char const *name,
                         std::ostream &os, int indent)
 {
-  str::ind(os, indent) << name << ":\n";
+  str::ind(os, indent) << name << ":";
   int ct=0;
   {
     FAKELIST_FOREACH(T, list, iter) {
@@ -258,16 +258,16 @@ void debugPrintFakeList(FakeList<T> const *list, char const *name,
     (tree)->debugPrint(os, indent, #tree);      \
   }                                             \
   else {                                        \
-    str::ind(os, indent) << #tree << " is null\n";   \
+    str::ind(os, indent) << #tree << " is null";   \
   } /* user ; (optional) */
 
 
 #define PRINT_GENERIC(var) \
-  str::ind(os, indent) << #var << " = " << ::toString(var) << "\n"   /* user ; */
+  str::ind(os, indent) << #var << " = "; debugString(os, var, indent+1); os << ""   /* user ; */
 
 
 #define PRINT_BOOL(var) \
-  str::ind(os, indent) << #var << " = " << (var? "true" : "false") << "\n"   /* user ; */
+  str::ind(os, indent) << #var << " = " << (var? "true" : "false") << ""   /* user ; */
 
 
 // ------------------- xml print helpers -----------------
@@ -275,12 +275,12 @@ void debugPrintFakeList(FakeList<T> const *list, char const *name,
 //  std::ostream &ind(std::ostream &os, int indent);
 
 #define XMLPRINT_HEADER(clsname)                            \
-  str::ind(os, indent) << "<object type=\"" << #clsname "\">\n"; \
+  str::ind(os, indent) << "<object type=\"" << #clsname "\">"; \
   indent += 2   /* user ; */                                \
 
 #define XMLPRINT_FOOTER(clsname)                            \
   indent -= 2;                                              \
-  str::ind(os, indent) << "</object>\n" /* user ; */
+  str::ind(os, indent) << "</object>" /* user ; */
 
 #define XMLPRINT_STRING(var)                                \
   xmlPrintStr(var, #var, os, indent) /* user ; */
@@ -296,13 +296,13 @@ template <class T>
 void xmlPrintList(ASTList<T> const &list, char const *name,
                   std::ostream &os, int indent)
 {
-  ind(os, indent) << "<member type=list name=\"" << name << "\">\n";
+  str::ind(os, indent) << "<member type=list name=\"" << name << "\">";
   {
     FOREACH_ASTLIST(T, list, iter) {
       iter.data()->xmlPrint(os, indent+2);
     }
   }
-  ind(os, indent) << "</member>\n";
+  str::ind(os, indent) << "</member>";
 }
 
 // provide explicit specialization for strings
@@ -319,13 +319,13 @@ template <class T>
 void xmlPrintFakeList(FakeList<T> const *list, char const *name,
                         std::ostream &os, int indent)
 {
-  ind(os, indent) << "<member type=fakelist name=\"" << name << "\">\n";
+  str::ind(os, indent) << "<member type=fakelist name=\"" << name << "\">";
   {
     FAKELIST_FOREACH(T, list, iter) {
       iter->xmlPrint(os, indent+2);
     }
   }
-  ind(os, indent) << "</member>\n";
+  str::ind(os, indent) << "</member>";
 }
 
 // note that we never make FakeLists of strings, since of course
@@ -338,21 +338,21 @@ void xmlPrintFakeList(FakeList<T> const *list, char const *name,
   }                                                    \
   else {                                               \
     xassert(0); /* dsw:not sure what to do here yet */ \
-    ind(os, indent) << #tree << " is null\n";          \
+    str::ind(os, indent) << #tree << " is null";          \
   } /* user ; (optional) */
 
 
 // dsw: there's no way this can work in general
 #define XMLPRINT_GENERIC(var)                                                         \
-  ind(os, indent) << "<member type=generic name=\"" << #var << "\">\n";               \
-  ind(os, indent+2) << "<object type=generic val=\"" << ::toString(var) << "\" />\n"; \
-  ind(os, indent) << "</member>\n"   /* user ; */
+  str::ind(os, indent) << "<member type=generic name=\"" << #var << "\">";               \
+  str::ind(os, indent+2) << "<object type=generic val=\"" << ::toString(var) << "\" />"; \
+  str::ind(os, indent) << "</member>"   /* user ; */
 
 
 #define XMLPRINT_BOOL(var)                                                                 \
-  ind(os, indent) << "<member type=bool name=\"" << #var << "\">\n";                       \
-  ind(os, indent+2) << "<object type=bool val=\"" << (var? "true" : "false") << "\" />\n"; \
-  ind(os, indent) << "</member>\n"   /* user ; */
+  str::ind(os, indent) << "<member type=bool name=\"" << #var << "\">";                       \
+  str::ind(os, indent+2) << "<object type=bool val=\"" << (var? "true" : "false") << "\" />"; \
+  str::ind(os, indent) << "</member>"   /* user ; */
 
   
 // print a pointer address as an id, for example "FL0x12345678";

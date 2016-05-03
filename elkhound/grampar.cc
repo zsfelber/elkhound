@@ -28,8 +28,9 @@ inline bool isVoid(string const * tp) {
 
 
 // ------------------------- Environment ------------------------
-Environment::Environment(Grammar &G)
-  : g(G),
+Environment::Environment(DBG_INFO_FORMAL_FIRST  Grammar &G)
+  : Storeable(DBG_INFO_ARG0),
+    g(G),
     prevEnv(NULL),
     nontermDecls(),
     buffer(new EnvironmentBuffer),
@@ -44,8 +45,9 @@ Environment::Environment(Grammar &G)
     bufCc(buffer->bufCc)
 {}
 
-Environment::Environment(Environment &prev)
-  : g(prev.g),
+Environment::Environment(DBG_INFO_FORMAL_FIRST  Environment &prev)
+  : Storeable(DBG_INFO_ARG0),
+    g(prev.g),
     prevEnv(&prev),
     nontermDecls(prev.nontermDecls),
     buffer(0),
@@ -60,8 +62,9 @@ Environment::Environment(Environment &prev)
     bufCc(prev.bufCc)
 {}
 
-Environment::Environment(Environment &prev, Grammar &g)
-  : g(g),
+Environment::Environment(DBG_INFO_FORMAL_FIRST  Environment &prev, Grammar &g)
+  : Storeable(DBG_INFO_ARG0),
+    g(g),
     prevEnv(&prev),
     nontermDecls(prev.nontermDecls),
     buffer(0),
@@ -75,6 +78,60 @@ Environment::Environment(Environment &prev, Grammar &g)
     bufHeadFun(prev.bufHeadFun),
     bufCc(prev.bufCc)
 {}
+
+
+
+Environment::Environment(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Grammar &G)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool),
+    g(G),
+    prevEnv(NULL),
+    nontermDecls(),
+    buffer(new EnvironmentBuffer),
+    errors(buffer->errors),
+    startSymbol(buffer->startSymbol),
+    startLexer(buffer->startLexer),
+    parserFuncs(buffer->parserFuncs),
+    bufIncl(buffer->bufIncl),
+    bufHead(buffer->bufHead),
+    bufConsBase(buffer->bufConsBase),
+    bufHeadFun(buffer->bufHeadFun),
+    bufCc(buffer->bufCc)
+{}
+
+Environment::Environment(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Environment &prev)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool),
+    g(prev.g),
+    prevEnv(&prev),
+    nontermDecls(prev.nontermDecls),
+    buffer(0),
+    errors(prev.errors),
+    startSymbol(prev.startSymbol),     // copy parent's 'errors' reference
+    startLexer(prev.startLexer),
+    parserFuncs(prev.parserFuncs),
+    bufIncl(prev.bufIncl),
+    bufHead(prev.bufHead),
+    bufConsBase(prev.bufConsBase),
+    bufHeadFun(prev.bufHeadFun),
+    bufCc(prev.bufCc)
+{}
+
+Environment::Environment(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Environment &prev, Grammar &g)
+  : Storeable(DBG_INFO_ARG0_FIRST  pool),
+    g(g),
+    prevEnv(&prev),
+    nontermDecls(prev.nontermDecls),
+    buffer(0),
+    errors(prev.errors),
+    startSymbol(prev.startSymbol),     // copy parent's 'errors' reference
+    startLexer(prev.startLexer),
+    parserFuncs(prev.parserFuncs),
+    bufIncl(prev.bufIncl),
+    bufHead(prev.bufHead),
+    bufConsBase(prev.bufConsBase),
+    bufHeadFun(prev.bufHeadFun),
+    bufCc(prev.bufCc)
+{}
+
 
 Environment::~Environment()
 {
@@ -407,7 +464,7 @@ void astParseGrammar(Environment &env, GrammarAST *ast)
 
       // new environment since it can contain a grouping construct
       // (at this very moment it actually can't because there is no syntax..)
-      Environment newEnv(env);
+      Environment newEnv(DBG_INFO_ARG0_FIRST  env);
 
       // parse it
       astParseNonterm(newEnv, nt, ni++);
@@ -848,7 +905,7 @@ Nonterminal * complementNonterm(Environment &env, GrammarAST *ast, TF_nonterm * 
 
     // new environment since it can contain a grouping construct
     // (at this very moment it actually can't because there is no syntax..)
-    Environment newEnv(env);
+    Environment newEnv(DBG_INFO_ARG0_FIRST  env);
     astParseNonterm(newEnv, nt, ntIndex);
     addDefaultTypesActions(env, ast, result, eof);
     return result;

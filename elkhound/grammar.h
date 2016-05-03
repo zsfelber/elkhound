@@ -601,6 +601,23 @@ public:     // funcs
 
       pool.assigned(cpy.pool, str::StoragePool::Cp_All);
   }
+  template <typename G>
+  inline Grammar(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, G const &cpy) :
+      Storeable(DBG_INFO_ARG0_FIRST  pool, true),
+      pool(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      nonterminals(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      terminals(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      productions(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      prefix0(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      pref(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      verbatim(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      actionClasses(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      implVerbatim(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr),
+      targetLang(DBG_INFO_ARG0_FIRST  StoreAlreadyConstr) {
+
+      assign(cpy);
+      this->pool.assigned(cpy.pool, str::StoragePool::Cp_All);
+  }
   ~Grammar();
 
   // read/write as binary file

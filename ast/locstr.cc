@@ -93,6 +93,14 @@ rostring toString(LocString const *s)
   return s->str;
 }
 
+void debugString(std::ostream &os, LocString const &s, int level) {
+  os<<s.str;
+}
+
+void debugString(std::ostream &os, LocString const *s, int level) {
+  os<<s->str;
+}
+
 
 string toXml(LocString op)
 {

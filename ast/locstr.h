@@ -68,6 +68,8 @@ public:    // funcs
 // yields simply the string, no location info
 rostring toString(LocString const &s);
 rostring toString(LocString const *s);
+void debugString(std::ostream &os, LocString const &s, int level);
+void debugString(std::ostream &os, LocString const *s, int level);
 
 // xml stuff...
 string toXml(LocString op);

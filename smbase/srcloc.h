@@ -327,10 +327,10 @@ public:      // funcs
   {
       str::ind(os,indent)<< "SourceLocManager{"<<std::endl;
       str::ind(os,indent)<< "files:";
-      files.debugPrint(os);
+      files.debugPrint(os, indent+1);
       os <<std::endl;
       str::ind(os,indent)<< "statics:";
-      statics.debugPrint(os);
+      statics.debugPrint(os, indent+1);
       os <<std::endl;
       str::ind(os,indent)<< "nextLoc:"<<nextLoc<<" nextStaticLoc:"<<nextStaticLoc;
       os <<"}"<<std::endl;

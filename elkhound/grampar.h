@@ -83,7 +83,7 @@ struct EnvironmentBuffer {
 // while walking the AST, we do a kind of recursive evaluation
 // to handle things like inherited actions and self-updating
 // (eval'd at grammar parse time) action expressions
-class Environment {
+class Environment : public str::Storeable {
 
 public:      // data
   // grammar we're playing with (stored here because it's
@@ -108,9 +108,12 @@ public:      // data
   std::stringstream &bufIncl, &bufHead, &bufConsBase, &bufHeadFun, &bufCc;
 
 public:
-  Environment(Grammar &g);             // new env
-  Environment(Environment &prevEnv);   // nested env
-  Environment(Environment &prevEnv, Grammar &g);   // nested env
+  Environment(DBG_INFO_FORMAL_FIRST  Grammar &g);             // new env
+  Environment(DBG_INFO_FORMAL_FIRST  Environment &prevEnv);   // nested env
+  Environment(DBG_INFO_FORMAL_FIRST  Environment &prevEnv, Grammar &g);   // nested env
+  Environment(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Grammar &g);             // new env
+  Environment(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Environment &prevEnv);   // nested env
+  Environment(DBG_INFO_FORMAL_FIRST  str::StoragePool &pool, Environment &prevEnv, Grammar &g);   // nested env
   ~Environment();
 };
 

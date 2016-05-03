@@ -181,7 +181,7 @@ public:	       // funcs
 
   inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
-      str::ind(os,indent)<<"str:"<< s;
+      os<<"str:"<< s;
   }
 };
 
@@ -357,7 +357,12 @@ string toString(char c);
 string toString(long i);
 string toString(char const *str);
 string toString(float f);
-
+void debugString(std::ostream &os, int i, int level);
+void debugString(std::ostream &os, unsigned i, int level);
+void debugString(std::ostream &os, char i, int level);
+void debugString(std::ostream &os, long i, int level);
+void debugString(std::ostream &os, char const * i, int level);
+void debugString(std::ostream &os, float i, int level);
 
 // printf-like construction of a string; often very convenient, since
 // you can use any of the formatting characters (like %X) that your

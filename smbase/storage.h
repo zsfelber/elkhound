@@ -250,6 +250,7 @@ inline uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin,
 
 inline std::ostream &ind(std::ostream &os, int indent)
 {
+  os << "\n";
   while (indent--) {
     os << " ";
   }
@@ -512,7 +513,7 @@ public:
    }
 
 
-   void debugItm(std::ostream& os) const;
+   void debugItm(std::ostream& os, int indent) const;
 
 #ifdef DEBUG
    inline char const * getObjectName() const {
@@ -1843,7 +1844,7 @@ public:
 
    Storeable::debugPrint;
 
-   void debugVar(std::ostream& os, DataPtr& var, bool ptr) const {
+   void debugVar(std::ostream& os, DataPtr& var, bool ptr, int indent) const {
        os<<" ";
        StoragePool const *p;
        if (contains(var)) {
@@ -1865,12 +1866,12 @@ public:
        }
        if (ptr) os<<(void*)&var<<":";
        os<<(void*)var<<":";
-       var->debugPrint(os);
+       var->debugPrint(os, indent+1);
    }
 
-   void debugPtr(std::ostream& os, ExternalPtr ptr) const {
+   void debugPtr(std::ostream& os, ExternalPtr ptr, int indent) const {
        if (*ptr) {
-           debugVar(os, *ptr, true);
+           debugVar(os, *ptr, true, indent);
        } else {
            os<<" ";
            os<<(void*)ptr<<":NULL";
@@ -1899,14 +1900,13 @@ public:
          }
          //os<<std::dec;
 
-         os<<":{\n";
+         os<<":{";
          size_t* chPoolsFrom = childpools;
          size_t* chPoolsTo = childpools+chplslength;
          for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
              PtrToMe ptr = (PtrToMe)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *chPoolsFrom);
              if (ptr) {
                  ptr->debugPrint(os, indent+2);
-                 os<<"\n";
              }
          }
 
@@ -1915,9 +1915,8 @@ public:
              for (iterator it=begin(); it != -1; it++) {
                  Storeable *cur = *it;
                  os<<" ";
-                 cur->debugItm(os);
+                 cur->debugItm(os, indent+1);
              }
-             os<<"\n";
          }
 
          if (intvarslength) {
@@ -1927,10 +1926,9 @@ public:
              for (; intVarsFrom<intVarsTo; intVarsFrom++) {
                  DataPtr var = (DataPtr)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *intVarsFrom);
                  if (var) {
-                     debugVar(os, var, false);
+                     debugVar(os, var, false, indent+1);
                  }
              }
-             os<<"\n";
          }
 
          if (intptrslength) {
@@ -1940,10 +1938,9 @@ public:
              for (; intPointersFrom<intPointersTo; intPointersFrom++) {
                  ExternalPtr ptr = (ExternalPtr)decodeDeltaPtr(memory,  DBG_INFO_FWD_COM(memory+memlength) *intPointersFrom);
                  if (ptr) {
-                     debugPtr(os, ptr);
+                     debugPtr(os, ptr, indent+1);
                  }
              }
-             os<<"\n";
          }
 
          if (extptrslength) {
@@ -1953,10 +1950,9 @@ public:
              for (; extPointersFrom<extPointersTo; extPointersFrom++) {
                  ExternalPtr ptr = *extPointersFrom;
                  if (ptr) {
-                     debugPtr(os, ptr);
+                     debugPtr(os, ptr, indent+1);
                  }
              }
-             os<<"\n";
          }
 
          ind(os,indent)<< "}"<<std::flush;
@@ -2243,7 +2239,7 @@ inline void Storeable::operator delete[] (void* _ptr) {
     // else Nothing to do here, everything is in ~Storeable
 }
 
-inline void Storeable::debugItm(std::ostream& os) const {
+inline void Storeable::debugItm(std::ostream& os, int indent) const {
     if (__kind & ST_VALUE) {
     } else if (__kind & ST_STORAGE_POOL) {
         os<<"pool:";
@@ -2261,7 +2257,7 @@ inline void Storeable::debugItm(std::ostream& os) const {
         os<<"del:"<<(void*)this;
     } else if (__kind & ST_VALUE) {
         os<<(void*)this<<":";
-        debugPrint(os);
+        debugPrint(os, indent);
     } else {
         os<<(void*)this;
     }
@@ -2272,6 +2268,10 @@ inline void operator<<(std::ostream & os, Storeable const & st) {
 }
 
 }// namespace str
+
+inline void debugString(std::ostream & os, str::Storeable const & st, int level) {
+    st.debugPrint(os, level);
+}
 
 inline std::string toString(str::Storeable const & st) {
   std::stringstream s;

@@ -252,6 +252,7 @@ public:      // funcs
     NUM_ACCESSCTLS
   };
 
+  void debugString(std::ostream& os, AccessCtl acc, int level);
   // map the enum value to a string like "public"
   string toString(AccessCtl acc);      // defined in ast.cc
 

@@ -227,9 +227,9 @@ outputCond([[[m4_dnl    // sobjlist
 
   Storeable::debugPrint;
   outputCond([[[m4_dnl      // sobjlist
-  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { str::ind(os,indent)<<"sobj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os); }
+  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { str::ind(os,indent)<<"sobj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent); }
   ]]], [[[m4_dnl            // objlist
-  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { str::ind(os,indent)<<"obj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os); }
+  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { str::ind(os,indent)<<"obj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent); }
   ]]])m4_dnl
 };
 

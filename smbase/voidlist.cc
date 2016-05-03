@@ -876,7 +876,8 @@ void VoidList::debugPrint(std::ostream& os, int indent, char const * subtreeName
   os << "{";
   for (VoidListIter iter(*this); !iter.isDone(); iter.adv()) {
     if (iter.data()) {
-        os<<" "<< *iter.data();
+        os<<" ";
+        iter.data()->debugPrint(os, indent+1);
     } else {
         os<<" NULL";
     }
