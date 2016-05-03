@@ -1,6 +1,8 @@
 // fakelist.h            see license.txt for copyright and terms of use
 // headerless list of nodes where each node has a 'next' field
 
+#include "storage.h"
+
 #ifndef FAKELIST_H
 #define FAKELIST_H
 
@@ -28,7 +30,7 @@
 class Some_undefined_class;
 
 template <class T>
-class FakeList {
+class FakeList : T {
 private:
   // you can't create or delete one of these
   FakeList();
@@ -45,6 +47,8 @@ public:
   // this is as much of a constructor as there is
   static FakeList<T> *makeList(T *node) { return (FakeList<T>*)node; }
   static FakeList<T> *emptyList()       { return NULL; }
+
+  T::isDeleted;
 
   // this will deallocate all the nodes in the list; the list itself
   // is, therefore, also deallocated and should not be used after this

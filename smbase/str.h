@@ -181,7 +181,7 @@ public:	       // funcs
 
   inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
-      os<<"str:"<< s;
+      os<<"str:"<< (s?s:"#null");
   }
 };
 

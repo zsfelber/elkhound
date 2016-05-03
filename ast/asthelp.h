@@ -215,6 +215,7 @@ template <class T>
 void debugPrintList(ASTList<T> const &list, char const *name,
                     std::ostream &os, int indent)
 {
+  if (indent > DEBUG_MAX_IND || list.isDeleted()) { str::ind(os,indent)<< "name"<<(void*)&list<<"..."; return; }
   str::ind(os, indent) << name << ":";
   int ct=0;
   {
@@ -239,6 +240,7 @@ template <class T>
 void debugPrintFakeList(FakeList<T> const *list, char const *name,
                         std::ostream &os, int indent)
 {
+  if (indent > DEBUG_MAX_IND || !list || list->isDeleted()) { str::ind(os,indent)<< "name"<<(void*)list<<"..."; return; }
   str::ind(os, indent) << name << ":";
   int ct=0;
   {
@@ -296,6 +298,7 @@ template <class T>
 void xmlPrintList(ASTList<T> const &list, char const *name,
                   std::ostream &os, int indent)
 {
+  if (indent > DEBUG_MAX_IND || list.isDeleted()) { str::ind(os,indent)<< "name"<<(void*)&list<<"..."; return; }
   str::ind(os, indent) << "<member type=list name=\"" << name << "\">";
   {
     FOREACH_ASTLIST(T, list, iter) {
@@ -319,6 +322,7 @@ template <class T>
 void xmlPrintFakeList(FakeList<T> const *list, char const *name,
                         std::ostream &os, int indent)
 {
+  if (indent > DEBUG_MAX_IND || !list || list->isDeleted()) { str::ind(os,indent)<< "name"<<(void*)list<<"..."; return; }
   str::ind(os, indent) << "<member type=fakelist name=\"" << name << "\">";
   {
     FAKELIST_FOREACH(T, list, iter) {

@@ -27,6 +27,8 @@ class VoidTailList;
 class VoidNode;
 class GrammarAnalysis;
 
+#define DEBUG_MAX_IND 25
+
 #define S1(x) #x
 #define S2(x) S1(x)
 #define __FILE_LINE__ __FILE__ " : " S2(__LINE__)
@@ -250,10 +252,10 @@ inline uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin,
 
 inline std::ostream &ind(std::ostream &os, int indent)
 {
+  xassert(indent <= 110);
+  char const *ib = "                                                                                                              ";
   os << "\n";
-  while (indent--) {
-    os << " ";
-  }
+  os << ib+(110-indent);
   return os;
 }
 
@@ -512,6 +514,9 @@ public:
    {
    }
 
+   inline bool isDeleted() const {
+       return __kind & ST_DELETED;
+   }
 
    void debugItm(std::ostream& os, int indent) const;
 
@@ -1866,6 +1871,9 @@ public:
        }
        if (ptr) os<<(void*)&var<<":";
        os<<(void*)var<<":";
+
+       if (indent > DEBUG_MAX_IND || isDeleted()) { os<<"..."; return; }
+
        var->debugPrint(os, indent+1);
    }
 
@@ -1880,8 +1888,8 @@ public:
 
    void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const
    {
-     if (indent > 100) {
-         ind(os,indent)<< "...";
+     if (indent > DEBUG_MAX_IND || isDeleted()) {
+         ind(os,indent)<< "pool...";
      } else {
          ind(os,indent) << "pool:"<<(void*)this;
 #ifdef DEBUG

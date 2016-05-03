@@ -869,6 +869,7 @@ STATICDEF int VoidList::pointerAddressDiff(str::Storeable const *left, str::Stor
 
 void VoidList::debugPrint(std::ostream& os, int indent, char const * subtreeName) const
 {
+  if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "vlstx"<<(void*)this<<"..."; return; }
   str::ind(os,indent)<< "vlstx"<<(void*)this/*<<std::dec*/;
 #ifdef DEBUG
   os<<":"<<objectName.str;

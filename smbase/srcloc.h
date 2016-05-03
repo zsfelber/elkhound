@@ -325,6 +325,7 @@ public:      // funcs
 
   inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
   {
+      if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "SourceLocManager..."; return; }
       str::ind(os,indent)<< "SourceLocManager{"<<std::endl;
       str::ind(os,indent)<< "files:";
       files.debugPrint(os, indent+1);

@@ -106,7 +106,9 @@ public:
 
   // debugging: two additional invariants
   void selfCheck() const                { list.selfCheck(); }
-  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        { str::ind(os,indent)<<"ast<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent+1); }
+  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        {
+     if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "ast..."; return; }
+     str::ind(os,indent)<<"ast<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent+1); }
 };
 
 

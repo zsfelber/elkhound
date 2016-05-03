@@ -5519,6 +5519,10 @@ int inner_entry(int argc, char **argv)
   // parse the grammar
   string grammarFname = argv[0];
   SHIFT;
+
+  std::cout<<"1.5"<<std::endl;
+  debugEverything();
+
   Owner<GrammarAST> ast(parseGrammarFile(env0, grammarFname, useML));
   std::cout<<"2."<<std::endl;
   debugEverything();

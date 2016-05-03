@@ -35,7 +35,8 @@ public:
       pool.removePointer(data);
   }
   void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const {
-      str::ind(os,indent)<< "node:";
+      if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "vnode"<<(void*)this<<"..."; return; }
+      str::ind(os,indent)<< "vnode:";
       if (data) {
           os<<" ";
           data->debugPrint(os, indent+1);

@@ -1311,6 +1311,7 @@ void CGen::emitTFClass(TF_class const &cls)
   // debugPrint
   out << "void " << cls.super->name << "::debugPrint(std::ostream &os, int indent, char const *subtreeName) const\n";
   out << "{\n";
+  out << "  if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< \"" << cls.super->name << "\"<<(void*)this<<\"...\"; return; }\n";
   if (!cls.hasChildren()) {
     // childless superclasses get the preempt in the superclass;
     // otherwise it goes into the child classes
@@ -1397,6 +1398,7 @@ void CGen::emitTFClass(TF_class const &cls)
     // subclass debugPrint
     out << "void " << ctor.name << "::debugPrint(std::ostream &os, int indent, char const *subtreeName) const\n";
     out << "{\n";
+    out << "  if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< \"" << ctor.name << "\"<<(void*)this<<\"...\"; return; }\n";
 
     // the debug print preempter is declared in the outer "class",
     // but inserted into the print methods of the inner "constructors"

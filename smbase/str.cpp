@@ -158,7 +158,7 @@ void string::readdelim(std::istream &is, char const *delim)
 
 void string::write(std::ostream &os) const
 {
-  os << s;     // standard char* writing routine
+  os << (s?s:"#null");     // standard char* writing routine
 }
 
 
