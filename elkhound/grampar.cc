@@ -1992,6 +1992,9 @@ GrammarAST *parseGrammarFile(Environment &env, rostring origFname, bool useML)
 
   traceProgress() << "parsing grammar source: " << fname << std::endl;
   int retval = grampar_yyparse(&params);
+
+  debugEverything();
+
   if (retval==0 && lexer->errors==0) {
     GrammarAST *ret = params.treeTop;
 

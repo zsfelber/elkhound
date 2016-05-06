@@ -1550,10 +1550,14 @@ void CGen::emitDestroyField(bool isOwner, rostring type, rostring name)
 
 void CGen::emitPrintCtorArgs(ASTList<CtorArg> const &args)
 {
+  int i = 0;
   FOREACH_ASTLIST(CtorArg, args, argiter) {
     CtorArg const &arg = *(argiter.data());
 
+    if (i==0 && arg.name.equals("pool") && arg.type.equals("str::StoragePool &")) continue;
+
     emitPrintField("PRINT", arg.isOwner, arg.type, arg.name);
+    i++;
   }
 }
 
@@ -1608,10 +1612,14 @@ void CGen::emitPrintField(rostring print,
 
 void CGen::emitXmlPrintCtorArgs(ASTList<CtorArg> const &args)
 {
+  int i = 0;
   FOREACH_ASTLIST(CtorArg, args, argiter) {
     CtorArg const &arg = *(argiter.data());
-    
+
+    if (i==0 && arg.name.equals("pool") && arg.type.equals("str::StoragePool &")) continue;
+
     emitPrintField("XMLPRINT", arg.isOwner, arg.type, arg.name);
+    i++;
   }
 }
 

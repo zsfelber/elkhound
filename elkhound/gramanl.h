@@ -57,6 +57,7 @@ extern SourceLocManager &mgr;
 #define LITERAL_LOCSTRING(str)  new (mgr.getPool()) LocString(DBG_INFO_ARG0_FIRST  mgr.getPool(), HERE_SOURCELOC, str)
 #define STR(s) LITERAL_LOCSTRING(grammarStringTable.add(s))
 
+int debugEverything();
 
 // ---------------- DottedProduction --------------------
 // a production, with an indicator that says how much of this
