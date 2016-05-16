@@ -39,6 +39,7 @@ class GrammarAnalysis;
 #define DBG_INFO_ARG_FWD objectName
 #define DBG_INFO_ARG_FWD_FIRST objectName,
 #define DBG_INFO_ARG0 __DbgStr(__FILE_LINE__)
+#define DBG_INFO_ARG0_SOLE (DBG_INFO_ARG0)
 #define DBG_INFO_ARG0_FIRST __DbgStr(__FILE_LINE__),
 #define DBG_INFO_FWD(a) a
 #define DBG_INFO_FWD_COM(a) a,
@@ -49,6 +50,7 @@ class GrammarAnalysis;
 #define DBG_INFO_ARG_FWD
 #define DBG_INFO_ARG_FWD_FIRST
 #define DBG_INFO_ARG0
+#define DBG_INFO_ARG0_SOLE
 #define DBG_INFO_ARG0_FIRST
 #define DBG_INFO_FWD(a)
 #define DBG_INFO_FWD_COM(a)
@@ -261,7 +263,7 @@ inline std::ostream &ind(std::ostream &os, int indent)
 
 #define BI_NI \
     if (*middle == nullItem) {                                                   \
-        T* _middle = middle;                                                     \
+        IT_OR_PTR  _middle = middle;                                             \
         do {                                                                     \
             _middle++;                                                           \
         } while (*_middle == nullItem && _middle < last);                        \
@@ -283,21 +285,21 @@ inline std::ostream &ind(std::ostream &os, int indent)
         middle = _middle;                                                        \
     }                                                                            \
 
-#define BI(bi_ni) \
+#define BI(bi_ni, cmp, rcmp) \
     while (first < last) {                                                       \
       std::ptrdiff_t half = (last-first) >> 1;                                   \
-      T* middle = first + half;                                                  \
+      IT_OR_PTR  middle = first + half;                                          \
       bool nothingToTheRight = false;                                            \
                                                                                  \
       bi_ni                                                                      \
                                                                                  \
-      if (*middle < val) {                                                       \
+      if (cmp) {                                                                 \
           first = middle+1;                                                      \
           if (nothingToTheRight) {                                               \
               result = first;                                                    \
               return false;                                                      \
           }                                                                      \
-      } else if (val < *middle) {                                                \
+      } else if (rcmp) {                                                         \
           /* exclusive index  (no -1)*/                                          \
           last = middle;                                                         \
       } else {                                                                   \
@@ -320,13 +322,21 @@ inline std::ostream &ind(std::ostream &os, int indent)
  *                  @a val.
  *  @ingroup binary_search_algorithms
 */
-template<typename T>
-bool binary_insert(T* first, T* last, const T& val, const T& nullItem, T*& result) {
-   BI(BI_NI)
+template<typename IT_OR_PTR, typename T>
+bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, T const & nullItem, IT_OR_PTR& result) {
+   BI(BI_NI, *middle < val, val < *middle)
 }
-template<typename T>
-bool binary_insert(T* first, T* last, const T& val, T*& result) {
-   BI(/**/)
+template<typename IT_OR_PTR, typename T>
+bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result) {
+   BI(/**/, *middle < val, val < *middle)
+}
+template<typename IT_OR_PTR, typename T,typename CMP>
+bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, T const & nullItem, IT_OR_PTR& result, CMP const & cmp) {
+   BI(BI_NI, cmp(*middle, val), cmp(val, *middle))
+}
+template<typename IT_OR_PTR, typename T,typename CMP>
+bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP const & cmp) {
+   BI(/**/, cmp(*middle, val), cmp(val, *middle))
 }
 
 template<typename T>
@@ -1427,7 +1437,7 @@ public:
    StoragePool& operator= (StoragePool const &src);
 
    inline StoragePool& operator+= (StoragePool const &src) {
-       StoragePool childView(DBG_INFO_ARG0);
+       StoragePool childView DBG_INFO_ARG0_SOLE;
        append(src, childView);
        return *this;
    }
