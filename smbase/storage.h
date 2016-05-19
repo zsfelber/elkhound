@@ -331,11 +331,11 @@ bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& re
    BI(/**/, *middle < val, val < *middle)
 }
 template<typename IT_OR_PTR, typename T,typename CMP>
-bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, T const & nullItem, IT_OR_PTR& result, CMP const & cmp) {
+bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, T const & nullItem, IT_OR_PTR& result, CMP cmp) {
    BI(BI_NI, cmp(*middle, val), cmp(val, *middle))
 }
 template<typename IT_OR_PTR, typename T,typename CMP>
-bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP const & cmp) {
+bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP cmp) {
    BI(/**/, cmp(*middle, val), cmp(val, *middle))
 }
 
