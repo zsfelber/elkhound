@@ -265,6 +265,7 @@ private:     // funcs
 
 public:      // funcs
   SourceLocManager(str::StoragePool &parent);
+  SourceLocManager();
   ~SourceLocManager();
 
   str::StoragePool & getPool() {

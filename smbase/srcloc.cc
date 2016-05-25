@@ -45,14 +45,15 @@ SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool
     init();
 }
 
-SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  char const *n, SourceLoc aStartLoc)
-  : Storeable(DBG_INFO_ARG_FWD), name(n),
-    startLoc(aStartLoc),     // assigned by SourceLocManager
-    hashLines(NULL),
 
-    // valid marker/col for the first char in the file
-    marker(0, 1, 0),
-    markerCol(1)
+SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  char const *n, SourceLoc aStartLoc)
+: str::Storeable(DBG_INFO_ARG_FWD),  name(n),
+  startLoc(aStartLoc),     // assigned by SourceLocManager
+  hashLines(NULL),
+
+  // valid marker/col for the first char in the file
+  marker(0, 1, 0),
+  markerCol(1)
 {
     init();
 }
@@ -431,6 +432,31 @@ SourceLocManager::SourceLocManager(str::StoragePool &parent)
   xassert(u == SL_INIT);
   PRETEND_USED(u);
 }
+SourceLocManager::SourceLocManager()
+  : Storeable(DBG_INFO_ARG0), pool(DBG_INFO_ARG0),
+    files(DBG_INFO_ARG0),
+    recent(NULL),
+    statics(DBG_INFO_ARG0),
+    nextLoc(toLoc(1)),
+    nextStaticLoc(toLoc(0)),
+    maxStaticLocs(100),
+    useHashLines(true)
+{
+  xassert(!sourceLocManager);
+  //if (!sourceLocManager) {
+    sourceLocManager = this;
+  //}
+
+  // slightly clever: treat SL_UNKNOWN as a static
+  SourceLoc u = encodeStatic(StaticLoc(DBG_INFO_ARG0_FIRST  "<noloc>", 0,1,1));
+  xassert(u == SL_UNKNOWN);
+  PRETEND_USED(u);     // silence warning in case xasserts are turned off
+
+  // similarly for SL_INIT
+  u = encodeStatic(StaticLoc(DBG_INFO_ARG0_FIRST  "<init>", 0,1,1));
+  xassert(u == SL_INIT);
+  PRETEND_USED(u);
+}
 
 SourceLocManager::~SourceLocManager()
 {
@@ -692,7 +718,7 @@ string SourceLocManager::getString(SourceLoc loc)
   int line, col;
   decodeLineCol(loc, name, line, col);
 
-  stringBuilder result(DBG_INFO_ARG0);
+  stringBuilder result DBG_INFO_ARG0_SOLE;
   result << name << ":" << line << ":" << col;
   return result;
 }
@@ -703,7 +729,7 @@ string SourceLocManager::getLCString(SourceLoc loc)
   int line, col;
   decodeLineCol(loc, name, line, col);
 
-  stringBuilder result(DBG_INFO_ARG0);
+  stringBuilder result DBG_INFO_ARG0_SOLE;
   result << line << ":" << col;
   return result;
 }
@@ -731,7 +757,7 @@ void fromXml(SourceLoc &out, string str) {
 
 #include <stdlib.h>      // rand, exit, system
 
-str::StoragePool pool(DBG_INFO_ARG0);
+str::StoragePool pool DBG_INFO_ARG0_SOLE;
 SourceLocManager *_mgr = NULL;
 int longestLen=0;
 

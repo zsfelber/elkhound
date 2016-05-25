@@ -10,7 +10,11 @@
 #include <string.h>         // strcmp
 #include <iostream>       // std::ostream << char*
 #include <assert.h>         // assert
+#ifdef _MSC_VER
+#include <io.h>         // write
+#else
 #include <unistd.h>         // write
+#endif
 #include <iostream>
 
 #include "xassert.h"        // xassert
@@ -19,7 +23,7 @@
 #include "nonport.h"        // vnprintf
 #include "array.h"          // Array
 
-str::StoragePool str_pool(DBG_INFO_ARG0);
+str::StoragePool str_pool DBG_INFO_ARG0_SOLE;
 
 // ----------------------- string ---------------------
 
@@ -30,7 +34,7 @@ char const nul_byte = 0;
 // 'emptyString' to be const because it gets assigned to 's', but it
 // is nevertheless the intent that I never modify 'nul_byte'
 char * const string::emptyString = const_cast<char*>(&nul_byte);
-char * const string::nullString = "<null>";
+char * const string::nullString = const_cast<char*>("<null>");
 
 string::string(DBG_INFO_FORMAL_FIRST  char const *src, int length, SmbaseStringFunc) : str::Storeable(DBG_INFO_ARG_FWD)
 {
@@ -150,7 +154,7 @@ string& string::operator&=(string const &tail)
 
 void string::readdelim(std::istream &is, char const *delim)
 {
-  stringBuilder sb(DBG_INFO_ARG0);
+  stringBuilder sb  DBG_INFO_ARG0_SOLE;
   sb.readdelim(is, delim);
   operator= (sb);
 }

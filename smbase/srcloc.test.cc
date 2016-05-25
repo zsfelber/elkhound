@@ -3,6 +3,11 @@
 
 #include <stdio.h>      // fprintf
 #include <string.h>     // memcpy
+#include "array.h"
+#include "srcloc.h"
+#include "autofile.h"
+#include "syserr.h"
+#include "hashline.h"
 
 // This is not a real source file, it is simply some test input for
 // the srcloc module to consume.  Originally, srcloc.cc simply used
