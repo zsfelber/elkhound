@@ -19,9 +19,9 @@ CC := gcc
 CXX := g++
 
 #all: <- not working
-#OPT_DEBUG := -O2 -DNDEBUG
+OPT_DEBUG := -O2 -DNDEBUG
 #debug:
-OPT_DEBUG := -O0 -DDEBUG
+#OPT_DEBUG := -O0 -DDEBUG
 
 # flags for the C and C++ compilers (and preprocessor)
 CFLAGS  := -g -Wall -D__UNIX__ -D__LINUX__

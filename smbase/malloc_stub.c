@@ -8,7 +8,7 @@ void checkHeap() {}
 unsigned numMallocCalls() { return 0; }
 unsigned numFreeCalls() { return 0; }
 
-#if defined(_MSC_VER)|!defined(__WIN32__)
+#if !defined(__WIN32__)&&!defined(_WIN32)
 void malloc_stats() {}
 void checkHeapNode(void *node) {}
 void walkMallocHeap(HeapWalkFn func) {}

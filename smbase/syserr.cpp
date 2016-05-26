@@ -147,7 +147,7 @@ string sysErrorString(char const *syscallName, char const *context)
 
 
 // ----------------------- Win32 code ------------------------------------
-#ifdef __WIN32__
+#if defined(__WIN32__)||defined(_WIN32)
 
 #ifdef USE_MINWIN_H
 #  include "minwin.h"   // api

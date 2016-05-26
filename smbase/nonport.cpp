@@ -6,13 +6,13 @@
 #include <stdlib.h>      // abort, exit
 #include <string.h>      // strncpy
 
-#ifdef __WIN32__
+#if defined(__WIN32__)||defined(_WIN32)
 #  ifdef USE_MINWIN_H
 #    include "minwin.h"   // api
 #  else
 #    include <windows.h>  // api
 #  endif
-
+#  include <Lmcons.h>
 #  include <conio.h>      // getch or _getch
 #  include <dos.h>        // sleep
 #  include <io.h>         // chmod
@@ -50,7 +50,7 @@
 #include <time.h>         // tzset, localtime, time
 #include <iostream>     // std::cout
 
-#if !defined(__WIN32__) || defined(__BORLANDC__)
+#if (!defined(__WIN32__)&&!defined(_WIN32)) || defined(__BORLANDC__)
   #include <dirent.h>       // opendir
 #endif
 
@@ -71,7 +71,7 @@ inline void fail(char const *call, char const *ctx=NULL)
 
 void setRawMode(bool raw)
 {
-# ifdef __WIN32__
+# if defined(__WIN32__)||defined(_WIN32)
     // nothing necessary; getConsoleChar handles it
 
 # else
@@ -96,7 +96,7 @@ void setRawMode(bool raw)
 // or buffering
 char getConsoleChar()
 {
-# ifdef __WIN32__
+# if defined(__WIN32__)||defined(_WIN32)
     // this function always bypasses 'cooked' console mode
     return (char)getch();
 
@@ -115,7 +115,7 @@ char getConsoleChar()
 // constant for the life of the program, event
 long getMilliseconds()
 {
-# ifdef __WIN32__
+# if defined(__WIN32__)||defined(_WIN32)
     // # of milliseconds since program started
     return GetTickCount();
 
@@ -151,7 +151,7 @@ bool limitFileAccess(char const *fname)
 bool createDirectory(char const *dirname)
 {
   int res;
-# ifdef __WIN32__
+# if defined(__WIN32__)||defined(_WIN32)
     // no 'mode' argument
     res = mkdir(dirname);
 # else   // unix
@@ -235,11 +235,22 @@ void portableSleep(unsigned seconds)
 
 void getCurrentUsername(char *buf, int buflen)
 {
-  #ifdef __WIN32__
-    DWORD len = buflen;
-    if (!GetUserName(buf, &len)) {
-      fail("GetUserName");
-      strncpy(buf, "(unknown)", buflen);
+  #if defined(__WIN32__)||defined(_WIN32)
+    int lenW = ::MultiByteToWideChar(CP_ACP, 0, buf, buflen, NULL, 0);
+    if (lenW>0)
+    {
+        wchar_t * output = new wchar_t[lenW];
+        ::MultiByteToWideChar(CP_ACP, 0, buf, buflen, output, lenW);
+        DWORD len = lenW;
+        //TODO import advapi32-lib in qtcreator:
+        //if (!GetUserName(output, &len)) {
+        if (false) {
+          fail("GetUserName");
+          strncpy(buf, "(unknown)", buflen);
+        }
+    } else {
+        fail("GetUserName");
+        strncpy(buf, "(unknown)", buflen);
     }
 
   #else    // unix (SunOS only?  we'll see..)
@@ -330,7 +341,7 @@ void applyToDirContents(char const *dirName,
   //     trash section)
   // DOB: VC doesn't have opendir-
   //  I think this is the only way to do it in the Win32 API
-  #if defined(__WIN32__) && !defined(__BORLANDC__)
+  #if (defined(__WIN32__)||defined(_WIN32)) && !defined(__BORLANDC__)
     struct _finddata_t fb;
     char* buf = new char[strlen(dirName)+5];
     strcpy(buf, dirName);
@@ -384,7 +395,7 @@ bool isDirectory(char const *path)
     fail("stat", path);
     return false;
   }
-  #if defined(__WIN32__) && !defined(__BORLANDC__)
+  #if (defined(__WIN32__)||defined(_WIN32)) && !defined(__BORLANDC__)
     return !!(st.st_mode & _S_IFDIR); // this is how it works for VC
   #else
     return S_ISDIR(st.st_mode);
@@ -443,7 +454,7 @@ bool ensurePath(char const *filename, bool isDirectory)
 // underlying test
 bool hsrcHelper()
 {
-  #if !defined(__WIN32__)     // unix
+  #if !defined(__WIN32__)&&!defined(_WIN32)     // unix
     // see if /dev/random exists and is readable
     int fd = open("/dev/random", O_RDONLY);
     if (fd < 0) {
@@ -485,7 +496,7 @@ bool hasSystemCryptoRandom()
 // of things hasSystemCryptoRandom checks)
 unsigned getSystemCryptoRandom()
 {
-  #if !defined(__WIN32__)     // unix
+  #if !defined(__WIN32__)&&!defined(_WIN32)     // unix
     // open /dev/random
     int fd = open("/dev/random", O_RDONLY);
     if (!fd) {
@@ -530,7 +541,7 @@ unsigned getSystemCryptoRandom()
 
 int getProcessId()
 {
-  #ifdef __WIN32__
+  #if defined(__WIN32__)||defined(_WIN32)
     return GetCurrentProcessId();
 
   #else  // unix
@@ -831,7 +842,7 @@ void limitFileAccess(char const *fname)
 # endif
 }
 
-# ifdef __WIN32__     // findfirst, findnext
+# if defined(__WIN32__)||defined(_WIN32)     // findfirst, findnext
 #   ifdef __BORLANDC__
       struct ffblk fb;
       int done = findfirst("*", &fb, 0);
