@@ -187,6 +187,11 @@ inline void removeBufferItem(T* buf, size_t& size, T* pos) {
     // allow overlap
     memmove(pos, pos+1, (size-(pos-buf))*sizeof(T));
 }
+inline void removeBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
+    size-=size_of;
+    // allow overlap
+    memmove(pos, pos+size_of, size-(pos-buf));
+}
 
 template<typename T>
 inline void insertBufferItem(T* buf, size_t& size, T* pos) {
