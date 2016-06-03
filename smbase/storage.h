@@ -182,6 +182,19 @@ inline void extendBuffer(T*& buf, size_t size, size_t newcap) {
 }
 
 template<typename T>
+inline void extendBufferAndSet(T*& buf, size_t size, size_t newcap, uint8_t defaultByte) {
+    xassert(newcap);
+    T* old = buf;
+    buf = (T*)new uint8_t[newcap*sizeof(T)];//avoid using default constructor for class types
+    if (!buf) x_assert_fail("Memory allocation error.", __FILE__, __LINE__);
+    if (old) {
+        memcpy(buf, old, size*sizeof(T));
+        delete[] old;
+    }
+    memset(buf+size, defaultByte, (newcap-size)*sizeof(T));
+}
+
+template<typename T>
 inline void removeBufferItem(T* buf, size_t& size, T* pos) {
     size--;
     // allow overlap
