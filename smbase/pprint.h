@@ -40,9 +40,9 @@ public:
 };
 
 class PPrintStringOut : public PPrintOut {
-  stringBuilder &sb;
+  std::stringstream &sb;
 public:
-  PPrintStringOut(stringBuilder &s) : sb(s) {}
+  PPrintStringOut(std::stringstream &s) : sb(s) {}
   virtual void write(char const *text);
 };
 
@@ -64,7 +64,7 @@ private:     // types
     PPrint &pprint;
 
     // emitted text in the current line
-    stringBuilder curLine;
+    std::stringstream curLine;
 
     // indentation used for 'curLine'
     int curLineInd;
@@ -158,7 +158,7 @@ public:      // funcs
 
 class PPrintToString : public PPrint {
 public:
-  stringBuilder sb;            // output (set) lines accumulate here
+  std::stringstream sb;            // output (set) lines accumulate here
   PPrintStringOut sbOut;       // helper
 
 public:

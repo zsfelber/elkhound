@@ -20,9 +20,9 @@
   #include <gnuregex.h>
 #endif
 
-
+//TODO
 // get an error string
-static string regexpErrorString(regex_t const *pat, int code)
+static std::string regexpErrorString(regex_t const *pat, int code)
 {
   // find out how long the error string is; this size
   // includes the final NUL byte
@@ -33,7 +33,7 @@ static string regexpErrorString(regex_t const *pat, int code)
   regerror(code, pat, buf.ptr(), size);
   buf[size] = 0;     // paranoia
 
-  return string(buf);
+  return std::string(buf);
 }
 
 // throw an exception
@@ -71,7 +71,7 @@ Regexp::Regexp(rostring exp, CFlags flags)
   int code = regcomp(PAT, toCStr(exp), f);
   if (code) {
     // deallocate the pattern buffer before throwing the exception
-    string msg = regexpErrorString(PAT, code);
+    std::string msg = regexpErrorString(PAT, code);
     delete PAT;
     xbase(msg);
   }

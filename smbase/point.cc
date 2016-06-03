@@ -4,12 +4,12 @@
 #include "point.h"      // this module
 #include "str.h"        // stringBuilder
 
-stringBuilder& operator<< (stringBuilder &sb, point const &pt)
+std::stringstream& operator<< (std::stringstream &sb, point const &pt)
 {
-  return sb << "(" << pt.x << ", " << pt.y << ")";
+  return (std::stringstream&)(sb << "(" << pt.x << ", " << pt.y << ")");
 }
 
-stringBuilder& operator<< (stringBuilder &sb, fpoint const &pt)
+std::stringstream& operator<< (std::stringstream &sb, fpoint const &pt)
 {
-  return sb << "(" << pt.x << ", " << pt.y << ")";
+  return (std::stringstream&)(sb << "(" << pt.x << ", " << pt.y << ")");
 }

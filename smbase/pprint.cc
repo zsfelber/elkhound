@@ -107,7 +107,8 @@ void PPrint::Setter::set()
     int p = lineIndex;
 
     // column at which the line would break, if we broke at 'p'
-    int pCol = curLine.length();
+    // TODO ! inefficient copy
+    int pCol = curLine.str().length();
 
     // the topmost entry of this stack says how far we'd indent
     // at the beginning of the next line, if we broke at 'p'
@@ -224,7 +225,8 @@ void PPrint::Setter::emitTo(int p)
         break;
 
       case '\b':   // begin break group
-        indentGroups.push(curLine.length());
+        // TODO ! inefficient copy
+        indentGroups.push(curLine.str().length());
         break;
 
       case '\a':   // alternate begin group
@@ -250,7 +252,7 @@ void PPrint::Setter::flush()
   if (pprint.startText) {
     pprint.out.write(pprint.startText);
   }
-  pprint.out.write(curLine);
+  pprint.out.write(curLine.str().c_str());
   curLine.clear();
 }
 

@@ -8,6 +8,7 @@
 #include <iostream>       // clog
 #include <stdarg.h>       // va_xxx
 #include <ctype.h>        // toupper, tolower
+#include <sstream>
 
 
 // ------------------------- xBase -----------------
@@ -78,16 +79,26 @@ void xbase(rostring msg)
 void xBase::addContext(rostring context)
 {
   // for now, fairly simple
-  msg = stringc << "while " << context << ",\n" << msg;
+  msg = stringb( "while " << context << ",\n" << msg ).str();
 }
 
 
 // ------------------- x_assert -----------------
+x_assert::x_assert(char const* cond, char const* fname, int line)
+  : xBase(stringb(
+      "Assertion failed: " << cond <<
+      ", file " << fname <<
+      " line " << line).str().c_str())
+    ,condition(cond),
+    filename(fname),
+    lineno(line)
+{}
+
 x_assert::x_assert(rostring cond, rostring fname, int line)
   : xBase(stringb(
       "Assertion failed: " << cond <<
       ", file " << fname <<
-      " line " << line)),
+      " line " << line).str().c_str()),
     condition(cond),
     filename(fname),
     lineno(line)
@@ -114,7 +125,7 @@ int x_assert_fail(char const *cond, char const *file, int line)
 
 // --------------- xFormat ------------------
 xFormat::xFormat(rostring cond)
-  : xBase(stringb("Formatting error: " << cond)),
+  : xBase(stringb("Formatting error: " << cond).str().c_str()),
     condition(cond)
 {}
 
@@ -135,16 +146,16 @@ void xformat(rostring condition)
 
 void formatAssert_fail(char const *cond, char const *file, int line)
 {
-  xFormat x(stringc << "format assertion failed, "
+  xFormat x(stringb ("format assertion failed, "
                     << file << ":" << line << ": "
-                    << cond);
+                    << cond).str());
   THROW(x);
 }
 
 
 // -------------------- XOpen -------------------
 XOpen::XOpen(rostring fname)
-  : xBase(stringc << "failed to open file: " << fname),
+  : xBase(stringb("failed to open file: " << fname).str()),
     filename(fname)
 {}
 
@@ -170,9 +181,9 @@ XOpenEx::XOpenEx(rostring fname, rostring m, rostring c)
     mode(m),
     cause(c)
 {
-  msg = stringc << "failed to open file \"" << fname
+  msg = stringb("failed to open file \"" << fname
                 << "\" for " << interpretMode(mode)
-                << ": " << cause;
+                << ": " << cause).str();
 }
 
 XOpenEx::XOpenEx(XOpenEx const &obj)
@@ -184,8 +195,8 @@ XOpenEx::XOpenEx(XOpenEx const &obj)
 XOpenEx::~XOpenEx()
 {}
 
-
-STATICDEF string XOpenEx::interpretMode(rostring mode)
+//TODO
+STATICDEF std::string XOpenEx::interpretMode(rostring mode)
 {
   if (mode[0]=='r') {
     if (mode[1]=='+') {
@@ -214,7 +225,7 @@ STATICDEF string XOpenEx::interpretMode(rostring mode)
     }
   }
 
-  return stringc << "(unknown action mode \"" << mode << "\")";
+  return stringb("(unknown action mode \"" << mode << "\")").str();
 }
 
 
@@ -227,7 +238,7 @@ void throw_XOpenEx(rostring fname, rostring mode, rostring cause)
 
 // -------------------- XUnimp -------------------
 XUnimp::XUnimp(rostring msg)
-  : xBase(stringc << "unimplemented: " << msg)
+  : xBase(stringb("unimplemented: " << msg).str())
 {}
 
 XUnimp::XUnimp(XUnimp const &obj)
@@ -247,7 +258,7 @@ void throw_XUnimp(rostring msg)
 
 void throw_XUnimp(char const *msg, char const *file, int line)
 {
-  throw_XUnimp(stringc << file << ":" << line << ": " << msg);
+  throw_XUnimp(stringb(file << ":" << line << ": " << msg).str());
 }
 
 
@@ -257,7 +268,7 @@ void throw_XUnimp(char const *msg, char const *file, int line)
 // fatal-ness is sufficiently expressed by the fact that an exception
 // is thrown, as opposed to simply printing the message and continuing.
 XFatal::XFatal(rostring msg)
-  : xBase(stringc << "error: " << msg)
+  : xBase(stringb(  "error: " << msg).str())
 {}
 
 XFatal::XFatal(XFatal const &obj)

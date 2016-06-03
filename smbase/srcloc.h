@@ -95,7 +95,8 @@ public:      // types
     // file name; we consider two files to be the same if and only
     // if their names are equal, i.e. there is no checking done to
     // see if their names happen to be aliases in the filesystem
-    string name;
+      //TODO
+    std::string name;
 
     // start offset in the SourceLoc space
     SourceLoc startLoc;
@@ -318,10 +319,10 @@ public:      // funcs
     { return getFile(fname); }
 
   // render as string in "file:line:col" format
-  string getString(SourceLoc loc);
+  std::string getString(SourceLoc loc);
 
   // "line:col" format
-  string getLCString(SourceLoc loc);
+  std::string getLCString(SourceLoc loc);
 
 
   inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
@@ -346,15 +347,17 @@ extern SourceLocManager *sourceLocManager;
 // dsw: So that gdb can find it please DO NOT inline this; also the
 // unique public name is intentional: I don't want gdb doing
 // overloading and sometimes getting it wrong, which it does
-string locToStr(SourceLoc sl);
+std::string locToStr(SourceLoc sl);
 
-inline string toString(SourceLoc sl)
+inline std::string toString(SourceLoc sl)
   { return locToStr(sl); }
 
-inline stringBuilder& operator<< (stringBuilder &sb, SourceLoc sl)
-  { return sb << toString(sl); }
+//inline stringBuilder& operator<< (stringBuilder &sb, SourceLoc sl)
+//  { return sb << toString(sl); }
+inline std::stringstream& operator<< (std::stringstream &sb, SourceLoc sl)
+  { return (std::stringstream&)(sb << toString(sl)); }
 
-inline string toLCString(SourceLoc sl)
+inline std::string toLCString(SourceLoc sl)
   { return sourceLocManager->getLCString(sl); }
 
 
@@ -374,8 +377,8 @@ inline SourceLoc advLine(SourceLoc base)
 inline SourceLoc advText(SourceLoc base, char const *text, int textLen)
   { return SourceLocManager::advText(base, text, textLen); }
 
-string toXml(SourceLoc index);
-void fromXml(SourceLoc &out, string str);
+std::string toXml(SourceLoc index);
+void fromXml(SourceLoc &out, std::string str);
 
 
 #endif // SRCLOC_H

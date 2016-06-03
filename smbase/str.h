@@ -187,7 +187,8 @@ public:	       // funcs
 
 // ------------------------ rostring ----------------------
 // My plan is to use this in places I currently use 'char const *'.
-typedef string const &rostring;
+// TODO fail-safe
+typedef std::string const &rostring;
 
 // I have the modest hope that the transition to 'rostring' might be
 // reversible, so this function converts to 'char const *' but with a
@@ -227,7 +228,7 @@ string substring(char const *p, int n);
 inline string substring(rostring p, int n)
   { return substring(p.c_str(), n); }
 
-
+/*
 // --------------------- stringBuilder --------------------
 // this class is specifically for appending lots of things
 class stringBuilder : public string {
@@ -336,17 +337,20 @@ public:
   #define SBHex stringBuilder::Hex
 };
 
-
+*/
 // ---------------------- misc utils ------------------------
 // the real strength of this entire module: construct strings in-place
 // using the same syntax as C++ iostreams.  e.g.:
 //   puts(stringb("x=" << x << ", y=" << y));
-#define stringb(expr) (stringBuilder(DBG_INFO_ARG0) << expr)
+//#define stringb(expr) (stringBuilder(DBG_INFO_ARG0) << expr)
+// TODO fail safe
+#define stringb(expr) ((std::stringstream&)(std::stringstream() << expr))
 
 // experimenting with dropping the () in favor of <<
 // (the "c" can be interpreted as "constructor", or maybe just
 // the successor to "b" above)
-#define stringc stringBuilder(DBG_INFO_ARG0)
+// TODO fail-safe
+#define stringc std::stringstream()
 
 
 // experimenting with using toString as a general method for datatypes

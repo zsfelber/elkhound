@@ -37,7 +37,8 @@ private:    // types
 private:    // data
   // name of the pp file; this is needed for queries to lines
   // before any #line is encountered
-  string ppFname;
+  //TODO
+  std::string ppFname;
 
   // map for canonical storage of orig filenames; I don't rely on
   // an external string table because I don't want the extra

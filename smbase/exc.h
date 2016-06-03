@@ -60,7 +60,9 @@ bool unwinding_other(xBase const &x);
 class xBase {
 protected:
   // the human-readable description of the exception
-  string msg;
+  //string msg;
+    // TODO fail-safe
+  std::string msg;
 
 public:
   // initially true; when true, we write a record of the thrown exception
@@ -97,11 +99,13 @@ void xbase(rostring msg) NORETURN;
 // thrown by _xassert_fail, declared in xassert.h
 // throwing this corresponds to detecting a bug in the program
 class x_assert : public xBase {
-  string condition;          // text of the failed condition
-  string filename;           // name of the source file
+    // TODO fail-safe
+  std::string condition;          // text of the failed condition
+  std::string filename;           // name of the source file
   int lineno;                // line number
 
 public:
+  x_assert(char const* cond, char const* fname, int line);
   x_assert(rostring cond, rostring fname, int line);
   x_assert(x_assert const &obj);
   ~x_assert();
@@ -117,7 +121,8 @@ public:
 // in some input data; the program cannot process it, but it
 // is not a bug in the program
 class xFormat : public xBase {
-  string condition;          // what is wrong with the input
+    // TODO fail-safe
+  std::string condition;          // what is wrong with the input
 
 public:
   xFormat(rostring cond);
@@ -145,7 +150,8 @@ void formatAssert_fail(char const *cond, char const *file, int line) NORETURN;
 // thrown when we fail to open a file
 class XOpen : public xBase {
 public:
-  string filename;
+    // TODO fail-safe
+  std::string filename;
   
 public:
   XOpen(rostring fname);
@@ -160,8 +166,9 @@ void throw_XOpen(rostring fname) NORETURN;
 // more informative
 class XOpenEx : public XOpen {
 public:
-  string mode;         // fopen-style mode string, e.g. "r"
-  string cause;        // errno-derived failure cause, e.g. "no such file"
+    // TODO fail-safe
+  std::string mode;         // fopen-style mode string, e.g. "r"
+  std::string cause;        // errno-derived failure cause, e.g. "no such file"
 
 public:
   XOpenEx(rostring fname, rostring mode, rostring cause);
@@ -170,7 +177,7 @@ public:
                                               
   // convert a mode string as into human-readable participle,
   // e.g. "r" becomes "reading"
-  static string interpretMode(rostring mode);
+  static std::string interpretMode(rostring mode);
 };
 
 void throw_XOpenEx(rostring fname, rostring mode, rostring cause) NORETURN;

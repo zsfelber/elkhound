@@ -45,11 +45,13 @@ void BPRender::breakLine(int ind)
 }
 
 
-string BPRender::takeAndRender(BoxPrint &bld)
+// TODO fail-safe
+std::string BPRender::takeAndRender(BoxPrint &bld)
 {
   BPBox* /*owner*/ tree = bld.takeTree();
   tree->render(*this);
-  string ret(sb);
+  // TODO fail-safe
+  std::string ret(sb.str());
   sb.clear();
   delete tree;
   return ret;
@@ -377,7 +379,7 @@ BoxPrint& BoxPrint::operator<< (char const *s)
 
 BoxPrint& BoxPrint::operator<< (int i)
 {
-  return operator<< (stringc << i);
+  return operator<< ((stringb(i)).str().c_str());
 }
 
 

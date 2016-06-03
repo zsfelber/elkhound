@@ -477,12 +477,12 @@ SourceLocManager::File *SourceLocManager::findFile(char const *name)
     xfailure("you have to create a SourceLocManager in your main() function");
   }
 
-  if (recent && recent->name.equals(name)) {
+  if (recent && recent->name==name) {
     return recent;
   }
 
   FOREACH_OBJLIST_NC(File, files, iter) {
-    if (iter.data()->name.equals(name)) {
+    if (iter.data()->name==name) {
       return recent = iter.data();
     }
   }
@@ -712,40 +712,40 @@ int SourceLocManager::getCol(SourceLoc loc)
 }
 
 
-string SourceLocManager::getString(SourceLoc loc)
+std::string SourceLocManager::getString(SourceLoc loc)
 {
   char const *name;
   int line, col;
   decodeLineCol(loc, name, line, col);
 
-  stringBuilder result DBG_INFO_ARG0_SOLE;
+  std::stringstream result DBG_INFO_ARG0_SOLE;
   result << name << ":" << line << ":" << col;
-  return result;
+  return result.str();
 }
 
-string SourceLocManager::getLCString(SourceLoc loc)
+std::string SourceLocManager::getLCString(SourceLoc loc)
 {
   char const *name;
   int line, col;
   decodeLineCol(loc, name, line, col);
 
-  stringBuilder result DBG_INFO_ARG0_SOLE;
+  std::stringstream result DBG_INFO_ARG0_SOLE;
   result << line << ":" << col;
-  return result;
+  return result.str();
 }
 
 
-string locToStr(SourceLoc sl)
+std::string locToStr(SourceLoc sl)
 {
   return sourceLocManager->getString(sl);
 }
 
 // this code simply defeats the xml serialization of SourceLoc-s
-string toXml(SourceLoc index) {
+std::string toXml(SourceLoc index) {
   return "0";
 }
 
-void fromXml(SourceLoc &out, string str) {
+void fromXml(SourceLoc &out, std::string str) {
   out = SL_UNKNOWN;
 }
 

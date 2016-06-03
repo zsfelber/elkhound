@@ -8,7 +8,8 @@
 #include "str.h"          // stringBuilder
 #include "astlist.h"      // ASTList
 #include "array.h"        // ObjArrayStack
-  
+#include <sstream>
+
 
 // fwd
 class BoxPrint;
@@ -18,7 +19,8 @@ class BoxPrint;
 class BPRender {
 public:
   // output string
-  stringBuilder sb;
+    // TODO fail-safe  stroimgBuilder
+  std::stringstream sb;
 
   // right margin column; defaults to 72
   int margin;
@@ -50,8 +52,9 @@ public:
 
   // take the string out of the rendering engine, replacing it
   // with the empty string
-  string takeString() {
-    string ret(sb);
+  // TODO fail-safe
+  std::string takeString() {
+    std::string ret(sb.str());
     reset();
     return ret;
   }
@@ -62,7 +65,8 @@ public:
 
   // take the tree out of a boxprint builder, convert it to a string,
   // and delete the tree
-  string takeAndRender(BoxPrint &bld);
+  // TODO fail-safe
+  std::string takeAndRender(BoxPrint &bld);
 };
 
 
@@ -102,7 +106,8 @@ public:
 // leaf in the tree: text to print
 class BPText : public BPElement {
 public:
-  string text;
+    // TODO fail-safe
+  std::string text;
 
 public:
   BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring t);

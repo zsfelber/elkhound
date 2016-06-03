@@ -6,6 +6,7 @@
 
 #include <string.h>       // memset
 #include <iostream>
+#include <string>
 
 
 BitArray::BitArray(int n)
@@ -154,12 +155,13 @@ BitArray stringToBitArray(char const *src)
   return ret;
 }
 
-string toString(BitArray const &b)
+//TODO
+std::string toString(BitArray const &b)
 {
   int len = b.length();
-  stringBuilder ret(DBG_INFO_ARG0_FIRST  len);
+  std::string ret;
   for (int i=0; i<len; i++) {
-    ret[i] = b.test(i)? '1' : '0';
+    ret+= b.test(i)? '1' : '0';
   }
   return ret;
 }
