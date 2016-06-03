@@ -16,7 +16,7 @@
 #define REGEXP_H
 
 #include "macros.h"      // ENUM_BITWISE_OR, NORETURN
-#include "str.h"         // string
+#include "str.h"         // std::string
 
 
 // ----------------- Regexp class -------------------
@@ -66,7 +66,7 @@ ENUM_BITWISE_OR(Regexp::EFlags)
 // TODO: Add support for substring matches by building a class to
 // remember the substring offsets (enable 'numLParens' above)
 // efficiently.  Major question: do I always make an internal copy of
-// the string in which we searched?  Leaning towards yes...
+// the std::string in which we searched?  Leaning towards yes...
 
 
 

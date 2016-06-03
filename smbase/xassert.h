@@ -7,14 +7,16 @@
 #define XASSERT_H
 
 #include "macros.h"     // NORETURN
+#include <string>
 
 // linkdepend: exc.cpp
+typedef std::string const &rostring;
 
 // this functions accepts raw 'char const *' instead of 'rostring'
 // because I do not want this interface to depend on str.h, and also
 // because I do not want the many call sites to have the overhead
 // of constructing and destructing temporary objects
-int x_assert_fail(char const *cond, char const *file, int line) NORETURN;
+int x_assert_fail(rostring cond, rostring file, int line) NORETURN;
 
 // Ordinary 'xassert' *can* be turned off, but the nominal intent
 // is that it be left on, under the "ship what you test" theory.
@@ -41,10 +43,10 @@ int x_assert_fail(char const *cond, char const *file, int line) NORETURN;
 
 // Quick note: one prominent book on writing code recommends that
 // assertions *not* include the failure condition, since the file
-// and line number are sufficient, and the condition string uses
+// and line number are sufficient, and the condition std::string uses
 // memory.  The problem is that sometimes a compiled binary is
 // out of date w/respect to the code, and line numbers move, so
-// the condition string provides a good way to find the right
+// the condition std::string provides a good way to find the right
 // assertion.
 
 

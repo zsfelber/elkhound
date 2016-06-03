@@ -452,7 +452,7 @@ extern "C" {
 
 
 /*
-  USE_DL_PREFIX will prefix all public routines with the string 'dl'.
+  USE_DL_PREFIX will prefix all public routines with the std::string 'dl'.
   This is necessary when you only want to use this malloc in one part 
   of a program, using your regular system malloc elsewhere.
 */

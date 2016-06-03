@@ -29,7 +29,7 @@ void traceRemoveAll();
 // method, it is up to you to put the newline
 std::ostream &trace(char const *sysName);
 
-// give an entire string to trace; do *not* put a newline in it
+// give an entire std::string to trace; do *not* put a newline in it
 // (the tracer will do that)
 void trstr(char const *sysName, char const *traceString);
 

@@ -1,11 +1,11 @@
 // str.h            see license.txt for copyright and terms of use
-// a string class
+// a std::string class
 // the representation uses just one char*, so that a smart compiler
 //   can pass the entire object as a single word
 // Scott McPeak, 1995-2000  This file is public domain.
 
-// 2005-03-01: See string.txt.  The plan is to evolve the class
-// towards compatibility with string, such that eventually
+// 2005-03-01: See std::string.txt.  The plan is to evolve the class
+// towards compatibility with std::string, such that eventually
 // they will be interchangeable.  So far I have converted only
 // the most problematic constructs, those involving construction,
 // conversion, and internal pointers.
@@ -22,11 +22,11 @@
 class Flatten;           // flatten.h
 
 // certain unfortunate implementation decisions by some compilers
-// necessitate avoiding the name 'string'
+// necessitate avoiding the name 'std::string'
 //
 // 9/19/04: I originally made this definition to work around a problem
 // with Borland C++ 4.5.  It causes a problem when using the new
-// standard library, since the name clashes with string.  A
+// standard library, since the name clashes with std::string.  A
 // simple solution is to remove the #definition and let namespaces do
 // their job.  Since Intel's headers are the only ones that provoke
 // the problem I'll confine it to that case for now.  Eventually I
@@ -38,13 +38,13 @@ class Flatten;           // flatten.h
 //             I have solved them differently, but it is worth noting 
 //             that re-enabling this #define also fixed the problem.
 #if 0   //!defined(__INTEL_COMPILER)
-  #define string mystring
+  #define std::string mystring
 #endif
 
 
-// ------------------------- string ---------------------
-// This is used when I want to call a function in smbase::string
-// that does not exist or has different semantics in string.
+// ------------------------- std::string ---------------------
+// This is used when I want to call a function in smbase::std::string
+// that does not exist or has different semantics in std::string.
 // That way for now I can keep using the function, but it is 
 // marked as incompatible.
 enum SmbaseStringFunc { SMBASE_STRING_FUNC };
@@ -79,8 +79,8 @@ public:	       // funcs
   string(DBG_INFO_FORMAL_FIRST char const *src, int length, SmbaseStringFunc);
 
   // for this one, there are two alternatives:
-  //   - stringBuilder has nearly the same constructor interface
-  //     as string had, but cannot export a char* for writing 
+  //   - std::stringstream has nearly the same constructor interface
+  //     as string had, but cannot export a char* for writing
   //     (for the same reason string can't anymore); operator[] must
   //     be used
   //   - Array<char> is very flexible, but remember to add 1 to 
@@ -206,7 +206,7 @@ inline int strlen(rostring s) { return s.length(); }
 int strcmp(rostring s1, rostring s2);
 int strcmp(rostring s1, char const *s2);
 int strcmp(char const *s1, rostring s2);
-// string.h, above, provides:
+// std::string.h, above, provides:
 // int strcmp(char const *s1, char const *s2);
 
 // dsw: this is what we are asking most of the time so let's special
@@ -218,23 +218,23 @@ inline bool streq(char const *s1, char const *s2) {return strcmp(s1, s2) == 0;}
 
 char const *strstr(rostring haystack, char const *needle);
 
-// there is no wrapper for 'strchr'; use string::contains
+// there is no wrapper for 'strchr'; use std::string::contains
 
 int atoi(rostring s);
 
-// construct a string out of characters from 'p' up to 'p+n-1',
-// inclusive; resulting string length is 'n'
-string substring(char const *p, int n);
-inline string substring(rostring p, int n)
+// construct a std::string out of characters from 'p' up to 'p+n-1',
+// inclusive; resulting std::string length is 'n'
+std::string substring(char const *p, int n);
+inline std::string substring(rostring p, int n)
   { return substring(p.c_str(), n); }
 
 /*
-// --------------------- stringBuilder --------------------
+// --------------------- std::stringstream --------------------
 // this class is specifically for appending lots of things
-class stringBuilder : public string {
+class std::stringstream : public std::string {
 protected:
   enum { EXTRA_SPACE = 30 };    // extra space allocated in some situations
-  char *end;          // current end of the string (points to the NUL character)
+  char *end;          // current end of the std::string (points to the NUL character)
   int size;           // amount of space (in bytes) allocated starting at 's'
 
 protected:
@@ -242,82 +242,82 @@ protected:
   void dup(char const *src);
 
 public:
-  stringBuilder(DBG_INFO_FORMAL_FIRST  int length=0);    // creates an empty string
+  stringBuilder(DBG_INFO_FORMAL_FIRST  int length=0);    // creates an empty std::string
   stringBuilder(DBG_INFO_FORMAL_FIRST  char const *str);
   stringBuilder(DBG_INFO_FORMAL_FIRST  char const *str, int length);
-  stringBuilder(DBG_INFO_FORMAL_FIRST  string const &str) : string(DBG_INFO_ARG_FWD) { dup(str.c_str()); }
-  stringBuilder(DBG_INFO_FORMAL_FIRST  stringBuilder const &obj) : string(DBG_INFO_ARG_FWD) { dup(obj.c_str()); }
+  stringBuilder(DBG_INFO_FORMAL_FIRST  std::string const &str) : std::string(DBG_INFO_ARG_FWD) { dup(str.c_str()); }
+  stringBuilder(DBG_INFO_FORMAL_FIRST  std::stringstream const &obj) : std::string(DBG_INFO_ARG_FWD) { dup(obj.c_str()); }
   ~stringBuilder() {}
 
-  stringBuilder& operator= (char const *src);
-  stringBuilder& operator= (string const &s) { return operator= (s.c_str()); }
-  stringBuilder& operator= (stringBuilder const &s) { return operator= (s.c_str()); }
+  std::stringstream& operator= (char const *src);
+  std::stringstream& operator= (std::string const &s) { return operator= (s.c_str()); }
+  std::stringstream& operator= (std::stringstream const &s) { return operator= (s.c_str()); }
 
   int length() const { return end-s; }
   bool isempty() const { return length()==0; }
 
-  // unlike 'string' above, I will allow stringBuilder to convert to
+  // unlike 'std::string' above, I will allow std::stringstream to convert to
   // char const * so I can continue to use 'stringc' to build strings
   // for functions that accept char const *; this should not conflict
-  // with string, since I am explicitly using a different class
+  // with std::string, since I am explicitly using a different class
   // (namely stringBuilder) when I use this functionality
   operator char const * () const { return c_str(); }
 
-  stringBuilder& setlength(int newlen);    // change length, forget current data
+  std::stringstream& setlength(int newlen);    // change length, forget current data
 
   // make sure we can store 'someLength' non-null chars; grow if necessary
   void ensure(int someLength) { if (someLength >= size) { grow(someLength); } }
 
-  // grow the string's length (retaining data); make sure it can hold at least
+  // grow the std::string's length (retaining data); make sure it can hold at least
   // 'newMinLength' non-null chars
   void grow(int newMinLength);
 
-  // this can be useful if you modify the string contents directly..
+  // this can be useful if you modify the std::string contents directly..
   // it's not really the intent of this class, though
   void adjustend(char* newend);
 
-  // remove characters from the end of the string; 'newLength' must
+  // remove characters from the end of the std::string; 'newLength' must
   // be at least 0, and less than or equal to current length
   void truncate(int newLength);
 
-  // make the string be the empty string, but don't change the
+  // make the std::string be the empty std::string, but don't change the
   // allocated space
   void clear() { adjustend(s); }
 
   // concatenation, which is the purpose of this class
-  stringBuilder& operator&= (char const *tail);
+  std::stringstream& operator&= (char const *tail);
 
   // useful for appending substrings or strings with NUL in them
   void append(char const *tail, int length);
 
   // append a given number of spaces; meant for contexts where we're
-  // building a multi-line string; returns '*this'
-  stringBuilder& indent(int amt);
+  // building a multi-line std::string; returns '*this'
+  std::stringstream& indent(int amt);
 
   // sort of a mixture of Java compositing and C++ i/o strstream
-  stringBuilder& operator << (rostring text) { return operator&=(text.c_str()); }
-  stringBuilder& operator << (char const *text) { return operator&=(text); }
-  stringBuilder& operator << (char c);
-  stringBuilder& operator << (unsigned char c) { return operator<<((char)c); }
-  stringBuilder& operator << (long i);
-  stringBuilder& operator << (unsigned long i);
-  stringBuilder& operator << (int i) { return operator<<((long)i); }
-  stringBuilder& operator << (unsigned i) { return operator<<((unsigned long)i); }
-  stringBuilder& operator << (short i) { return operator<<((long)i); }
-  stringBuilder& operator << (unsigned short i) { return operator<<((long)i); }
-  stringBuilder& operator << (double d);
-  stringBuilder& operator << (void *ptr);     // inserts address in hex
+  std::stringstream& operator << (rostring text) { return operator&=(text.c_str()); }
+  std::stringstream& operator << (char const *text) { return operator&=(text); }
+  std::stringstream& operator << (char c);
+  std::stringstream& operator << (unsigned char c) { return operator<<((char)c); }
+  std::stringstream& operator << (long i);
+  std::stringstream& operator << (unsigned long i);
+  std::stringstream& operator << (int i) { return operator<<((long)i); }
+  std::stringstream& operator << (unsigned i) { return operator<<((unsigned long)i); }
+  std::stringstream& operator << (short i) { return operator<<((long)i); }
+  std::stringstream& operator << (unsigned short i) { return operator<<((long)i); }
+  std::stringstream& operator << (double d);
+  std::stringstream& operator << (void *ptr);     // inserts address in hex
   #ifndef LACKS_BOOL
-    stringBuilder& operator << (bool b) { return operator<<((long)b); }
+    std::stringstream& operator << (bool b) { return operator<<((long)b); }
   #endif // LACKS_BOOL
 
   // useful in places where long << expressions make it hard to
   // know when arguments will be evaluated, but order does matter
-  typedef stringBuilder& (*Manipulator)(stringBuilder &sb);
-  stringBuilder& operator<< (Manipulator manip);
+  typedef std::stringstream& (*Manipulator)(std::stringstream &sb);
+  std::stringstream& operator<< (Manipulator manip);
 
   // stream readers
-  friend std::istream& operator>> (std::istream &is, stringBuilder &sb)
+  friend std::istream& operator>> (std::istream &is, std::stringstream &sb)
     { sb.readline(is); return is; }
   void readall(std::istream &is) { readdelim(is, NULL); }
   void readline(std::istream &is) { readdelim(is, "\n"); }
@@ -333,7 +333,7 @@ public:
     Hex(unsigned long v) : value(v) {}
     Hex(Hex const &obj) : value(obj.value) {}
   };
-  stringBuilder& operator<< (Hex const &h);
+  std::stringstream& operator<< (Hex const &h);
   #define SBHex stringBuilder::Hex
 };
 
@@ -354,12 +354,12 @@ public:
 
 
 // experimenting with using toString as a general method for datatypes
-string toString(int i);
-string toString(unsigned i);
-string toString(char c);
-string toString(long i);
-string toString(char const *str);
-string toString(float f);
+std::string toString(int i);
+std::string toString(unsigned i);
+std::string toString(char c);
+std::string toString(long i);
+std::string toString(char const *str);
+std::string toString(float f);
 void debugString(std::ostream &os, int i, int level);
 void debugString(std::ostream &os, unsigned i, int level);
 void debugString(std::ostream &os, char i, int level);
@@ -367,11 +367,11 @@ void debugString(std::ostream &os, long i, int level);
 void debugString(std::ostream &os, char const * i, int level);
 void debugString(std::ostream &os, float i, int level);
 
-// printf-like construction of a string; often very convenient, since
+// printf-like construction of a std::string; often very convenient, since
 // you can use any of the formatting characters (like %X) that your
 // libc's sprintf knows about
-string stringf(char const *format, ...);
-string vstringf(char const *format, va_list args);
+std::string stringf(char const *format, ...);
+std::string vstringf(char const *format, va_list args);
 
 
 #endif // STR_H

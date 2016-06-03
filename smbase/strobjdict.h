@@ -1,5 +1,5 @@
 // strobjdict.h            see license.txt for copyright and terms of use
-// dictionary of objects, indexed by string (case-sensitive)
+// dictionary of objects, indexed by std::string (case-sensitive)
 // (c) Scott McPeak, 2000
 
 #ifndef __STROBJDICT_H
@@ -16,8 +16,8 @@ template <class T>
 class StringObjDict {
 public:     // types
   // 'foreach' iterator functions
-  typedef bool (*ForeachCFn)(string const &key, T const *value, void *extra);
-  typedef bool (*ForeachFn)(string const &key, T * /*serf*/ value, void *extra);
+  typedef bool (*ForeachCFn)(std::string const &key, T const *value, void *extra);
+  typedef bool (*ForeachFn)(std::string const &key, T * /*serf*/ value, void *extra);
 
   // external iterator
   class Iter {
@@ -32,7 +32,7 @@ public:     // types
     bool isDone() const { return iter.isDone(); }
     Iter& next() { iter.next(); return *this; }
 
-    string const &key() const { return iter.key(); }
+    std::string const &key() const { return iter.key(); }
     T const *&value() const { return (T const *&)iter.value(); }
   };
   friend class Iter;

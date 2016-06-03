@@ -15,10 +15,10 @@
 class BoxPrint;
 
 
-// manages the process of rendering a boxprint tree to a string
+// manages the process of rendering a boxprint tree to a std::string
 class BPRender {
 public:
-  // output string
+  // output std::string
     // TODO fail-safe  stroimgBuilder
   std::stringstream sb;
 
@@ -31,7 +31,7 @@ public:
 
   // text to begin every line with; not counted towards column
   // counts; defaults to ""
-  string lineStartText;
+  std::string lineStartText;
 
 public:
   BPRender();
@@ -50,8 +50,8 @@ public:
   // add a newline, plus indentation to get to column 'ind'
   void breakLine(int ind);
 
-  // take the string out of the rendering engine, replacing it
-  // with the empty string
+  // take the std::string out of the rendering engine, replacing it
+  // with the empty std::string
   // TODO fail-safe
   std::string takeString() {
     std::string ret(sb.str());
@@ -63,7 +63,7 @@ public:
   // manually after changing 'lineStartText'
   void reset();
 
-  // take the tree out of a boxprint builder, convert it to a string,
+  // take the tree out of a boxprint builder, convert it to a std::string,
   // and delete the tree
   // TODO fail-safe
   std::string takeAndRender(BoxPrint &bld);
@@ -84,7 +84,7 @@ public:
   // as above, but without the forcedBreak info
   int oneLineWidth();
 
-  // render this element as a string with newlines, etc.
+  // render this element as a std::string with newlines, etc.
   virtual void render(BPRender &mgr)=0;
 
   // true if this element is a BPBreak and is enabled; returns false

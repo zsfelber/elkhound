@@ -55,7 +55,7 @@ void traceRemoveSys(char const *sysName)
   init();
 
   MUTATE_EACH_OBJLIST(string, tracers, mut) {
-    if (mut.data()->compareTo(sysName) == 0) {
+    if (!mut.data()->compareTo(sysName)) {
       mut.deleteIt();
       return;
     }
@@ -69,7 +69,7 @@ bool tracingSys(char const *sysName)
   init();
 
   FOREACH_OBJLIST(string, tracers, iter) {
-    if (iter.data()->compareTo(sysName) == 0) {
+    if (!iter.data()->compareTo(sysName)) {
       return true;
     }
   }

@@ -41,9 +41,9 @@ private:    // data
   std::string ppFname;
 
   // map for canonical storage of orig filenames; I don't rely on
-  // an external string table because I don't want the extra
+  // an external std::string table because I don't want the extra
   // dependency
-  StringObjDict<string> filenames;
+  StringObjDict<std::string> filenames;
 
   // growable array of HashLine objects
   ArrayStack<HashLine> directives;

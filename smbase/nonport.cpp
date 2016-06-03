@@ -583,7 +583,7 @@ int vnprintf(char const *format, va_list args)
     return vsnprintf(NULL, 0, format, args);
 
   #else
-    // conservatively interpret the format string using gprintf
+    // conservatively interpret the format std::string using gprintf
     int count = 0;
     general_vprintf(counting_output_function, &count, format, args);
     return count;

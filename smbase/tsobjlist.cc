@@ -10,13 +10,13 @@ int main()
   str::StoragePool pool(DBG_INFO_ARG0);
   char const *_hi = "hi there";
   char const *_what = "what's up?";
-  string hi(_hi);
-  string what(_what);
+  std::string hi(_hi);
+  std::string what(_what);
 
   // the real purpose of this test is to make sure it's ok to
   // add a 'const' qualifier inside the angle brackets, and get
   // the effect I'm after
-  STORE_NEW_REF0(pool, SObjList<string>, list);
+  STORE_NEW_REF0(pool, SObjList<std::string>, list);
   
   // 'prepend' accepts a T*, which should become a char const *;
   // if it only becomes (e.g.) a char*, then this call should

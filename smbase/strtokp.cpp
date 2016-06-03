@@ -74,7 +74,7 @@ char const *StrtokParse::tokv(int which) const
 }
 
 
-string StrtokParse::
+std::string StrtokParse::
   reassemble(int firstTok, int lastTok, rostring original) const
 {
   int left = offset(firstTok);
@@ -84,10 +84,10 @@ string StrtokParse::
 }
 
 
-string StrtokParse::
+std::string StrtokParse::
   join(int firstTok, int lastTok, rostring separator) const
 {
-  stringBuilder sb(DBG_INFO_ARG0);
+  std::stringstream sb;
   
   for (int i=firstTok; i<=lastTok; i++) {
     if (i > firstTok) {
@@ -96,7 +96,7 @@ string StrtokParse::
     sb << tokv(i);
   }
   
-  return sb;
+  return sb.str();
 }
 
 

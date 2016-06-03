@@ -2,7 +2,7 @@
 // code for smregexp.h
 
 #include "smregexp.h"     // this module
-#include "str.h"          // string
+#include "str.h"          // std::string
 #include "exc.h"          // xbase
 #include "array.h"        // Array
 
@@ -21,14 +21,14 @@
 #endif
 
 //TODO
-// get an error string
+// get an error std::string
 static std::string regexpErrorString(regex_t const *pat, int code)
 {
-  // find out how long the error string is; this size
+  // find out how long the error std::string is; this size
   // includes the final NUL byte
   int size = regerror(code, pat, NULL, 0);
 
-  // get the string
+  // get the std::string
   Array<char> buf(size);
   regerror(code, pat, buf.ptr(), size);
   buf[size] = 0;     // paranoia

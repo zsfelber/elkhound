@@ -27,7 +27,7 @@
 #define PPRINT_H
 
 #include <iostream>      // std::ostream
-#include "str.h"           // string
+#include "str.h"           // std::string
 #include "array.h"         // GrowArray
 
 
@@ -91,7 +91,7 @@ private:     // types
   public:      // funcs
     Setter(PPrint &p)
       : pprint(p),
-        curLine(DBG_INFO_ARG0),
+        curLine(),
         curLineInd(0),
         lineIndex(0),
         indentGroups()
@@ -163,7 +163,7 @@ public:
 
 public:
   PPrintToString()
-    : PPrint(sbOut), sb(DBG_INFO_ARG0), sbOut(sb) {}
+    : PPrint(sbOut), sb(), sbOut(sb) {}
   ~PPrintToString();
 };
 

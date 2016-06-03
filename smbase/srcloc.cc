@@ -718,7 +718,7 @@ std::string SourceLocManager::getString(SourceLoc loc)
   int line, col;
   decodeLineCol(loc, name, line, col);
 
-  std::stringstream result DBG_INFO_ARG0_SOLE;
+  std::stringstream result ;
   result << name << ":" << line << ":" << col;
   return result.str();
 }
@@ -729,7 +729,7 @@ std::string SourceLocManager::getLCString(SourceLoc loc)
   int line, col;
   decodeLineCol(loc, name, line, col);
 
-  std::stringstream result DBG_INFO_ARG0_SOLE;
+  std::stringstream result ;
   result << line << ":" << col;
   return result.str();
 }
@@ -894,7 +894,7 @@ void expect(SourceLoc loc, char const *expFname, int expLine, int expCol)
 
 
 // should this be exported?
-string locString(char const *fname, int line, int col)
+std::string locString(char const *fname, int line, int col)
 {
   return stringc << fname << ":" << line << ":" << col;
 }
@@ -927,7 +927,7 @@ void buildHashMap(SourceLocManager::File *pp, char const *fname, int &expanderLi
 
     int origLine = atoi(tok[1]);
     char const *tok2 = tok[2];
-    string origFname = substring(tok2+1, strlen(tok2)-2);  // remove quotes
+    std::string origFname = substring(tok2+1, strlen(tok2)-2);  // remove quotes
     pp->addHashLine(ppLine, origLine, origFname.c_str());
   }
   pp->doneAdding();

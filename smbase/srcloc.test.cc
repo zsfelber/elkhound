@@ -676,7 +676,7 @@ int SourceLocManager::getCol(SourceLoc loc)
 }
 
 
-string SourceLocManager::getString(SourceLoc loc)
+std::string SourceLocManager::getString(SourceLoc loc)
 {
   char const *name;
   int line, col;
@@ -685,7 +685,7 @@ string SourceLocManager::getString(SourceLoc loc)
   return stringc << name << ":" << line << ":" << col;
 }
 
-string SourceLocManager::getLCString(SourceLoc loc)
+std::string SourceLocManager::getLCString(SourceLoc loc)
 {
   char const *name;
   int line, col;
@@ -695,7 +695,7 @@ string SourceLocManager::getLCString(SourceLoc loc)
 }
 
 
-string locToStr(SourceLoc sl)
+std::string locToStr(SourceLoc sl)
 {
   return sourceLocManager->getString(sl);
 }
@@ -850,7 +850,7 @@ EXPANDER
 
 
 // should this be exported?
-string locString(char const *fname, int line, int col)
+std::string locString(char const *fname, int line, int col)
 {
   return stringc << fname << ":" << line << ":" << col;
 }
@@ -893,7 +893,7 @@ void testHashMap()
 
       int origLine = atoi(tok[1]);
       char const *tok2 = tok[2];
-      string origFname = substring(tok2+1, strlen(tok2)-2);  // remove quotes
+      std::string origFname = substring(tok2+1, strlen(tok2)-2);  // remove quotes
       pp->addHashLine(ppLine, origLine, origFname.c_str());
     }
     pp->doneAdding();

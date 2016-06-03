@@ -13,7 +13,7 @@
 #include "breaker.h"     // breaker
 #include "typ.h"         // bool
 #include "xassert.h"     // xassert, for convenience for #includers
-#include "str.h"         // string
+#include "str.h"         // std::string
 #include <iostream>    // ostream
 
 // forward declarations
@@ -60,7 +60,7 @@ bool unwinding_other(xBase const &x);
 class xBase {
 protected:
   // the human-readable description of the exception
-  //string msg;
+  //std::string msg;
     // TODO fail-safe
   std::string msg;
 
@@ -85,9 +85,9 @@ public:
   friend std::ostream& operator << (std::ostream &os, xBase const &obj)
     { obj.insert(os); return os; }
 
-  // add a string describing what was going on at the time the
+  // add a std::string describing what was going on at the time the
   // exception was thrown; this should be called with the innermost
-  // context string first, i.e., in the normal unwind order
+  // context std::string first, i.e., in the normal unwind order
   void addContext(rostring context);
 };
 
@@ -105,7 +105,6 @@ class x_assert : public xBase {
   int lineno;                // line number
 
 public:
-  x_assert(char const* cond, char const* fname, int line);
   x_assert(rostring cond, rostring fname, int line);
   x_assert(x_assert const &obj);
   ~x_assert();
@@ -167,7 +166,7 @@ void throw_XOpen(rostring fname) NORETURN;
 class XOpenEx : public XOpen {
 public:
     // TODO fail-safe
-  std::string mode;         // fopen-style mode string, e.g. "r"
+  std::string mode;         // fopen-style mode std::string, e.g. "r"
   std::string cause;        // errno-derived failure cause, e.g. "no such file"
 
 public:
@@ -175,7 +174,7 @@ public:
   XOpenEx(XOpenEx const &obj);
   ~XOpenEx();
                                               
-  // convert a mode string as into human-readable participle,
+  // convert a mode std::string as into human-readable participle,
   // e.g. "r" becomes "reading"
   static std::string interpretMode(rostring mode);
 };

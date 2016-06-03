@@ -26,7 +26,7 @@
 #
 #   using namespace std;
 #
-# This causes a clash for the name 'string'.  Long term, I'd like
+# This causes a clash for the name 'std::string'.  Long term, I'd like
 # to have a good, general way to reconcile this clash.  But for the
 # short term, this script replaces that line with these two:
 #

@@ -27,7 +27,7 @@
 #ifndef SRCLOC_H
 #define SRCLOC_H
 
-#include "str.h"      // string
+#include "str.h"      // std::string
 #include "objlist.h"  // ObjList
 #include "storage.h"  // ObjList
 
@@ -186,7 +186,7 @@ public:      // types
     StaticLoc(StaticLoc const &obj);//undefined
 #endif
   public:
-    string name;      // file name
+    std::string name;      // file name
     int offset;       // char offset
     int line, col;    // line,col
 
@@ -318,7 +318,7 @@ public:      // funcs
   File *getInternalFile(char const *fname)
     { return getFile(fname); }
 
-  // render as string in "file:line:col" format
+  // render as std::string in "file:line:col" format
   std::string getString(SourceLoc loc);
 
   // "line:col" format
@@ -352,7 +352,7 @@ std::string locToStr(SourceLoc sl);
 inline std::string toString(SourceLoc sl)
   { return locToStr(sl); }
 
-//inline stringBuilder& operator<< (stringBuilder &sb, SourceLoc sl)
+//inline std::stringstream& operator<< (std::stringstream &sb, SourceLoc sl)
 //  { return sb << toString(sl); }
 inline std::stringstream& operator<< (std::stringstream &sb, SourceLoc sl)
   { return (std::stringstream&)(sb << toString(sl)); }

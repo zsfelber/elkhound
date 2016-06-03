@@ -1,5 +1,5 @@
 // strsobjdict.h            see license.txt for copyright and terms of use
-// dictionary of *serf* pointers to objects, indexed by string (case-sensitive)
+// dictionary of *serf* pointers to objects, indexed by std::string (case-sensitive)
 // (c) Scott McPeak, 2000
 
 // created by copying strobjdict and modifying.. nonideal..
@@ -19,7 +19,7 @@ template <class T>
 class StringSObjDict {
 public:     // types
   // 'foreach' iterator functions
-  typedef bool (*ForeachFn)(string const &key, T *value, void *extra);
+  typedef bool (*ForeachFn)(std::string const &key, T *value, void *extra);
 
   // external iterator
   class Iter {
@@ -34,7 +34,7 @@ public:     // types
     bool isDone() const { return iter.isDone(); }
     Iter& next() { iter.next(); return *this; }
 
-    string const &key() const { return iter.key(); }
+    std::string const &key() const { return iter.key(); }
     T *&value() const { return (T *&)iter.value(); }
 
     int private_getCurrent() const { return iter.private_getCurrent(); }
@@ -53,7 +53,7 @@ public:     // types
     bool isDone() const { return iter.isDone(); }
     IterC& next() { iter.next(); return *this; }
 
-    string const &key() const { return iter.key(); }
+    std::string const &key() const { return iter.key(); }
     T *value() const { return (T *)iter.value(); }
 
     int private_getCurrent() const { return iter.private_getCurrent(); }

@@ -235,7 +235,7 @@ int main()
       buf[len++] = '\n';
     }
     buf[len] = 0;
-    printf("error string: %s", buf);   // should include newline from perror
+    printf("error std::string: %s", buf);   // should include newline from perror
 
     close(in);
     close(out);
@@ -267,7 +267,7 @@ int main()
       buf[len++] = '\n';
     }
     buf[len] = 0;
-    printf("error string: %s", buf);   // should include newline from perror
+    printf("error std::string: %s", buf);   // should include newline from perror
 
     close(in);
     close(out);

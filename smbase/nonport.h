@@ -77,7 +77,7 @@ void applyToDirContents(char const *dirName,
                         PerFileFunc func, void *extra=NULL);
 
 
-// return true if the given string names a directory
+// return true if the given std::string names a directory
 bool isDirectory(char const *path);
 
 
@@ -101,7 +101,7 @@ void portableSleep(unsigned seconds);
 void getCurrentUsername(char *buffer, int buflen);
 
 
-// read a string from the console, with no echo
+// read a std::string from the console, with no echo
 void readNonechoString(char *buffer, int buflen, char const *prompt);
 
 

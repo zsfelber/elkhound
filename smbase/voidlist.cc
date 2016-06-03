@@ -68,9 +68,9 @@ str::Storeable *VoidList::nth(int which) const
     p = p->next;
   }
   if (p == NULL) {
-    xfailure(stringc << "asked for list element "
+    xfailure(stringb( "asked for list element "
                      << (count()+which) << " (0-based) but list only has "
-                     << count() << " elements");
+                     << count() << " elements").str());
   }
   return p->data;
 }

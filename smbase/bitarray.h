@@ -5,7 +5,7 @@
 #define BITARRAY_H
 
 #include "xassert.h"      // xassert
-#include "str.h"          // string
+#include "str.h"          // std::string
 
 class Flatten;            // flatten.h
 

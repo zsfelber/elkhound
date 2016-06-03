@@ -25,10 +25,10 @@ void HashLineMap::addHashLine(int ppLine, int origLine, char const *origFname)
   prev_ppLine = ppLine;
 
   // map 'origFname' to a canonical reference
-  string *canon = filenames.queryif(origFname);
+  std::string *canon = filenames.queryif(origFname);
   if (!canon) {
     // add a new one
-    canon = new string(origFname);
+    canon = new std::string(origFname);
     filenames.add(origFname, canon);
   }
   origFname = canon->c_str();

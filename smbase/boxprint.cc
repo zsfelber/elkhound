@@ -9,7 +9,7 @@
 
 // ----------------------- BPRender ----------------------
 BPRender::BPRender()
-  : sb(DBG_INFO_ARG0),         // initially empty
+  : sb(),         // initially empty
     margin(72),   
     curCol(0),
     lineStartText("")

@@ -370,9 +370,9 @@ void StringVoidDict::insertOstream(std::ostream &os) const
 }
 
 
-string StringVoidDict::toString() const
+std::string StringVoidDict::toString() const
 {
-  stringBuilder sb(DBG_INFO_ARG0);
+  std::stringstream sb;
   sb << "{";
   int count=0;
   FOREACH_ITERC(*this, entry) {
@@ -382,7 +382,7 @@ string StringVoidDict::toString() const
     sb << " " << entry.key() << "=\"" << entry.value() << "\"";
   }
   sb << " }";
-  return sb;
+  return sb.str();
 }
 
 
@@ -399,21 +399,21 @@ char randChar()
   return (char)(myrandom(127-32+1)+32);
 }
 
-string randString(int len)
+std::string randString(int len)
 {
-  stringBuilder str(DBG_INFO_ARG0);
+  std::stringstream str(DBG_INFO_ARG0);
   loopj(len) {
     str << randChar();
   }
   return str;
 }
 
-string randStringRandLen(int maxlen)
+std::string randStringRandLen(int maxlen)
 {
   return randString(myrandom(maxlen)+1);
 }
 
-string randKey(StringVoidDict const &dict)
+std::string randKey(StringVoidDict const &dict)
 {
   int size = dict.size();
   xassert(size > 0);
@@ -442,7 +442,7 @@ void entry()
     switch (myrandom(6)) {
       case 0: {
         // insert a random element
-        string key = randStringRandLen(10);
+        std::string key = randStringRandLen(10);
         void *value = randVoidPtr();
 
         if (!dict.isMapped(key.c_str())) {
@@ -461,7 +461,7 @@ void entry()
           break;
         }
 
-        string key = randKey(dict);
+        std::string key = randKey(dict);
         dict.remove(key.c_str());
         size--;
         break;
@@ -469,7 +469,7 @@ void entry()
 
       case 2: {
         // check a random element that should not be there
-        string key = randStringRandLen(10);
+        std::string key = randStringRandLen(10);
         if (dict.isMapped(key.c_str())) {
           collisions++;
         }
@@ -490,7 +490,7 @@ void entry()
 
         // modify it, then verify inequality
         if (!dict2.isEmpty()) {
-          string key = randKey(dict2);
+          std::string key = randKey(dict2);
           void *value = dict2.queryf(key.c_str());
 
           if (myrandom(2) == 0) {
@@ -508,7 +508,7 @@ void entry()
       case 5: {
         // random modification
         if (!dict.isEmpty()) {
-          string key = randKey(dict);
+          std::string key = randKey(dict);
           dict.modify(key.c_str(), randVoidPtr());
         }
         break;

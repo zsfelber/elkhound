@@ -1,5 +1,5 @@
 // svdict.h            see license.txt for copyright and terms of use
-// dictionary of void*, indexed by string (case-sensitive)
+// dictionary of void*, indexed by std::string (case-sensitive)
 // (c) Scott McPeak, 2000
 
 // created by modifying strdict; at some point strdict should
@@ -9,13 +9,13 @@
 #define __SVDICT_H
 
 #include <iostream>   // ostream
-#include "str.h"        // string
+#include "str.h"        // std::string
 #include "macros.h"     // DMEMB
 #include "xassert.h"    // xassert
 #include "typ.h"        // MUTABLE
 #include "strhash.h"    // StringHash
 
-// constness: for this class, 'const' means the *mapping* from string
+// constness: for this class, 'const' means the *mapping* from std::string
 // to void* won't change; but I don't prevent the thing pointed-at
 // by the void* from changing (would like multiple levels of constness..)
 
@@ -27,7 +27,7 @@ private:    // types
   class Node {
   public:
     Node *next;
-    string key;
+    std::string key;
     void *value;
 
   public:
@@ -41,7 +41,7 @@ private:    // types
 public:     // types
   // function for general foreach; return false to continue,
   // true to stop iterating
-  typedef bool (*ForeachFn)(string const &key, void *value, void *extra);
+  typedef bool (*ForeachFn)(std::string const &key, void *value, void *extra);
 
   // function type to delete void*s while emptying
   typedef void (*DelFn)(void *value);
@@ -63,7 +63,7 @@ public:     // types
     Iter& next() { xassert(current); current = current->next; return *this; }
       // 'next' returns a value primarily to allow use in for-loop comma exprs
 
-    string &key() const { return current->key; }
+    std::string &key() const { return current->key; }
     void *&value() const { return current->value; }
     
     long private_getCurrent() const { return (long)current; }
@@ -84,7 +84,7 @@ public:     // types
     Iter::private_getCurrent;
 
     // others must be const-ified
-    string const &key() const { return Iter::key(); }
+    std::string const &key() const { return Iter::key(); }
     void const *&value() const { return (void const *&)Iter::value(); }
   };
 
@@ -177,7 +177,7 @@ public:
 
   // ------------ misc --------------
   INSERT_OSTREAM(StringVoidDict)
-  string toString() const;
+  std::string toString() const;
   
   // debugging...
   long private_getTopAddr() const { return (long)top; }

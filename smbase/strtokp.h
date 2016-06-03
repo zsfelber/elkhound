@@ -1,11 +1,11 @@
 // strtokp.h            see license.txt for copyright and terms of use
-// using strtok to parse an entire string at once
+// using strtok to parse an entire std::string at once
 // Scott McPeak, 1997  This file is public domain.
 
 #ifndef __STRTOKP_H
 #define __STRTOKP_H
 
-#include "str.h"       // string
+#include "str.h"       // std::string
 #include "array.h"     // Array
 #include <string.h>    // strlen
 
@@ -33,19 +33,19 @@ public:
   char const* operator[] (int which) const { return tokv(which); }
     // access to tokens; must make local copies to modify
 
-  string reassemble(int firstTok, int lastTok, rostring originalString) const;
-    // return the substring of the original string spanned by the
+  std::string reassemble(int firstTok, int lastTok, rostring originalString) const;
+    // return the substring of the original std::string spanned by the
     // given range of tokens; if firstTok==lastTok, only that token is
     // returned (without any separators); must be that firstTok <=
     // lastTok
 
-  string join(int firstTok, int lastTok, rostring separator) const;
-    // return a string created by concatenating the given range of tokens
+  std::string join(int firstTok, int lastTok, rostring separator) const;
+    // return a std::string created by concatenating the given range of tokens
     // together with 'separator' in between them
 
   int offset(int which) const;
     // return a value that, when added to the original 'str' parameter,
-    // yields a pointer to where tokv(which) is, as a substring, in that string
+    // yields a pointer to where tokv(which) is, as a substring, in that std::string
 
   int offsetAfter(int which) const
     { return offset(which) + strlen(tokv(which)); }
