@@ -16,7 +16,7 @@ typedef std::string const &rostring;
 // because I do not want this interface to depend on str.h, and also
 // because I do not want the many call sites to have the overhead
 // of constructing and destructing temporary objects
-int x_assert_fail(rostring cond, rostring file, int line) NORETURN;
+int x_assert_fail(rostring cond, rostring file, int line);// NORETURN;
 
 // Ordinary 'xassert' *can* be turned off, but the nominal intent
 // is that it be left on, under the "ship what you test" theory.
