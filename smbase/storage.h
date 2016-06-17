@@ -356,6 +356,10 @@ template<typename IT_OR_PTR, typename T,typename CMP>
 bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP cmp) {
    BI(/**/, cmp(*middle, val), cmp(val, *middle))
 }
+template<typename IT_OR_PTR, typename T,typename CMP>
+bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP cmp1, CMP cmp2) {
+   BI(/**/, cmp1(*middle, val), cmp2(val, *middle))
+}
 
 template<typename T>
 inline void shrinkTail(size_t& length, T* vect, T nullitm) {
