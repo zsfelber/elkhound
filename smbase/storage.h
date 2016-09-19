@@ -69,6 +69,8 @@ class GrammarAnalysis;
 #define NDEBUG_COLON :
 #endif
 
+#define OPT inline __attribute__((optimize("O2")))
+
 namespace str {
 
 
@@ -94,11 +96,11 @@ P& NN(P* a) {
     return *a;
 }
 
-template <typename P> inline P* constcast(P const * p) {
+template <typename P> OPT P* constcast(P const * p) {
     return const_cast<P*>(p);
 }
 
-template <typename P> inline P& constcast(P const & p) {
+template <typename P> OPT P& constcast(P const & p) {
     return const_cast<P&>(p);
 }
 
@@ -133,13 +135,13 @@ extern const char* lastObjName;
 
 
 template<typename T>
-inline void memsetBuffer(T *buf, int32_t c, T n)
+OPT void memsetBuffer(T *buf, int32_t c, T n)
 {
     for (uint32_t i = 0; i<n; i++, buf++) *buf = c;
 }
 
 template<typename T>
-inline void copyBuffer(T* src, size_t srclen, size_t srccap,
+OPT void copyBuffer(T* src, size_t srclen, size_t srccap,
                        T*& dest, size_t &dstlen, size_t &dstcap) {
     xassert(srccap && !dest);
     dest = (T*)new uint8_t[srccap*sizeof(T)];//avoid using default constructor for class types
@@ -150,14 +152,14 @@ inline void copyBuffer(T* src, size_t srclen, size_t srccap,
 }
 
 template<typename T>
-inline void copyBuffer(T* src, size_t srclen, size_t srccap, T*& dest) {
+OPT void copyBuffer(T* src, size_t srclen, size_t srccap, T*& dest) {
     xassert(!dest);
     dest = (T*)new uint8_t[srccap*sizeof(T)];//avoid using default constructor for class types
     memcpy(dest, src, srclen*sizeof(T));
 }
 
 template<typename T>
-inline void extendBuffer(T*& buf, size_t size, size_t& capacity, size_t newcap) {
+OPT void extendBuffer(T*& buf, size_t size, size_t& capacity, size_t newcap) {
     xassert(newcap);
     T* old = buf;
     buf = (T*)new uint8_t[newcap*sizeof(T)];//avoid using default constructor for class types
@@ -170,7 +172,7 @@ inline void extendBuffer(T*& buf, size_t size, size_t& capacity, size_t newcap) 
 }
 
 template<typename T>
-inline void extendBuffer(T*& buf, size_t size, size_t newcap) {
+OPT void extendBuffer(T*& buf, size_t size, size_t newcap) {
     xassert(newcap);
     T* old = buf;
     buf = (T*)new uint8_t[newcap*sizeof(T)];//avoid using default constructor for class types
@@ -182,7 +184,7 @@ inline void extendBuffer(T*& buf, size_t size, size_t newcap) {
 }
 
 template<typename T>
-inline void extendBufferAndSet(T*& buf, size_t size, size_t newcap, uint8_t defaultByte) {
+OPT void extendBufferAndSet(T*& buf, size_t size, size_t newcap, uint8_t defaultByte) {
     xassert(newcap);
     T* old = buf;
     buf = (T*)new uint8_t[newcap*sizeof(T)];//avoid using default constructor for class types
@@ -195,37 +197,37 @@ inline void extendBufferAndSet(T*& buf, size_t size, size_t newcap, uint8_t defa
 }
 
 template<typename T>
-inline void removeBufferItem(T* buf, size_t& size, T* pos) {
+OPT void removeBufferItem(T* buf, size_t& size, T* pos) {
     size--;
     // allow overlap
     memmove(pos, pos+1, (size-(pos-buf))*sizeof(T));
 }
-inline void removeBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
+OPT void removeBufferItem(uint8_t* buf, size_t& size, uint8_t* pos, size_t size_of) {
     size-=size_of;
     // allow overlap
     memmove(pos, pos+size_of, size-(pos-buf));
 }
 
 template<typename T>
-inline void insertBufferItem(T* buf, size_t& size, T* pos) {
+OPT void insertBufferItem(T* buf, size_t& size, T* pos) {
     // allow overlap
     memmove(pos+1, pos, (size-(pos-buf))*sizeof(T));
     size++;
 }
 
-inline size_t getStoreSize(size_t size_of) {
+OPT size_t getStoreSize(size_t size_of) {
     return ((size_of + STORE_BUF_ADDR_SZ - 1)>>STORE_BUF_VAR_SH)<<STORE_BUF_VAR_SH;
 }
 
-inline size_t getMemBufSize(size_t memlength) {
+OPT size_t getMemBufSize(size_t memlength) {
     return ((memlength + STORE_BUF_SZ - 1)>>STORE_BUF_BITS)<<STORE_BUF_BITS;
 }
 
-inline size_t getPtrBufSize(size_t ptrslength) {
+OPT size_t getPtrBufSize(size_t ptrslength) {
     return ((ptrslength + STORE_BUF_PTR_SZ/*+1-1*/)>>STORE_BUF_PTR_BITS)<<STORE_BUF_PTR_BITS;
 }
 
-inline size_t encodeDeltaPtr(uint8_t const * origin,
+OPT size_t encodeDeltaPtr(uint8_t const * origin,
                              DBG_INFO_FWD_COM(uint8_t const * org_last)
                              uint8_t const * address) {
     if (!address || !origin) {
@@ -237,7 +239,7 @@ inline size_t encodeDeltaPtr(uint8_t const * origin,
     }
 }
 
-inline std::ptrdiff_t encodeSignedDeltaPtr(uint8_t const * origin,
+OPT std::ptrdiff_t encodeSignedDeltaPtr(uint8_t const * origin,
                                            uint8_t const * address) {
     if (!address || !origin) {
         return 0;
@@ -246,7 +248,7 @@ inline std::ptrdiff_t encodeSignedDeltaPtr(uint8_t const * origin,
     }
 }
 
-inline uint8_t const * decodeDeltaPtr(uint8_t const * origin,
+OPT uint8_t const * decodeDeltaPtr(uint8_t const * origin,
                                       DBG_INFO_FWD_COM(uint8_t const * org_last)
                                       size_t delta) {
     if (delta == npos || !origin) {
@@ -259,18 +261,18 @@ inline uint8_t const * decodeDeltaPtr(uint8_t const * origin,
     }
 }
 
-/*inline uint8_t const * decodeDeltaBackPtr(uint8_t const * origin,
+/*OPT uint8_t const * decodeDeltaBackPtr(uint8_t const * origin,
                                           DBG_INFO_FWD_COM(uint8_t const * org_last)
                                           size_t delta) {
     return (delta == npos || !origin)  ? NULL : (origin - delta);
 }*/
 
-inline uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin,
+OPT uint8_t const * decodeSignedDeltaPtr(uint8_t const * origin,
                                             std::ptrdiff_t delta) {
     return (delta == 0 || !origin)  ? NULL : (origin + delta);
 }
 
-inline std::ostream &ind(std::ostream &os, int indent)
+OPT std::ostream &ind(std::ostream &os, int indent)
 {
   xassert(indent <= 110);
   char const *ib = "                                                                                                              ";
@@ -341,28 +343,28 @@ inline std::ostream &ind(std::ostream &os, int indent)
  *  @ingroup binary_search_algorithms
 */
 template<typename IT_OR_PTR, typename T>
-bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, T const & nullItem, IT_OR_PTR& result) {
+OPT bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, T const & nullItem, IT_OR_PTR& result) {
    BI(BI_NI, *middle < val, val < *middle)
 }
 template<typename IT_OR_PTR, typename T>
-bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result) {
+OPT bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result) {
    BI(/**/, *middle < val, val < *middle)
 }
 template<typename IT_OR_PTR, typename T,typename CMP>
-bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, T const & nullItem, IT_OR_PTR& result, CMP cmp) {
+OPT bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, T const & nullItem, IT_OR_PTR& result, CMP cmp) {
    BI(BI_NI, cmp(*middle, val), cmp(val, *middle))
 }
 template<typename IT_OR_PTR, typename T,typename CMP>
-bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP cmp) {
+OPT bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP cmp) {
    BI(/**/, cmp(*middle, val), cmp(val, *middle))
 }
 template<typename IT_OR_PTR, typename T,typename CMP>
-bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP cmp1, CMP cmp2) {
+OPT bool binary_insert(IT_OR_PTR first, IT_OR_PTR last, T const & val, IT_OR_PTR& result, CMP cmp1, CMP cmp2) {
    BI(/**/, cmp1(*middle, val), cmp2(val, *middle))
 }
 
 template<typename T>
-inline void shrinkTail(size_t& length, T* vect, T nullitm) {
+OPT void shrinkTail(size_t& length, T* vect, T nullitm) {
     length--;
     while (length>0) {
         size_t chl = length-1;
@@ -405,7 +407,7 @@ DBG_INFO_FWD(__DbgStr objectName;)
     }
 #endif
 
-    inline void clear(size_t size_of) {
+    OPT void clear(size_t size_of) {
 #ifdef DEBUG
         uint8_t * bg = sizeof(objectName)+(uint8_t*)&objectName;
         uint8_t * th = (uint8_t*)this;
@@ -504,19 +506,19 @@ public:
 
    void assignParent(StoragePool const * srcPool, bool isPool = false, StoragePool const * oldPool = NULL);
 
-   inline __Kind getKind() const {
+   OPT __Kind getKind() const {
        return (__Kind)__kind;
    }
 
-   inline StoragePool const & getParentRef() const {
+   OPT StoragePool const & getParentRef() const {
        return NN(__parent);
    }
 
-   inline StoragePool const * getParent() const {
+   OPT StoragePool const * getParent() const {
        return __parent;
    }
 
-   inline StoragePool const * getPool() const {
+   OPT StoragePool const * getPool() const {
        if (__kind & ST_STORAGE_POOL) {
            return (StoragePool*)this;
        } else if (__kind & ST_VALUE) {
@@ -528,32 +530,32 @@ public:
        }
    }
 
-   inline StoragePool const & getPoolRef() const {
+   OPT StoragePool const & getPoolRef() const {
        return NN(getPool());
    }
 
-   inline virtual StoragePool * asPool() const {
+   OPT virtual StoragePool * asPool() const {
        return NULL;
    }
 
-   inline int debugPrint(int indent = 0) const
+   OPT int debugPrint(int indent = 0) const
    {
        debugPrint(std::cout, indent);
        return 0;
    }
 
-   virtual inline void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const
+   virtual OPT void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const
    {
    }
 
-   inline bool isDeleted() const {
+   OPT bool isDeleted() const {
        return __kind & ST_DELETED;
    }
 
    void debugItm(std::ostream& os, int indent) const;
 
 #ifdef DEBUG
-   inline char const * getObjectName() const {
+   OPT char const * getObjectName() const {
        return objectName.str;
    }
 #endif
@@ -611,8 +613,8 @@ public:
        uint8_t* memend;
        uint8_t const * variablePtr;
 
-       inline iterator() {}
-       inline iterator(StoragePool const & pool, uint8_t const * _variablePtr) : index(0), variablePtr(_variablePtr) {
+       OPT iterator() {}
+       OPT iterator(StoragePool const & pool, uint8_t const * _variablePtr) : index(0), variablePtr(_variablePtr) {
            if (!variablePtr) {
                variablePtr = pool.memory;
            }
@@ -620,7 +622,7 @@ public:
            check();
        }
 
-       inline void check() {
+       OPT void check() {
            if (variablePtr >= memend) {
                index = -1;
            } else {
@@ -629,7 +631,7 @@ public:
        }
 
      public:
-       inline void pp() {
+       OPT void pp() {
            if (index>=0) {
                size_t st = (*this)->__store_size;
                xassert(st);
@@ -640,28 +642,28 @@ public:
            }
        }
 
-       inline iterator& operator++() {
+       OPT iterator& operator++() {
            pp();
            return *this;
        }
-       inline iterator& operator++(int postfix) {
+       OPT iterator& operator++(int postfix) {
            pp();
            return *this;
        }
 
-       inline bool operator==(int arg) {
+       OPT bool operator==(int arg) {
            return index == arg;
        }
 
-       inline bool operator!=(int arg) {
+       OPT bool operator!=(int arg) {
            return index != arg;
        }
 
-       inline DataPtr operator*() {
+       OPT DataPtr operator*() {
            return (DataPtr)variablePtr;
        }
 
-       inline DataPtr operator->() {
+       OPT DataPtr operator->() {
            return (DataPtr)variablePtr;
        }
    };
@@ -675,13 +677,13 @@ public:
        uint8_t* memend;
        DataPtr variablePtr;
 
-       inline child_iterator(DataPtr variablePtr) : index(0), variablePtr(variablePtr) {
+       OPT child_iterator(DataPtr variablePtr) : index(0), variablePtr(variablePtr) {
            variableMemFirst = (uint8_t*)variablePtr;
            memend = variableMemFirst + __store_size;
            check();
        }
 
-       inline void check() {
+       OPT void check() {
            if (variablePtr > memend) {
                x_assert_fail("Overindexed StoragePool.", __FILE__, __LINE__);
            } else if (variablePtr->__next) {
@@ -692,7 +694,7 @@ public:
        }
 
      public:
-       inline void pp() {
+       OPT void pp() {
            if (index>=0) {
                variablePtr = (DataPtr) (variableMemFirst + variablePtr->__next);
                check();
@@ -701,28 +703,28 @@ public:
            }
        }
 
-       inline iterator& operator++() {
+       OPT iterator& operator++() {
            pp();
            return *this;
        }
-       inline iterator& operator++(int postfix) {
+       OPT iterator& operator++(int postfix) {
            pp();
            return *this;
        }
 
-       inline void operator==(int arg) {
+       OPT void operator==(int arg) {
            return index == arg;
        }
 
-       inline void operator!=(int arg) {
+       OPT void operator!=(int arg) {
            return index != arg;
        }
 
-       inline Storeable& operator*() {
+       OPT Storeable& operator*() {
            return *variablePtr;
        }
 
-       inline DataPtr operator->() {
+       OPT DataPtr operator->() {
            return *variablePtr;
        }
    };
@@ -746,7 +748,7 @@ private:
 
    StoragePool * ownerPool;
 
-   inline void movePointers(StoragePool const & oldmem) {
+   OPT void movePointers(StoragePool const & oldmem) {
        xassert(ownerPool == this);
 
        moveInternalPointers(oldmem);
@@ -790,7 +792,7 @@ private:
        }
    }
 
-   inline void convertDeltas(size_t* buf, size_t* last, uint8_t const * oldOrigin  DBG_INFO_FWD_PCOM(uint8_t const * oldLast)) {
+   OPT void convertDeltas(size_t* buf, size_t* last, uint8_t const * oldOrigin  DBG_INFO_FWD_PCOM(uint8_t const * oldLast)) {
        for (; buf<last; buf++) {
            uint8_t const * ptr = decodeDeltaPtr(oldOrigin, DBG_INFO_FWD_COM(oldLast) *buf);
            if (ptr) {
@@ -800,7 +802,7 @@ private:
    }
 
    template <typename T>
-   inline void sort(T * buf, size_t buflength, T * src_buf, size_t src_buflength) {
+   OPT void sort(T * buf, size_t buflength, T * src_buf, size_t src_buflength) {
        // should remain sorted
        if (buflength && src_buflength &&
                buf[buflength-1] > src_buf[0]) {
@@ -839,7 +841,7 @@ private:
    }
 
 
-   inline void moveFrom(StoragePool const & parent, DataPtr & child, uint8_t * origin = NULL) {
+   OPT void moveFrom(StoragePool const & parent, DataPtr & child, uint8_t * origin = NULL) {
 
        StoragePool*  pool = this;
        std::ptrdiff_t d;
@@ -918,7 +920,7 @@ private:
        }
    }
 
-   inline void fixChildValues(StoragePool const * target, StoragePool const & source,
+   OPT void fixChildValues(StoragePool const * target, StoragePool const & source,
                               std::ptrdiff_t d, bool req = true) {
 
        size_t* tar_varsFrom = intvariables;
@@ -930,7 +932,7 @@ private:
                       target, source, d, req);
    }
 
-   inline void fixChildPools(StoragePool const * target, StoragePool const & source,
+   OPT void fixChildPools(StoragePool const * target, StoragePool const & source,
                              std::ptrdiff_t d, bool req = true) {
 
        size_t* tar_chPoolsFrom = childpools;
@@ -943,7 +945,7 @@ private:
    }
 
    template <class V>
-   inline void fixChildren(size_t* tar_chFrom, size_t* tar_chTo,
+   OPT void fixChildren(size_t* tar_chFrom, size_t* tar_chTo,
                        size_t* src_chFrom, size_t* src_chTo,
                        StoragePool const * target, StoragePool const & source,
                            std::ptrdiff_t d, bool req) {
@@ -959,7 +961,7 @@ private:
    }
 
    template <class V>
-   inline void fixChild(V* ptr, V* src_ptr,
+   OPT void fixChild(V* ptr, V* src_ptr,
                         StoragePool const * target, StoragePool const & source,
                         std::ptrdiff_t d, bool req) {
 
@@ -980,13 +982,13 @@ private:
        }
    }
 
-   inline void fixPoolPointer(StoragePool const * target, Storeable * ptr, Storeable const * src_ptr) {
+   OPT void fixPoolPointer(StoragePool const * target, Storeable * ptr, Storeable const * src_ptr) {
        xassert( contains(ptr) );
 
        ptr->__parent = target;
    }
 
-   inline void fixPoolPointer(StoragePool const * target, StoragePool * ptr, StoragePool const * src_ptr) {
+   OPT void fixPoolPointer(StoragePool const * target, StoragePool * ptr, StoragePool const * src_ptr) {
        fixPoolPointer(target, (Storeable*) ptr, src_ptr);
 
        xassert( src_ptr->ownerPool == ptr->ownerPool );
@@ -998,11 +1000,11 @@ private:
        }
    }
 
-   inline void fixPoolPointerChildren(StoragePool const * target, Storeable * ptr, Storeable const * src_ptr) {
+   OPT void fixPoolPointerChildren(StoragePool const * target, Storeable * ptr, Storeable const * src_ptr) {
 
    }
 
-   inline void fixPoolPointerChildren(StoragePool const * target, StoragePool * ptr, StoragePool const * src_ptr) {
+   OPT void fixPoolPointerChildren(StoragePool const * target, StoragePool * ptr, StoragePool const * src_ptr) {
        ptr->fixChildren(ptr, *src_ptr);
    }
 
@@ -1168,7 +1170,7 @@ private:
 
    }
 
-   inline bool isParentOf(Storeable const & chpool) const {
+   OPT bool isParentOf(Storeable const & chpool) const {
        StoragePool const * par = chpool.__parent;
        if (par == this) {
            return true;
@@ -1179,7 +1181,7 @@ private:
        }
    }
 
-   inline StoragePool * getRootPool() const {
+   OPT StoragePool * getRootPool() const {
        if (__kind & ST_STORAGE_POOL) {
            return __parent->getRootPool();
        } else {
@@ -1188,16 +1190,16 @@ private:
        }
    }
 
-   inline StoragePool & getRootPoolRef() const {
+   OPT StoragePool & getRootPoolRef() const {
        return NN(getRootPool());
    }
 
-   inline StoragePool * asPool() const {
+   OPT StoragePool * asPool() const {
        return constcast(this);
    }
 
    template <typename T>
-   inline void addValue(T*& vars, size_t &length, size_t &capacity, T dd, T nullitm) {
+   OPT void addValue(T*& vars, size_t &length, size_t &capacity, T dd, T nullitm) {
        // to ensure it is ordered (binary search invariant)
        T *val;
        size_t pbufsz = getPtrBufSize(length);
@@ -1228,7 +1230,7 @@ private:
    }
 
    template <typename T>
-   inline void removeValue(T* vars, size_t &length, T dd, T nullitm) {
+   OPT void removeValue(T* vars, size_t &length, T dd, T nullitm) {
 
        T* last = vars + length;
        T* val;
@@ -1346,7 +1348,7 @@ public:
        }
    }
 
-   inline void assign(StoragePool const & src, CopyMode copyMode=Cp_All) {
+   OPT void assign(StoragePool const & src, CopyMode copyMode=Cp_All) {
        xassert(!isParentOf(src));
        xassert(!src.isParentOf(*this));
 
@@ -1361,7 +1363,7 @@ public:
        assigned(src, copyMode);
    }
 
-   inline void assigned(StoragePool const & src, CopyMode copyMode=Cp_All) {
+   OPT void assigned(StoragePool const & src, CopyMode copyMode=Cp_All) {
 
        switch (copyMode) {
        case Cp_TmpDuplicate:
@@ -1402,14 +1404,14 @@ public:
        }
    }
 
-   inline void removeInParent() {
+   OPT void removeInParent() {
        StoragePool * pool = constcast(__parent);
        if (pool) {
            pool->removeChildPool(this);
        }
    }
 
-   inline void del() {
+   OPT void del() {
        xassert(ownerPool == this);
        if (__kind & ST_DELETED) {
            x_assert_fail("Already deleted.", __FILE__, __LINE__);
@@ -1429,7 +1431,7 @@ public:
        __kind |= ST_DELETED;
    }
 
-   inline void delChildPools() {
+   OPT void delChildPools() {
        size_t* chPoolsFrom = childpools;
        size_t* chPoolsTo = childpools+chplslength;
        for (; chPoolsFrom<chPoolsTo; chPoolsFrom++) {
@@ -1440,7 +1442,7 @@ public:
        }
    }
 
-   inline void clear() {
+   OPT void clear() {
        __Kind k = getKind();
 #ifdef DEBUG
        uint8_t * bg = sizeof(objectName)+(uint8_t*)&objectName;
@@ -1458,7 +1460,7 @@ public:
 
    StoragePool& operator= (StoragePool const &src);
 
-   inline StoragePool& operator+= (StoragePool const &src) {
+   OPT StoragePool& operator+= (StoragePool const &src) {
        StoragePool childView DBG_INFO_ARG0_SOLE;
        append(src, childView);
        return *this;
@@ -1534,7 +1536,7 @@ public:
        removeChildPool(this);
    }
 
-   inline void swap(StoragePool * pool) {
+   OPT void swap(StoragePool * pool) {
        uint8_t buf[sizeof(SwapVars)];
        uint8_t *_this = sizeof(Storeable) + (uint8_t*) this;
        uint8_t *_pool = sizeof(Storeable) + (uint8_t*) pool;
@@ -1572,15 +1574,15 @@ public:
        extptrslength += plen;
    }
 
-   inline size_t getExtPtrsLength() const {
+   OPT size_t getExtPtrsLength() const {
        return extptrslength;
    }
 
-   inline bool contains(void const * pointer) const {
+   OPT bool contains(void const * pointer) const {
        return (memory<=pointer && pointer<memory+memlength);
    }
 
-   inline StoragePool const * findChild(void * pointer) const {
+   OPT StoragePool const * findChild(void * pointer) const {
        if (contains(pointer)) {
            return this;
        }
@@ -1598,7 +1600,7 @@ public:
        return NULL;
    }
 
-   inline void findChildChain(std::list<ChCh> & result, void * pointer) const {
+   OPT void findChildChain(std::list<ChCh> & result, void * pointer) const {
        if (contains(pointer)) {
            ChCh ch;
            ch.pool = constcast(this);
@@ -1623,7 +1625,7 @@ public:
        }
    }
 
-   inline size_t* getChildPointer(StoragePool const * child) const {
+   OPT size_t* getChildPointer(StoragePool const * child) const {
        size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)child);
        size_t * last = childpools+chplslength;
        size_t* val;
@@ -1641,12 +1643,12 @@ public:
    }
 
    template<class ST>
-   inline void addPointer(ST*& _externalPointer) {
+   OPT void addPointer(ST*& _externalPointer) {
        addPointer((DataPtr&)_externalPointer);
    }
 
    template<class ST>
-   inline void removePointer(ST*& _externalPointer) {
+   OPT void removePointer(ST*& _externalPointer) {
        removePointer((DataPtr&)_externalPointer);
    }
 
@@ -1751,27 +1753,27 @@ public:
 
 
 
-   inline void removeAllExternalPointers() {
+   OPT void removeAllExternalPointers() {
        delete extpointers;
        extptrslength = 0;
        extptrscapacity = 0;
    }
 
-   inline void addChildPool(CPtrToMe childPoolPointer) {
+   OPT void addChildPool(CPtrToMe childPoolPointer) {
        xassert(ownerPool == this && contains(childPoolPointer));
 
        size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)childPoolPointer);
        addValue(childpools, chplslength, chplscapacity, dd, npos);
    }
 
-   inline void removeChildPool(CPtrToMe childPoolPointer) {
+   OPT void removeChildPool(CPtrToMe childPoolPointer) {
        if (memory <= (uint8_t*)childPoolPointer && ((uint8_t*)childPoolPointer) < (memory+memlength)) {
            size_t dd = encodeDeltaPtr(memory, DBG_INFO_FWD_COM(memory+memlength) (uint8_t*)childPoolPointer);
            removeValue(childpools, chplslength, dd, npos);
       }
    }
 
-   inline void removeChildPool(size_t * val) {
+   OPT void removeChildPool(size_t * val) {
        size_t* last = childpools+chplslength;
 
        if (val == last) {
@@ -1999,17 +2001,17 @@ public:
      }
    }
 
-   inline iterator begin(DataPtr variablePtr = 0) const {
+   OPT iterator begin(DataPtr variablePtr = 0) const {
        return iterator(*this, (uint8_t*)variablePtr);
    }
 
 #ifdef REG_CHILD
-   inline child_iterator begin_children(DataPtr variablePtr) {
+   OPT child_iterator begin_children(DataPtr variablePtr) {
        return child_iterator(variablePtr);
    }
 #endif
 
-   inline int end() {
+   OPT int end() {
        return -1;
    }
 };
@@ -2021,13 +2023,13 @@ public:
  */
 
 
-inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing)
+OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing)
 DBG_INFO_FWD(: objectName(objectName)  REG_CHILD_COMMA)
 {
     DBG_INFO_FWD(lastObjName = objectName.str;)
 }
 
-inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
+OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
 DBG_INFO_FWD(: objectName(objectName)  REG_CHILD_COMMA)
 #ifdef REG_CHILD
     NDEBUG_COLON __next(0)
@@ -2047,7 +2049,7 @@ DBG_INFO_FWD(lastObjName = objectName.str;)
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool, size_t size_of)
+OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool, size_t size_of)
 DBG_INFO_FWD(: objectName(objectName))
 {
     DBG_INFO_FWD(lastObjName = objectName.str;)
@@ -2061,21 +2063,21 @@ DBG_INFO_FWD(: objectName(objectName))
 }
 
 template<class ME>
-inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST  ME const & srcOrParent, bool childOfParent, bool isPool)
+OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST  ME const & srcOrParent, bool childOfParent, bool isPool)
 DBG_INFO_FWD(: objectName(objectName))
 {
     DBG_INFO_FWD(lastObjName = objectName.str;)
     init(srcOrParent, sizeof(ME), childOfParent, isPool);
 }
 
-inline Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool)
+OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool)
 DBG_INFO_FWD(: objectName(objectName))
 {
     DBG_INFO_FWD(lastObjName = objectName.str;)
     init(srcOrParent, size_of, childOfParent, isPool);
 }
 
-inline Storeable::~Storeable() {
+OPT Storeable::~Storeable() {
     if (__kind & ST_VALUE) {
         if (__kind & ST_DELETED) {
             x_assert_fail("Already deleted.", __FILE__, __LINE__);
@@ -2085,7 +2087,7 @@ inline Storeable::~Storeable() {
     }
 }
 
-inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool) {
+OPT void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool) {
     if (childOfParent) {
         StoragePool const & srcPool = srcOrParent.getPoolRef();
         xassert(srcPool.contains(this));
@@ -2108,7 +2110,7 @@ inline void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool 
     }
 }
 
-inline void Storeable::removeInParent() {
+OPT void Storeable::removeInParent() {
     StoragePool * pool = constcast(__parent);
     if (pool) {
         pool->removeVariable(this);
@@ -2116,11 +2118,11 @@ inline void Storeable::removeInParent() {
 }
 
 template<class ME>
-inline void Storeable::assign(ME const & srcOrParent) {
+OPT void Storeable::assign(ME const & srcOrParent) {
     assign(srcOrParent, sizeof(ME));
 }
 
-inline void Storeable::assign(Storeable const & src, size_t size_of) {
+OPT void Storeable::assign(Storeable const & src, size_t size_of) {
     // !
     xassert(src.__store_size == getStoreSize(size_of));
     StoragePool * oldpar = constcast(__parent);
@@ -2150,7 +2152,7 @@ inline void Storeable::assign(Storeable const & src, size_t size_of) {
     }
 }
 
-inline void Storeable::assignSameParent(Storeable const & src, bool isPool, StoragePool const * oldPool) {
+OPT void Storeable::assignSameParent(Storeable const & src, bool isPool, StoragePool const * oldPool) {
     StoragePool const * srcPool = src.__parent;
     if (srcPool) {
         assignParent(srcPool, isPool, oldPool);
@@ -2168,7 +2170,7 @@ inline void Storeable::assignSameParent(Storeable const & src, bool isPool, Stor
     }
 }
 
-inline void Storeable::assignParent(StoragePool const * srcPool, bool isPool, StoragePool const * oldPool) {
+OPT void Storeable::assignParent(StoragePool const * srcPool, bool isPool, StoragePool const * oldPool) {
     StoragePool const * par = srcPool->findChild(this);
     StoragePool * par0 = NULL;
 
@@ -2223,7 +2225,7 @@ inline void Storeable::assignParent(StoragePool const * srcPool, bool isPool, St
     }
 }
 
-inline void* Storeable::operator new (std::size_t size) {
+OPT void* Storeable::operator new (std::size_t size) {
     void* result = malloc(size);
     if (result) {
         return result;
@@ -2232,12 +2234,12 @@ inline void* Storeable::operator new (std::size_t size) {
     }
 }
 
-inline void* Storeable::operator new (std::size_t size, const std::nothrow_t& nothrow_value) {
+OPT void* Storeable::operator new (std::size_t size, const std::nothrow_t& nothrow_value) {
     void* result = malloc(size);
     return result;
 }
 
-inline void* Storeable::operator new[] (std::size_t size) {
+OPT void* Storeable::operator new[] (std::size_t size) {
     void* result = malloc(size);
     if (result) {
         return result;
@@ -2246,24 +2248,24 @@ inline void* Storeable::operator new[] (std::size_t size) {
     }
 }
 
-inline void* Storeable::operator new[] (std::size_t size, const std::nothrow_t& nothrow_value) {
+OPT void* Storeable::operator new[] (std::size_t size, const std::nothrow_t& nothrow_value) {
     void* result = malloc(size);
     return result;
 }
 
-inline void* Storeable::operator new (std::size_t size, StoragePool const & pool) {
+OPT void* Storeable::operator new (std::size_t size, StoragePool const & pool) {
     void const * data;
     constcast(pool).allocParentItem(data, getStoreSize(size));
     return constcast(data);
 }
 
-inline void* Storeable::operator new[] (std::size_t size, StoragePool const & pool) {
+OPT void* Storeable::operator new[] (std::size_t size, StoragePool const & pool) {
     void const * data;
     constcast(pool).allocParentItem(data, getStoreSize(size));
     return constcast(data);
 }
 
-inline void Storeable::operator delete (void* _ptr) {
+OPT void Storeable::operator delete (void* _ptr) {
     DataPtr ptr = (DataPtr) _ptr;
     if (!(ptr->__kind & ST_IN_POOL)) {
         free(_ptr);
@@ -2271,7 +2273,7 @@ inline void Storeable::operator delete (void* _ptr) {
     // else Nothing to do here, everything is in ~Storeable
 }
 
-inline void Storeable::operator delete[] (void* _ptr) {
+OPT void Storeable::operator delete[] (void* _ptr) {
     DataPtr ptr = (DataPtr) _ptr;
     if (!(ptr->__kind & ST_IN_POOL)) {
         free(_ptr);
@@ -2279,7 +2281,7 @@ inline void Storeable::operator delete[] (void* _ptr) {
     // else Nothing to do here, everything is in ~Storeable
 }
 
-inline void Storeable::debugItm(std::ostream& os, int indent) const {
+OPT void Storeable::debugItm(std::ostream& os, int indent) const {
     if (__kind & ST_VALUE) {
     } else if (__kind & ST_STORAGE_POOL) {
         os<<"pool:";
@@ -2303,23 +2305,23 @@ inline void Storeable::debugItm(std::ostream& os, int indent) const {
     }
 }
 
-inline void operator<<(std::ostream & os, Storeable const & st) {
+OPT void operator<<(std::ostream & os, Storeable const & st) {
     st.debugPrint(os);
 }
 
 }// namespace str
 
-inline void debugString(std::ostream & os, str::Storeable const & st, int level) {
+OPT void debugString(std::ostream & os, str::Storeable const & st, int level) {
     st.debugPrint(os, level);
 }
 
-inline std::string toString(str::Storeable const & st) {
+OPT std::string toString(str::Storeable const & st) {
   std::stringstream s;
   st.debugPrint(s);
   return s.str();
 }
 /*
-inline char const * toString(str::StoragePool const & st) {
+OPT char const * toString(str::StoragePool const & st) {
 #ifdef DEBUG
    return st.getObjectName();
 #endif
