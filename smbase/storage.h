@@ -69,7 +69,19 @@ class GrammarAnalysis;
 #define NDEBUG_COLON :
 #endif
 
-#define OPT inline __attribute__((optimize("O2")))
+#if (defined(_MSC_VER))
+#define OPTL0 __pragma(optimize("gts", on))
+#define OPTL
+#define OPT inline
+#elif (defined(__GNUC__))
+#define OPTL0
+#define OPTL __attribute__((optimize("O2")))
+#define OPT inline OPTL
+#else
+
+#endif
+
+
 
 namespace str {
 
