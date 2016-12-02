@@ -51,138 +51,138 @@ enum SmbaseStringFunc { SMBASE_STRING_FUNC };
 
 extern str::StoragePool str_pool;
 
-class string : public str::Storeable {
-protected:     // data
-  // 10/12/00: switching to never letting s be NULL
-  char *s;     	       	       	       // string contents; never NULL
-public:
-  static char * const emptyString;     // a global ""; should never be modified
-  static char * const nullString;
+//class string : public str::Storeable {
+//protected:     // data
+//  // 10/12/00: switching to never letting s be NULL
+//  char *s;     	       	       	       // string contents; never NULL
+//public:
+//  static char * const emptyString;     // a global ""; should never be modified
+//  static char * const nullString;
 
-protected:     // funcs
-  void dup(char const *source);        // copies, doesn't dealloc first
-  void kill();                         // dealloc if str != 0
+//protected:     // funcs
+//  void dup(char const *source);        // copies, doesn't dealloc first
+//  void kill();                         // dealloc if str != 0
 
-public:	       // funcs
-#ifdef DEBUG
-  string(string const &src) : str::Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
-#endif
-  string(DBG_INFO_FORMAL_FIRST string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
-  string(DBG_INFO_FORMAL_FIRST char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
-  string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
-  string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
-  string(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  }
-  string(DBG_INFO_FORMAL ) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { s=emptyString; }
-  ~string() { kill(); }
+//public:	       // funcs
+//#ifdef DEBUG
+//  string(string const &src) : str::Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
+//#endif
+//  string(DBG_INFO_FORMAL_FIRST string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
+//  string(DBG_INFO_FORMAL_FIRST char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
+//  string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
+//  string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
+//  string(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  }
+//  string(DBG_INFO_FORMAL ) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { s=emptyString; }
+//  ~string() { kill(); }
 
-  // for this one, use ::substring instead
-  string(DBG_INFO_FORMAL_FIRST char const *src, int length, SmbaseStringFunc);
+//  // for this one, use ::substring instead
+//  string(DBG_INFO_FORMAL_FIRST char const *src, int length, SmbaseStringFunc);
 
-  // for this one, there are two alternatives:
-  //   - std::stringstream has nearly the same constructor interface
-  //     as string had, but cannot export a char* for writing
-  //     (for the same reason string can't anymore); operator[] must
-  //     be used
-  //   - Array<char> is very flexible, but remember to add 1 to 
-  //     the length passed to its constructor!
-  string(DBG_INFO_FORMAL_FIRST int length, SmbaseStringFunc) : str::Storeable(DBG_INFO_ARG_FWD) { s=emptyString; setlength(length); }
+//  // for this one, there are two alternatives:
+//  //   - std::stringstream has nearly the same constructor interface
+//  //     as string had, but cannot export a char* for writing
+//  //     (for the same reason string can't anymore); operator[] must
+//  //     be used
+//  //   - Array<char> is very flexible, but remember to add 1 to
+//  //     the length passed to its constructor!
+//  string(DBG_INFO_FORMAL_FIRST int length, SmbaseStringFunc) : str::Storeable(DBG_INFO_ARG_FWD) { s=emptyString; setlength(length); }
 
-  string(DBG_INFO_FORMAL_FIRST Flatten&);
-  void xfer(Flatten &flat);
+//  string(DBG_INFO_FORMAL_FIRST Flatten&);
+//  void xfer(Flatten &flat);
 
-  // simple queries
-  int length() const;  	       	// returns number of non-null chars in the string; length of "" is 0
-  bool isempty() const { return s[0]==0; }
-  bool contains(char c) const;
+//  // simple queries
+//  int length() const;  	       	// returns number of non-null chars in the string; length of "" is 0
+//  bool isempty() const { return s[0]==0; }
+//  bool contains(char c) const;
   
-  // string has this instead; I will begin using slowly
-  bool empty() const { return isempty(); }
+//  // string has this instead; I will begin using slowly
+//  bool empty() const { return isempty(); }
 
-  // array-like access
-  char& operator[] (int i) { return s[i]; }
-  char operator[] (int i) const { return s[i]; }
+//  // array-like access
+//  char& operator[] (int i) { return s[i]; }
+//  char operator[] (int i) const { return s[i]; }
 
-  // substring
-  string substring(int startIndex, int length) const;
+//  // substring
+//  string substring(int startIndex, int length) const;
 
-  // conversions
-  #if 0    // removing these for more standard compliace
-    //operator char* () { return s; }      // ambiguities...
-    operator char const* () const { return s; }
-    char *pchar() { return s; }
-    char const *pcharc() const { return s; }
-  #else
-    char const *c_str() const { return s; }
-  #endif
+//  // conversions
+//  #if 0    // removing these for more standard compliace
+//    //operator char* () { return s; }      // ambiguities...
+//    operator char const* () const { return s; }
+//    char *pchar() { return s; }
+//    char const *pcharc() const { return s; }
+//  #else
+//    char const *c_str() const { return s; }
+//  #endif
 
-  // assignment
-  string& operator=(string const &src)
-    { if (&src != this) { kill(); dup(src.s); } return *this; }
-  string& operator=(char const *src)
-    { if (src != s) { kill(); dup(src); } return *this; }
+//  // assignment
+//  string& operator=(string const &src)
+//    { if (&src != this) { kill(); dup(src.s); } return *this; }
+//  string& operator=(char const *src)
+//    { if (src != s) { kill(); dup(src); } return *this; }
 
-  // allocate 'newlen' + 1 bytes (for null); initial contents is ""
-  string& setlength(int newlen);
+//  // allocate 'newlen' + 1 bytes (for null); initial contents is ""
+//  string& setlength(int newlen);
 
-  // comparison; return value has same meaning as strcmp's return value:
-  //   <0   if   *this < src
-  //   0    if   *this == src
-  //   >0   if   *this > src
-  int compareTo(string const &src) const;
-  int compareTo(char const *src) const;
-  bool equals(char const *src) const { return compareTo(src) == 0; }
-  bool equals(string const &src) const { return compareTo(src) == 0; }
+//  // comparison; return value has same meaning as strcmp's return value:
+//  //   <0   if   *this < src
+//  //   0    if   *this == src
+//  //   >0   if   *this > src
+//  int compareTo(string const &src) const;
+//  int compareTo(char const *src) const;
+//  bool equals(char const *src) const { return compareTo(src) == 0; }
+//  bool equals(string const &src) const { return compareTo(src) == 0; }
 
-  #define MAKEOP(op)							       	 \
-    bool operator op (string const &src) const { return compareTo(src) op 0; }	 \
-    /*bool operator op (const char *src) const { return compareTo(src) op 0; }*/ \
-    /* killed stuff with char* because compilers are too flaky; use compareTo */
-  MAKEOP(==)  MAKEOP(!=)
-  MAKEOP(>=)  MAKEOP(>)
-  MAKEOP(<=)  MAKEOP(<)
-  #undef MAKEOP
+//  #define MAKEOP(op)							       	 \
+//    bool operator op (string const &src) const { return compareTo(src) op 0; }	 \
+//    /*bool operator op (const char *src) const { return compareTo(src) op 0; }*/ \
+//    /* killed stuff with char* because compilers are too flaky; use compareTo */
+//  MAKEOP(==)  MAKEOP(!=)
+//  MAKEOP(>=)  MAKEOP(>)
+//  MAKEOP(<=)  MAKEOP(<)
+//  #undef MAKEOP
 
-  // concatenation (properly handles string growth)
-  // uses '&' instead of '+' to avoid char* coercion problems
-  string operator& (string const &tail) const;
-  string& operator&= (string const &tail);
+//  // concatenation (properly handles string growth)
+//  // uses '&' instead of '+' to avoid char* coercion problems
+//  string operator& (string const &tail) const;
+//  string& operator&= (string const &tail);
 
-  // input/output
-  friend std::istream& operator>> (std::istream &is, string &obj)
-    { obj.readline(is); return is; }
-  friend std::ostream& operator<< (std::ostream &os, string const &obj)
-    { obj.write(os); return os; }
+//  // input/output
+//  friend std::istream& operator>> (std::istream &is, string &obj)
+//    { obj.readline(is); return is; }
+//  friend std::ostream& operator<< (std::ostream &os, string const &obj)
+//    { obj.write(os); return os; }
 
-  // note: the read* functions are currently implemented in a fairly
-  // inefficient manner (one char at a time)
+//  // note: the read* functions are currently implemented in a fairly
+//  // inefficient manner (one char at a time)
 
-  void readdelim(std::istream &is, char const *delim);
-    // read from is until any character in delim is encountered; consumes that
-    // character, but does not put it into the string; if delim is null or
-    // empty, reads until EOF
+//  void readdelim(std::istream &is, char const *delim);
+//    // read from is until any character in delim is encountered; consumes that
+//    // character, but does not put it into the string; if delim is null or
+//    // empty, reads until EOF
 
-  void readall(std::istream &is) { readdelim(is, NULL); }
-    // read all remaining chars of is into this
+//  void readall(std::istream &is) { readdelim(is, NULL); }
+//    // read all remaining chars of is into this
 
-  void readline(std::istream &is) { readdelim(is, "\n"); }
-    // read a line from input stream; consumes the \n, but doesn't put it into
-    // the string
+//  void readline(std::istream &is) { readdelim(is, "\n"); }
+//    // read a line from input stream; consumes the \n, but doesn't put it into
+//    // the string
 
-  void write(std::ostream &os) const;
-    // writes all stored characters (but not '\0')
+//  void write(std::ostream &os) const;
+//    // writes all stored characters (but not '\0')
     
-  // debugging
-  void selfCheck() const;
-    // fail an assertion if there is a problem
+//  // debugging
+//  void selfCheck() const;
+//    // fail an assertion if there is a problem
 
-  void* operator new (size_t size);
-  void* operator new (size_t size, str::StoragePool &pool);
+//  void* operator new (size_t size);
+//  void* operator new (size_t size, str::StoragePool &pool);
 
-  inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
-  {
-      os<<"str:"<< (s?s:"#null");
-  }
-};
+//  inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
+//  {
+//      os<<"str:"<< (s?s:"#null");
+//  }
+//};
 
 
 // ------------------------ rostring ----------------------
@@ -354,18 +354,18 @@ public:
 
 
 // experimenting with using toString as a general method for datatypes
-std::string toString(int i);
-std::string toString(unsigned i);
-std::string toString(char c);
-std::string toString(long i);
-std::string toString(char const *str);
-std::string toString(float f);
-void debugString(std::ostream &os, int i, int level);
-void debugString(std::ostream &os, unsigned i, int level);
-void debugString(std::ostream &os, char i, int level);
-void debugString(std::ostream &os, long i, int level);
-void debugString(std::ostream &os, char const * i, int level);
-void debugString(std::ostream &os, float i, int level);
+//std::string toString(int i);
+//std::string toString(unsigned i);
+//std::string toString(char c);
+//std::string toString(long i);
+//std::string toString(char const *str);
+//std::string toString(float f);
+//void debugString(std::ostream &os, int i, int level);
+//void debugString(std::ostream &os, unsigned i, int level);
+//void debugString(std::ostream &os, char i, int level);
+//void debugString(std::ostream &os, long i, int level);
+//void debugString(std::ostream &os, char const * i, int level);
+//void debugString(std::ostream &os, float i, int level);
 
 // printf-like construction of a std::string; often very convenient, since
 // you can use any of the formatting characters (like %X) that your
