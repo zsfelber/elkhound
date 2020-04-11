@@ -9,6 +9,7 @@
 typedef unsigned char byte;
 typedef signed char signed_byte;
 
+#include <cstdint>
 
 // int32 used to be here, but defined nonportably, and I don't use
 // it anyway, so I ripped it out
@@ -30,9 +31,10 @@ typedef signed char signed_byte;
 
 // This used when I want to cast a pointer to an integer for something
 // like hashing the address.  It need not be injective.
-inline long pointerToInteger(void const *p)
-  { return (long)p; }
-
+//inline long pointerToInteger(void const *p)
+//  { return (long)p; }
+inline uintptr_t pointerToInteger(void const *p)
+    { return reinterpret_cast<std::uintptr_t>(p); }
   
 // This can be used to compare two pointers, even when they do not point
 // into the same object.
@@ -45,7 +47,7 @@ inline int comparePointerAddresses(void const *p, void const *q)
   // existence of this function at least ensures I only have to change
   // one place.
   return p==q?               0 :
-         (long)p < (long)q? -1 :      // would use std::less<> here
+         pointerToInteger(p) < pointerToInteger(q)? -1 :      // would use std::less<> here
                             +1 ;
 }
 
