@@ -7,10 +7,11 @@
 #define XASSERT_H
 
 #include "macros.h"     // NORETURN
-#include <string>
+//#include <string>
+#include "str.h"
 
 // linkdepend: exc.cpp
-typedef std::string const &rostring;
+//typedef std::string const &rostring;
 
 // this functions accepts raw 'char const *' instead of 'rostring'
 // because I do not want this interface to depend on str.h, and also

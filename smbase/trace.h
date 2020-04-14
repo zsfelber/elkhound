@@ -11,13 +11,13 @@
 extern str::StoragePool trace_pool;
 
 // add a subsystem to the list of those being traced
-void traceAddSys(char const *sysName);
+void traceAddSys(std::string const &sysName);
 
 // remove a subsystem; must have been there
-void traceRemoveSys(char const *sysName);
+void traceRemoveSys(std::string const &sysName);
 
 // see if a subsystem is among those to trace
-bool tracingSys(char const *sysName);
+bool tracingSys(std::string const &sysName);
 
 // clear all tracing flags
 void traceRemoveAll();
@@ -27,11 +27,11 @@ void traceRemoveAll();
 // sending a little output to identify the system); if not, it
 // yields an std::ostream attached to /dev/null; when using this
 // method, it is up to you to put the newline
-std::ostream &trace(char const *sysName);
+std::ostream &trace(std::string const &sysName);
 
 // give an entire std::string to trace; do *not* put a newline in it
 // (the tracer will do that)
-void trstr(char const *sysName, char const *traceString);
+void trstr(std::string const &sysName, std::string const &traceString);
 
 // trace macro which disables itself when NDEBUG is true,
 // and automatically supplies 'endl' when it's not true
@@ -63,7 +63,7 @@ std::ostream &traceProgress(int level=1);
 
 
 // add one or more subsystems, separated by commas
-void traceAddMultiSys(char const *systemNames);
+void traceAddMultiSys(std::string const &systemNames);
 
 // if the first argument is a tracing directive, handle it, modify
 // argc and argv modified to effectively remove it, and return true

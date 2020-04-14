@@ -6,7 +6,8 @@
 
 #include <string.h>       // memset
 #include <iostream>
-#include <string>
+//#include <string>
+#include "str.h"
 
 
 BitArray::BitArray(int n)

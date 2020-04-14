@@ -8,7 +8,8 @@
 #include <stdint.h>
 #include <algorithm>
 #include <iostream>
-#include <string>
+//#include <string>
+#include "str.h"
 #include <sstream>
 
 #include "xassert.h"

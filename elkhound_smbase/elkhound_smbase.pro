@@ -50,7 +50,6 @@ SOURCES += main.cpp \
     ../smbase/warn.cpp \
     ../smbase/cycles.c \
     ../smbase/gprintf.c \
-    ../smbase/malloc.c \
     ../smbase/malloc_stub.c \
     ../smbase/mypopen.c \
     ../smbase/tmalloc.c \

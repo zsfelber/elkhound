@@ -13,7 +13,8 @@ public:
 
 
 #include <algorithm>
-#include <string>
+//#include <string>
+#include "str.h"
 #include <vector>
 
 #include <stdio.h>

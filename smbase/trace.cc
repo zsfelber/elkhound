@@ -19,10 +19,10 @@ str::StoragePool trace_pool(DBG_INFO_ARG0);
 // auto-init
 static bool inited = false;
 
-static ObjList<string>* _tracers = new (trace_pool) ObjList<string>(DBG_INFO_ARG0_FIRST  trace_pool);
+static ObjList<std::string>* _tracers = new (trace_pool) ObjList<std::string>(DBG_INFO_ARG0_FIRST  trace_pool);
 
 // list of active tracers, initially empty
-static ObjList<string>& tracers = *_tracers;
+static ObjList<std::string>& tracers = *_tracers;
 
 // stream connected to /dev/null
 std::ofstream devNullObj("/dev/null");
@@ -46,20 +46,20 @@ static void init()
 }
 
 
-void traceAddSys(char const *sysName)
+void traceAddSys(std::string const &sysName)
 {
   init();
 
-  tracers.prepend(DBG_INFO_ARG0_FIRST  new (trace_pool) string(DBG_INFO_ARG0_FIRST  trace_pool, sysName));
+  tracers.prepend(DBG_INFO_ARG0_FIRST  new (trace_pool) std::string(DBG_INFO_ARG0_FIRST  trace_pool, sysName));
 }
 
 
-void traceRemoveSys(char const *sysName)
+void traceRemoveSys(std::string const &sysName)
 {
   init();
 
-  MUTATE_EACH_OBJLIST(string, tracers, mut) {
-    if (!mut.data()->compareTo(sysName)) {
+  MUTATE_EACH_OBJLIST(std::string, tracers, mut) {
+    if (!mut.data()->compare(sysName)) {
       mut.deleteIt();
       return;
     }
@@ -68,12 +68,12 @@ void traceRemoveSys(char const *sysName)
 }
 
 
-bool tracingSys(char const *sysName)
+bool tracingSys(std::string const &sysName)
 {
   init();
 
-  FOREACH_OBJLIST(string, tracers, iter) {
-    if (!iter.data()->compareTo(sysName)) {
+  FOREACH_OBJLIST(std::string, tracers, iter) {
+    if (!iter.data()->compare(sysName)) {
       return true;
     }
   }
@@ -87,7 +87,7 @@ void traceRemoveAll()
 }  
 
 
-std::ostream &trace(char const *sysName)
+std::ostream &trace(std::string const &sysName)
 {
   init();
 
@@ -101,7 +101,7 @@ std::ostream &trace(char const *sysName)
 }
 
 
-void trstr(char const *sysName, char const *traceString)
+void trstr(std::string const &sysName, std::string const &traceString)
 {
   trace(sysName) << traceString << std::endl;
 }
@@ -121,7 +121,7 @@ std::ostream &traceProgress(int level)
 }
 
 
-void traceAddMultiSys(char const *systemNames)
+void traceAddMultiSys(std::string const &systemNames)
 {
   StrtokParse tok(systemNames, ",");
   loopi(tok) {
