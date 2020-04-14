@@ -58,7 +58,7 @@ void defaultWarningLogger(WarnLevel /*level*/, char const *message)
       time_t t;
       time(&t);
       int len = fprintf(logfile, "\nLog started at %s", ctime(&t));
-        // note: astonishingly (bad), the std::string returned by ctime() has
+        // note: astonishingly (bad), the str::string returned by ctime() has
         //       a newline at the end!
 
       while (len--) {

@@ -31,7 +31,7 @@ sub get_sm_config_version {
   # 1.04: 2005-05-04: re-added -no-dash-g and -no-dash-O2
 }
 
-# standard prefix of the usage std::string
+# standard prefix of the usage str::string
 sub standardUsage {
   print(<<"EOF");
 usage: ./configure [options]

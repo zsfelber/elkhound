@@ -18,17 +18,17 @@ HashLineMap::~HashLineMap()
 {}
 
 
-void HashLineMap::addHashLine(int ppLine, int origLine, std::string &origFname)
+void HashLineMap::addHashLine(int ppLine, int origLine, str::string &origFname)
 {
   // check that entries are being added in sorted order
   xassert(ppLine > prev_ppLine);
   prev_ppLine = ppLine;
 
   // map 'origFname' to a canonical reference
-  std::string *canon = filenames.queryif(origFname);
+  str::string *canon = filenames.queryif(origFname);
   if (!canon) {
     // add a new one
-    canon = new std::string(origFname);
+    canon = new str::string(origFname);
     filenames.add(origFname, canon);
   }
   origFname = canon->c_str();
@@ -59,7 +59,7 @@ void HashLineMap::doneAdding()
 // for queries exactly on #line directives we return the specified
 // origLine minus 1, but I don't specify any behavior in that case
 // so it's not a problem
-void HashLineMap::map(int ppLine, int &origLine, std::string &origFname) const
+void HashLineMap::map(int ppLine, int &origLine, str::string &origFname) const
 {
   // check for a ppLine that precedes any in the array
   if (directives.isEmpty() ||
@@ -101,15 +101,15 @@ void HashLineMap::map(int ppLine, int &origLine, std::string &origFname) const
 int HashLineMap::mapLine(int ppLine) const
 {
   int origLine;
-  std::string origFname;
+  str::string origFname;
   map(ppLine, origLine, origFname);
   return origLine;
 }
 
-std::string HashLineMap::mapFile(int ppLine) const
+str::string HashLineMap::mapFile(int ppLine) const
 {
   int origLine;
-  std::string origFname;
+  str::string origFname;
   map(ppLine, origLine, origFname);
   return origFname;
 }
@@ -122,10 +122,10 @@ std::string HashLineMap::mapFile(int ppLine) const
 #include <stdlib.h>    // exit
 
 void query(HashLineMap &hl, int ppLine,
-           int expectOrigLine, std::string &expectOrigFname)
+           int expectOrigLine, str::string &expectOrigFname)
 {
   int origLine;
-  std::string origFname;
+  str::string origFname;
   hl.map(ppLine, origLine, origFname);
 
   if (origLine != expectOrigLine ||

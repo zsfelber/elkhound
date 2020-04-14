@@ -1,7 +1,7 @@
 #include "diff.h"
 
-std::vector<std::string> rows1;
-std::vector<std::string> rows2;
+std::vector<str::string> rows1;
+std::vector<str::string> rows2;
 
 
 Diff::Diff()

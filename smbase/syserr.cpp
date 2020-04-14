@@ -27,7 +27,7 @@ char const * const xSysError::reasonStrings[] = {
 STATICDEF char const *xSysError::
   getReasonString(xSysError::Reason r)
 {
-  // at compile-time, verify consistency between enumeration and std::string array
+  // at compile-time, verify consistency between enumeration and str::string array
   // (it's in here because, at least on Borland, the preprocessor respects
   // the member access rules (strangely..))
   #ifdef __BORLANDC__
@@ -57,15 +57,15 @@ xSysError::xSysError(xSysError::Reason r, int sysCode, rostring sysReason,
 {}
 
 
-STATICDEF std::string xSysError::
+STATICDEF str::string xSysError::
   constructWhyString(xSysError::Reason r, rostring sysReason,
                      rostring syscall, rostring ctx)
 {
-  // build std::string; start with syscall that failed
-  std::stringstream sb;
+  // build str::string; start with syscall that failed
+  str::stringstream sb;
   sb << syscall << ": ";
 
-  // now a failure reason std::string
+  // now a failure reason str::string
   if (r != R_UNKNOWN) {
     sb << getReasonString(r);
   }
@@ -73,7 +73,7 @@ STATICDEF std::string xSysError::
     sb << sysReason;
   }
   else {
-    // no useful info, use the R_UNKNOWN std::string
+    // no useful info, use the R_UNKNOWN str::string
     sb << getReasonString(r);
   }
 
@@ -108,7 +108,7 @@ STATICDEF void xSysError::
   int code = getSystemErrorCode();
 
   // translate it into one of ours
-  std::string sysMsg;
+  str::string sysMsg;
   Reason r = portablize(code, sysMsg);
 
   // construct an object to throw
@@ -120,7 +120,7 @@ STATICDEF void xSysError::
 
 void xsyserror(char const *syscallName)
 {
-  xSysError::xsyserror(syscallName, std::string(""));
+  xSysError::xsyserror(syscallName, str::string(""));
 }
 
 void xsyserror(rostring syscallName, rostring context)
@@ -129,17 +129,17 @@ void xsyserror(rostring syscallName, rostring context)
 }
 
 
-std::string sysErrorCodeString(int systemErrorCode, rostring syscallName,
+str::string sysErrorCodeString(int systemErrorCode, rostring syscallName,
                                                rostring context)
 {
-  std::string sysMsg;
+  str::string sysMsg;
   xSysError::Reason r = xSysError::portablize(systemErrorCode, sysMsg);
   return xSysError::constructWhyString(
            r, sysMsg,
            syscallName, context);
 }
 
-std::string sysErrorString(char const *syscallName, char const *context)
+str::string sysErrorString(char const *syscallName, char const *context)
 {
   return sysErrorCodeString(xSysError::getSystemErrorCode(),
                             syscallName, context);
@@ -188,16 +188,16 @@ STATICDEF int xSysError::getSystemErrorCode()
 }
 
 
-STATICDEF xSysError::Reason xSysError::portablize(int sysErrorCode, std::string &sysMsg)
+STATICDEF xSysError::Reason xSysError::portablize(int sysErrorCode, str::string &sysMsg)
 {
   // I'd like to put this into a static class member, but then
   // the table would have to prepend R_ constants with xSysError::,
   // which is a pain.
 
-  // method to translate an error code into a std::string on win32; this
+  // method to translate an error code into a str::string on win32; this
   // code is copied+modified from the win32 SDK docs for FormatMessage
   {
-    // get the std::string
+    // get the str::string
     LPVOID lpMsgBuf;
     FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -216,7 +216,7 @@ STATICDEF xSysError::Reason xSysError::portablize(int sysErrorCode, std::string 
     // I think this means that lpMsgBuf might have "%" escape
     // sequences in it... oh well, I'm just going to keep them
     
-    // make a copy of the std::string
+    // make a copy of the str::string
     sysMsg = (char*)lpMsgBuf;
 
     // Free the buffer.
@@ -286,7 +286,7 @@ STATICDEF int xSysError::getSystemErrorCode()
 }
 
 
-STATICDEF xSysError::Reason xSysError::portablize(int sysErrorCode, std::string &sysMsg)
+STATICDEF xSysError::Reason xSysError::portablize(int sysErrorCode, str::string &sysMsg)
 {
   sysMsg = strerror(sysErrorCode);
     // operator= copies to local storage

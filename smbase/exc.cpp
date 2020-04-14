@@ -8,7 +8,7 @@
 #include <iostream>       // clog
 #include <stdarg.h>       // va_xxx
 #include <ctype.h>        // toupper, tolower
-#include <sstream>
+//#include <sstream>
 
 
 // ------------------------- xBase -----------------
@@ -190,7 +190,7 @@ XOpenEx::~XOpenEx()
 {}
 
 //TODO
-STATICDEF std::string XOpenEx::interpretMode(rostring mode)
+STATICDEF str::string XOpenEx::interpretMode(rostring mode)
 {
   if (mode[0]=='r') {
     if (mode[1]=='+') {

@@ -5,7 +5,7 @@
 #define BITARRAY_H
 
 #include "xassert.h"      // xassert
-#include "str.h"          // std::string
+#include "str.h"          // str::string
 
 class Flatten;            // flatten.h
 
@@ -125,7 +125,7 @@ public:     // types
 
 
 BitArray stringToBitArray(char const *src);
-std::string toString(BitArray const &b);
+str::string toString(BitArray const &b);
 
 
 #endif // BITARRAY_H

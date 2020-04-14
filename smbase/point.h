@@ -6,7 +6,7 @@
 #define __POINT_H
 
 #include "typ.h"          // bool, min, max
-#include <sstream>
+#include "str.h"
 
 // point defined over arbitrary underlying types
 template <class num>
@@ -88,10 +88,10 @@ typedef TPoint<int> point;
 typedef TPoint<double> fpoint;
 
 
-// and we can then define std::stringstream output ops for them
+// and we can then define str::stringstream output ops for them
 //class stringBuilder;
-std::stringstream& operator<< (std::stringstream &sb, point const &pt);
-std::stringstream& operator<< (std::stringstream &sb, fpoint const &pt);
+str::stringstream& operator<< (str::stringstream &sb, point const &pt);
+str::stringstream& operator<< (str::stringstream &sb, fpoint const &pt);
 
 
 // iterate: 0,0    1,0    2,0    ... x-1,0    and then

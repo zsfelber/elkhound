@@ -19,7 +19,7 @@ public:
 
 #include <stdio.h>
 #include <string.h>
-#include <sstream>
+//#include <sstream>
 #include "storage.h"
 #include "str.h"
 #include "trace.h"
@@ -35,7 +35,7 @@ class LCS
         size_t   n_;
         size_t*  data_;
         T *X, *Y;
-        std::string both, first, second, newline;
+        str::string both, first, second, newline;
         std::ostream * os;
         std::vector<T>* result;
 
@@ -48,7 +48,7 @@ class LCS
         }
 
         LCSTable(size_t m, size_t n, T* X, T* Y,
-                 std::string &both, std::string &first, std::string &second, std::string &newline,
+                 str::string &both, str::string &first, str::string &second, str::string &newline,
                  std::ostream & os)
         : m_(m), n_(n), X(X), Y(Y),
           both(both), first(first), second(second), newline(newline),
@@ -151,8 +151,8 @@ public:
 
     template<typename T>
     static bool printDiff(std::ostream & os, std::vector<T>& X, std::vector<T>& Y,
-                          std::string both="   ", std::string first="-  ",
-                          std::string second="+  ", std::string newline="\n") {
+                          str::string both="   ", str::string first="-  ",
+                          str::string second="+  ", str::string newline="\n") {
         LCSTable<T> table(X.size(), Y.size(), &*X.begin(), &*Y.begin(),
                        both, first, second, newline, os);
         return table.printDiff();
@@ -164,12 +164,12 @@ public:
 
 
 
-extern std::vector<std::string> rows1;
-extern std::vector<std::string> rows2;
+extern std::vector<str::string> rows1;
+extern std::vector<str::string> rows2;
 
-inline void splitMemoryTreeLines(std::string const &s, std::vector<std::string> &rows) {
+inline void splitMemoryTreeLines(str::string const &s, std::vector<str::string> &rows) {
     std::istringstream st(s);
-    std::string line;
+    str::string line;
     while (std::getline(st, line)) {
         rows.reserve((rows.size()+1)<<10>>10);
         rows.push_back(line);
@@ -179,7 +179,7 @@ inline void splitMemoryTreeLines(std::string const &s, std::vector<std::string> 
 #define DEBUG_MEMORY_TREE(pool, DEBUG_BLOCK)                                                \
 {                                                                                           \
     try {                                                                                   \
-        std::stringstream s;                                                                \
+        str::stringstream s;                                                                \
         s<<"*****************************************************************************************************\n"; \
         s<<str::lastObjName<<"..\n";                                                        \
         s<<"Pool:\n";                                                                       \
@@ -194,7 +194,7 @@ inline void splitMemoryTreeLines(std::string const &s, std::vector<std::string> 
         DEBUG_BLOCK                                                                         \
         rows2.clear();                                                                      \
         splitMemoryTreeLines(s.str(), rows2);                                               \
-        std::stringstream sd;                                                               \
+        str::stringstream sd;                                                               \
         if (LCS::printDiff(sd, rows1, rows2)) {                                             \
             std::cout << sd.str();                                                          \
             std::cout<<std::flush;                                                          \

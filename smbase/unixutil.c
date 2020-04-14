@@ -25,7 +25,7 @@
 //   http://curl.haxx.se/mail/archive-2003-05/0161.html
 //   http://archives.postgresql.org/pgsql-hackers/1997-01/msg00878.php
 //
-// So I will just stick with std::string.h until I see a problem with it.
+// So I will just stick with str::string.h until I see a problem with it.
 #include <string.h>     // bzero via FD_ZERO on OS X
 
 #ifdef __MINGW32__

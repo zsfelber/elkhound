@@ -7,7 +7,7 @@
 #include <string.h>      // strcmp
 #include <iostream>
 
-// notes on std::string hash functions ****************
+// notes on str::string hash functions ****************
 
 // We need to test the various hash functions versus each other for
 // randomness.  Scott suggests simply hashing the same data and
@@ -48,7 +48,7 @@ StringHash::~StringHash()
 {}
 
 
-STATICDEF unsigned StringHash::coreHash(std::string &key)
+STATICDEF unsigned StringHash::coreHash(str::string &key)
 {
   // dsw: not sure if this is the best place for it, but an assertion
   // failure is better than a segfault
@@ -77,7 +77,7 @@ STATICDEF unsigned StringHash::coreHash(std::string &key)
 
   // http://mail.python.org/pipermail/python-dev/2004-April/044235.html
   //
-  // Start of a discussion thread about changing the std::string hash
+  // Start of a discussion thread about changing the str::string hash
   // in Python.
 
 
@@ -108,7 +108,7 @@ STATICDEF unsigned StringHash::coreHash(std::string &key)
     #warning hash function 1: Nelson 
   #endif // SAY_STRHASH_ALG
   // this one is supposed to be better
-  /* An excellent std::string hashing function.
+  /* An excellent str::string hashing function.
      Adapted from glib's g_str_hash().
      Investigation by Karl Nelson <kenelson@ece.ucdavis.edu>.
      Do a web search for "g_str_hash X31_HASH" if you want to know more. */
@@ -170,7 +170,7 @@ STATICDEF unsigned StringHash::coreHash(std::string &key)
   unsigned h = primeA;
 
   // Stride a word at a time.  Note that this works best (or works at
-  // all) if the std::string is 32-bit aligned.  This initial 'if' block is
+  // all) if the str::string is 32-bit aligned.  This initial 'if' block is
   // to prevent an extra unneeded rotate.
   //
   // FIX: this would be even faster if all strings were NUL-padded in
@@ -191,7 +191,7 @@ STATICDEF unsigned StringHash::coreHash(std::string &key)
     if (!key[2]) {h = ROTATE(h, 5); goto end2;}
     if (!key[3]) {h = ROTATE(h, 5); goto end3;}
     h = ROTATE(h, 5);
-    // FIX: if the start of the std::string is not 4-byte aligned then this
+    // FIX: if the start of the str::string is not 4-byte aligned then this
     // will be slower on x86 and I think even illegal on MIPS and
     // perhaps others.  To be portable we should ensure this.
     h += *( (unsigned *) key ); // on my machine plus is faster than xor
@@ -265,7 +265,7 @@ end0:
 }
 
 
-STATICDEF bool StringHash::keyCompare(std::string &key1, std::string &key2)
+STATICDEF bool StringHash::keyCompare(str::string &key1, str::string &key2)
 {
   //return 0==strcmp(key1, key2);
     return key1==key2;
@@ -283,7 +283,7 @@ STATICDEF bool StringHash::keyCompare(std::string &key1, std::string &key2)
 #include "crc.h"         // crc32
 #include "nonport.h"     // getMilliseconds
 #include "array.h"       // GrowArray
-#include "str.h"         // std::string
+#include "str.h"         // str::string
 
 // pair a GrowArray with its size
 struct StringArray {
@@ -308,7 +308,7 @@ struct StringArray {
 StringArray *dataArray = NULL;
 
 
-std::string id(void *p)
+str::string id(void *p)
 {
   return (char const*)p;
 }
@@ -341,9 +341,9 @@ void readDataFromFile(char *inFileName) {
   std::istream in(&fb);
   while(true) {
 #if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
-      std::stringstream s;
+      str::stringstream s;
 #else
-      std::stringstream s(DBG_INFO_ARG0);
+      str::stringstream s(DBG_INFO_ARG0);
 #endif
     s.readdelim(in, delim);
 //      cout << ":" << s->pcharc() << ":" << endl;
@@ -450,13 +450,13 @@ bool testPerf = true;
 int numPerfRuns = 10000;
 
 void usage() {
-  std::cout << "Test the std::string hashing module strhash.cc\n"
+  std::cout << "Test the str::string hashing module strhash.cc\n"
        << "  --help / -h     : print this message\n"
        << "  --[no-]testCor  : run the correctness tests\n"
        << "                    will fail if data has duplicate strings (?!)\n"
        << "  --[no-]testPerf : run the performance tests\n"
        << "  --numPerfRuns N : loop over data N times during performance run\n"
-       << "  --file FILE     : use the whitespace-delimited std::string contents of FILE\n"
+       << "  --file FILE     : use the whitespace-delimited str::string contents of FILE\n"
        << "  --random N      : use N internally generated random strings of length 10;\n"
        << "                    N should be even\n"
        << "  --dump          : dump out the data after generating/reading it\n"

@@ -13,11 +13,8 @@
 #ifndef STR_H
 #define STR_H
 
-#include "typ.h"         // bool
-#include <iostream>	 // istream, ostream
-#include <stdarg.h>      // va_list
-#include <string.h>      // strcmp, etc.
-#include "storage.h"
+#include "defs.h"
+#include "stor0.h"
 
 class Flatten;           // flatten.h
 
@@ -50,17 +47,19 @@ class Flatten;           // flatten.h
 enum SmbaseStringFunc { SMBASE_STRING_FUNC };
 
 
+
 namespace str {
 
     extern StoragePool str_pool;
 
-    class string : public str::Storeable {
+    class string : public Storeable {
     protected:     // data
       // 10/12/00: switching to never letting s be NULL
       char *s;     	       	       	       // string contents; never NULL
     public:
       static char * const emptyString;     // a global ""; should never be modified
       static char * const nullString;
+      static size_t const npos = std::string::npos;
 
     protected:     // funcs
       void dup(char const *source);        // copies, doesn't dealloc first
@@ -68,14 +67,14 @@ namespace str {
 
     public:	       // funcs
     #ifdef DEBUG
-      string(string const &src) : str::Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
+      string(string const &src) : Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
     #endif
-      string(DBG_INFO_FORMAL_FIRST string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
-      string(DBG_INFO_FORMAL_FIRST char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
-      string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
-      string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
-      string(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  }
-      string(DBG_INFO_FORMAL ) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { s=emptyString; }
+      string(DBG_INFO_FORMAL_FIRST string const &src) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
+      string(DBG_INFO_FORMAL_FIRST char const *src) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
+      string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
+      string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
+      string(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr) : Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  }
+      string(DBG_INFO_FORMAL ) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { s=emptyString; }
       ~string() { kill(); }
 
       // for this one, use ::substring instead
@@ -88,7 +87,7 @@ namespace str {
       //     be used
       //   - Array<char> is very flexible, but remember to add 1 to
       //     the length passed to its constructor!
-      string(DBG_INFO_FORMAL_FIRST int length, SmbaseStringFunc) : str::Storeable(DBG_INFO_ARG_FWD) { s=emptyString; setlength(length); }
+      string(DBG_INFO_FORMAL_FIRST int length, SmbaseStringFunc) : Storeable(DBG_INFO_ARG_FWD) { s=emptyString; setlength(length); }
 
       string(DBG_INFO_FORMAL_FIRST Flatten&);
       void xfer(Flatten &flat);
@@ -181,10 +180,7 @@ namespace str {
       void* operator new (size_t size);
       void* operator new (size_t size, str::StoragePool &pool);
 
-      inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
-      {
-          os<<"str:"<< (s?s:"#null");
-      }
+      void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const;
     };
 
 
@@ -305,7 +301,6 @@ namespace str {
 // ------------------------ rostring ----------------------
 // My plan is to use this in places I currently use 'char const *'.
 // TODO fail-safe
-typedef str::string const rostring;
 
 // I have the modest hope that the transition to 'rostring' might be
 // reversible, so this function converts to 'char const *' but with a
@@ -361,24 +356,29 @@ inline str::string substring(rostring p, int n)
 //#define stringc stringstream()
 
 // experimenting with using toString as a general method for datatypes
-//string toString(int i);
-//string toString(unsigned i);
-//string toString(char c);
-//string toString(long i);
-//string toString(char const *str);
-//string toString(float f);
-//void debugString(std::ostream &os, int i, int level);
-//void debugString(std::ostream &os, unsigned i, int level);
-//void debugString(std::ostream &os, char i, int level);
-//void debugString(std::ostream &os, long i, int level);
-//void debugString(std::ostream &os, char const * i, int level);
-//void debugString(std::ostream &os, float i, int level);
+str::string toString(int i);
+str::string toString(unsigned i);
+str::string toString(char c);
+str::string toString(long i);
+str::string toString(char const *str);
+str::string toString(float f);
+str::string toString(char const *str);
+void debugString(std::ostream &os, int i, int level);
+void debugString(std::ostream &os, unsigned i, int level);
+void debugString(std::ostream &os, char i, int level);
+void debugString(std::ostream &os, long i, int level);
+void debugString(std::ostream &os, char const * i, int level);
+void debugString(std::ostream &os, float i, int level);
 
 // printf-like construction of a string; often very convenient, since
 // you can use any of the formatting characters (like %X) that your
 // libc's sprintf knows about
 str::string stringf(char const *format, ...);
 str::string vstringf(char const *format, va_list args);
+
+
+#include "typ.h"         // bool
+#include "storage.h"
 
 
 #endif // STR_H

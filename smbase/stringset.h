@@ -28,7 +28,7 @@ public:      // funcs
     bool isDone() const { return iter.isDone(); }
     Iter& next() { iter.next(); return *this; }
 
-    std::string const &data() const { return iter.key(); }
+    str::string const &data() const { return iter.key(); }
 
     int private_getCurrent() const { return iter.private_getCurrent(); }
   };
@@ -46,7 +46,7 @@ public:      // funcs
     bool isDone() const { return iter.isDone(); }
     IterC& next() { iter.next(); return *this; }
 
-    std::string const &data() const { return iter.key(); }
+    str::string const &data() const { return iter.key(); }
 
     int private_getCurrent() const { return iter.private_getCurrent(); }
   };

@@ -173,6 +173,7 @@ HEADERS += \
     ../smbase/crc.h \
     ../smbase/cycles.h \
     ../smbase/datablok.h \
+    ../smbase/defs.h \
     ../smbase/exc.h \
     ../smbase/flatten.h \
     ../smbase/gprintf.h \
@@ -203,6 +204,7 @@ HEADERS += \
     ../smbase/sobjset.h \
     ../smbase/sobjstack.h \
     ../smbase/srcloc.h \
+    ../smbase/stor0.h \
     ../smbase/str.h \
     ../smbase/strdict.h \
     ../smbase/strhash.h \

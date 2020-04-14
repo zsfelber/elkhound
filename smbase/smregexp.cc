@@ -2,7 +2,7 @@
 // code for smregexp.h
 
 #include "smregexp.h"     // this module
-#include "str.h"          // std::string
+#include "str.h"          // str::string
 #include "exc.h"          // xbase
 #include "array.h"        // Array
 
@@ -25,19 +25,19 @@
 #endif
 
 //TODO
-// get an error std::string
-static std::string regexpErrorString(regex_t const *pat, int code)
+// get an error str::string
+static str::string regexpErrorString(regex_t const *pat, int code)
 {
-  // find out how long the error std::string is; this size
+  // find out how long the error str::string is; this size
   // includes the final NUL byte
   int size = regerror(code, pat, NULL, 0);
 
-  // get the std::string
+  // get the str::string
   Array<char> buf(size);
   regerror(code, pat, buf.ptr(), size);
   buf[size] = 0;     // paranoia
 
-  return std::string(buf);
+  return str::string(buf);
 }
 
 // throw an exception
@@ -75,7 +75,7 @@ Regexp::Regexp(rostring exp, CFlags flags)
   int code = regcomp(PAT, toCStr(exp), f);
   if (code) {
     // deallocate the pattern buffer before throwing the exception
-    std::string msg = regexpErrorString(PAT, code);
+    str::string msg = regexpErrorString(PAT, code);
     delete PAT;
     xbase(msg);
   }

@@ -46,12 +46,12 @@ void BPRender::breakLine(int ind)
 
 
 // TODO fail-safe
-std::string BPRender::takeAndRender(BoxPrint &bld)
+str::string BPRender::takeAndRender(BoxPrint &bld)
 {
   BPBox* /*owner*/ tree = bld.takeTree();
   tree->render(*this);
   // TODO fail-safe
-  std::string ret(sb.str());
+  str::string ret(sb.str());
   sb.clear();
   delete tree;
   return ret;

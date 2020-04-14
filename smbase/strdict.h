@@ -1,5 +1,5 @@
 // strdict.h            see license.txt for copyright and terms of use
-// std::string dictionary
+// str::string dictionary
 // (c) Scott McPeak, 2000
 
 // entire module is case sensitive
@@ -8,7 +8,7 @@
 #define __STRDICT_H
 
 #include <iostream>   // ostream
-#include "str.h"        // std::string
+#include "str.h"        // str::string
 #include "macros.h"     // DMEMB
 #include "xassert.h"    // xassert
 #include "typ.h"        // MUTABLE
@@ -18,7 +18,7 @@ private:    // types
   class Node {
   public:
     Node *next;
-    std::string key, value;
+    str::string key, value;
 
   public:
     Node(char const *k, char const *v, Node *n = NULL)
@@ -44,8 +44,8 @@ public:     // types
     Iter& next() { xassert(current); current = current->next; return *this; }
       // 'next' returns a value primarily to allow use in for-loop comma exprs
 
-    std::string& key() const { return current->key; }
-    std::string& value() const { return current->value; }
+    str::string& key() const { return current->key; }
+    str::string& value() const { return current->value; }
   };
   friend class Iter;
 
@@ -62,8 +62,8 @@ public:     // types
     Iter::next;
 
     // others must be const-ified
-    std::string const &key() const { return Iter::key(); }
-    std::string const &value() const { return Iter::value(); }
+    str::string const &key() const { return Iter::key(); }
+    str::string const &value() const { return Iter::value(); }
   };
 
 private:    // data
@@ -100,11 +100,11 @@ public:
   bool isNotEmpty() const
     { return !isEmpty(); }
 
-  bool query(char const *key, std::string &value) const;
+  bool query(char const *key, str::string &value) const;
     // if 'key' is mapped to a value, put it into 'value' and return true;
     // otherwise, return false
 
-  std::string queryf(char const *key) const;
+  str::string queryf(char const *key) const;
     // return the value corresponding to 'key', or throw an exception of it's
     // not mapped
 
@@ -139,7 +139,7 @@ public:
 
   // ------------ misc --------------
   INSERT_OSTREAM(StringDict)
-  std::string toString() const;
+  str::string toString() const;
 };
 
 #endif // __STRDICT_H

@@ -13,7 +13,7 @@
 #include "breaker.h"     // breaker
 #include "typ.h"         // bool
 #include "xassert.h"     // xassert, for convenience for #includers
-#include "str.h"         // std::string
+#include "str.h"         // str::string
 #include <iostream>    // ostream
 
 // forward declarations
@@ -60,9 +60,9 @@ bool unwinding_other(xBase const &x);
 class xBase {
 protected:
   // the human-readable description of the exception
-  //std::string msg;
+  //str::string msg;
     // TODO fail-safe
-  std::string msg;
+  str::string msg;
 
 public:
   // initially true; when true, we write a record of the thrown exception
@@ -85,9 +85,9 @@ public:
   friend std::ostream& operator << (std::ostream &os, xBase const &obj)
     { obj.insert(os); return os; }
 
-  // add a std::string describing what was going on at the time the
+  // add a str::string describing what was going on at the time the
   // exception was thrown; this should be called with the innermost
-  // context std::string first, i.e., in the normal unwind order
+  // context str::string first, i.e., in the normal unwind order
   void addContext(rostring context);
 };
 
@@ -100,8 +100,8 @@ void xbase(rostring msg) NORETURN;
 // throwing this corresponds to detecting a bug in the program
 class x_assert : public xBase {
     // TODO fail-safe
-  std::string condition;          // text of the failed condition
-  std::string filename;           // name of the source file
+  str::string condition;          // text of the failed condition
+  str::string filename;           // name of the source file
   int lineno;                // line number
 
 public:
@@ -121,7 +121,7 @@ public:
 // is not a bug in the program
 class xFormat : public xBase {
     // TODO fail-safe
-  std::string condition;          // what is wrong with the input
+  str::string condition;          // what is wrong with the input
 
 public:
   xFormat(rostring cond);
@@ -150,7 +150,7 @@ void formatAssert_fail(char const *cond, char const *file, int line) NORETURN;
 class XOpen : public xBase {
 public:
     // TODO fail-safe
-  std::string filename;
+  str::string filename;
   
 public:
   XOpen(rostring fname);
@@ -166,17 +166,17 @@ void throw_XOpen(rostring fname) NORETURN;
 class XOpenEx : public XOpen {
 public:
     // TODO fail-safe
-  std::string mode;         // fopen-style mode std::string, e.g. "r"
-  std::string cause;        // errno-derived failure cause, e.g. "no such file"
+  str::string mode;         // fopen-style mode str::string, e.g. "r"
+  str::string cause;        // errno-derived failure cause, e.g. "no such file"
 
 public:
   XOpenEx(rostring fname, rostring mode, rostring cause);
   XOpenEx(XOpenEx const &obj);
   ~XOpenEx();
                                               
-  // convert a mode std::string as into human-readable participle,
+  // convert a mode str::string as into human-readable participle,
   // e.g. "r" becomes "reading"
-  static std::string interpretMode(rostring mode);
+  static str::string interpretMode(rostring mode);
 };
 
 void throw_XOpenEx(rostring fname, rostring mode, rostring cause) NORETURN;

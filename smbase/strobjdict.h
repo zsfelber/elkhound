@@ -1,5 +1,5 @@
 // strobjdict.h            see license.txt for copyright and terms of use
-// dictionary of objects, indexed by std::string (case-sensitive)
+// dictionary of objects, indexed by str::string (case-sensitive)
 // (c) Scott McPeak, 2000
 
 #ifndef __STROBJDICT_H
@@ -16,8 +16,8 @@ template <class T>
 class StringObjDict {
 public:     // types
   // 'foreach' iterator functions
-  typedef bool (*ForeachCFn)(std::string const &key, T const *value, void *extra);
-  typedef bool (*ForeachFn)(std::string const &key, T * /*serf*/ value, void *extra);
+  typedef bool (*ForeachCFn)(str::string const &key, T const *value, void *extra);
+  typedef bool (*ForeachFn)(str::string const &key, T * /*serf*/ value, void *extra);
 
   // external iterator
   class Iter {
@@ -32,7 +32,7 @@ public:     // types
     bool isDone() const { return iter.isDone(); }
     Iter& next() { iter.next(); return *this; }
 
-    std::string const &key() const { return iter.key(); }
+    str::string const &key() const { return iter.key(); }
     T const *&value() const { return (T const *&)iter.value(); }
   };
   friend class Iter;
@@ -60,20 +60,20 @@ public:     // funcs
   bool isEmpty() const                                 { return dict.isEmpty(); }
   bool isNotEmpty() const                              { return !isEmpty(); }
 
-  bool queryC(std::string &key, T const *&value) const  { return dict.query(key, (void*&)value); }
-  bool query(std::string &key, T *&value)               { return queryC(key, (T const*&)value); }
+  bool queryC(str::string &key, T const *&value) const  { return dict.query(key, (void*&)value); }
+  bool query(str::string &key, T *&value)               { return queryC(key, (T const*&)value); }
 
-  T const *queryfC(std::string &key) const              { return (T const *)dict.queryf(key); }
-  T * /*serf*/ queryf(std::string &key)                 { return (T*)dict.queryf(key); }
-  T * /*serf*/ queryif(std::string &key)                { return (T*)dict.queryif(key); }
+  T const *queryfC(str::string &key) const              { return (T const *)dict.queryf(key); }
+  T * /*serf*/ queryf(str::string &key)                 { return (T*)dict.queryf(key); }
+  T * /*serf*/ queryif(str::string &key)                { return (T*)dict.queryif(key); }
 
-  bool isMapped(std::string &key) const                 { return dict.isMapped(key); }
+  bool isMapped(str::string &key) const                 { return dict.isMapped(key); }
 
   // -------- mutators -----------
-  void add(std::string &key, T *value)                  { dict.add(key, value); }
+  void add(str::string &key, T *value)                  { dict.add(key, value); }
 
-  T * /*owner*/ remove(std::string &key)                { return (T*)dict.remove(key); }
-  void deleteAt(std::string &key)                       { deleteObject(remove(key)); }
+  T * /*owner*/ remove(str::string &key)                { return (T*)dict.remove(key); }
+  void deleteAt(str::string &key)                       { deleteObject(remove(key)); }
 
   void empty()               { dict.emptyAndDel((StringVoidDict::DelFn)deleteObject); }
 

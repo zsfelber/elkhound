@@ -104,7 +104,7 @@ Options:
   -r          Recursively follow dependencies for files encountered.
   -q          Suppress warnings.
   -d          Enable debug messages.
-  -h,-help    Print this usage std::string.
+  -h,-help    Print this usage str::string.
 
 EOF
   exit(0);
@@ -283,7 +283,7 @@ sub basename {
 }
 
 
-# given a file name, possibly with path, return the std::string of
+# given a file name, possibly with path, return the str::string of
 # characters after the last slash (if any) but before the first dot
 # which follows the last slash (if any)
 sub prefix {

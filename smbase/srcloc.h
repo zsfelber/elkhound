@@ -27,13 +27,13 @@
 #ifndef SRCLOC_H
 #define SRCLOC_H
 
-#include "str.h"      // std::string
+#include "str.h"      // str::string
 #include "objlist.h"  // ObjList
 #include "storage.h"  // ObjList
 
 class HashLineMap;    // hashline.h
 
-std::string E;
+str::string E;
 
 // This is a source location.  It's interpreted as an integer
 // specifying the byte offset within a hypothetical file created by
@@ -97,7 +97,7 @@ public:      // types
     // if their names are equal, i.e. there is no checking done to
     // see if their names happen to be aliases in the filesystem
       //TODO
-    std::string name;
+    str::string name;
 
     // start offset in the SourceLoc space
     SourceLoc startLoc;
@@ -146,9 +146,9 @@ public:      // types
 
   public:    // funcs
     // this builds both the array and the index
-    File(DBG_INFO_FORMAL_FIRST  const std::string &name, SourceLoc startLoc);
-    File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const std::string &name, SourceLoc startLoc);
-    //File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const std::string &name, SourceLoc startLoc);
+    File(DBG_INFO_FORMAL_FIRST  const str::string &name, SourceLoc startLoc);
+    File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const str::string &name, SourceLoc startLoc);
+    //File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const str::string &name, SourceLoc startLoc);
     ~File();
     void init();
     
@@ -168,10 +168,10 @@ public:      // types
 
     // call this time each time a #line directive is encountered;
     // same semantics as HashLineMap::addHashLine
-    void addHashLine(int ppLine, int origLine, std::string &origFname);
+    void addHashLine(int ppLine, int origLine, str::string &origFname);
     void doneAdding();
 
-    inline void debugPrint(std::ostream& os, int indent = 0, std::string & subtreeName = E) const
+    inline void debugPrint(std::ostream& os, int indent = 0, str::string & subtreeName = E) const
     {
         str::ind(os,indent)<< "File{"<<name<<":"<<startLoc<<"/"<<numChars<<"}";
     }
@@ -187,22 +187,22 @@ public:      // types
     StaticLoc(StaticLoc const &obj);//undefined
 #endif
   public:
-    std::string name;      // file name
+    str::string name;      // file name
     int offset;       // char offset
     int line, col;    // line,col
 
   public:
-    StaticLoc(DBG_INFO_FORMAL_FIRST  const std::string &n, int o, int L, int c)
+    StaticLoc(DBG_INFO_FORMAL_FIRST  const str::string &n, int o, int L, int c)
       : str::Storeable(DBG_INFO_ARG_FWD), name(n), offset(o), line(L), col(c) {}
     StaticLoc(DBG_INFO_FORMAL_FIRST  StaticLoc const &obj)
       : str::Storeable(DBG_INFO_ARG_FWD), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
-    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const std::string &n, int o, int L, int c)
+    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const str::string &n, int o, int L, int c)
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(n), offset(o), line(L), col(c) {}
     StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, StaticLoc const &obj)
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
 
-    inline void debugPrint(std::ostream& os, int indent = 0, std::string & subtreeName = E) const
+    inline void debugPrint(std::ostream& os, int indent = 0, str::string & subtreeName = E) const
     {
         str::ind(os,indent)<< "StaticLoc{"<<name<<":"<<offset<<":"<<line<<":"<<col<<"}";
     }
@@ -259,8 +259,8 @@ private:     // funcs
   }
   static int toInt(SourceLoc loc) { return (int)loc; }
 
-  File *findFile(const std::string &name);
-  File *getFile(const std::string &name);
+  File *findFile(const str::string &name);
+  File *getFile(const str::string &name);
                                 
   File *findFileWithLoc(SourceLoc loc);
   StaticLoc const *getStatic(SourceLoc loc);
@@ -280,17 +280,17 @@ public:      // funcs
   //   columns start at 1
 
   // encode from scratch
-  SourceLoc encodeOffset(std::string &filename, int charOffset);
-  SourceLoc encodeBegin(std::string &filename)
+  SourceLoc encodeOffset(str::string &filename, int charOffset);
+  SourceLoc encodeBegin(str::string &filename)
     { return encodeOffset(filename, 0 /*offset*/); }
-  SourceLoc encodeLineCol(std::string &filename, int line, int col);
+  SourceLoc encodeLineCol(str::string &filename, int line, int col);
 
   // some care is required with 'encodeStatic', since each call makes
   // a new location with a new entry in the static array to back it
   // up, so the caller should ensure a given static location is not
   // encoded more than once, if possible
   SourceLoc encodeStatic(StaticLoc const &obj);
-  SourceLoc encodeStatic(std::string &fname, int offset, int line, int col)
+  SourceLoc encodeStatic(str::string &fname, int offset, int line, int col)
     { return encodeStatic(StaticLoc(DBG_INFO_ARG0_FIRST  fname, offset, line, col)); }
   static bool isStatic(SourceLoc loc) { return toInt(loc) <= 0; }
 
@@ -302,31 +302,31 @@ public:      // funcs
     { xassert(!isStatic(base)); return toLoc(toInt(base) + colOffset); }
   static SourceLoc advLine(SourceLoc base)     // from end of line to beginning of next
     { xassert(!isStatic(base)); return toLoc(toInt(base) + 1); }
-  static SourceLoc advText(SourceLoc base, std::string & /*text*/, int textLen)
+  static SourceLoc advText(SourceLoc base, str::string & /*text*/, int textLen)
     { xassert(!isStatic(base)); return toLoc(toInt(base) + textLen); }
 
   // decode
-  void decodeOffset(SourceLoc loc, std::string &filename, int &charOffset);
-  void decodeLineCol(SourceLoc loc, std::string &filename, int &line, int &col);
+  void decodeOffset(SourceLoc loc, str::string &filename, int &charOffset);
+  void decodeLineCol(SourceLoc loc, str::string &filename, int &line, int &col);
 
   // more specialized decode
-  std::string getFile(SourceLoc loc);
+  str::string getFile(SourceLoc loc);
   int getOffset(SourceLoc loc);
   int getLine(SourceLoc loc);
   int getCol(SourceLoc loc);
 
   // get access to the File itself, for adding #line directives
-  File *getInternalFile(std::string &fname)
+  File *getInternalFile(str::string &fname)
     { return getFile(fname); }
 
-  // render as std::string in "file:line:col" format
-  std::string getString(SourceLoc loc);
+  // render as str::string in "file:line:col" format
+  str::string getString(SourceLoc loc);
 
   // "line:col" format
-  std::string getLCString(SourceLoc loc);
+  str::string getLCString(SourceLoc loc);
 
 
-  inline void debugPrint(std::ostream& os, int indent = 0, std::string & subtreeName = E) const
+  inline void debugPrint(std::ostream& os, int indent = 0, str::string & subtreeName = E) const
   {
       if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "SourceLocManager..."; return; }
       str::ind(os,indent)<< "SourceLocManager{"<<std::endl;
@@ -348,17 +348,17 @@ extern SourceLocManager *sourceLocManager;
 // dsw: So that gdb can find it please DO NOT inline this; also the
 // unique public name is intentional: I don't want gdb doing
 // overloading and sometimes getting it wrong, which it does
-std::string locToStr(SourceLoc sl);
+str::string locToStr(SourceLoc sl);
 
-inline std::string toString(SourceLoc sl)
+inline str::string toString(SourceLoc sl)
   { return locToStr(sl); }
 
-//inline std::stringstream& operator<< (std::stringstream &sb, SourceLoc sl)
+//inline str::stringstream& operator<< (str::stringstream &sb, SourceLoc sl)
 //  { return sb << toString(sl); }
-inline std::stringstream& operator<< (std::stringstream &sb, SourceLoc sl)
-  { return (std::stringstream&)(sb << toString(sl)); }
+inline str::stringstream& operator<< (str::stringstream &sb, SourceLoc sl)
+  { return (str::stringstream&)(sb << toString(sl)); }
 
-inline std::string toLCString(SourceLoc sl)
+inline str::string toLCString(SourceLoc sl)
   { return sourceLocManager->getLCString(sl); }
 
 
@@ -375,11 +375,11 @@ inline SourceLoc advCol(SourceLoc base, int colOffset)
   { return SourceLocManager::advCol(base, colOffset); }
 inline SourceLoc advLine(SourceLoc base)
   { return SourceLocManager::advLine(base); }
-inline SourceLoc advText(SourceLoc base, std::string &text, int textLen)
+inline SourceLoc advText(SourceLoc base, str::string &text, int textLen)
   { return SourceLocManager::advText(base, text, textLen); }
 
-std::string toXml(SourceLoc index);
-void fromXml(SourceLoc &out, std::string str);
+str::string toXml(SourceLoc index);
+void fromXml(SourceLoc &out, str::string str);
 
 
 #endif // SRCLOC_H

@@ -157,10 +157,10 @@ BitArray stringToBitArray(char const *src)
 }
 
 //TODO
-std::string toString(BitArray const &b)
+str::string toString(BitArray const &b)
 {
   int len = b.length();
-  std::string ret;
+  str::string ret;
   for (int i=0; i<len; i++) {
     ret+= b.test(i)? '1' : '0';
   }
@@ -203,9 +203,9 @@ void BitArray::Iter::adv()
 
 #include "test.h"     // USUAL_MAIN
 
-std::string toStringViaIter(BitArray const &b)
+str::string toStringViaIter(BitArray const &b)
 { 
-  std::stringstream sb;
+  str::stringstream sb;
   int index = 0;
 
   for (BitArray::Iter iter(b); !iter.isDone(); iter.adv()) {
@@ -231,8 +231,8 @@ void testIter(char const *str)
   BitArray b = stringToBitArray(str);
   b.selfCheck();
 
-  std::string s1 = toString(b);
-  std::string s2 = toStringViaIter(b);
+  str::string s1 = toString(b);
+  str::string s2 = toStringViaIter(b);
   if (s1 != s2 ||
       !s1.equals(str)) {
     std::cout << "str: " << str << std::endl;
@@ -246,16 +246,16 @@ void testIter(char const *str)
   c.selfCheck();
   
 #if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
-  std::stringstream inv;
+  str::stringstream inv;
 #else
-  std::stringstream inv(DBG_INFO_ARG0);
+  str::stringstream inv(DBG_INFO_ARG0);
 #endif
   int len = strlen(str);
   for (int i=0; i<len; i++) {
     inv << (str[i]=='0'? '1' : '0');
   }
 
-  std::string cStr = toString(c);
+  str::string cStr = toString(c);
   if (!inv.equals(cStr)) {
     std::cout << " inv: " << inv << std::endl;
     std::cout << "cStr: " << cStr << std::endl;
@@ -273,10 +273,10 @@ void testUnionIntersection(char const *s1, char const *s2)
   BitArray b2 = stringToBitArray(s2);
 
 #if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
-  std::stringstream expectUnion,
+  str::stringstream expectUnion,
           expectIntersection;
 #else
-  std::stringstream expectUnion(DBG_INFO_ARG0),
+  str::stringstream expectUnion(DBG_INFO_ARG0),
           expectIntersection(DBG_INFO_ARG0);
 #endif
   for (int i=0; i<len; i++) {
@@ -287,8 +287,8 @@ void testUnionIntersection(char const *s1, char const *s2)
   BitArray u = b1 | b2;
   BitArray i = b1 & b2;
   
-  std::string uStr = toString(u);
-  std::string iStr = toString(i);
+  str::string uStr = toString(u);
+  str::string iStr = toString(i);
 
   if (!uStr.equals(expectUnion)) {
     std::cout << "         s1: " << s1 << std::endl;

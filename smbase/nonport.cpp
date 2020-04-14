@@ -583,7 +583,7 @@ int vnprintf(char const *format, va_list args)
     return vsnprintf(NULL, 0, format, args);
 
   #else
-    // conservatively interpret the format std::string using gprintf
+    // conservatively interpret the format str::string using gprintf
     int count = 0;
     general_vprintf(counting_output_function, &count, format, args);
     return count;
@@ -608,7 +608,7 @@ int nprintf(char const *format, ...)
 
 
 // helper for testing applyToCwdFiles
-bool printFirst10(const std::string &name, void *extra)
+bool printFirst10(const str::string &name, void *extra)
 {
   int &count = *((int*)extra);
   count++;
@@ -622,7 +622,7 @@ bool printFirst10(const std::string &name, void *extra)
 }
 
 
-bool printIt(const std::string &name, void*)
+bool printIt(const str::string &name, void*)
 {
   printf("%s\n", name);
   return true;    // continue

@@ -1,60 +1,60 @@
-std::string.txt
-This document describes handling of std::string classes in smbase.
+str::string.txt
+This document describes handling of str::string classes in smbase.
 
 
 
-The 'std::string' class defined in str.h predates std::string by several
+The 'str::string' class defined in str.h predates str::string by several
 years.  I find its interface quite satisfactory.
 
 However, as part of the goal of releasing Elsa (etc.) is to let others
-use it in their projects, and std::string is understandably becoming
+use it in their projects, and str::string is understandably becoming
 quite popular, it must at a minimum be possible to integrate
-smbase-based code with code that uses std::string.
+smbase-based code with code that uses str::string.
 
-One option is to simply put my std::string class into its own namespace,
-say smbase::std::string, or maybe rename it to sm_string or something.  But
-it was never my intent to have more than one notion of 'std::string' in a
+One option is to simply put my str::string class into its own namespace,
+say smbase::str::string, or maybe rename it to sm_string or something.  But
+it was never my intent to have more than one notion of 'str::string' in a
 given code base; I made my own simply because there was nothing else
 at the time.  The programmer should not be forced to choose among
-std::string classes for routine tasks; a std::string is a std::string.
+str::string classes for routine tasks; a str::string is a str::string.
 
-Therefore my plan is to evolve my std::string (hereafter: smbase::std::string,
+Therefore my plan is to evolve my str::string (hereafter: smbase::str::string,
 even though it is not actually in a namespace at the moment) towards
-interface compatibility with std::string.  The ideal end state is that
+interface compatibility with str::string.  The ideal end state is that
 one could simply choose at compile-time which implementation to use,
 and all the client code would work, and the only difference (if any)
 would be performance.
 
-In other words, make smbase::std::string a subset of std::string.
+In other words, make smbase::str::string a subset of str::string.
 
 
 Now, that is all well and good, but there is one major problem:
-std::string does not implicitly convert to 'char const *', whereas
-smbase::std::string does (or used to), and a great deal of my code relies
+str::string does not implicitly convert to 'char const *', whereas
+smbase::str::string does (or used to), and a great deal of my code relies
 on this conversion.
 
 My general approach had been to use parameters of type 'char const *'
-whenever a function was (1) not going to modify the std::string, and (2)
+whenever a function was (1) not going to modify the str::string, and (2)
 not going to let the pointer escape (say, into the heap).  This worked
 well because it was both efficient and convenient; code that needed to
-store strings used 'std::string' and code that needed to temporarily use a
-std::string used 'char const *', and both could be passed to C library
+store strings used 'str::string' and code that needed to temporarily use a
+str::string used 'char const *', and both could be passed to C library
 functions.
 
-But since std::string cannot be implicitly converted to char const *,
+But since str::string cannot be implicitly converted to char const *,
 this strategy will not work, as it would require lots of explicit
 conversions (calls to c_str) that would clutter up the code.
 
-The main alternative is to push 'std::string' into interfaces further down
+The main alternative is to push 'str::string' into interfaces further down
 in the subsystem hierarchy, closer to the C library.  The main problem
-with that is it entails either making the parameter types be 'std::string',
+with that is it entails either making the parameter types be 'str::string',
 which incurs an extra pair of calls to malloc and free each time it is
-passed down, or make the type 'std::string const &', which is unwieldy.
+passed down, or make the type 'str::string const &', which is unwieldy.
 
-Actually, many implementations of std::string, including the one in
+Actually, many implementations of str::string, including the one in
 gcc's C++ library, use a copy-on-write strategy that would avoid the
 calls to malloc and free.  But the price is a significant storage
-overhead for each std::string (4 extra words for gcc), plus potential
+overhead for each str::string (4 extra words for gcc), plus potential
 problems in multithreaded code.  While in general I think
 copy-on-write is a good idea, I do not want to adopt a style of code
 that will force me to use copy-on-write to get decent performance.
@@ -67,19 +67,19 @@ no help for eliminating that first allocation.
 My (straightforward) idea is to use the following 'rostring':
          
   // str.h
-  typedef std::string const &rostring;
+  typedef str::string const &rostring;
   
 This type, normally used as a function parameter type, conveys both 
-(1) that the user promises not to modify the std::string, and also 
+(1) that the user promises not to modify the str::string, and also 
 (2) that the address of the object passed will *not* "escape", i.e.
 be stored in the heap or a global after the function returns.  These
 semantics have always been associated with my use of 'char const *'
 in parameters, but now they have their own name, and this name is
-much easier to type than 'std::string const &'.
+much easier to type than 'str::string const &'.
 
 I think this approach provides a reasonable compromise.  It lets
 me pass strings down efficiently and soundly, and I can create
-std::string objects implicitly from char ptrs.  The only problem is
+str::string objects implicitly from char ptrs.  The only problem is
 I cannot implicitly convert *to* char ptrs, so some conversion
 is necessary.
 
@@ -92,16 +92,16 @@ It is also consistent with the limited intended purposes of
 'rostring'.
 
 
-Transition guide for new std::string interface:
+Transition guide for new str::string interface:
 
   - Replace non-performance-critical uses of
       char const *
     as function parameters with
       rostring
-    which is a typedef for 'std::string const &'.
+    which is a typedef for 'str::string const &'.
 
     What is performance critical?  Mainly, uses of strings as keys
-    in hash tables.  In that case, the std::string data is often coming
+    in hash tables.  In that case, the str::string data is often coming
     from a lexer, which must *not* be required to allocate a copy
     just to talk to the hash table.
 
@@ -126,7 +126,7 @@ Transition guide for new std::string interface:
     - It will certainly not work to change 'char const *&' to 
       'rostring&', since the latter will be an invalid type.
     - Watch out for return types; if the function is returning a
-      locally-constructed std::string, a return type of 'rostring' will
+      locally-constructed str::string, a return type of 'rostring' will
       be death.
     - If the 'char const *' was *nullable*, then you should not
       convert it to rostring, since the latter cannot accept a NULL
@@ -137,7 +137,7 @@ Transition guide for new std::string interface:
   - To convert an rostring to a char const*, use
       char const *toCStr(rostring s);
     instead of
-      char const *std::string::c_str() const;
+      char const *str::string::c_str() const;
     to maintain the vague hope that 'rostring' could at some point
     be yet some other type (perhaps even 'char const *' again).
     For example:
@@ -153,33 +153,33 @@ Transition guide for new std::string interface:
     to 'char const *' because the former is a parameter of an overloaded
     function that just calls into another version which accepts the
     latter, then use c_str() instead.  This makes it clear that the
-    'rostring' is really being treated as 'std::string const &', not simply
+    'rostring' is really being treated as 'str::string const &', not simply
     "something vaguely similar to char const *".  For example:
     
       int foo(char const *s);                        // real function
       int foo(rostring s) { return foo(s.c_str()); } // yes
       int foo(rostring s) { return foo(toCStr(s)); } // no
 
-  - To convert a std::string (other than 'rostring') to a char const*, use
-      char const *std::string::c_str() const;
+  - To convert a str::string (other than 'rostring') to a char const*, use
+      char const *str::string::c_str() const;
     instead of
-      char const *std::string::pcharc() const;
+      char const *str::string::pcharc() const;
     as the latter is gratuitously nonstandard and has been deleted.
 
   - Replace uses of
-      std::string::std::string(char const *src, int length);
+      str::string::str::string(char const *src, int length);
     with
-      std::string substring(char const *p, int n);
+      str::string substring(char const *p, int n);
     since the former has different semantics in smbase than in std.
 
-  - The old std::string class allowed code to create a std::string with
-      std::string::std::string(int length)
-    and then modify the std::string with
+  - The old str::string class allowed code to create a str::string with
+      str::string::str::string(int length)
+    and then modify the str::string with
       char *pchar();
     and
       char operator[] (int i) const;
     If the latter function (operator[]) is all that is needed,
-    use std::stringstream instead.  If the former is needed, use
+    use str::stringstream instead.  If the former is needed, use
     Array<char> instead, but remember to explicitly allocate
     one extra byte for the NUL terminator.
     
@@ -235,7 +235,7 @@ Basically, there are three sources of strings in a typical program:
       
     to
     
-      static const std::string hi_there("hi there");
+      static const str::string hi_there("hi there");
       foo(hi_there)
       
     unwieldy though it may be.  (This should not be needed often.)
@@ -246,7 +246,7 @@ Basically, there are three sources of strings in a typical program:
 
       stringc << "hello" << ' ' << "world!"
 
-    requires lots of allocation, and the result is a 'std::string'.
+    requires lots of allocation, and the result is a 'str::string'.
     Passing this to an 'rostring' won't incur any penalty.
     
   - Strings in program input data.
@@ -260,7 +260,7 @@ Basically, there are three sources of strings in a typical program:
     It would be very bad for performance if the transition to
     'rostring' caused processing of such strings (and there are
     lots of them) to incur additional allocation.  That is why I
-    want to keep std::string table interfaces (etc.) capable of accepting
+    want to keep str::string table interfaces (etc.) capable of accepting
     raw 'char const *' pointers: it ought to be possible to do all
     the processing on input data strings without them taking any
     trips through the allocator.

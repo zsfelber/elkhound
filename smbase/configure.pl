@@ -19,7 +19,7 @@ package options:
   -debugheap         turn on heap usage debugging
   -traceheap         print messages on each malloc and free
 EOF
-# this option is obscure, so I won't print it in the usage std::string
+# this option is obscure, so I won't print it in the usage str::string
 # -icc               turn on options for Intel's compiler
 }
 

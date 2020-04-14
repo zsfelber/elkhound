@@ -66,7 +66,7 @@ bool getCurrentDirectory(char *dirname, int dirnameLen);
 
 
 // get and process the names of files *and directories* in the current directory
-typedef bool (*PerFileFunc)(const std::string &name, void *extra);
+typedef bool (*PerFileFunc)(const str::string &name, void *extra);
   // name   - file/dir being processed (contains no slashes)
   // extra  - 2nd parameter to applyToCwdContents
   // return - true to continue, false to stop iterating
@@ -77,7 +77,7 @@ void applyToDirContents(char const *dirName,
                         PerFileFunc func, void *extra=NULL);
 
 
-// return true if the given std::string names a directory
+// return true if the given str::string names a directory
 bool isDirectory(char const *path);
 
 
@@ -101,12 +101,12 @@ void portableSleep(unsigned seconds);
 void getCurrentUsername(char *buffer, int buflen);
 
 
-// read a std::string from the console, with no echo
+// read a str::string from the console, with no echo
 void readNonechoString(char *buffer, int buflen, char const *prompt);
 
 
 // return true if a file or directory exists
-bool fileOrDirectoryExists(const std::string &name);
+bool fileOrDirectoryExists(const str::string &name);
 
 
 // ensure that the pathname part of a file name exists;

@@ -27,7 +27,7 @@
 #define PPRINT_H
 
 #include <iostream>      // std::ostream
-#include "str.h"           // std::string
+#include "str.h"           // str::string
 #include "array.h"         // GrowArray
 
 
@@ -40,9 +40,9 @@ public:
 };
 
 class PPrintStringOut : public PPrintOut {
-  std::stringstream &sb;
+  str::stringstream &sb;
 public:
-  PPrintStringOut(std::stringstream &s) : sb(s) {}
+  PPrintStringOut(str::stringstream &s) : sb(s) {}
   virtual void write(char const *text);
 };
 
@@ -64,7 +64,7 @@ private:     // types
     PPrint &pprint;
 
     // emitted text in the current line
-    std::stringstream curLine;
+    str::stringstream curLine;
 
     // indentation used for 'curLine'
     int curLineInd;
@@ -158,7 +158,7 @@ public:      // funcs
 
 class PPrintToString : public PPrint {
 public:
-  std::stringstream sb;            // output (set) lines accumulate here
+  str::stringstream sb;            // output (set) lines accumulate here
   PPrintStringOut sbOut;       // helper
 
 public:

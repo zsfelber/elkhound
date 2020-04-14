@@ -1,5 +1,5 @@
 // svdict.h            see license.txt for copyright and terms of use
-// dictionary of void*, indexed by std::string (case-sensitive)
+// dictionary of void*, indexed by str::string (case-sensitive)
 // (c) Scott McPeak, 2000
 
 // created by modifying strdict; at some point strdict should
@@ -9,13 +9,13 @@
 #define __SVDICT_H
 
 #include <iostream>   // ostream
-#include "str.h"        // std::string
+#include "str.h"        // str::string
 #include "macros.h"     // DMEMB
 #include "xassert.h"    // xassert
 #include "typ.h"        // MUTABLE
 #include "strhash.h"    // StringHash
 
-// constness: for this class, 'const' means the *mapping* from std::string
+// constness: for this class, 'const' means the *mapping* from str::string
 // to void* won't change; but I don't prevent the thing pointed-at
 // by the void* from changing (would like multiple levels of constness..)
 
@@ -27,21 +27,21 @@ private:    // types
   class Node {
   public:
     Node *next;
-    std::string key;
+    str::string key;
     void *value;
 
   public:
-    Node(std::string &k, void *v, Node *n = NULL)
+    Node(str::string &k, void *v, Node *n = NULL)
       : next(n), key(k), value(v) {}
     ~Node() {}
     
-    static std::string const & getKey(Node const *n);
+    static str::string const & getKey(Node const *n);
   };
 
 public:     // types
   // function for general foreach; return false to continue,
   // true to stop iterating
-  typedef bool (*ForeachFn)(std::string const &key, void *value, void *extra);
+  typedef bool (*ForeachFn)(str::string const &key, void *value, void *extra);
 
   // function type to delete void*s while emptying
   typedef void (*DelFn)(void *value);
@@ -63,7 +63,7 @@ public:     // types
     Iter& next() { xassert(current); current = current->next; return *this; }
       // 'next' returns a value primarily to allow use in for-loop comma exprs
 
-    std::string &key() const { return current->key; }
+    str::string &key() const { return current->key; }
     void *&value() const { return current->value; }
     
     uintptr_t private_getCurrent() const { return (uintptr_t)current; }
@@ -84,7 +84,7 @@ public:     // types
     Iter::private_getCurrent;
 
     // others must be const-ified
-    std::string const &key() const { return Iter::key(); }
+    str::string const &key() const { return Iter::key(); }
     void const *&value() const { return (void const *&)Iter::value(); }
   };
 
@@ -128,29 +128,29 @@ public:
   bool isNotEmpty() const
     { return !isEmpty(); }
 
-  bool query(std::string &key, void *&value) const;
+  bool query(str::string &key, void *&value) const;
     // if 'key' is mapped to a value, put it into 'value' and return true;
     // otherwise, return false
 
-  void *queryf(std::string &key) const;
+  void *queryf(str::string &key) const;
     // return the value corresponding to 'key', or throw an exception of it's
     // not mapped
 
-  void *queryif(std::string &key) const;
+  void *queryif(str::string &key) const;
     // return the value corresponding to 'key', or return NULL
 
-  bool isMapped(std::string &key) const;
+  bool isMapped(str::string &key) const;
     // return true if 'key' is mapped to a value
 
   // -------- mutators -----------
-  void add(std::string &key, void *value);
+  void add(str::string &key, void *value);
     // add a mapping from 'key' to 'value'; 'key' must initially be unmapped
 
-  void *modify(std::string &key, void *newValue);
+  void *modify(str::string &key, void *newValue);
     // change the existing value for 'key', which must exist, to 'newValue';
     // the old value is returned
 
-  void *remove(std::string &key);
+  void *remove(str::string &key);
     // remove the mapping from 'key', which must exist; it is returned
 
   void emptyAndDel(DelFn func);
@@ -168,7 +168,7 @@ public:
   IterC getIterC() const;
     // retrieve a const iterator
 
-  Iter find(std::string &key);
+  Iter find(str::string &key);
     // return an iterator pointing to 'key', or an iterator
     // that isDone() if 'key' isn't mapped
 
@@ -177,7 +177,7 @@ public:
 
   // ------------ misc --------------
   INSERT_OSTREAM(StringVoidDict)
-  std::string toString() const;
+  str::string toString() const;
   
   // debugging...
   uintptr_t private_getTopAddr() const { return (uintptr_t)top; }

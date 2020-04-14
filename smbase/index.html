@@ -284,7 +284,7 @@ because comparison is more than a pointer equality test.  So there
 are some specialized maps from strings.
 
 <p>
-If you have a function that can map from data to (std::string) key,
+If you have a function that can map from data to (str::string) key,
 then StringHash and TStringHash (the template version) are the
 most efficient:
 
@@ -341,10 +341,10 @@ Strings are sequences of characters.
 
 <li><a href="str.h">str.h</a>,
     <a href="str.cpp">str.cpp</a>:
-The std::string class itself.  Using the std::string class instead of
+The str::string class itself.  Using the str::string class instead of
 <tt>char*</tt> makes handling strings as convenent as manipulating
 fundamental types like <tt>int</tt> or <tt>float</tt>.
-See also <a href="std::string.txt">std::string.txt</a>.
+See also <a href="str::string.txt">str::string.txt</a>.
 
 <li><a href="stringset.h">stringset.h</a>,
     <a href="stringset.cc">stringset.cc</a>:
@@ -352,13 +352,13 @@ StringSet, a set of strings.
 
 <li><a href="strtokp.h">strtokp.h</a>,
     <a href="strtokp.cpp">strtokp.cpp</a>:
-StrtokParse, a class that parses a std::string similar to how strtok()
+StrtokParse, a class that parses a str::string similar to how strtok()
 works, but provides a more convenient (and thread-safe) interface.
 Similar to Java's StringTokenizer.
 
 <li><a href="strutil.h">strutil.h</a>,
     <a href="strutil.cc">strutil.cc</a>:
-A set of generic std::string utilities, including replace(), translate(),
+A set of generic str::string utilities, including replace(), translate(),
 trimWhitespace(), encodeWithEscapes(), etc.
 
 <li><a href="smregexp.h">smregexp.h</a>,

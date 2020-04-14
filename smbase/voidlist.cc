@@ -12,7 +12,7 @@
 #include <stdlib.h>     // rand()
 #include <stdio.h>      // printf()
 #include <ios>
-#include <sstream>
+//#include <sstream>
 
 
 VoidList::VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &src, size_t size_of, bool move)

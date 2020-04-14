@@ -104,7 +104,7 @@ int StringDict::size() const
 }
 
 
-bool StringDict::query(char const *key, std::string &value) const
+bool StringDict::query(char const *key, str::string &value) const
 {
   FOREACH_ITERC(*this, entry) {
     if (0==strcmp(entry.key(), key)) {
@@ -117,9 +117,9 @@ bool StringDict::query(char const *key, std::string &value) const
 }
 
 
-std::string StringDict::queryf(char const *key) const
+str::string StringDict::queryf(char const *key) const
 {
-  std::string ret;
+  str::string ret;
   bool ok = query(key, ret);
   xassert(ok);
   return ret;
@@ -128,7 +128,7 @@ std::string StringDict::queryf(char const *key) const
 
 bool StringDict::isMapped(char const *key) const
 {
-  std::string dummy;
+  str::string dummy;
   return query(key, dummy);
 }
 
@@ -316,9 +316,9 @@ void StringDict::insertOstream(std::ostream &os) const
 }
 
 
-std::string StringDict::toString() const
+str::string StringDict::toString() const
 {
-  std::stringstream sb;
+  str::stringstream sb;
   sb << "{";
   int count=0;
   FOREACH_ITERC(*this, entry) {
@@ -345,24 +345,24 @@ char randChar()
   return (char)(myrandom(127-32+1)+32);
 }
 
-std::string randString(int len)
+str::string randString(int len)
 {
 #if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
 #else
 #endif
-  std::stringstream str(DBG_INFO_ARG0);
+  str::stringstream str(DBG_INFO_ARG0);
   loopj(len) {
     str << randChar();
   }
   return str;
 }
 
-std::string randStringRandLen(int maxlen)
+str::string randStringRandLen(int maxlen)
 {
   return randString(myrandom(maxlen)+1);
 }
 
-std::string randKey(StringDict const &dict)
+str::string randKey(StringDict const &dict)
 {
   int size = dict.size();
   xassert(size > 0);
@@ -386,8 +386,8 @@ void entry()
     switch (myrandom(6)) {
       case 0: {
         // insert a random element
-        std::string key = randStringRandLen(10);
-        std::string value = randStringRandLen(30);
+        str::string key = randStringRandLen(10);
+        str::string value = randStringRandLen(30);
 
         if (!dict.isMapped(key.c_str())) {
           dict.add(key.c_str(), value.c_str());
@@ -405,7 +405,7 @@ void entry()
           break;
         }
 
-        std::string key = randKey(dict);
+        str::string key = randKey(dict);
         dict.remove(key.c_str());
         size--;
         break;
@@ -413,7 +413,7 @@ void entry()
 
       case 2: {
         // check a random element that should not be there
-        std::string key = randStringRandLen(10);
+        str::string key = randStringRandLen(10);
         if (dict.isMapped(key.c_str())) {
           collisions++;
         }
@@ -434,8 +434,8 @@ void entry()
 
         // modify it, then verify inequality
         if (!dict2.isEmpty()) {
-          std::string key = randKey(dict2);
-          std::string value = dict2.queryf(key.c_str());
+          str::string key = randKey(dict2);
+          str::string value = dict2.queryf(key.c_str());
 
           if (myrandom(2) == 0) {
             dict2.remove(key.c_str());
@@ -452,7 +452,7 @@ void entry()
       case 5: {
         // random modification
         if (!dict.isEmpty()) {
-          std::string key = randKey(dict);
+          str::string key = randKey(dict);
           dict.modify(key.c_str(), randStringRandLen(30).c_str());
         }
         break;

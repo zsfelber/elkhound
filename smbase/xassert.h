@@ -6,12 +6,12 @@
 #ifndef XASSERT_H
 #define XASSERT_H
 
+#include "defs.h"
 #include "macros.h"     // NORETURN
-//#include <string>
-#include "str.h"
+#include "str.h"     // NORETURN
 
 // linkdepend: exc.cpp
-//typedef std::string const &rostring;
+//typedef str::string const &rostring;
 
 // this functions accepts raw 'char const *' instead of 'rostring'
 // because I do not want this interface to depend on str.h, and also
@@ -44,10 +44,10 @@ int x_assert_fail(rostring cond, rostring file, int line);// NORETURN;
 
 // Quick note: one prominent book on writing code recommends that
 // assertions *not* include the failure condition, since the file
-// and line number are sufficient, and the condition std::string uses
+// and line number are sufficient, and the condition str::string uses
 // memory.  The problem is that sometimes a compiled binary is
 // out of date w/respect to the code, and line numbers move, so
-// the condition std::string provides a good way to find the right
+// the condition str::string provides a good way to find the right
 // assertion.
 
 
@@ -83,6 +83,7 @@ int x_assert_fail(rostring cond, rostring file, int line);// NORETURN;
   common.
 
 */
+
 
 #endif // XASSERT_H
 

@@ -8,19 +8,19 @@
 #include "str.h"          // stringBuilder
 #include "astlist.h"      // ASTList
 #include "array.h"        // ObjArrayStack
-#include <sstream>
+//#include <sstream>
 
 
 // fwd
 class BoxPrint;
 
 
-// manages the process of rendering a boxprint tree to a std::string
+// manages the process of rendering a boxprint tree to a str::string
 class BPRender {
 public:
-  // output std::string
+  // output str::string
     // TODO fail-safe  stroimgBuilder
-  std::stringstream sb;
+  str::stringstream sb;
 
   // right margin column; defaults to 72
   int margin;
@@ -31,7 +31,7 @@ public:
 
   // text to begin every line with; not counted towards column
   // counts; defaults to ""
-  std::string lineStartText;
+  str::string lineStartText;
 
 public:
   BPRender();
@@ -50,11 +50,11 @@ public:
   // add a newline, plus indentation to get to column 'ind'
   void breakLine(int ind);
 
-  // take the std::string out of the rendering engine, replacing it
-  // with the empty std::string
+  // take the str::string out of the rendering engine, replacing it
+  // with the empty str::string
   // TODO fail-safe
-  std::string takeString() {
-    std::string ret(sb.str());
+  str::string takeString() {
+    str::string ret(sb.str());
     reset();
     return ret;
   }
@@ -63,10 +63,10 @@ public:
   // manually after changing 'lineStartText'
   void reset();
 
-  // take the tree out of a boxprint builder, convert it to a std::string,
+  // take the tree out of a boxprint builder, convert it to a str::string,
   // and delete the tree
   // TODO fail-safe
-  std::string takeAndRender(BoxPrint &bld);
+  str::string takeAndRender(BoxPrint &bld);
 };
 
 
@@ -84,7 +84,7 @@ public:
   // as above, but without the forcedBreak info
   int oneLineWidth();
 
-  // render this element as a std::string with newlines, etc.
+  // render this element as a str::string with newlines, etc.
   virtual void render(BPRender &mgr)=0;
 
   // true if this element is a BPBreak and is enabled; returns false
@@ -107,7 +107,7 @@ public:
 class BPText : public BPElement {
 public:
     // TODO fail-safe
-  std::string text;
+  str::string text;
 
 public:
   BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring t);

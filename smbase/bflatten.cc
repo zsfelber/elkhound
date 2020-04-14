@@ -119,7 +119,7 @@ void entry()
 {                    
   // make up some data
   int x = 9, y = 22;
-  std::string s("foo bar");
+  str::string s("foo bar");
   int *px = &x, *py = &y;
 
   // open a file for writing them
@@ -136,7 +136,7 @@ void entry()
 
   // place to put the data we read
   int x2, y2;
-  std::string s2(DBG_INFO_ARG0);
+  str::string s2(DBG_INFO_ARG0);
 #if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
 #else
 #endif

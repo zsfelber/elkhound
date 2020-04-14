@@ -5,30 +5,9 @@
 #ifndef __TYP_H
 #define __TYP_H
 
-// byte
-typedef unsigned char byte;
-typedef signed char signed_byte;
 
+#include "defs.h"
 #include <cstdint>
-//#include <string>
-#include "str.h"
-
-// int32 used to be here, but defined nonportably, and I don't use
-// it anyway, so I ripped it out
-
-
-// NULL
-#ifndef NULL
-#  define NULL 0
-#endif // NULL
-
-
-// bool
-#ifdef LACKS_BOOL
-  typedef int bool;
-  bool const false=0;
-  bool const true=1;
-#endif // LACKS_BOOL
 
 
 // This used when I want to cast a pointer to an integer for something
@@ -37,7 +16,7 @@ typedef signed char signed_byte;
 //  { return (long)p; }
 inline uintptr_t pointerToInteger(void const *p)
     { return reinterpret_cast<std::uintptr_t>(p); }
-  
+
 // This can be used to compare two pointers, even when they do not point
 // into the same object.
 inline int comparePointerAddresses(void const *p, void const *q)
@@ -54,105 +33,21 @@ inline int comparePointerAddresses(void const *p, void const *q)
 }
 
 
-// min, max
-#undef min
-#undef max
-       
-template <class T>
-inline T min(T const &a, T const &b)
-{
-  return a<b? a:b;
+template <typename P> OPT P* constcast(P const * p) {
+    return const_cast<P*>(p);
 }
 
-template <class T>
-inline T max(T const &a, T const &b)
-{
-  return a>b? a:b;
+template <typename P> OPT P& constcast(P const & p) {
+    return const_cast<P&>(p);
 }
 
-
-#if 0   // old
-  #ifndef __MINMAX_DEFINED
-  # ifndef min
-  #  define min(a,b) ((a)<(b)?(a):(b))
-  # endif
-  # ifndef max
-  #  define max(a,b) ((a)>(b)?(a):(b))
-  # endif
-  # define __MINMAX_DEFINED
-  #endif // __MINMAX_DEFINED
-#endif // 0
-
-
-// tag for definitions of static member functions; there is no
-// compiler in existence for which this is useful, but I like
-// to see *something* next to implementations of static members
-// saying that they are static, and this seems slightly more
-// formal than just a comment
-#define STATICDEF /*static*/
-
-
-// often-useful number-of-entries function
-#define TABLESIZE(tbl) ((int)(sizeof(tbl)/sizeof((tbl)[0])))
-
-
-// concise way to loop on an integer range
-#define loopi(end) for(int i=0; i<(int)(end); i++)
-#define loopj(end) for(int j=0; j<(int)(end); j++)
-#define loopk(end) for(int k=0; k<(int)(end); k++)
-
-
-// for using selfCheck methods
-// to explicitly check invariants in debug mode
-//
-// dsw: debugging *weakly* implies selfchecking: if we are debugging,
-// do selfcheck unless otherwise specified
-#ifndef NDEBUG
-  #ifndef DO_SELFCHECK
-    #define DO_SELFCHECK 1
-  #endif
-#endif
-// dsw: selfcheck *bidirectionally* configurable from the command line: it
-// may be turned on *or* off: any definition other than '0' counts as
-// true, such as -DDO_SELFCHECK=1 or just -DDO_SELFCHECK
-#ifndef DO_SELFCHECK
-  #define DO_SELFCHECK 0
-#endif
-#if DO_SELFCHECK != 0
-  #define SELFCHECK() selfCheck()
-#else
-  #define SELFCHECK() ((void)0)
-#endif
-
-
-// division with rounding towards +inf
-// (when operands are positive)
-template <class T>
-inline T div_up(T const &x, T const &y)
-{ return (x + y - 1) / y; }
-
-
-// mutable
-#ifdef __BORLANDC__
-#  define MUTABLE
-#  define EXPLICIT
-#else
-#  define MUTABLE mutable
-#  define EXPLICIT explicit
-#endif
-
-
-#define SWAP(a,b) \
-  temp = a;       \
-  a = b;          \
-  b = temp /*user supplies semicolon*/
-
-  
-// verify something is true at compile time (will produce
-// a compile error if it isn't)
-// update: use STATIC_ASSERT defined in macros.h instead
-//#define staticAssert(cond) extern int dummyArray[cond? 1 : 0]
-
+template <typename P>
+P& NN(P* a) {
+    if (!a) {
+        x_assert_fail("Non-nullable pointer is null.", __FILE__, __LINE__);
+    }
+    return *a;
+}
 
 #endif // __TYP_H
 

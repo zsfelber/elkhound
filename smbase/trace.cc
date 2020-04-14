@@ -19,10 +19,10 @@ str::StoragePool trace_pool(DBG_INFO_ARG0);
 // auto-init
 static bool inited = false;
 
-static ObjList<std::string>* _tracers = new (trace_pool) ObjList<std::string>(DBG_INFO_ARG0_FIRST  trace_pool);
+static ObjList<str::string>* _tracers = new (trace_pool) ObjList<str::string>(DBG_INFO_ARG0_FIRST  trace_pool);
 
 // list of active tracers, initially empty
-static ObjList<std::string>& tracers = *_tracers;
+static ObjList<str::string>& tracers = *_tracers;
 
 // stream connected to /dev/null
 std::ofstream devNullObj("/dev/null");
@@ -46,19 +46,19 @@ static void init()
 }
 
 
-void traceAddSys(std::string const &sysName)
+void traceAddSys(str::string const &sysName)
 {
   init();
 
-  tracers.prepend(DBG_INFO_ARG0_FIRST  new (trace_pool) std::string(DBG_INFO_ARG0_FIRST  trace_pool, sysName));
+  tracers.prepend(DBG_INFO_ARG0_FIRST  new (trace_pool) str::string(DBG_INFO_ARG0_FIRST  trace_pool, sysName));
 }
 
 
-void traceRemoveSys(std::string const &sysName)
+void traceRemoveSys(str::string const &sysName)
 {
   init();
 
-  MUTATE_EACH_OBJLIST(std::string, tracers, mut) {
+  MUTATE_EACH_OBJLIST(str::string, tracers, mut) {
     if (!mut.data()->compare(sysName)) {
       mut.deleteIt();
       return;
@@ -68,11 +68,11 @@ void traceRemoveSys(std::string const &sysName)
 }
 
 
-bool tracingSys(std::string const &sysName)
+bool tracingSys(str::string const &sysName)
 {
   init();
 
-  FOREACH_OBJLIST(std::string, tracers, iter) {
+  FOREACH_OBJLIST(str::string, tracers, iter) {
     if (!iter.data()->compare(sysName)) {
       return true;
     }
@@ -87,7 +87,7 @@ void traceRemoveAll()
 }  
 
 
-std::ostream &trace(std::string const &sysName)
+std::ostream &trace(str::string const &sysName)
 {
   init();
 
@@ -101,7 +101,7 @@ std::ostream &trace(std::string const &sysName)
 }
 
 
-void trstr(std::string const &sysName, std::string const &traceString)
+void trstr(str::string const &sysName, str::string const &traceString)
 {
   trace(sysName) << traceString << std::endl;
 }
@@ -121,7 +121,7 @@ std::ostream &traceProgress(int level)
 }
 
 
-void traceAddMultiSys(std::string const &systemNames)
+void traceAddMultiSys(str::string const &systemNames)
 {
   StrtokParse tok(systemNames, ",");
   loopi(tok) {
@@ -129,7 +129,7 @@ void traceAddMultiSys(std::string const &systemNames)
       // treat a leading '-' as a signal to *remove*
       // a tracing flag, e.g. from some defaults specified
       // statically      
-      const std::string &name = tok[i]+1;
+      const str::string &name = tok[i]+1;
       if (tracingSys(name)) {      // be forgiving here
         traceRemoveSys(name);
       }

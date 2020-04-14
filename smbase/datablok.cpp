@@ -210,7 +210,7 @@ void DataBlock::setFromString(char const *srcString)
 {
   SELFCHECK();
   int len = strlen(srcString)+1;
-    // a std::string is its contents and the null terminator
+    // a str::string is its contents and the null terminator
   setFromBlock((byte const*)srcString, len);
   SELFCHECK();
 }

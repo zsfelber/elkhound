@@ -14,9 +14,9 @@
 
 
 // replace all instances of oldstr in src with newstr, return result
-std::string replace(rostring origSrc, rostring oldstr, rostring newstr)
+str::string replace(rostring origSrc, rostring oldstr, rostring newstr)
 {
-  std::stringstream ret;
+  str::stringstream ret;
   char const *src = toCStr(origSrc);
 
   while (*src) {
@@ -29,7 +29,7 @@ std::string replace(rostring origSrc, rostring oldstr, rostring newstr)
     // add the characters between src and next
     ret << substring(src, next-src);
 
-    // add the replace-with std::string
+    // add the replace-with str::string
     ret << newstr;
 
     // move src to beyond replaced substring
@@ -40,9 +40,9 @@ std::string replace(rostring origSrc, rostring oldstr, rostring newstr)
 }
 
 
-std::string expandRanges(char const *chars)
+str::string expandRanges(char const *chars)
 {
-  std::stringstream ret;
+  str::stringstream ret;
 
   while (*chars) {
     if (chars[1] == '-' && chars[2] != 0) {
@@ -67,11 +67,11 @@ std::string expandRanges(char const *chars)
 }
 
 
-std::string translate(rostring origSrc, rostring srcchars, rostring destchars)
+str::string translate(rostring origSrc, rostring srcchars, rostring destchars)
 {
   // first, expand range notation in the specification sequences
-  std::string srcSpec = expandRanges(toCStr(srcchars));
-  std::string destSpec = expandRanges(toCStr(destchars));
+  str::string srcSpec = expandRanges(toCStr(srcchars));
+  str::string destSpec = expandRanges(toCStr(destchars));
 
   // build a translation map
   char map[256];
@@ -80,7 +80,7 @@ std::string translate(rostring origSrc, rostring srcchars, rostring destchars)
     map[i] = i;
   }
 
-  // excess characters from either std::string are ignored ("SysV" behavior)
+  // excess characters from either str::string are ignored ("SysV" behavior)
   for (i=0; i < srcSpec.length() && i < destSpec.length(); i++) {
     map[(unsigned char)( srcSpec[i] )] = destSpec[i];
   }
@@ -96,16 +96,16 @@ std::string translate(rostring origSrc, rostring srcchars, rostring destchars)
   }
   *dest = 0;    // final nul terminator
 
-  return std::string(ret);
+  return str::string(ret);
 }
 
 
 // why is this necessary?
-std::string stringToupper(rostring src)
+str::string stringToupper(rostring src)
   { return translate(src, "a-z", "A-Z"); }
 
 
-std::string trimWhitespace(rostring origStr)
+str::string trimWhitespace(rostring origStr)
 {                                   
   char const *str = toCStr(origStr);
 
@@ -126,7 +126,7 @@ std::string trimWhitespace(rostring origStr)
 }
 
 
-std::string firstAlphanumToken(rostring origStr)
+str::string firstAlphanumToken(rostring origStr)
 {                                   
   char const *str = toCStr(origStr);
 
@@ -149,7 +149,7 @@ std::string firstAlphanumToken(rostring origStr)
 
 // table of escape codes
 static struct Escape {
-  char actual;      // actual character in std::string
+  char actual;      // actual character in str::string
   char escape;      // char that follows backslash to produce 'actual'
 } const escapes[] = {
   { '\0', '0' },  // nul
@@ -166,9 +166,9 @@ static struct Escape {
 };
 
 
-std::string encodeWithEscapes(char const *p, int len)
+str::string encodeWithEscapes(char const *p, int len)
 {
-  std::stringstream sb;
+  str::stringstream sb;
 
   for (; len>0; len--, p++) {
     // look for an escape code
@@ -199,13 +199,13 @@ std::string encodeWithEscapes(char const *p, int len)
 }
 
 
-std::string encodeWithEscapes(rostring p)
+str::string encodeWithEscapes(rostring p)
 {
   return encodeWithEscapes(toCStr(p), strlen(p));
 }
 
 
-std::string quoted(rostring src)
+str::string quoted(rostring src)
 {
   return stringb ("\""
                  << encodeWithEscapes(src)
@@ -220,7 +220,7 @@ void decodeEscapes(ArrayStack<char> &dest, rostring origSrc,
 
   while (*src != '\0') {
     if (*src == '\n' && !allowNewlines) {
-      xformat("unescaped newline (unterminated std::string)");
+      xformat("unescaped newline (unterminated str::string)");
     }
     if (*src == delim) {
       xformat(stringb( "unescaped delimiter (" << delim << ")").str());
@@ -253,7 +253,7 @@ void decodeEscapes(ArrayStack<char> &dest, rostring origSrc,
     }
 
     if (*src == '\0') {
-      xformat("backslash at end of std::string");
+      xformat("backslash at end of str::string");
     }
 
     if (*src == '\n') {
@@ -268,7 +268,7 @@ void decodeEscapes(ArrayStack<char> &dest, rostring origSrc,
     if (*src == 'x' || isdigit(*src)) {
       // hexadecimal or octal char (it's unclear to me exactly how to
       // parse these since it's supposedly legal to have e.g. "\x1234"
-      // mean a one-char std::string.. whatever)
+      // mean a one-char str::string.. whatever)
       bool hex = (*src == 'x');
       if (hex) {
         src++;
@@ -307,29 +307,29 @@ void decodeEscapes(ArrayStack<char> &dest, rostring origSrc,
 }
 
 
-std::string parseQuotedString(rostring text)
+str::string parseQuotedString(rostring text)
 {
   if (!( text[0] == '"' &&
          text[strlen(text)-1] == '"' )) {
-    xformat(stringb("quoted std::string is missing quotes: " << text).str());
+    xformat(stringb("quoted str::string is missing quotes: " << text).str());
   }
 
   // strip the quotes
-  std::string noQuotes = substring(toCStr(text)+1, strlen(text)-2);
+  str::string noQuotes = substring(toCStr(text)+1, strlen(text)-2);
 
   // decode escapes
   ArrayStack<char> buf;
   decodeEscapes(buf, noQuotes, '"');
   buf.push(0 /*NUL*/);
 
-  // return std::string contents up to first NUL, which isn't necessarily
+  // return str::string contents up to first NUL, which isn't necessarily
   // the same as the one just pushed; by invoking this function, the
   // caller is accepting responsibility for this condition
-  return std::string(buf.getArray());
+  return str::string(buf.getArray());
 }
 
 
-std::string localTimeString()
+str::string localTimeString()
 {
   time_t t = time(NULL);
   char const *p = asctime(localtime(&t));
@@ -337,7 +337,7 @@ std::string localTimeString()
 }
 
 
-std::string sm_basename(rostring origSrc)
+str::string sm_basename(rostring origSrc)
 {
   char const *src = toCStr(origSrc);
 
@@ -349,21 +349,21 @@ std::string sm_basename(rostring origSrc)
   }
 
   if (sl) {
-    return std::string(sl+1);     // everything after the slash
+    return str::string(sl+1);     // everything after the slash
   }
   else {
-    return std::string(src);      // entire std::string if no slashes
+    return str::string(src);      // entire str::string if no slashes
   }
 }
 
-std::string dirname(rostring origSrc)
+str::string dirname(rostring origSrc)
 {                              
   char const *src = toCStr(origSrc);
 
   char const *sl = strrchr(src, '/');   // locate last slash
   if (sl == src) {
     // last slash is leading slash
-    return std::string("/");
+    return str::string("/");
   }
 
   if (sl && sl[1] == 0) {
@@ -376,21 +376,21 @@ std::string dirname(rostring origSrc)
     return substring(src, sl-src);     // everything before slash
   }
   else {
-    return std::string(".");
+    return str::string(".");
   }
 }
 
 
 // I will expand this definition to use more knowledge about English
 // irregularities as I need it
-std::string plural(int n, rostring prefix)
+str::string plural(int n, rostring prefix)
 {
   if (n==1) {
     return prefix;
   }
 
   if (0==strcmp(prefix, "was")) {
-    return std::string("were");
+    return str::string("were");
   }
   if (prefix[strlen(prefix)-1] == 'y') {
     return stringb(substring(prefix, strlen(prefix)-1).c_str() << "ies").str();
@@ -400,13 +400,13 @@ std::string plural(int n, rostring prefix)
   }
 }
 
-std::string pluraln(int n, rostring prefix)
+str::string pluraln(int n, rostring prefix)
 {
   return stringb( n << " " << plural(n, prefix)).str();
 }
 
 
-std::string a_or_an(rostring noun)
+str::string a_or_an(rostring noun)
 {
   bool use_an = false;
 
@@ -469,11 +469,11 @@ void writeStringToFile(rostring str, rostring fname)
 }
 
 
-std::string readStringFromFile(rostring fname)
+str::string readStringFromFile(rostring fname)
 {
   AutoFILE fp(toCStr(fname), "r");
 
-  std::stringstream sb;
+  str::stringstream sb;
 
   char buf[4096];
   for (;;) {
@@ -486,14 +486,14 @@ std::string readStringFromFile(rostring fname)
     }
 
     // TODO ineff
-    sb<<std::string(buf,len);
+    sb<<str::string(buf,len);
   }
 
   return sb.str();
 }
 
 
-bool readLine(std::string &dest, FILE *fp)
+bool readLine(str::string &dest, FILE *fp)
 {
   char buf[80];
 
@@ -507,8 +507,8 @@ bool readLine(std::string &dest, FILE *fp)
     return true;
   }
 
-  // only got part of the std::string; need to iteratively construct
-  std::stringstream sb;
+  // only got part of the str::string; need to iteratively construct
+  str::stringstream sb;
   while (buf[strlen(buf)-1] != '\n') {
     sb << buf;
     if (!fgets(buf, 80, fp)) {
@@ -523,7 +523,7 @@ bool readLine(std::string &dest, FILE *fp)
 }
 
 
-std::string chomp(rostring src)
+str::string chomp(rostring src)
 {
   if (!src.empty() && src[strlen(src)-1] == '\n') {
     return substring(src, strlen(src)-1);
@@ -543,14 +543,14 @@ std::string chomp(rostring src)
 void expRangeVector(char const *in, char const *out)
 {
   printf("expRangeVector(%s, %s)\n", in, out);
-  std::string result = expandRanges(in);
+  str::string result = expandRanges(in);
   xassert(result.equals(out));
 }
 
 void trVector(char const *in, char const *srcSpec, char const *destSpec, char const *out)
 {
   printf("trVector(%s, %s, %s, %s)\n", in, srcSpec, destSpec, out);
-  std::string result = translate(in, srcSpec, destSpec);
+  str::string result = translate(in, srcSpec, destSpec);
   xassert(result.equals(out));
 }
 
@@ -566,21 +566,21 @@ void decodeVector(char const *in, char const *out, int outLen)
 void basenameVector(char const *in, char const *out)
 {
   printf("basenameVector(%s, %s)\n", in, out);
-  std::string result = sm_basename(in);
+  str::string result = sm_basename(in);
   xassert(result.equals(out));
 }
 
 void dirnameVector(char const *in, char const *out)
 {
   printf("dirnameVector(%s, %s)\n", in, out);
-  std::string result = dirname(in);
+  str::string result = dirname(in);
   xassert(result.equals(out));
 }
 
 void pluralVector(int n, char const *in, char const *out)
 {
   printf("pluralVector(%d, %s, %s)\n", n, in, out);
-  std::string result = plural(n, in);
+  str::string result = plural(n, in);
   xassert(result.equals(out));
 }
 

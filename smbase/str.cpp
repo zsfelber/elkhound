@@ -4,6 +4,10 @@
 
 #include "str.h"            // this module
 
+#include <iostream>	 // istream, ostream
+#include <stdarg.h>      // va_list
+#include <string.h>      // strcmp, etc.
+
 #include <stdlib.h>         // atoi
 #include <stdio.h>          // sprintf
 #include <ctype.h>          // isspace
@@ -173,6 +177,11 @@ void string::selfCheck() const
   if (s != emptyString) {
     checkHeapNode(s);
   }
+}
+
+void string::debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
+{
+    str::ind(os,indent)<< "str:"<< (s?s:"#null");
 }
 
 
@@ -428,6 +437,8 @@ string toString(char const *str)
     return string(str);
   }
 }
+
+
 
 
 // ------------------- stringf -----------------
