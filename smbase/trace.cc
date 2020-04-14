@@ -10,7 +10,11 @@
 #include <fstream>   // std::ofstream
 #include <stdlib.h>    // getenv
 
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+str::StoragePool trace_pool;
+#else
 str::StoragePool trace_pool(DBG_INFO_ARG0);
+#endif
 
 // auto-init
 static bool inited = false;
@@ -125,7 +129,7 @@ void traceAddMultiSys(char const *systemNames)
       // treat a leading '-' as a signal to *remove*
       // a tracing flag, e.g. from some defaults specified
       // statically      
-      char const *name = tok[i]+1;
+      const std::string &name = tok[i]+1;
       if (tracingSys(name)) {      // be forgiving here
         traceRemoveSys(name);
       }

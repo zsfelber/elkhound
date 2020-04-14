@@ -347,6 +347,9 @@ char randChar()
 
 std::string randString(int len)
 {
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+#else
+#endif
   std::stringstream str(DBG_INFO_ARG0);
   loopj(len) {
     str << randChar();

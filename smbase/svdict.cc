@@ -18,9 +18,9 @@
 #define MUTABLE_SORT(obj) (const_cast<StringVoidDict&>(obj)).sort()
 
 
-STATICDEF char const *StringVoidDict::Node::getKey(StringVoidDict::Node const *n)
+STATICDEF std::string const & StringVoidDict::Node::getKey(StringVoidDict::Node const *n)
 {
-  return n->key.c_str();
+  return n->key;
 }
 
 
@@ -57,7 +57,7 @@ StringVoidDict& StringVoidDict::operator= (StringVoidDict const &obj)
   FOREACH_ITERC(obj, src) {
     // const_cast needed because the resulting dictionary can now access
     // the data objects and modify them... hmm...
-    Node *newnode = new Node(src.key().c_str(), const_cast<void*>(src.value()));
+    Node *newnode = new Node(const_cast<std::string&>(src.key()), const_cast<void*>(src.value()));
     if (!end) {
       // first element of list
       end = top = newnode;
@@ -66,7 +66,7 @@ StringVoidDict& StringVoidDict::operator= (StringVoidDict const &obj)
       // adding to end of nonempty list
       end = end->next = newnode;
     }
-    hash.add(newnode->key.c_str(), newnode);
+    hash.add(newnode->key, newnode);
   }
 
   SELFCHECK();
@@ -111,7 +111,7 @@ int StringVoidDict::size() const
 }
 
 
-bool StringVoidDict::query(char const *key, void *&value) const
+bool StringVoidDict::query(std::string &key, void *&value) const
 {
   Node *n = (Node*)hash.get(key);
   if (!n) {
@@ -123,7 +123,7 @@ bool StringVoidDict::query(char const *key, void *&value) const
 }
 
 
-void *StringVoidDict::queryf(char const *key) const
+void *StringVoidDict::queryf(std::string &key) const
 {
   void *ret;
   bool ok = query(key, ret);
@@ -132,7 +132,7 @@ void *StringVoidDict::queryf(char const *key) const
 }
 
 
-void *StringVoidDict::queryif(char const *key) const
+void *StringVoidDict::queryif(std::string &key) const
 {
   void *ret;
   if (query(key, ret)) {
@@ -144,14 +144,14 @@ void *StringVoidDict::queryif(char const *key) const
 }
 
 
-bool StringVoidDict::isMapped(char const *key) const
+bool StringVoidDict::isMapped(std::string &key) const
 {
   void *dummy;
   return query(key, dummy);
 }
 
 
-void StringVoidDict::add(char const *key, void *value)
+void StringVoidDict::add(std::string &key, void *value)
 {
   xassert(!isMapped(key));
 
@@ -163,7 +163,7 @@ void StringVoidDict::add(char const *key, void *value)
 }
 
 
-void *StringVoidDict::modify(char const *key, void *newValue)
+void *StringVoidDict::modify(std::string &key, void *newValue)
 {
   Iter entry = find(key);
   xassert(!entry.isDone());
@@ -176,14 +176,14 @@ void *StringVoidDict::modify(char const *key, void *newValue)
 }
 
 
-StringVoidDict::Iter StringVoidDict::find(char const *key)
+StringVoidDict::Iter StringVoidDict::find(std::string &key)
 {
   Node *n = (Node*)hash.get(key);
   return Iter(n);
 }
 
 
-void *StringVoidDict::remove(char const *key)
+void *StringVoidDict::remove(std::string &key)
 {
   void *ret;     // will be previous value
   xassert(top);
@@ -193,7 +193,7 @@ void *StringVoidDict::remove(char const *key)
     Node *temp = top;
     top = top->next;
     ret = temp->value;
-    hash.remove(temp->key.c_str());
+    hash.remove(temp->key);
     delete temp;
   }
 
@@ -213,7 +213,7 @@ void *StringVoidDict::remove(char const *key)
     Node *temp = p->next;
     p->next = p->next->next;
     ret = temp->value;
-    hash.remove(temp->key.c_str());
+    hash.remove(temp->key);
     delete temp;
   }
 
@@ -236,7 +236,7 @@ void StringVoidDict::emptyAndDel(DelFn func)
     if (func != NULL) {
       func(temp->value);
     }
-    hash.remove(temp->key.c_str());
+    hash.remove(temp->key);
     delete temp;
   }
 
@@ -356,7 +356,7 @@ void StringVoidDict::selfCheck() const
   // check counts, mappings
   int ct=0;
   for (Node *n = top; n != NULL; n = n->next, ct++) {
-    xassert(hash.get(n->key.c_str()) == n);
+    xassert(hash.get(n->key) == n);
   }
   xassert(hash.getNumEntries() == ct);
 }
@@ -401,7 +401,11 @@ char randChar()
 
 std::string randString(int len)
 {
-  std::stringstream str(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+    std::stringstream str;
+#else
+    std::stringstream str(DBG_INFO_ARG0);
+#endif
   loopj(len) {
     str << randChar();
   }
@@ -445,8 +449,8 @@ void entry()
         std::string key = randStringRandLen(10);
         void *value = randVoidPtr();
 
-        if (!dict.isMapped(key.c_str())) {
-          dict.add(key.c_str(), value);
+        if (!dict.isMapped(key)) {
+          dict.add(key, value);
           size++;
         }
         else {
@@ -462,7 +466,7 @@ void entry()
         }
 
         std::string key = randKey(dict);
-        dict.remove(key.c_str());
+        dict.remove(key);
         size--;
         break;
       }
@@ -470,7 +474,7 @@ void entry()
       case 2: {
         // check a random element that should not be there
         std::string key = randStringRandLen(10);
-        if (dict.isMapped(key.c_str())) {
+        if (dict.isMapped(key)) {
           collisions++;
         }
         break;
@@ -491,13 +495,13 @@ void entry()
         // modify it, then verify inequality
         if (!dict2.isEmpty()) {
           std::string key = randKey(dict2);
-          void *value = dict2.queryf(key.c_str());
+          void *value = dict2.queryf(key);
 
           if (myrandom(2) == 0) {
-            dict2.remove(key.c_str());
+            dict2.remove(key);
           }
           else {
-            dict2.modify(key.c_str(), (void*)((int)value + 24));
+            dict2.modify(key, (void*)((int)value + 24));
           }
           xassert(dict2 != dict);
         }
@@ -509,7 +513,7 @@ void entry()
         // random modification
         if (!dict.isEmpty()) {
           std::string key = randKey(dict);
-          dict.modify(key.c_str(), randVoidPtr());
+          dict.modify(key, randVoidPtr());
         }
         break;
       }

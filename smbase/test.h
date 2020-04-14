@@ -52,11 +52,11 @@ int main(int argc, char *argv[])                \
 
 // easy way to time a section of code
 class TimedSection {
-  char const *name;
+  std::string name;
   long start;
 
 public:
-  TimedSection(char const *n) : name(n) {
+  TimedSection(const std::string &n) : name(n) {
     start = getMilliseconds();
   }
   ~TimedSection() {

@@ -33,6 +33,9 @@ class GrammarAnalysis;
 #define S2(x) S1(x)
 #define __FILE_LINE__ __FILE__ " : " S2(__LINE__)
 
+#define DO_EXPAND(VAL)  VAL ## 0
+#define EXPAND(VAL)     DO_EXPAND(VAL)
+
 #ifdef DEBUG
 #define DBG_INFO_FORMAL __DbgStr const objectName
 #define DBG_INFO_FORMAL_FIRST __DbgStr const objectName,
@@ -71,6 +74,10 @@ class GrammarAnalysis;
 
 #if (defined(_MSC_VER))
 #define OPTL0 __pragma(optimize("gts", on))
+#define OPTL
+#define OPT inline
+#elif (defined(__MINGW32__))
+#define OPTL0
 #define OPTL
 #define OPT inline
 #elif (defined(__GNUC__))

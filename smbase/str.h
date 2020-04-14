@@ -350,8 +350,7 @@ public:
 // (the "c" can be interpreted as "constructor", or maybe just
 // the successor to "b" above)
 // TODO fail-safe
-#define stringc std::stringstream()
-
+//#define stringc std::stringstream()
 
 // experimenting with using toString as a general method for datatypes
 //std::string toString(int i);

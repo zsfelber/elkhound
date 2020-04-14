@@ -608,7 +608,7 @@ int nprintf(char const *format, ...)
 
 
 // helper for testing applyToCwdFiles
-bool printFirst10(char const *name, void *extra)
+bool printFirst10(const std::string &name, void *extra)
 {
   int &count = *((int*)extra);
   count++;
@@ -622,7 +622,7 @@ bool printFirst10(char const *name, void *extra)
 }
 
 
-bool printIt(char const *name, void*)
+bool printIt(const std::string &name, void*)
 {
   printf("%s\n", name);
   return true;    // continue

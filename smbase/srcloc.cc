@@ -33,7 +33,7 @@ void addLineLength(ArrayStack<unsigned char> &lengths, int len)
   lengths.push((unsigned char)len);
 }
 
-SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, char const *n, SourceLoc aStartLoc)
+SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const std::string &n, SourceLoc aStartLoc)
 : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool),  name(n),
   startLoc(aStartLoc),     // assigned by SourceLocManager
   hashLines(NULL),
@@ -46,7 +46,7 @@ SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool
 }
 
 
-SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  char const *n, SourceLoc aStartLoc)
+SourceLocManager::File::File(DBG_INFO_FORMAL_FIRST  const std::string &n, SourceLoc aStartLoc)
 : str::Storeable(DBG_INFO_ARG_FWD),  name(n),
   startLoc(aStartLoc),     // assigned by SourceLocManager
   hashLines(NULL),
@@ -376,7 +376,7 @@ void SourceLocManager::File::charToLineCol(int offset, int &line, int &col)
 
 
 void SourceLocManager::File::addHashLine
-  (int ppLine, int origLine, char const *origFname)
+  (int ppLine, int origLine, std::string &origFname)
 {
   if (!hashLines) {
     hashLines = new HashLineMap(name);
@@ -467,7 +467,7 @@ SourceLocManager::~SourceLocManager()
 
 
 // find it, or return NULL
-SourceLocManager::File *SourceLocManager::findFile(char const *name)
+SourceLocManager::File *SourceLocManager::findFile(const std::string &name)
 {
   if (!this) {
     // it's quite common to forget to do this, and this function is 
@@ -491,7 +491,7 @@ SourceLocManager::File *SourceLocManager::findFile(char const *name)
 }
 
 // find it or make it
-SourceLocManager::File *SourceLocManager::getFile(char const *name)
+SourceLocManager::File *SourceLocManager::getFile(const std::string &name)
 {
   File *f = findFile(name);
   if (!f) {
@@ -509,7 +509,7 @@ SourceLocManager::File *SourceLocManager::getFile(char const *name)
 
 
 SourceLoc SourceLocManager::encodeOffset(
-  char const *filename, int charOffset)
+  std::string &filename, int charOffset)
 {
   xassert(charOffset >= 0);
 
@@ -520,7 +520,7 @@ SourceLoc SourceLocManager::encodeOffset(
 
 
 SourceLoc SourceLocManager::encodeLineCol(
-  char const *filename, int line, int col)
+  std::string &filename, int line, int col)
 {
   xassert(line >= 1);
   xassert(col >= 1);
@@ -594,18 +594,18 @@ SourceLocManager::StaticLoc const *SourceLocManager::getStatic(SourceLoc loc)
 
 
 void SourceLocManager::decodeOffset(
-  SourceLoc loc, char const *&filename, int &charOffset)
+  SourceLoc loc, std::string &filename, int &charOffset)
 {
   // check for static
   if (isStatic(loc)) {
     StaticLoc const *s = getStatic(loc);
-    filename = s->name.c_str();
+    filename = s->name;
     charOffset = s->offset;
     return;
   }
 
   File *f = findFileWithLoc(loc);
-  filename = f->name.c_str();
+  filename = f->name;
   charOffset = toInt(loc) - toInt(f->startLoc);
   
   if (useHashLines && f->hashLines) {
@@ -619,7 +619,7 @@ void SourceLocManager::decodeOffset(
 
     // map to original line/file
     int origLine;
-    char const *origFname;
+    std::string origFname;
     f->hashLines->map(ppLine, origLine, origFname);
 
     // get a File for the original file; this opens that file
@@ -637,7 +637,7 @@ void SourceLocManager::decodeOffset(
 
 
 void SourceLocManager::decodeLineCol(
-  SourceLoc loc, char const *&filename, int &line, int &col)
+  SourceLoc loc, std::string &filename, int &line, int &col)
 { 
   if (!this) {
     // didn't initialize a loc manager.. but maybe we can survive?
@@ -676,9 +676,9 @@ void SourceLocManager::decodeLineCol(
 }
 
 
-char const *SourceLocManager::getFile(SourceLoc loc)
+std::string SourceLocManager::getFile(SourceLoc loc)
 {
-  char const *name;
+  std::string name;
   int ofs;
   decodeOffset(loc, name, ofs);
   return name;
@@ -687,7 +687,7 @@ char const *SourceLocManager::getFile(SourceLoc loc)
 
 int SourceLocManager::getOffset(SourceLoc loc)
 {
-  char const *name;
+  std::string name;
   int ofs;
   decodeOffset(loc, name, ofs);
   return ofs;
@@ -696,7 +696,7 @@ int SourceLocManager::getOffset(SourceLoc loc)
 
 int SourceLocManager::getLine(SourceLoc loc)
 {
-  char const *name;
+  std::string name;
   int line, col;
   decodeLineCol(loc, name, line, col);
   return line;
@@ -705,7 +705,7 @@ int SourceLocManager::getLine(SourceLoc loc)
 
 int SourceLocManager::getCol(SourceLoc loc)
 {
-  char const *name;
+  std::string name;
   int line, col;
   decodeLineCol(loc, name, line, col);
   return col;
@@ -714,7 +714,7 @@ int SourceLocManager::getCol(SourceLoc loc)
 
 std::string SourceLocManager::getString(SourceLoc loc)
 {
-  char const *name;
+  std::string name;
   int line, col;
   decodeLineCol(loc, name, line, col);
 
@@ -725,7 +725,7 @@ std::string SourceLocManager::getString(SourceLoc loc)
 
 std::string SourceLocManager::getLCString(SourceLoc loc)
 {
-  char const *name;
+  std::string name;
   int line, col;
   decodeLineCol(loc, name, line, col);
 
@@ -777,7 +777,7 @@ int debugEverything() {
 void testRoundTrip(SourceLoc loc)
 {
   SourceLocManager &mgr = *_mgr;
-  char const *fname;
+  std::string fname;
   int line, col;
   mgr.decodeLineCol(loc, fname, line, col);
 
@@ -801,7 +801,7 @@ public:
 
 // given a file, compute SourceLocs throughout it and verify
 // that round-trip encoding works
-void testFile(char const *fname)
+void testFile(std::string &fname)
 {
   SourceLocManager &mgr = *_mgr;
   // find the file's length
@@ -830,7 +830,7 @@ void testFile(char const *fname)
   //testRoundTrip((SourceLoc)11649);
 
   BiLoc *bi = new BiLoc[len+1];
-  char const *dummy;
+  std::string dummy;
 
   // test all positions, forward sequential; also build the
   // map for the random test; note that 'len' is considered
@@ -875,10 +875,10 @@ void testFile(char const *fname)
 
 
 // decode with given expectation, complain if it doesn't match
-void expect(SourceLoc loc, char const *expFname, int expLine, int expCol)
+void expect(SourceLoc loc, std::string &expFname, int expLine, int expCol)
 {
   SourceLocManager &mgr = *_mgr;
-  char const *fname;
+  std::string fname;
   int line, col;
   mgr.decodeLineCol(loc, fname, line, col);
   
@@ -894,13 +894,13 @@ void expect(SourceLoc loc, char const *expFname, int expLine, int expCol)
 
 
 // should this be exported?
-std::string locString(char const *fname, int line, int col)
+std::string locString(std::string &fname, int line, int col)
 {
   return stringc << fname << ":" << line << ":" << col;
 }
 
 
-void buildHashMap(SourceLocManager::File *pp, char const *fname, int &expanderLine)
+void buildHashMap(SourceLocManager::File *pp, std::string &fname, int &expanderLine)
 {
   expanderLine = 0;
   AutoFILE fp(fname, "rb");
@@ -926,7 +926,7 @@ void buildHashMap(SourceLocManager::File *pp, char const *fname, int &expanderLi
     if (tok < 3) continue;
 
     int origLine = atoi(tok[1]);
-    char const *tok2 = tok[2];
+    std::string &tok2 = tok[2];
     std::string origFname = substring(tok2+1, strlen(tok2)-2);  // remove quotes
     pp->addHashLine(ppLine, origLine, origFname.c_str());
   }
@@ -984,7 +984,7 @@ void testHashMap()
     // this should truncate to column 9
     loc = advCol(loc, 20);
 
-    char const *fname;
+    std::string fname;
     int offset;
     mgr.decodeOffset(loc, fname, offset);
     std::cout << "expander column 21: " << fname << ", offset " << offset << std::endl;

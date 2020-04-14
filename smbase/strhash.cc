@@ -48,7 +48,7 @@ StringHash::~StringHash()
 {}
 
 
-STATICDEF unsigned StringHash::coreHash(char const *key)
+STATICDEF unsigned StringHash::coreHash(std::string &key)
 {
   // dsw: not sure if this is the best place for it, but an assertion
   // failure is better than a segfault
@@ -57,7 +57,7 @@ STATICDEF unsigned StringHash::coreHash(char const *key)
   // quite friendly (deref'ing random address is another story).
   // Anyway, this is fine, but I'd like it to go away in NDEBUG
   // mode so I'm changing it to use 'xassertdb'.
-  xassertdb(key);
+  //xassertdb(key);
 
   // some more references:
   
@@ -115,9 +115,10 @@ STATICDEF unsigned StringHash::coreHash(char const *key)
   /* update: this is the same function as that described in Kernighan and Pike,
      "The Practice of Programming", section 2.9 */
   unsigned h = 0;
-  for (; *key != '\0'; key += 1) {
+  char const *pkey = key.c_str();
+  for (; *pkey != '\0'; pkey += 1) {
     // original X31_HASH
-    h = ( h << 5 ) - h + *key;       // h*31 + *key
+    h = ( h << 5 ) - h + *pkey;       // h*31 + *pkey
 
     // dsw: this one is better because it does the multiply last;
     // otherwise the last byte has no hope of modifying the high order
@@ -129,7 +130,7 @@ STATICDEF unsigned StringHash::coreHash(char const *key)
     // always a multiple of 31 and hence will suffer many more
     // collisions.  I would like more justification in the form of
     // experimental measurements before making a change.
-    //h += *key;
+    //h += *pkey;
     //h = ( h << 5 ) - h;         // h *= 31
   }
   return h;
@@ -264,9 +265,10 @@ end0:
 }
 
 
-STATICDEF bool StringHash::keyCompare(char const *key1, char const *key2)
+STATICDEF bool StringHash::keyCompare(std::string &key1, std::string &key2)
 {
-  return 0==strcmp(key1, key2);
+  //return 0==strcmp(key1, key2);
+    return key1==key2;
 }
 
 
@@ -306,7 +308,7 @@ struct StringArray {
 StringArray *dataArray = NULL;
 
 
-char const *id(void *p)
+std::string id(void *p)
 {
   return (char const*)p;
 }
@@ -338,7 +340,11 @@ void readDataFromFile(char *inFileName) {
   fb.open (inFileName, std::ios::in);
   std::istream in(&fb);
   while(true) {
-    std::stringstream s(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+      std::stringstream s;
+#else
+      std::stringstream s(DBG_INFO_ARG0);
+#endif
     s.readdelim(in, delim);
 //      cout << ":" << s->pcharc() << ":" << endl;
     if (in.eof()) break;

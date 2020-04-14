@@ -31,11 +31,11 @@ private:    // types
     void *value;
 
   public:
-    Node(char const *k, void *v, Node *n = NULL)
+    Node(std::string &k, void *v, Node *n = NULL)
       : next(n), key(k), value(v) {}
     ~Node() {}
     
-    static char const *getKey(Node const *n);
+    static std::string const & getKey(Node const *n);
   };
 
 public:     // types
@@ -66,7 +66,7 @@ public:     // types
     std::string &key() const { return current->key; }
     void *&value() const { return current->value; }
     
-    long private_getCurrent() const { return (long)current; }
+    uintptr_t private_getCurrent() const { return (uintptr_t)current; }
   };
   friend class Iter;
 
@@ -128,29 +128,29 @@ public:
   bool isNotEmpty() const
     { return !isEmpty(); }
 
-  bool query(char const *key, void *&value) const;
+  bool query(std::string &key, void *&value) const;
     // if 'key' is mapped to a value, put it into 'value' and return true;
     // otherwise, return false
 
-  void *queryf(char const *key) const;
+  void *queryf(std::string &key) const;
     // return the value corresponding to 'key', or throw an exception of it's
     // not mapped
 
-  void *queryif(char const *key) const;
+  void *queryif(std::string &key) const;
     // return the value corresponding to 'key', or return NULL
 
-  bool isMapped(char const *key) const;
+  bool isMapped(std::string &key) const;
     // return true if 'key' is mapped to a value
 
   // -------- mutators -----------
-  void add(char const *key, void *value);
+  void add(std::string &key, void *value);
     // add a mapping from 'key' to 'value'; 'key' must initially be unmapped
 
-  void *modify(char const *key, void *newValue);
+  void *modify(std::string &key, void *newValue);
     // change the existing value for 'key', which must exist, to 'newValue';
     // the old value is returned
 
-  void *remove(char const *key);
+  void *remove(std::string &key);
     // remove the mapping from 'key', which must exist; it is returned
 
   void emptyAndDel(DelFn func);
@@ -168,7 +168,7 @@ public:
   IterC getIterC() const;
     // retrieve a const iterator
 
-  Iter find(char const *key);
+  Iter find(std::string &key);
     // return an iterator pointing to 'key', or an iterator
     // that isDone() if 'key' isn't mapped
 
@@ -180,7 +180,7 @@ public:
   std::string toString() const;
   
   // debugging...
-  long private_getTopAddr() const { return (long)top; }
+  uintptr_t private_getTopAddr() const { return (uintptr_t)top; }
 };
 
 #endif // __SVDICT_H

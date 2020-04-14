@@ -115,7 +115,8 @@ void entry(int argc, char *argv[])
   // see how long the input is
   int inputLen;
   {
-    FILE *input = fopen(inputFname, "r");
+    FILE *input = 0;
+    fopen_s(&input, inputFname, "r");
     if (!input) {
       throw_XOpen(inputFname);
     }

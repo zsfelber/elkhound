@@ -5,6 +5,6 @@
 #define TRIVLEX_H
 
 class Lexer2;
-void trivialLexer(char const *fname, Lexer2 &dest);
+void trivialLexer(const std::string &fname, Lexer2 &dest);
 
 #endif // TRIVLEX_H

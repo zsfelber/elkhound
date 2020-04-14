@@ -13,7 +13,7 @@
   #include <siginfo.h>
 #endif
 
-#ifndef __CYGWIN__      // everything here is for *not* cygwin
+#if !defined(__CYGWIN__) && !defined(__MINGW32__)      // everything here is for *not* cygwin
 
 void setHandler(int signum, SignalHandler handler)
 {

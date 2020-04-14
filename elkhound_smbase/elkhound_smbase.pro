@@ -3,7 +3,7 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
-INCLUDEPATH += ../../boost_1_60_0
+INCLUDEPATH += C:/boost_1_72_0
 
 SOURCES += main.cpp \
     ../smbase/autofile.cc \
@@ -27,7 +27,6 @@ SOURCES += main.cpp \
     ../smbase/smregexp.cc \
     ../smbase/srcloc.cc \
     ../smbase/srcloc.test.cc \
-    ../smbase/srcloc.test2.cc \
     ../smbase/str.cpp \
     ../smbase/strdict.cc \
     ../smbase/strhash.cc \
@@ -40,7 +39,6 @@ SOURCES += main.cpp \
     ../smbase/tarrayqueue.cc \
     ../smbase/testarray.cc \
     ../smbase/testcout.cc \
-    ../smbase/testmalloc.cc \
     ../smbase/tobjlist.cc \
     ../smbase/tobjpool.cc \
     ../smbase/trace.cc \
@@ -143,6 +141,7 @@ DISTFILES += \
     ../smbase/pprint.d \
     ../smbase/smregexp.d \
     ../smbase/srcloc.d \
+    ../smbase/srcloc.test2.cc \
     ../smbase/str.d \
     ../smbase/strdict.d \
     ../smbase/strhash.d \

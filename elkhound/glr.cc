@@ -1651,7 +1651,8 @@ StackNode *GLR::findTopmostParser(StateId state)
 // graph visualization tool of some sort
 void GLR::dumpGSS(int tokenNumber) const
 {
-  FILE *dest = fopen(stringc << "gss." << tokenNumber << ".g", "w");
+  FILE *dest = 0;
+  fopen_s(&dest, stringc << "gss." << tokenNumber << ".g", "w");
 
   // list of nodes we've already printed, to avoid printing any
   // node more than once
@@ -2451,9 +2452,10 @@ string reductionName(StackNode const *sn, int ruleNo, Reduction const *red)
 //
 // however, it's worth noting that the text output is not entirely
 // unreadable...
-void GLR::writeParseGraph(char const *fname) const
+void GLR::writeParseGraph(const std::string &fname) const
 {
-  FILE *out = fopen(stringb("graphs/" << fname), "w");
+  FILE *out = 0;
+  fopen_s(&out, stringb("graphs/" << fname), "w");
   if (!out) {
     xsyserror("fopen", stringb("opening file `graphs/" << fname << "'"));
   }
@@ -2533,13 +2535,14 @@ void GLR::writeParseGraph(char const *fname) const
 // read an entire file into a single string
 // currenty is *not* pipe-friendly because it must seek
 // (candidate for adding to 'str' module)
-string readFileIntoString(char const *fname)
+string readFileIntoString(const std::string &fname)
 {
   return readStringFromFile(fname);
                                    
   #if 0   // old
   // open file
-  FILE *fp = fopen(fname, "r");
+  FILE *fp = 0;
+  fopen_s(&fp, fname, "r");
   if (!fp) {
     xsyserror("fopen", stringb("opening `" << fname << "' for reading"));
   }

@@ -60,20 +60,20 @@ public:     // funcs
   bool isEmpty() const                                 { return dict.isEmpty(); }
   bool isNotEmpty() const                              { return !isEmpty(); }
 
-  bool queryC(char const *key, T const *&value) const  { return dict.query(key, (void*&)value); }
-  bool query(char const *key, T *&value)               { return queryC(key, (T const*&)value); }
+  bool queryC(std::string &key, T const *&value) const  { return dict.query(key, (void*&)value); }
+  bool query(std::string &key, T *&value)               { return queryC(key, (T const*&)value); }
 
-  T const *queryfC(char const *key) const              { return (T const *)dict.queryf(key); }
-  T * /*serf*/ queryf(char const *key)                 { return (T*)dict.queryf(key); }
-  T * /*serf*/ queryif(char const *key)                { return (T*)dict.queryif(key); }
+  T const *queryfC(std::string &key) const              { return (T const *)dict.queryf(key); }
+  T * /*serf*/ queryf(std::string &key)                 { return (T*)dict.queryf(key); }
+  T * /*serf*/ queryif(std::string &key)                { return (T*)dict.queryif(key); }
 
-  bool isMapped(char const *key) const                 { return dict.isMapped(key); }
+  bool isMapped(std::string &key) const                 { return dict.isMapped(key); }
 
   // -------- mutators -----------
-  void add(char const *key, T *value)                  { dict.add(key, value); }
+  void add(std::string &key, T *value)                  { dict.add(key, value); }
 
-  T * /*owner*/ remove(char const *key)                { return (T*)dict.remove(key); }
-  void deleteAt(char const *key)                       { deleteObject(remove(key)); }
+  T * /*owner*/ remove(std::string &key)                { return (T*)dict.remove(key); }
+  void deleteAt(std::string &key)                       { deleteObject(remove(key)); }
 
   void empty()               { dict.emptyAndDel((StringVoidDict::DelFn)deleteObject); }
 

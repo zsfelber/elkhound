@@ -28,8 +28,8 @@ public:     // funcs
   ~StringHash();
 
   // utilities
-  static unsigned coreHash(char const *key);
-  static bool keyCompare(char const *key1, char const *key2);
+  static unsigned coreHash(std::string &key);
+  static bool keyCompare(std::string &key1, std::string &key2);
 
   // return # of mapped entries
   int getNumEntries() const
@@ -37,17 +37,17 @@ public:     // funcs
 
   // if this key has a mapping, return it; otherwise,
   // return NULL
-  void *get(char const *key) const
-    { return HashTable::get(key); }
+  void *get(std::string &key) const
+    { return HashTable::get(&key); }
 
   // add a mapping from 'key' to 'value'; there must not already
   // be a mapping for this key
-  void add(char const *key, void *value)
-    { HashTable::add(key, value); }
+  void add(std::string &key, void *value)
+    { HashTable::add(&key, value); }
 
   // remove the mapping for 'key' -- it must exist
-  void remove(char const *key)
-    { HashTable::remove(key); }
+  void remove(std::string &key)
+    { HashTable::remove(&key); }
 
   // drop all entries
   void empty() 
@@ -71,9 +71,9 @@ public:
   ~TStringHash()                      {}
 
   int getNumEntries() const           { return StringHash::getNumEntries(); }
-  T *get(char const *key) const       { return (T*)StringHash::get(key); }
-  void add(char const *key, T *value) { StringHash::add(key, (void*)value); }
-  void remove(char const *key)        { StringHash::remove(key); }
+  T *get(std::string &key) const       { return (T*)StringHash::get(key); }
+  void add(std::string &key, T *value) { StringHash::add(key, (void*)value); }
+  void remove(std::string &key)        { StringHash::remove(key); }
   void empty()                        { StringHash::empty(); }
 };
 

@@ -66,7 +66,7 @@ bool getCurrentDirectory(char *dirname, int dirnameLen);
 
 
 // get and process the names of files *and directories* in the current directory
-typedef bool (*PerFileFunc)(char const *name, void *extra);
+typedef bool (*PerFileFunc)(const std::string &name, void *extra);
   // name   - file/dir being processed (contains no slashes)
   // extra  - 2nd parameter to applyToCwdContents
   // return - true to continue, false to stop iterating
@@ -106,7 +106,7 @@ void readNonechoString(char *buffer, int buflen, char const *prompt);
 
 
 // return true if a file or directory exists
-bool fileOrDirectoryExists(char const *name);
+bool fileOrDirectoryExists(const std::string &name);
 
 
 // ensure that the pathname part of a file name exists;

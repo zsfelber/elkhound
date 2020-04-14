@@ -90,7 +90,7 @@ char const *hashLine()
 // note that #line must be preceeded by a newline
 string lineDirective(SourceLoc loc)
 {
-  char const *fname;
+  const std::string fname;
   int line, col;
   sourceLocManager->decodeLineCol(loc, fname, line, col);
 

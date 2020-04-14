@@ -47,12 +47,20 @@ void print(ObjList<Integer> const &list)
 void testSorting()
 {
   try {
-      str::StoragePool pool(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+        str::StoragePool pool;
+#else
+        str::StoragePool pool(DBG_INFO_ARG0);
+#endif
       enum { ITERS=100, ITEMS=20 };
 
       loopi(ITERS) {
           try {
-            str::StoragePool pool2(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+              str::StoragePool pool2;
+#else
+              str::StoragePool pool2(DBG_INFO_ARG0);
+#endif
             // construct a list
             STORE_NEW_REF0(pool2, ObjList<Integer>, list1);
             STORE_NEW_REF0(pool2, ObjList<Integer>, list2);
@@ -105,7 +113,12 @@ void testSorting()
 
 void entry()
 {
-  str::StoragePool pool(DBG_INFO_ARG0  );
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+              str::StoragePool pool;
+#else
+              str::StoragePool pool(DBG_INFO_ARG0);
+#endif
+
   // first set of tests
   {
     // some sample items

@@ -33,6 +33,7 @@
 
 class HashLineMap;    // hashline.h
 
+std::string E;
 
 // This is a source location.  It's interpreted as an integer
 // specifying the byte offset within a hypothetical file created by
@@ -145,9 +146,9 @@ public:      // types
 
   public:    // funcs
     // this builds both the array and the index
-    File(DBG_INFO_FORMAL_FIRST  char const *name, SourceLoc startLoc);
-    File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, char const *name, SourceLoc startLoc);
-    //File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, char const *name, SourceLoc startLoc);
+    File(DBG_INFO_FORMAL_FIRST  const std::string &name, SourceLoc startLoc);
+    File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const std::string &name, SourceLoc startLoc);
+    //File(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const std::string &name, SourceLoc startLoc);
     ~File();
     void init();
     
@@ -167,10 +168,10 @@ public:      // types
 
     // call this time each time a #line directive is encountered;
     // same semantics as HashLineMap::addHashLine
-    void addHashLine(int ppLine, int origLine, char const *origFname);
+    void addHashLine(int ppLine, int origLine, std::string &origFname);
     void doneAdding();
 
-    inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
+    inline void debugPrint(std::ostream& os, int indent = 0, std::string & subtreeName = E) const
     {
         str::ind(os,indent)<< "File{"<<name<<":"<<startLoc<<"/"<<numChars<<"}";
     }
@@ -191,17 +192,17 @@ public:      // types
     int line, col;    // line,col
 
   public:
-    StaticLoc(DBG_INFO_FORMAL_FIRST  char const *n, int o, int L, int c)
+    StaticLoc(DBG_INFO_FORMAL_FIRST  const std::string &n, int o, int L, int c)
       : str::Storeable(DBG_INFO_ARG_FWD), name(n), offset(o), line(L), col(c) {}
     StaticLoc(DBG_INFO_FORMAL_FIRST  StaticLoc const &obj)
       : str::Storeable(DBG_INFO_ARG_FWD), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
-    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, char const *n, int o, int L, int c)
+    StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, const std::string &n, int o, int L, int c)
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), name(n), offset(o), line(L), col(c) {}
     StaticLoc(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, StaticLoc const &obj)
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
 
-    inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
+    inline void debugPrint(std::ostream& os, int indent = 0, std::string & subtreeName = E) const
     {
         str::ind(os,indent)<< "StaticLoc{"<<name<<":"<<offset<<":"<<line<<":"<<col<<"}";
     }
@@ -258,8 +259,8 @@ private:     // funcs
   }
   static int toInt(SourceLoc loc) { return (int)loc; }
 
-  File *findFile(char const *name);
-  File *getFile(char const *name);
+  File *findFile(const std::string &name);
+  File *getFile(const std::string &name);
                                 
   File *findFileWithLoc(SourceLoc loc);
   StaticLoc const *getStatic(SourceLoc loc);
@@ -279,17 +280,17 @@ public:      // funcs
   //   columns start at 1
 
   // encode from scratch
-  SourceLoc encodeOffset(char const *filename, int charOffset);
-  SourceLoc encodeBegin(char const *filename)
+  SourceLoc encodeOffset(std::string &filename, int charOffset);
+  SourceLoc encodeBegin(std::string &filename)
     { return encodeOffset(filename, 0 /*offset*/); }
-  SourceLoc encodeLineCol(char const *filename, int line, int col);
+  SourceLoc encodeLineCol(std::string &filename, int line, int col);
 
   // some care is required with 'encodeStatic', since each call makes
   // a new location with a new entry in the static array to back it
   // up, so the caller should ensure a given static location is not
   // encoded more than once, if possible
   SourceLoc encodeStatic(StaticLoc const &obj);
-  SourceLoc encodeStatic(char const *fname, int offset, int line, int col)
+  SourceLoc encodeStatic(std::string &fname, int offset, int line, int col)
     { return encodeStatic(StaticLoc(DBG_INFO_ARG0_FIRST  fname, offset, line, col)); }
   static bool isStatic(SourceLoc loc) { return toInt(loc) <= 0; }
 
@@ -301,21 +302,21 @@ public:      // funcs
     { xassert(!isStatic(base)); return toLoc(toInt(base) + colOffset); }
   static SourceLoc advLine(SourceLoc base)     // from end of line to beginning of next
     { xassert(!isStatic(base)); return toLoc(toInt(base) + 1); }
-  static SourceLoc advText(SourceLoc base, char const * /*text*/, int textLen)
+  static SourceLoc advText(SourceLoc base, std::string & /*text*/, int textLen)
     { xassert(!isStatic(base)); return toLoc(toInt(base) + textLen); }
 
   // decode
-  void decodeOffset(SourceLoc loc, char const *&filename, int &charOffset);
-  void decodeLineCol(SourceLoc loc, char const *&filename, int &line, int &col);
+  void decodeOffset(SourceLoc loc, std::string &filename, int &charOffset);
+  void decodeLineCol(SourceLoc loc, std::string &filename, int &line, int &col);
 
   // more specialized decode
-  char const *getFile(SourceLoc loc);
+  std::string getFile(SourceLoc loc);
   int getOffset(SourceLoc loc);
   int getLine(SourceLoc loc);
   int getCol(SourceLoc loc);
 
   // get access to the File itself, for adding #line directives
-  File *getInternalFile(char const *fname)
+  File *getInternalFile(std::string &fname)
     { return getFile(fname); }
 
   // render as std::string in "file:line:col" format
@@ -325,7 +326,7 @@ public:      // funcs
   std::string getLCString(SourceLoc loc);
 
 
-  inline void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
+  inline void debugPrint(std::ostream& os, int indent = 0, std::string & subtreeName = E) const
   {
       if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "SourceLocManager..."; return; }
       str::ind(os,indent)<< "SourceLocManager{"<<std::endl;
@@ -374,7 +375,7 @@ inline SourceLoc advCol(SourceLoc base, int colOffset)
   { return SourceLocManager::advCol(base, colOffset); }
 inline SourceLoc advLine(SourceLoc base)
   { return SourceLocManager::advLine(base); }
-inline SourceLoc advText(SourceLoc base, char const *text, int textLen)
+inline SourceLoc advText(SourceLoc base, std::string &text, int textLen)
   { return SourceLocManager::advText(base, text, textLen); }
 
 std::string toXml(SourceLoc index);

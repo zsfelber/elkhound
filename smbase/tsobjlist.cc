@@ -7,7 +7,11 @@
 
 int main()
 {
-  str::StoragePool pool(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+    str::StoragePool pool;
+#else
+    str::StoragePool pool(DBG_INFO_ARG0);
+#endif
   char const *_hi = "hi there";
   char const *_what = "what's up?";
   std::string hi(_hi);

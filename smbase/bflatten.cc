@@ -137,6 +137,9 @@ void entry()
   // place to put the data we read
   int x2, y2;
   std::string s2(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+#else
+#endif
   int *px2, *py2;
 
   // read them back

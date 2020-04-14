@@ -18,7 +18,7 @@ HashLineMap::~HashLineMap()
 {}
 
 
-void HashLineMap::addHashLine(int ppLine, int origLine, char const *origFname)
+void HashLineMap::addHashLine(int ppLine, int origLine, std::string &origFname)
 {
   // check that entries are being added in sorted order
   xassert(ppLine > prev_ppLine);
@@ -59,7 +59,7 @@ void HashLineMap::doneAdding()
 // for queries exactly on #line directives we return the specified
 // origLine minus 1, but I don't specify any behavior in that case
 // so it's not a problem
-void HashLineMap::map(int ppLine, int &origLine, char const *&origFname) const
+void HashLineMap::map(int ppLine, int &origLine, std::string &origFname) const
 {
   // check for a ppLine that precedes any in the array
   if (directives.isEmpty() ||
@@ -101,15 +101,15 @@ void HashLineMap::map(int ppLine, int &origLine, char const *&origFname) const
 int HashLineMap::mapLine(int ppLine) const
 {
   int origLine;
-  char const *origFname;
+  std::string origFname;
   map(ppLine, origLine, origFname);
   return origLine;
 }
 
-char const *HashLineMap::mapFile(int ppLine) const
+std::string HashLineMap::mapFile(int ppLine) const
 {
   int origLine;
-  char const *origFname;
+  std::string origFname;
   map(ppLine, origLine, origFname);
   return origFname;
 }
@@ -122,10 +122,10 @@ char const *HashLineMap::mapFile(int ppLine) const
 #include <stdlib.h>    // exit
 
 void query(HashLineMap &hl, int ppLine,
-           int expectOrigLine, char const *expectOrigFname)
+           int expectOrigLine, std::string &expectOrigFname)
 {
   int origLine;
-  char const *origFname;
+  std::string origFname;
   hl.map(ppLine, origLine, origFname);
 
   if (origLine != expectOrigLine ||

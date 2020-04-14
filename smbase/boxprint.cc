@@ -467,7 +467,11 @@ void BoxPrint::debugPrintCout() const
 
 void doit(int argc, char *argv[])
 {
-  str::StoragePool pool(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+    str::StoragePool pool;
+#else
+    str::StoragePool pool(DBG_INFO_ARG0);
+#endif
 
   STORE_NEW_REF0(pool, BoxPrint, bp);
 

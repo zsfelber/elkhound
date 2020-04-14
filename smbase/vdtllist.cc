@@ -224,7 +224,11 @@ void VoidTailList::selfCheck() const
 
 int main()
 {
-  VoidTailList list(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+    VoidTailList list;
+#else
+    VoidTailList list(DBG_INFO_ARG0);
+#endif
   Integer zero(DBG_INFO_ARG0_FIRST  0),
           one(DBG_INFO_ARG0_FIRST  1),
           two(DBG_INFO_ARG0_FIRST  2),

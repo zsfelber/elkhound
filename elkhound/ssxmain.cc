@@ -84,14 +84,15 @@ int entry(int argc, char *argv[])
     printf("usage: %s input-file\n", progName);
     return 0;
   }
-  char const *inputFname = argv[1];
+  std::string inputFname = argv[1];
 
   // see how long the input is
   int inputLen;
   {
-    FILE *input = fopen(inputFname, "r");
+    FILE *input = 0;
+    fopen_s(&input, inputFname.c_str(), "r");
     if (!input) {
-      printf("cannot open file: %s\n", inputFname);
+      printf("cannot open file: %s\n", inputFname.c_str());
       return 2;
     }
     fseek(input, 0, SEEK_END);

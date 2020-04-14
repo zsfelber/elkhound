@@ -244,7 +244,11 @@ void testIter(char const *str)
   BitArray c = ~b;
   c.selfCheck();
   
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+  std::stringstream inv;
+#else
   std::stringstream inv(DBG_INFO_ARG0);
+#endif
   int len = strlen(str);
   for (int i=0; i<len; i++) {
     inv << (str[i]=='0'? '1' : '0');
@@ -267,8 +271,13 @@ void testUnionIntersection(char const *s1, char const *s2)
   BitArray b1 = stringToBitArray(s1);
   BitArray b2 = stringToBitArray(s2);
 
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+  std::stringstream expectUnion,
+          expectIntersection;
+#else
   std::stringstream expectUnion(DBG_INFO_ARG0),
           expectIntersection(DBG_INFO_ARG0);
+#endif
   for (int i=0; i<len; i++) {
     expectUnion        << ((s1[i]=='1' || s2[i]=='1')? '1' : '0');
     expectIntersection << ((s1[i]=='1' && s2[i]=='1')? '1' : '0');

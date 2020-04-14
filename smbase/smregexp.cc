@@ -15,7 +15,11 @@
 // other BSDs?) has regex.h contents that do not compile under C++,
 // and apparently gnuregex.h is the substitute that does
 #ifndef __FreeBSD__
-  #include <regex.h>
+#ifdef __MINGW32__
+  #include "C:/Qt/Tools/mingw730_64_updater/mingw64/opt/include/regex.h"
+#else
+#include <regex.h>
+#endif
 #else
   #include <gnuregex.h>
 #endif

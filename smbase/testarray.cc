@@ -16,7 +16,11 @@ int maxLength = 0;
 // one round of testing
 void round(int ops)
 {
-  str::StoragePool pool(DBG_INFO_ARG0);
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+    str::StoragePool pool;
+#else
+    str::StoragePool pool(DBG_INFO_ARG0);
+#endif
   // implementations to test
   ArrayStack<int> arrayStack;
   ArrayStackEmbed<int, 10> arrayStackEmbed;

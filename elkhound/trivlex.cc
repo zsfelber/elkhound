@@ -6,9 +6,10 @@
 
 #include <stdio.h>      // FILE stuff
 
-void trivialLexer(char const *fname, Lexer2 &dest)
+void trivialLexer(const std::string &fname, Lexer2 &dest)
 {
-  FILE *fp = fopen(fname, "r");
+  FILE *fp = 0;
+  fopen_s(&fp, fname, "r");
   if (!fp) {
     xsyserror("open", fname);
   }                    

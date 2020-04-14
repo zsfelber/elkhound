@@ -625,7 +625,11 @@ uint8_t* VoidList::glueNpools(VoidList const &tail) {
     if (npool.findChild(tail.npool.memory) || tail.npool.findChild(npool.memory)) {
         oldmemend = NULL;
     } else {
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+        str::StoragePool childView;
+#else
         str::StoragePool childView(DBG_INFO_ARG0);
+#endif
         npool.append(tail.npool, childView);
         oldmemend = childView.memory;
     }
@@ -967,7 +971,11 @@ VoidListIter::VoidListIter(VoidList const &list, int pos)
 
 namespace str {
 
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+str::StoragePool pool;
+#else
 str::StoragePool pool(DBG_INFO_ARG0);
+#endif
 VoidList *_list = NULL;
 VoidList *_thief = NULL;
 VoidList *_list1 = NULL, *_list2 = NULL, *_list3 = NULL;

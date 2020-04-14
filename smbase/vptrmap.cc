@@ -256,7 +256,11 @@ void test1()
     #define CAST(something) /*nothing*/
 
     PtrMap<Node,int> map;
+#if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+    ObjArrayStack<Node> stack;
+#else
     ObjArrayStack<Node> stack(DBG_INFO_ARG0);
+#endif
 
     int iters2 = rand() % ITERS2MAX;
     for (int j=0; j < iters2; j++) {

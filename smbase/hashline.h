@@ -23,12 +23,12 @@ private:    // types
   public:
     int ppLine;              // pp source line where it appears
     int origLine;            // orig line it names
-    char const *origFname;   // orig fname it names
+    std::string origFname;   // orig fname it names
     
   public:
     HashLine()
       : ppLine(0), origLine(0), origFname(NULL) {}
-    HashLine(int pl, int ol, char const *of)
+    HashLine(int pl, int ol, std::string &of)
       : ppLine(pl), origLine(ol), origFname(of) {}
     HashLine(HashLine const &obj)
       : DMEMB(ppLine), DMEMB(origLine), DMEMB(origFname) {}
@@ -58,7 +58,7 @@ public:     // funcs
 
   // call this time each time a #line directive is encountered;
   // successive calls must have strictly increasing values of 'ppLine'
-  void addHashLine(int ppLine, int origLine, char const *origFname);
+  void addHashLine(int ppLine, int origLine, std::string &origFname);
 
   // call this when all the #line directives have been added; this
   // consolidates the 'directives' array to reclaim any space created
@@ -67,9 +67,9 @@ public:     // funcs
 
   // map from pp line to orig line/file; note that queries exactly on
   // #line lines have undefined results
-  void map(int ppLine, int &origLine, char const *&origFname) const;
+  void map(int ppLine, int &origLine, std::string &origFname) const;
   int mapLine(int ppLine) const;           // returns 'origLine'
-  char const *mapFile(int ppLine) const;   // returns 'origFname'
+  std::string mapFile(int ppLine) const;   // returns 'origFname'
   
   // for curiosity, find out how many unique filenames are recorded in
   // the 'filenames' dictionary
