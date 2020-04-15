@@ -5,6 +5,8 @@
 
 #include "mypopen.h"    // this module
 
+#ifdef NEED_UNIXUTIL
+
 #include <stdlib.h>     // exit, perror
 #include <stdio.h>      // printf
 #include <unistd.h>     // pipe, read, etc.
@@ -286,3 +288,6 @@ int main()
 }
 
 #endif // TEST_POPEN
+
+
+#endif //NEED_UNIXUTIL

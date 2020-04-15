@@ -4,6 +4,8 @@
 #ifndef UNIXUTIL_H
 #define UNIXUTIL_H
 
+#ifdef NEED_UNIXUTIL
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -22,6 +24,8 @@ int canRead(int fd);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif // UNIXUTIL_H

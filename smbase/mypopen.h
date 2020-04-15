@@ -4,6 +4,8 @@
 #ifndef MYPOPEN_H
 #define MYPOPEN_H
 
+#ifdef NEED_UNIXUTIL
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,6 +34,8 @@ int popen_execvp(int *parentWritesChild, int *parentReadsChild,
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif // MYPOPEN_H

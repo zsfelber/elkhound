@@ -3,6 +3,8 @@
 
 #include "unixutil.h"   // this module
 
+#ifdef NEED_UNIXUTIL
+
 #include <unistd.h>     // write
 #include <assert.h>     // assert
 #include <sys/time.h>   // struct timeval
@@ -90,5 +92,6 @@ int canRead(int fd)
   return res;             // 0 or 1
 }
 
+#endif
 
 // EOF
