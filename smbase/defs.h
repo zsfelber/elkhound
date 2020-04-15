@@ -8,11 +8,14 @@ class VoidNode;
 class GrammarAnalysis;
 namespace str {
 class string;
+class stringstream;
 class Storeable;
 class StoragePool;
+char const * flush = "";
+char const * endl = "\n";
 }
 //typedef str::string const rostring;
-#define rostring str::string const&
+typedef str::string const& rostring;
 
 #define DEBUG_MAX_IND 25
 
@@ -202,6 +205,13 @@ inline T div_up(T const &x, T const &y)
 // update: use STATIC_ASSERT defined in macros.h instead
 //#define staticAssert(cond) extern int dummyArray[cond? 1 : 0]
 
+
+// this functions accepts raw 'char const *' instead of 'rostring'
+// because I do not want this interface to depend on str.h, and also
+// because I do not want the many call sites to have the overhead
+// of constructing and destructing temporary objects
+
+int x_assert_fail(const char * cond, const char * file, int line);// NORETURN;
 int x_assert_fail(rostring cond, rostring file, int line);// NORETURN;
 
 

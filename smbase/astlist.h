@@ -40,11 +40,11 @@ public:
   // use move:true as stealing ctor; among other things, since &*this is assumed to
   // point at 'src', this class can't have virtual functions;
   // these ctors delete 'src'
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> &src, bool move=true) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src.list, move); }
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> *src, bool move=true) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src->list, move); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> &src, bool move=true) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  str::StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src.list, move); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> *src, bool move=true) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  str::StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src->list, move); }
   // move:false is default with const making ast tree generation easy
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src.list, false); }
-  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src->list, false); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> const &src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, false), list(DBG_INFO_ARG_FWD_FIRST  str::StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src.list, false); }
+  ASTList(DBG_INFO_FORMAL_FIRST  str::StoragePool const *pool0, ASTList<T> const *src) : str::Storeable(DBG_INFO_ARG_FWD_FIRST  NN(src), false), list(DBG_INFO_ARG_FWD_FIRST  str::StoreAlreadyConstr) { assignParent(pool0); list.chk_assign(src->list, false); }
 
   VoidTailList const & getList() {
       return list;
@@ -106,9 +106,9 @@ public:
 
   // debugging: two additional invariants
   void selfCheck() const                { list.selfCheck(); }
-  void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        {
+  void debugPrint(str::stringstream& os, int indent = 0, char const *subtreeName = 0) const        {
      if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "ast..."; return; }
-     str::ind(os,indent)<<"ast<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent+1); }
+     str::ind(os,indent)<<"ast<"<< boost::typeindex::type_id<T>().pretty_name().c_str() <<">:"; list.debugPrint(os, indent+1); }
 };
 
 

@@ -30,7 +30,7 @@ private:
   void adjustTails();
 
 public:
-  VoidTailList(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing) : VoidList(DBG_INFO_ARG_FWD_FIRST  nothing)
+  VoidTailList(DBG_INFO_FORMAL_FIRST  str::__StoreAlreadyConstr nothing) : VoidList(DBG_INFO_ARG_FWD_FIRST  nothing)
   {  }
 
   VoidTailList(DBG_INFO_FORMAL) : VoidList(DBG_INFO_ARG_FWD_FIRST  sizeof(VoidTailList))

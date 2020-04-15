@@ -27,6 +27,14 @@
 #include "nonport.h"        // vnprintf
 #include "array.h"          // Array
 
+
+
+
+
+int x_assert_fail(const char * cond, const char * file, int line) {
+    return x_assert_fail(str::string(cond), str::string(file), line);
+}
+
 namespace str {
 
 StoragePool str_pool DBG_INFO_ARG0_SOLE;
@@ -157,6 +165,18 @@ string& string::operator&=(string const &tail)
   return *this = *this & tail;
 }
 
+string string::operator+(char const c)
+{
+    string dest(DBG_INFO_ARG0_FIRST  length() + 1, SMBASE_STRING_FUNC);
+    strcpy(dest.s, s);
+    dest.s[length()] = c;
+    return dest;
+}
+
+string& string::operator+=(char const c)
+{
+    return *this = *this + c;
+}
 
 void string::readdelim(std::istream &is, char const *delim)
 {
@@ -179,18 +199,18 @@ void string::selfCheck() const
   }
 }
 
-void string::debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const
+void string::debugPrint(str::stringstream& os, int indent, char const * subtreeName) const
 {
     str::ind(os,indent)<< "str:"<< (s?s:"#null");
 }
 
 
 // ----------------------- rostring ---------------------
-int strcmp(rostring s1, rostring s2)
+int cmp(rostring s1, rostring s2)
   { return strcmp(s1.c_str(), s2.c_str()); }
-int strcmp(rostring s1, char const *s2)
+int cmp(rostring s1, char const *s2)
   { return strcmp(s1.c_str(), s2); }
-int strcmp(char const *s1, rostring s2)
+int cmp(char const *s1, rostring s2)
   { return strcmp(s1, s2.c_str()); }
 
 

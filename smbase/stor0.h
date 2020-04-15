@@ -185,13 +185,9 @@ public:
        return NULL;
    }
 
-   OPT int debugPrint(int indent = 0) const
-   {
-       debugPrint(std::cout, indent);
-       return 0;
-   }
+   OPT int debugPrint(int indent = 0) const;
 
-   virtual OPT void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const
+   virtual OPT void debugPrint(str::stringstream& os, int indent = 0, char const *subtreeName = 0) const
    {
    }
 
@@ -199,7 +195,7 @@ public:
        return __kind & ST_DELETED;
    }
 
-   void debugItm(std::ostream& os, int indent) const;
+   void debugItm(str::stringstream& os, int indent) const;
 
 #ifdef DEBUG
    OPT char const * getObjectName() const {

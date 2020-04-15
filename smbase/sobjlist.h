@@ -151,7 +151,7 @@ public:
   void checkUniqueDataPtrs() const      { list.checkUniqueDataPtrs(); }
 
   Storeable::debugPrint;
-    void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        {
+    void debugPrint(str::stringstream& os, int indent = 0, char const *subtreeName = 0) const        {
       if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "sobj<"<< boost::typeindex::type_id<T>().pretty_name() <<">..."; return; }
       str::ind(os,indent)<<"sobj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent); }
   };

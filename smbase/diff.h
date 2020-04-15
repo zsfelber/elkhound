@@ -13,13 +13,13 @@ public:
 
 
 #include <algorithm>
-//#include <string>
+#include <string>
 #include "str.h"
 #include <vector>
 
 #include <stdio.h>
 #include <string.h>
-//#include <sstream>
+#include <sstream>
 #include "storage.h"
 #include "str.h"
 #include "trace.h"
@@ -168,11 +168,11 @@ extern std::vector<str::string> rows1;
 extern std::vector<str::string> rows2;
 
 inline void splitMemoryTreeLines(str::string const &s, std::vector<str::string> &rows) {
-    std::istringstream st(s);
-    str::string line;
-    while (std::getline(st, line)) {
+    std::istringstream st(s.c_str());
+    std::string line;
+    while (std::getline(st, line, '\n')) {
         rows.reserve((rows.size()+1)<<10>>10);
-        rows.push_back(line);
+        rows.push_back(line.c_str());
     }
 }
 
@@ -197,7 +197,7 @@ inline void splitMemoryTreeLines(str::string const &s, std::vector<str::string> 
         str::stringstream sd;                                                               \
         if (LCS::printDiff(sd, rows1, rows2)) {                                             \
             std::cout << sd.str();                                                          \
-            std::cout<<std::flush;                                                          \
+            std::cout<<str::flush;                                                          \
             rows1 = rows2;                                                                  \
         }                                                                                   \
         return 0;                                                                           \

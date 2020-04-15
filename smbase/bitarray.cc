@@ -160,9 +160,9 @@ BitArray stringToBitArray(char const *src)
 str::string toString(BitArray const &b)
 {
   int len = b.length();
-  str::string ret;
+  str::stringstream ret;
   for (int i=0; i<len; i++) {
-    ret+= b.test(i)? '1' : '0';
+    ret << (b.test(i)? '1' : '0');
   }
   return ret;
 }

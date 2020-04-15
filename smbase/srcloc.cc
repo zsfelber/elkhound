@@ -734,6 +734,19 @@ str::string SourceLocManager::getLCString(SourceLoc loc)
   return result.str();
 }
 
+void SourceLocManager::debugPrint(str::stringstream& os, int indent, str::string & subtreeName) const
+{
+    if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "SourceLocManager..."; return; }
+    str::ind(os,indent)<< "SourceLocManager{"<<str::endl;
+    str::ind(os,indent)<< "files:";
+    files.debugPrint(os, indent+1);
+    os <<str::endl;
+    str::ind(os,indent)<< "statics:";
+    statics.debugPrint(os, indent+1);
+    os <<str::endl;
+    str::ind(os,indent)<< "nextLoc:"<<nextLoc<<" nextStaticLoc:"<<nextStaticLoc;
+    os <<"}"<<str::endl;
+}
 
 str::string locToStr(SourceLoc sl)
 {

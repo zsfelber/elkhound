@@ -47,8 +47,8 @@ protected:
 private:
   //bool const owning;
   // make shallow copies and non-owning list
-  ObjList(DBG_INFO_FORMAL_FIRST ObjList const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)/*, owning(false)*/ {  list.chk_assign(obj.list, move);   }
-  ObjList(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr)       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {     }
+  ObjList(DBG_INFO_FORMAL_FIRST ObjList const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  str::StoreAlreadyConstr)/*, owning(false)*/ {  list.chk_assign(obj.list, move);   }
+  ObjList(DBG_INFO_FORMAL_FIRST str::__StoreAlreadyConstr StoreAlreadyConstr)       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {     }
   ObjList& operator= (ObjList const &src) { NOWN list = src.list; return *this;  }
 
   inline void del_itm(T* itm) { /*if (owning) delete itm;*/ }
@@ -153,7 +153,7 @@ private:
   }
 
   Storeable::debugPrint;
-    void debugPrint(std::ostream& os, int indent = 0, char const *subtreeName = 0) const        {
+    void debugPrint(str::stringstream& os, int indent = 0, char const *subtreeName = 0) const        {
       if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "obj<"<< boost::typeindex::type_id<T>().pretty_name() <<">..."; return; }
       str::ind(os,indent)<<"obj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent); }
   };

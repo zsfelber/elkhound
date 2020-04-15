@@ -15,6 +15,7 @@
 
 #include "defs.h"
 #include "stor0.h"
+#include <string.h>
 
 class Flatten;           // flatten.h
 
@@ -149,6 +150,9 @@ namespace str {
       string operator& (string const &tail) const;
       string& operator&= (string const &tail);
 
+      string operator+ (char const c);
+      string& operator+= (char const c);
+
       // input/output
       friend std::istream& operator>> (std::istream &is, string &obj)
         { obj.readline(is); return is; }
@@ -180,7 +184,7 @@ namespace str {
       void* operator new (size_t size);
       void* operator new (size_t size, str::StoragePool &pool);
 
-      void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const;
+      void debugPrint(str::stringstream& os, int indent = 0, char const * subtreeName = 0) const;
     };
 
 
@@ -253,20 +257,21 @@ namespace str {
       stringstream& indent(int amt);
 
       // sort of a mixture of Java compositing and C++ i/o strstream
-      stringstream& operator << (rostring text) { return operator&=(text.c_str()); }
-      stringstream& operator << (char const *text) { return operator&=(text); }
+      inline stringstream& operator << (rostring text) { return operator&=(text.c_str()); }
+      inline stringstream& operator << (char const *text) { return operator&=(text); }
       stringstream& operator << (char c);
-      stringstream& operator << (unsigned char c) { return operator<<((char)c); }
+      inline stringstream& operator << (unsigned char c) { return operator<<((char)c); }
       stringstream& operator << (long i);
       stringstream& operator << (unsigned long i);
-      stringstream& operator << (int i) { return operator<<((long)i); }
-      stringstream& operator << (unsigned i) { return operator<<((unsigned long)i); }
-      stringstream& operator << (short i) { return operator<<((long)i); }
-      stringstream& operator << (unsigned short i) { return operator<<((long)i); }
+      inline stringstream& operator << (int i) { return operator<<((long)i); }
+      inline stringstream& operator << (unsigned i) { return operator<<((unsigned long)i); }
+      inline stringstream& operator << (short i) { return operator<<((long)i); }
+      inline stringstream& operator << (unsigned short i) { return operator<<((long)i); }
+      inline stringstream& operator << (size_t i)  { return operator<<((void*)i); }
       stringstream& operator << (double d);
       stringstream& operator << (void *ptr);     // inserts address in hex
       #ifndef LACKS_BOOL
-        stringstream& operator << (bool b) { return operator<<((long)b); }
+        inline stringstream& operator << (bool b) { return operator<<((long)b); }
       #endif // LACKS_BOOL
 
       // useful in places where long << expressions make it hard to
@@ -315,17 +320,17 @@ void/*unusable*/ toCStr(char const *s);
 // I need some compatibility functions
 inline int strlen(rostring s) { return s.length(); }
 
-int strcmp(rostring s1, rostring s2);
-int strcmp(rostring s1, char const *s2);
-int strcmp(char const *s1, rostring s2);
+int cmp(rostring s1, rostring s2);
+int cmp(rostring s1, char const *s2);
+int cmp(char const *s1, rostring s2);
 // string.h, above, provides:
 // int strcmp(char const *s1, char const *s2);
 
 // dsw: this is what we are asking most of the time so let's special
 // case it
-inline bool streq(rostring s1, rostring s2)       {return strcmp(s1, s2) == 0;}
-inline bool streq(rostring s1, char const *s2)    {return strcmp(s1, s2) == 0;}
-inline bool streq(char const *s1, rostring s2)    {return strcmp(s1, s2) == 0;}
+inline bool streq(rostring s1, rostring s2)       {return cmp(s1, s2) == 0;}
+inline bool streq(rostring s1, char const *s2)    {return cmp(s1, s2) == 0;}
+inline bool streq(char const *s1, rostring s2)    {return cmp(s1, s2) == 0;}
 inline bool streq(char const *s1, char const *s2) {return strcmp(s1, s2) == 0;}
 
 char const *strstr(rostring haystack, char const *needle);
@@ -347,7 +352,7 @@ inline str::string substring(rostring p, int n)
 //   puts(stringb("x=" << x << ", y=" << y));
 //#define stringb(expr) (stringstream(DBG_INFO_ARG0) << expr)
 // TODO fail safe
-#define stringb(expr) ((stringstream&)(stringstream() << expr))
+#define stringb(expr) (str::stringstream() << expr)
 
 // experimenting with dropping the () in favor of <<
 // (the "c" can be interpreted as "constructor", or maybe just

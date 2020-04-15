@@ -2,7 +2,7 @@
 // code for strdict.h
 
 #include "strdict.h"        // this module
-#include <string.h>         // strcmp
+#include <string.h>         // cmp
 #include <iostream>
 
 
@@ -71,8 +71,8 @@ bool StringDict::operator== (StringDict const &obj) const
 
   IterC ths(*this), other(obj);
   while (!ths.isDone() && !other.isDone()) {
-    if (0!=strcmp(ths.key(), other.key()) ||
-        0!=strcmp(ths.value(), other.value())) {
+    if (0!=cmp(ths.key(), other.key()) ||
+        0!=cmp(ths.value(), other.value())) {
       return false;
     }
     ths.next();
@@ -107,7 +107,7 @@ int StringDict::size() const
 bool StringDict::query(char const *key, str::string &value) const
 {
   FOREACH_ITERC(*this, entry) {
-    if (0==strcmp(entry.key(), key)) {
+    if (0==cmp(entry.key(), key)) {
       value = entry.value();
       return true;
     }
@@ -158,7 +158,7 @@ void StringDict::modify(char const *key, char const *newValue)
 StringDict::Iter StringDict::find(char const *key)
 {
   FOREACH_ITER(*this, entry) {
-    if (0==strcmp(entry.key(), key)) {
+    if (0==cmp(entry.key(), key)) {
       return entry;
     }
   }
@@ -171,7 +171,7 @@ void StringDict::remove(char const *key)
   xassert(top);
 
   // check for removal of top element
-  if (0==strcmp(top->key, key)) {
+  if (0==cmp(top->key, key)) {
     Node *temp = top;
     top = top->next;
     delete temp;
@@ -180,7 +180,7 @@ void StringDict::remove(char const *key)
   // find node to remove in tail of list
   else {
     Node *p = top;
-    while (p->next && 0!=strcmp(p->next->key, key)) {
+    while (p->next && 0!=cmp(p->next->key, key)) {
       p = p->next;
     }
 
@@ -238,7 +238,7 @@ StringDict::IterC StringDict::getIterC() const
   Node *walker = top;
   while (walker->next != NULL) {
     // see if walker->next is out of order
-    if (0 <= strcmp(walker->key, walker->next->key)) {
+    if (0 <= cmp(walker->key, walker->next->key)) {
       // it's in order
       walker = walker->next;
       continue;
@@ -252,7 +252,7 @@ StringDict::IterC StringDict::getIterC() const
     mover->next = NULL;       // (redundant because of (**) lines)
 
     // insert at head?
-    if (0 < strcmp(mover->key, top->key)) {
+    if (0 < cmp(mover->key, top->key)) {
       mover->next = top;            // (**)
       top = mover;
       continue;
@@ -261,7 +261,7 @@ StringDict::IterC StringDict::getIterC() const
     // must find correct place to insert mover (will find the place
     // where we can insert mover just before searcher->next)
     Node *searcher = top;
-    while (0 < strcmp(searcher->next->key, mover->key)) {
+    while (0 < cmp(searcher->next->key, mover->key)) {
       searcher = searcher->next;
       xassert(searcher != walker);
         // otherwise how could mover have been out of order to begin with?
@@ -288,7 +288,7 @@ void StringDict::verifySorted() const
 
   Node *p = top;
   while (p->next) {
-    xassert(0 <= strcmp(p->key, p->next->key));
+    xassert(0 <= cmp(p->key, p->next->key));
     p = p->next;
   }
 }

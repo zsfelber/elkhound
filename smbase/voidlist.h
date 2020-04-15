@@ -11,6 +11,7 @@
 #include "trdelete.h"    // TRASHINGDELETE
 #include <iostream>      //
 #include "storage.h"
+#include "str.h"
 
 // -------------------------- non-typesafe core -----------------------------
 // non-typesafe list node
@@ -34,7 +35,7 @@ public:
       pool.removePointer(next);
       pool.removePointer(data);
   }
-  void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const {
+  void debugPrint(str::stringstream& os, int indent = 0, char const * subtreeName = 0) const {
       if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "vnode"<<(void*)this<<"..."; return; }
       str::ind(os,indent)<< "vnode:";
       if (data) {
@@ -43,7 +44,7 @@ public:
       } else {
           os<<" NULL";
       }
-      os<<std::flush;
+      os<<str::flush;
   }
 };
 
@@ -88,7 +89,7 @@ protected:
   VoidNode *getTop() const { return top; } // for iterator, below
 
 public:
-  VoidList(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing) : Storeable(DBG_INFO_ARG_FWD_FIRST  nothing), npool(DBG_INFO_ARG_FWD_FIRST  nothing)
+  VoidList(DBG_INFO_FORMAL_FIRST  str::__StoreAlreadyConstr nothing) : Storeable(DBG_INFO_ARG_FWD_FIRST  nothing), npool(DBG_INFO_ARG_FWD_FIRST  nothing)
   {  }
 
   VoidList(DBG_INFO_FORMAL_FIRST  size_t size_of=0)  : str::Storeable(DBG_INFO_ARG_FWD_FIRST  size_of?size_of:sizeof(VoidList)), npool(DBG_INFO_ARG_FWD)
@@ -200,7 +201,7 @@ public:
 
   Storeable::debugPrint;
 
-  void debugPrint(std::ostream& os, int indent = 0, char const * subtreeName = 0) const;     // print list contents to stdout
+  void debugPrint(str::stringstream& os, int indent = 0, char const * subtreeName = 0) const;     // print list contents to stdout
   void checkHeapDataPtrs() const;    // fail assertion if any 'data' ptr isn't valid heap ptr
   void checkUniqueDataPtrs() const;  // fail assertion if any 'data' ptr matches any other in this list
 };

@@ -171,7 +171,7 @@ public:      // types
     void addHashLine(int ppLine, int origLine, str::string &origFname);
     void doneAdding();
 
-    inline void debugPrint(std::ostream& os, int indent = 0, str::string & subtreeName = E) const
+    inline void debugPrint(str::stringstream& os, int indent = 0, str::string & subtreeName = E) const
     {
         str::ind(os,indent)<< "File{"<<name<<":"<<startLoc<<"/"<<numChars<<"}";
     }
@@ -202,7 +202,7 @@ public:      // types
       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  pool), DMEMB(name), DMEMB(offset), DMEMB(line), DMEMB(col) {}
     ~StaticLoc();
 
-    inline void debugPrint(std::ostream& os, int indent = 0, str::string & subtreeName = E) const
+    inline void debugPrint(str::stringstream& os, int indent = 0, str::string & subtreeName = E) const
     {
         str::ind(os,indent)<< "StaticLoc{"<<name<<":"<<offset<<":"<<line<<":"<<col<<"}";
     }
@@ -326,19 +326,7 @@ public:      // funcs
   str::string getLCString(SourceLoc loc);
 
 
-  inline void debugPrint(std::ostream& os, int indent = 0, str::string & subtreeName = E) const
-  {
-      if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "SourceLocManager..."; return; }
-      str::ind(os,indent)<< "SourceLocManager{"<<std::endl;
-      str::ind(os,indent)<< "files:";
-      files.debugPrint(os, indent+1);
-      os <<std::endl;
-      str::ind(os,indent)<< "statics:";
-      statics.debugPrint(os, indent+1);
-      os <<std::endl;
-      str::ind(os,indent)<< "nextLoc:"<<nextLoc<<" nextStaticLoc:"<<nextStaticLoc;
-      os <<"}"<<std::endl;
-  }
+  void debugPrint(str::stringstream& os, int indent = 0, str::string & subtreeName = E) const;
 };
 
 

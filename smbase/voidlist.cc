@@ -871,7 +871,7 @@ STATICDEF int VoidList::pointerAddressDiff(str::Storeable const *left, str::Stor
   return comparePointerAddresses(left, right);
 }
 
-void VoidList::debugPrint(std::ostream& os, int indent, char const * subtreeName) const
+void VoidList::debugPrint(str::stringstream& os, int indent, char const * subtreeName) const
 {
   if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "vlstx"<<(void*)this<<"..."; return; }
   str::ind(os,indent)<< "vlstx"<<(void*)this/*<<std::dec*/;
@@ -887,7 +887,7 @@ void VoidList::debugPrint(std::ostream& os, int indent, char const * subtreeName
         os<<" NULL";
     }
   }
-  os<< "}"<<std::flush;
+  os<< "}"<<str::flush;
 }
 
 

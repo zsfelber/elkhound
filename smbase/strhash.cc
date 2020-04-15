@@ -1,11 +1,11 @@
 // strhash.cc            see license.txt for copyright and terms of use
 // code for strhash.h
 
-#include "strhash.h"     // this module
-#include "xassert.h"     // xassert
-
 #include <string.h>      // strcmp
 #include <iostream>
+#include "strhash.h"     // this module
+#include "str.h"     // this module
+#include "xassert.h"     // xassert
 
 // notes on str::string hash functions ****************
 
