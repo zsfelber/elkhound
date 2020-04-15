@@ -19,6 +19,7 @@ SOURCES += main.cpp \
     ../smbase/growbuf.cc \
     ../smbase/hashline.cc \
     ../smbase/hashtbl.cc \
+    ../smbase/malloc.c \
     ../smbase/missing.cpp \
     ../smbase/mysig.cc \
     ../smbase/nonport.cpp \
@@ -27,6 +28,7 @@ SOURCES += main.cpp \
     ../smbase/smregexp.cc \
     ../smbase/srcloc.cc \
     ../smbase/srcloc.test.cc \
+    ../smbase/storage.cc \
     ../smbase/str.cpp \
     ../smbase/strdict.cc \
     ../smbase/strhash.cc \
@@ -39,6 +41,7 @@ SOURCES += main.cpp \
     ../smbase/tarrayqueue.cc \
     ../smbase/testarray.cc \
     ../smbase/testcout.cc \
+    ../smbase/testmalloc.cc \
     ../smbase/tobjlist.cc \
     ../smbase/tobjpool.cc \
     ../smbase/trace.cc \
@@ -55,7 +58,6 @@ SOURCES += main.cpp \
     ../smbase/tmalloc.c \
     ../smbase/unixutil.c \
     ../smbase/int.cc \
-    ../smbase/storage.cc \
     ../smbase/diff.cpp
 
 DISTFILES += \

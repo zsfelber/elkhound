@@ -20,6 +20,7 @@
 // most of the #includes simply commented-out or replaced with ones
 // that should be portable.
 
+#ifdef TEST_SRCLOC
 
 // this parameter controls the frequency of Markers in 
 // the marker index; lower period makes the index
@@ -706,7 +707,7 @@ str::string locToStr(SourceLoc sl)
 
 
 // -------------------------- test code ----------------------
-#ifdef TEST_SRCLOC
+//#ifdef TEST_SRCLOC
 
 //#include "test.h"        // USUAL_MAIN
 //#include "strtokp.h"     // StrtokParse

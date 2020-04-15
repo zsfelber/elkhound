@@ -19,7 +19,7 @@ private:
     // throw an exception if which is invalid token
 
 public:
-  StrtokParse(rostring str, rostring delim);
+  StrtokParse(rostring &str, rostring &delim);
     // parse 'str' into tokens delimited by chars from 'delim'
 
   ~StrtokParse();
@@ -33,13 +33,13 @@ public:
   char const* operator[] (int which) const { return tokv(which); }
     // access to tokens; must make local copies to modify
 
-  str::string reassemble(int firstTok, int lastTok, rostring originalString) const;
+  str::string reassemble(int firstTok, int lastTok, rostring &originalString) const;
     // return the substring of the original str::string spanned by the
     // given range of tokens; if firstTok==lastTok, only that token is
     // returned (without any separators); must be that firstTok <=
     // lastTok
 
-  str::string join(int firstTok, int lastTok, rostring separator) const;
+  str::string join(int firstTok, int lastTok, rostring &separator) const;
     // return a str::string created by concatenating the given range of tokens
     // together with 'separator' in between them
 

@@ -8,123 +8,159 @@
 
 #include <stddef.h>       // size_t
 
-// for now, I implement everything using the libc POSIX regex
-// facilities
-//
-// linux (etc.) has proper declarations in regex.h, but FreeBSD (and
-// other BSDs?) has regex.h contents that do not compile under C++,
-// and apparently gnuregex.h is the substitute that does
-#ifndef __FreeBSD__
-#ifdef __MINGW32__
-  #include "C:/Qt/Tools/mingw730_64_updater/mingw64/opt/include/regex.h"
-#else
-#include <regex.h>
-#endif
-#else
-  #include <gnuregex.h>
-#endif
+//// for now, I implement everything using the libc POSIX regex
+//// facilities
+////
+//// linux (etc.) has proper declarations in regex.h, but FreeBSD (and
+//// other BSDs?) has regex.h contents that do not compile under C++,
+//// and apparently gnuregex.h is the substitute that does
+//#ifndef __FreeBSD__
+//#ifdef __MINGW32__
+////??
+//#else
+//#include <regex.h>
+//#endif
+//#else
+//  #include <gnuregex.h>
+//#endif
 
-//TODO
-// get an error str::string
-static str::string regexpErrorString(regex_t const *pat, int code)
-{
-  // find out how long the error str::string is; this size
-  // includes the final NUL byte
-  int size = regerror(code, pat, NULL, 0);
+////TODO
+//// get an error str::string
+//static str::string regexpErrorString(regex_t const *pat, int code)
+//{
+//  // find out how long the error str::string is; this size
+//  // includes the final NUL byte
+//  int size = regerror(code, pat, NULL, 0);
 
-  // get the str::string
-  Array<char> buf(size);
-  regerror(code, pat, buf.ptr(), size);
-  buf[size] = 0;     // paranoia
+//  // get the str::string
+//  Array<char> buf(size);
+//  regerror(code, pat, buf.ptr(), size);
+//  buf[size] = 0;     // paranoia
 
-  return str::string(buf);
-}
+//  return str::string(buf);
+//}
 
-// throw an exception
-static void regexpError(regex_t const *pat, int code) NORETURN;
-static void regexpError(regex_t const *pat, int code)
-{
-  xbase(regexpErrorString(pat, code));
-}
+//// throw an exception
+//static void regexpError(regex_t const *pat, int code) NORETURN;
+//static void regexpError(regex_t const *pat, int code)
+//{
+//  xbase(regexpErrorString(pat, code));
+//}
 
 
-// -------------------- Regexp --------------------------
-// interpretation of 'impl' field
-#define PAT ((regex_t*&)impl)
+//// -------------------- Regexp --------------------------
+//// interpretation of 'impl' field
+//#define PAT ((regex_t*&)impl)
 
-Regexp::Regexp(rostring exp, CFlags flags)
-{
-  PAT = new regex_t;
+//Regexp::Regexp(rostring &exp, CFlags flags)
+//{
+//  PAT = new regex_t;
 
-  int f = REG_EXTENDED;    // "extended" language
+//  int f = REG_EXTENDED;    // "extended" language
   
-  // if the values I chose line up perfectly with the values used by
-  // libc, then I don't have to interpret them (hopefully the
-  // optimizer will discover that the 'if' test is constant
-  // (gcc-2.95.3's optimizer does); I can't do it with the
-  // preprocessor because it can't see the enumerator values)
-  if (REG_ICASE==ICASE && REG_NOSUB==NOSUB) {
-    f |= (int)flags;
-  }
-  else {
-    // interpret my flags
-    if (flags & ICASE) f |= REG_ICASE;
-    if (flags & NOSUB) f |= REG_NOSUB;
-  }
+//  // if the values I chose line up perfectly with the values used by
+//  // libc, then I don't have to interpret them (hopefully the
+//  // optimizer will discover that the 'if' test is constant
+//  // (gcc-2.95.3's optimizer does); I can't do it with the
+//  // preprocessor because it can't see the enumerator values)
+//  if (REG_ICASE==ICASE && REG_NOSUB==NOSUB) {
+//    f |= (int)flags;
+//  }
+//  else {
+//    // interpret my flags
+//    if (flags & ICASE) f |= REG_ICASE;
+//    if (flags & NOSUB) f |= REG_NOSUB;
+//  }
 
-  int code = regcomp(PAT, toCStr(exp), f);
-  if (code) {
-    // deallocate the pattern buffer before throwing the exception
-    str::string msg = regexpErrorString(PAT, code);
-    delete PAT;
-    xbase(msg);
-  }
+//  int code = regcomp(PAT, toCStr(exp), f);
+//  if (code) {
+//    // deallocate the pattern buffer before throwing the exception
+//    str::string msg = regexpErrorString(PAT, code);
+//    delete PAT;
+//    xbase(msg);
+//  }
+//}
+
+//Regexp::~Regexp()
+//{
+//  regfree(PAT);
+//  delete PAT;
+//}
+
+
+//void Regexp::err(int code)
+//{
+//  regexpError(PAT, code);
+//}
+
+
+//bool Regexp::match(rostring &str, EFlags flags)
+//{
+//  int f = 0;
+  
+//  // same thing as above
+//  if (REG_NOTBOL==NOTBOL && REG_NOTEOL==NOTEOL) {
+//    f = (int)flags;
+//  }
+//  else {
+//    if (flags & NOTBOL) f |= REG_NOTBOL;
+//    if (flags & NOTEOL) f |= REG_NOTEOL;
+//  }
+
+//  int code = regexec(PAT, toCStr(str), 0, NULL, f);
+//  if (code == 0) {
+//    return true;
+//  }
+//  else if (code == REG_NOMATCH) {
+//    return false;
+//  }
+//  else {
+//    err(code);
+//  }
+//}
+//
+//
+//#undef PAT
+
+
+#include <regex>
+
+#define PAT ((std::regex*&)impl)
+
+Regexp::Regexp(rostring &exp, CFlags flags)
+{
+    std::regex_constants::syntax_option_type f = std::regex_constants::extended;    // "extended" language
+
+    if (flags & ICASE) f |= std::regex_constants::icase;
+    if (flags & NOSUB) f |= std::regex_constants::nosubs;
+
+    PAT = new std::regex(exp.c_str(), f);
 }
 
 Regexp::~Regexp()
 {
-  regfree(PAT);
-  delete PAT;
+    delete PAT;
 }
-
 
 void Regexp::err(int code)
 {
-  regexpError(PAT, code);
 }
 
-
-bool Regexp::match(rostring str, EFlags flags)
+bool Regexp::match(rostring &str, EFlags flags)
 {
-  int f = 0;
-  
-  // same thing as above
-  if (REG_NOTBOL==NOTBOL && REG_NOTEOL==NOTEOL) {
-    f = (int)flags;
-  }
-  else {
-    if (flags & NOTBOL) f |= REG_NOTBOL;
-    if (flags & NOTEOL) f |= REG_NOTEOL;
-  }
+    std::regex_constants::match_flag_type f = std::regex_constants::match_default;// = regex_constants::match_default
 
-  int code = regexec(PAT, toCStr(str), 0, NULL, f);
-  if (code == 0) {
-    return true;
-  }
-  else if (code == REG_NOMATCH) {
-    return false;
-  }
-  else {
-    err(code);
-  }
+    if (flags & NOTBOL) f |= std::regex_constants::match_not_bol;
+    if (flags & NOTEOL) f |= std::regex_constants::match_not_eol;
+
+    return std::regex_match(str.c_str(), *PAT, f);
 }
-
 
 #undef PAT
 
 
 // --------------- convenience functions ---------------
-bool regexpMatch(rostring str, rostring exp)
+bool regexpMatch(rostring &str, rostring &exp)
 {
   Regexp pat(exp, Regexp::NOSUB);
   return pat.match(str);

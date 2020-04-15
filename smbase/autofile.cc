@@ -11,7 +11,8 @@
 
 FILE *xfopen(char const *fname, char const *mode)
 {
-  FILE *ret = fopen(fname, mode);
+  FILE *ret = 0;
+  fopen_s(&ret, fname, mode);
   if (!ret) {
     throw_XOpenEx(fname, mode, strerror(errno));
   }

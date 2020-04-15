@@ -43,8 +43,8 @@ protected:
   #define NOWN
 public:
   // make shallow copies
-  SObjList(DBG_INFO_FORMAL_FIRST SObjList const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  list.chk_assign(obj.list, move);   }
-  SObjList(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr)       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {     }
+  SObjList(DBG_INFO_FORMAL_FIRST SObjList const &obj, bool move=false)         : str::Storeable(DBG_INFO_ARG_FWD_FIRST  obj, false), list(DBG_INFO_ARG_FWD_FIRST  str::StoreAlreadyConstr) {  list.chk_assign(obj.list, move);   }
+  SObjList(DBG_INFO_FORMAL_FIRST str::__StoreAlreadyConstr StoreAlreadyConstr)       : str::Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr), list(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {     }
   SObjList& operator= (SObjList const &src)         { list = src.list; return *this; }
 
   public:
@@ -152,8 +152,8 @@ public:
 
   Storeable::debugPrint;
     void debugPrint(str::stringstream& os, int indent = 0, char const *subtreeName = 0) const        {
-      if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "sobj<"<< boost::typeindex::type_id<T>().pretty_name() <<">..."; return; }
-      str::ind(os,indent)<<"sobj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent); }
+      if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "sobj<"<< boost::typeindex::type_id<T>().pretty_name().c_str() <<">..."; return; }
+      str::ind(os,indent)<<"sobj<"<< boost::typeindex::type_id<T>().pretty_name().c_str() <<">:"; list.debugPrint(os, indent); }
   };
 
 

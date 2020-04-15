@@ -7,7 +7,7 @@
 #include <string.h>     // strtok
 
 
-StrtokParse::StrtokParse(rostring origStr, rostring origDelim)
+StrtokParse::StrtokParse(rostring &origStr, rostring &origDelim)
   : buf(strlen(origStr)+1)
 {
   char const *str = toCStr(origStr);
@@ -75,17 +75,17 @@ char const *StrtokParse::tokv(int which) const
 
 
 str::string StrtokParse::
-  reassemble(int firstTok, int lastTok, rostring original) const
+  reassemble(int firstTok, int lastTok, rostring &original) const
 {
   int left = offset(firstTok);
   int right = offset(lastTok) + strlen(tokv(lastTok));
 
-  return substring(toCStr(original) + left, right-left);
+  return str::substring(toCStr(original) + left, right-left);
 }
 
 
 str::string StrtokParse::
-  join(int firstTok, int lastTok, rostring separator) const
+  join(int firstTok, int lastTok, rostring &separator) const
 {
   str::stringstream sb;
   

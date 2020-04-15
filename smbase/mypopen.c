@@ -10,7 +10,6 @@
 #include <unistd.h>     // pipe, read, etc.
 #include <string.h>     // strlen
 #include <sys/types.h>  // pid_t
-#include <sys/wait.h>   // wait
 
 #define STDIN 0
 #define STDOUT 1
@@ -163,6 +162,7 @@ int popen_pipes(int *parentWritesChild, int *parentReadsChild,
 
 // ------------------ test code ----------------------
 #ifdef TEST_MYPOPEN
+#include <sys/wait.h>   // wait
 
 int main()
 {

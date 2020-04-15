@@ -136,9 +136,10 @@ void entry()
 
   // place to put the data we read
   int x2, y2;
-  str::string s2(DBG_INFO_ARG0);
 #if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
+  str::string s2;
 #else
+  str::string s2(DBG_INFO_ARG0);
 #endif
   int *px2, *py2;
 

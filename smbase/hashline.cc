@@ -6,7 +6,7 @@
 #include <string.h>        // memcpy
 
 
-HashLineMap::HashLineMap(rostring pf)
+HashLineMap::HashLineMap(rostring &pf)
   : ppFname(pf),
     filenames(),     // empty
     directives(),    // empty

@@ -6,6 +6,7 @@
 #include <stdlib.h>      // rand
 #include <iostream>    // cout
 
+#ifdef TEST_OBJPOOL
 
 // class we're going to make a pool of
 class Foo {
@@ -98,4 +99,4 @@ int main()
 
   return 0;
 }
-
+#endif

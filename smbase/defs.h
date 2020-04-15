@@ -11,11 +11,10 @@ class string;
 class stringstream;
 class Storeable;
 class StoragePool;
-char const * flush = "";
-char const * endl = "\n";
+static char const * flush = "";
+static char const * endl = "\n";
 }
-//typedef str::string const rostring;
-typedef str::string const& rostring;
+typedef str::string const rostring;
 
 #define DEBUG_MAX_IND 25
 
@@ -212,7 +211,7 @@ inline T div_up(T const &x, T const &y)
 // of constructing and destructing temporary objects
 
 int x_assert_fail(const char * cond, const char * file, int line);// NORETURN;
-int x_assert_fail(rostring cond, rostring file, int line);// NORETURN;
+int x_assert_fail(rostring &cond, rostring &file, int line);// NORETURN;
 
 
 #endif // DEFS_H

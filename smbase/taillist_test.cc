@@ -5,6 +5,8 @@
 #include "test.h" // USUAL_MAIN
 #include "int.h"
 
+#ifdef TAIL_LIST_TEST
+
 void entry()
 {
   Integer a(DBG_INFO_ARG0_FIRST  2),
@@ -47,3 +49,7 @@ void entry()
 }
 
 USUAL_MAIN
+
+#endif
+
+

@@ -45,7 +45,7 @@ public:
   int remainder() const { return margin - getCurCol(); }
 
   // add some text (that doesn't include newlines) to the output
-  void add(rostring text);
+  void add(rostring &text);
 
   // add a newline, plus indentation to get to column 'ind'
   void breakLine(int ind);
@@ -110,8 +110,8 @@ public:
   str::string text;
 
 public:
-  BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring t);
-  BPText(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, rostring t);
+  BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring &t);
+  BPText(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, rostring &t);
   ~BPText();
 
   // BPElement funcs
@@ -251,7 +251,7 @@ public:      // funcs
   void append(DBG_INFO_FORMAL_FIRST  BPElement *elt);
 
   // add BPText nodes to current box
-  BoxPrint& operator<< (rostring s);
+  BoxPrint& operator<< (rostring &s);
   BoxPrint& operator<< (char const *s);
   BoxPrint& operator<< (int i);
 

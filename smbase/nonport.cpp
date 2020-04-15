@@ -55,6 +55,7 @@
 #endif
 
 #include "nonport.h"      // this module
+#include "str.h"      // this module
 
 
 NonportFailFunc nonportFail = defaultNonportFail;

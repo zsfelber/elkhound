@@ -5,6 +5,8 @@
 #include "str.h"    // SObjList
 #include <stdio.h>       // printf
 
+#ifdef TEST_OBJLIST
+
 int main()
 {
 #if !defined(DBG_INFO_ARG0) || (EXPAND(DBG_INFO_ARG0) == 0)
@@ -44,3 +46,6 @@ int main()
 
   return 0;
 }
+
+
+#endif

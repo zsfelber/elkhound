@@ -68,18 +68,18 @@ namespace str {
 
     public:	       // funcs
     #ifdef DEBUG
-      string(string const &src) : Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
+      string(string const &src);
     #endif
-      string(DBG_INFO_FORMAL_FIRST string const &src) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
-      string(DBG_INFO_FORMAL_FIRST char const *src) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
-      string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
-      string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
-      string(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr) : Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  }
-      string(DBG_INFO_FORMAL ) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { s=emptyString; }
+      string(DBG_INFO_FORMAL_FIRST string const &src);
+      string(DBG_INFO_FORMAL_FIRST char const *src);
+      string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src);
+      string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src);
+      string(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr);
+      string(DBG_INFO_FORMAL );
       ~string() { kill(); }
 
       // for this one, use ::substring instead
-      string(DBG_INFO_FORMAL_FIRST char const *src, int length, SmbaseStringFunc);
+      string(DBG_INFO_FORMAL_FIRST char const *src, int length/*, SmbaseStringFunc*/);
 
       // for this one, there are two alternatives:
       //   - stringstream has nearly the same constructor interface
@@ -88,7 +88,7 @@ namespace str {
       //     be used
       //   - Array<char> is very flexible, but remember to add 1 to
       //     the length passed to its constructor!
-      string(DBG_INFO_FORMAL_FIRST int length, SmbaseStringFunc) : Storeable(DBG_INFO_ARG_FWD) { s=emptyString; setlength(length); }
+      string(DBG_INFO_FORMAL_FIRST int length, SmbaseStringFunc);
 
       string(DBG_INFO_FORMAL_FIRST Flatten&);
       void xfer(Flatten &flat);
@@ -132,6 +132,8 @@ namespace str {
       //   0    if   *this == src
       //   >0   if   *this > src
       int compareTo(string const &src) const;
+      inline int compare(string const &src) const
+      { return compareTo(src); }
       int compareTo(char const *src) const;
       bool equals(char const *src) const { return compareTo(src) == 0; }
       bool equals(string const &src) const { return compareTo(src) == 0; }
@@ -149,6 +151,11 @@ namespace str {
       // uses '&' instead of '+' to avoid char* coercion problems
       string operator& (string const &tail) const;
       string& operator&= (string const &tail);
+
+      inline string operator+ (string const &tail) const
+      { return operator&(tail); }
+      inline string& operator& (string const &tail)
+      { return operator&=(tail); }
 
       string operator+ (char const c);
       string& operator+= (char const c);
@@ -257,7 +264,7 @@ namespace str {
       stringstream& indent(int amt);
 
       // sort of a mixture of Java compositing and C++ i/o strstream
-      inline stringstream& operator << (rostring text) { return operator&=(text.c_str()); }
+      inline stringstream& operator << (rostring &text) { return operator&=(text.c_str()); }
       inline stringstream& operator << (char const *text) { return operator&=(text); }
       stringstream& operator << (char c);
       inline stringstream& operator << (unsigned char c) { return operator<<((char)c); }
@@ -300,86 +307,89 @@ namespace str {
       #define SBHex stringstream::Hex
     };
 
+
+
+    // ------------------------ rostring &----------------------
+    // My plan is to use this in places I currently use 'char const *'.
+    // TODO fail-safe
+
+    // I have the modest hope that the transition to 'rostring' might be
+    // reversible, so this function converts to 'char const *' but with a
+    // syntax that could just as easily apply to 'char const *' itself
+    // (and in that case would be the identity function).
+    inline char const *toCStr(rostring &s) { return s.c_str(); }
+
+    // at the moment, if I do this it is a mistake, so catch it; this
+    // function is not implemented anywhere
+    void/*unusable*/ toCStr(char const *s);
+
+    // I need some compatibility functions
+    inline int strlen(rostring &s) { return s.length(); }
+
+    inline int cmp(rostring &s1, rostring &s2)
+      { return strcmp(s1.c_str(), s2.c_str()); }
+    inline int cmp(rostring &s1, char const *s2)
+      { return strcmp(s1.c_str(), s2); }
+    inline int cmp(char const *s1, rostring &s2)
+      { return strcmp(s1, s2.c_str()); }
+    // string.h, above, provides:
+    // int strcmp(char const *s1, char const *s2);
+
+    // dsw: this is what we are asking most of the time so let's special
+    // case it
+    inline bool streq(rostring &s1, rostring &s2)       {return cmp(s1, s2) == 0;}
+    inline bool streq(rostring &s1, char const *s2)    {return cmp(s1, s2) == 0;}
+    inline bool streq(char const *s1, rostring &s2)    {return cmp(s1, s2) == 0;}
+    inline bool streq(char const *s1, char const *s2) {return strcmp(s1, s2) == 0;}
+
+    char const *strstr(rostring &haystack, char const *needle);
+
+    // there is no wrapper for 'strchr'; use string::contains
+
+    int atoi(rostring &s);
+
+    // construct a string out of characters from 'p' up to 'p+n-1',
+    // inclusive; resulting string length is 'n'
+    str::string substring(char const *p, int n);
+    inline str::string substring(rostring &p, int n)
+      { return substring(p.c_str(), n); }
+
+
+    // ---------------------- misc utils ------------------------
+    // the real strength of this entire module: construct strings in-place
+    // using the same syntax as C++ iostreams.  e.g.:
+    //   puts(stringb("x=" << x << ", y=" << y));
+    //#define stringb(expr) (stringstream(DBG_INFO_ARG0) << expr)
+    // TODO fail safe
+    #define stringb(expr) (str::stringstream() << expr)
+
+    // experimenting with dropping the () in favor of <<
+    // (the "c" can be interpreted as "constructor", or maybe just
+    // the successor to "b" above)
+    // TODO fail-safe
+    //#define stringc stringstream()
+
+    // experimenting with using toString as a general method for datatypes
+    str::string toString(int i);
+    str::string toString(unsigned i);
+    str::string toString(char c);
+    str::string toString(long i);
+    str::string toString(char const *str);
+    str::string toString(float f);
+    str::string toString(char const *str);
+    void debugString(std::ostream &os, int i, int level);
+    void debugString(std::ostream &os, unsigned i, int level);
+    void debugString(std::ostream &os, char i, int level);
+    void debugString(std::ostream &os, long i, int level);
+    void debugString(std::ostream &os, char const * i, int level);
+    void debugString(std::ostream &os, float i, int level);
+
+    // printf-like construction of a string; often very convenient, since
+    // you can use any of the formatting characters (like %X) that your
+    // libc's sprintf knows about
+    str::string stringf(char const *format, ...);
+    str::string vstringf(char const *format, va_list args);
 }
-
-
-// ------------------------ rostring ----------------------
-// My plan is to use this in places I currently use 'char const *'.
-// TODO fail-safe
-
-// I have the modest hope that the transition to 'rostring' might be
-// reversible, so this function converts to 'char const *' but with a
-// syntax that could just as easily apply to 'char const *' itself
-// (and in that case would be the identity function).
-inline char const *toCStr(rostring s) { return s.c_str(); }
-
-// at the moment, if I do this it is a mistake, so catch it; this
-// function is not implemented anywhere
-void/*unusable*/ toCStr(char const *s);
-
-// I need some compatibility functions
-inline int strlen(rostring s) { return s.length(); }
-
-int cmp(rostring s1, rostring s2);
-int cmp(rostring s1, char const *s2);
-int cmp(char const *s1, rostring s2);
-// string.h, above, provides:
-// int strcmp(char const *s1, char const *s2);
-
-// dsw: this is what we are asking most of the time so let's special
-// case it
-inline bool streq(rostring s1, rostring s2)       {return cmp(s1, s2) == 0;}
-inline bool streq(rostring s1, char const *s2)    {return cmp(s1, s2) == 0;}
-inline bool streq(char const *s1, rostring s2)    {return cmp(s1, s2) == 0;}
-inline bool streq(char const *s1, char const *s2) {return strcmp(s1, s2) == 0;}
-
-char const *strstr(rostring haystack, char const *needle);
-
-// there is no wrapper for 'strchr'; use string::contains
-
-int atoi(rostring s);
-
-// construct a string out of characters from 'p' up to 'p+n-1',
-// inclusive; resulting string length is 'n'
-str::string substring(char const *p, int n);
-inline str::string substring(rostring p, int n)
-  { return substring(p.c_str(), n); }
-
-
-// ---------------------- misc utils ------------------------
-// the real strength of this entire module: construct strings in-place
-// using the same syntax as C++ iostreams.  e.g.:
-//   puts(stringb("x=" << x << ", y=" << y));
-//#define stringb(expr) (stringstream(DBG_INFO_ARG0) << expr)
-// TODO fail safe
-#define stringb(expr) (str::stringstream() << expr)
-
-// experimenting with dropping the () in favor of <<
-// (the "c" can be interpreted as "constructor", or maybe just
-// the successor to "b" above)
-// TODO fail-safe
-//#define stringc stringstream()
-
-// experimenting with using toString as a general method for datatypes
-str::string toString(int i);
-str::string toString(unsigned i);
-str::string toString(char c);
-str::string toString(long i);
-str::string toString(char const *str);
-str::string toString(float f);
-str::string toString(char const *str);
-void debugString(std::ostream &os, int i, int level);
-void debugString(std::ostream &os, unsigned i, int level);
-void debugString(std::ostream &os, char i, int level);
-void debugString(std::ostream &os, long i, int level);
-void debugString(std::ostream &os, char const * i, int level);
-void debugString(std::ostream &os, float i, int level);
-
-// printf-like construction of a string; often very convenient, since
-// you can use any of the formatting characters (like %X) that your
-// libc's sprintf knows about
-str::string stringf(char const *format, ...);
-str::string vstringf(char const *format, va_list args);
 
 
 #include "typ.h"         // bool

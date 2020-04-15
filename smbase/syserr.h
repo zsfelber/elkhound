@@ -54,8 +54,8 @@ public:     // data
   str::string context;
 
 public:    // funcs
-  xSysError(Reason r, int sysCode, rostring sysReason,
-            rostring syscall, rostring ctx);
+  xSysError(Reason r, int sysCode, rostring &sysReason,
+            rostring &syscall, rostring &ctx);
   xSysError(xSysError const &obj);
   ~xSysError();
 
@@ -74,24 +74,24 @@ public:    // funcs
     // translate a Reason into a str::string (if r is invalid, a str::string
     // saying to will be returned)
 
-  static str::string constructWhyString(Reason r, rostring sysReason,
-                                   rostring syscall, rostring ctx);
+  static str::string constructWhyString(Reason r, rostring &sysReason,
+                                   rostring &syscall, rostring &ctx);
     // construct the str::string we throw as the 'why' of xBase; if ctx is NULL,
     // the str::string doesn't include it
 
-  static void xsyserror(rostring syscallName, rostring context);
+  static void xsyserror(rostring &syscallName, rostring &context);
     // does the throw
 };
 
 
 // function that does the throw
 void xsyserror(char const *syscallName);
-void xsyserror(rostring syscallName, rostring context);
+void xsyserror(rostring &syscallName, rostring &context);
 
 
 // get a representative str::string, for logging etc.
-str::string sysErrorCodeString(int systemErrorCode, rostring syscallName,
-                                               rostring context);
+str::string sysErrorCodeString(int systemErrorCode, rostring &syscallName,
+                                               rostring &context);
 
 str::string sysErrorString(char const *syscallName, char const *context=NULL);
 

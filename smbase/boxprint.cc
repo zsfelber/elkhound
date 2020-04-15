@@ -26,7 +26,7 @@ void BPRender::reset()
 }
 
 
-void BPRender::add(rostring text)
+void BPRender::add(rostring &text)
 {
   int len = strlen(text);
   sb << text;
@@ -80,10 +80,10 @@ BPElement::~BPElement()
 
 
 // ------------------------- BPText ----------------------
-BPText::BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring t)
+BPText::BPText(DBG_INFO_FORMAL_FIRST  str::StoragePool const &pool, rostring &t)
   : BPElement(DBG_INFO_ARG_FWD_FIRST  pool), text(t)
 {}
-BPText::BPText(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, rostring t)
+BPText::BPText(DBG_INFO_FORMAL_FIRST  str::Storeable &parent, rostring &t)
   : BPElement(DBG_INFO_ARG_FWD_FIRST  parent, sizeof(BPText)), text(t)
 {}
 
@@ -361,7 +361,7 @@ void BoxPrint::append(DBG_INFO_FORMAL_FIRST  BPElement *elt)
 }
 
 
-BoxPrint& BoxPrint::operator<< (rostring s)
+BoxPrint& BoxPrint::operator<< (rostring &s)
 {
     str::StoragePool *pool = constcast(getParent());
     xassert(pool);

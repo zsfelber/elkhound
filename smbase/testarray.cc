@@ -11,6 +11,8 @@
 #include <stdlib.h>          // exit
 
 
+#ifdef TEST_ARRAY
+
 int maxLength = 0;
 
 // one round of testing
@@ -88,6 +90,6 @@ int main()
   printf("arrayStack appears to work; maxLength=%d\n", maxLength);
   return 0;
 }
-
+#endif
 
 // EOF

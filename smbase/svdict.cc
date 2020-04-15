@@ -82,7 +82,7 @@ bool StringVoidDict::operator== (StringVoidDict const &obj) const
 
   IterC ths(*this), other(obj);
   while (!ths.isDone() && !other.isDone()) {
-    if (0!=strcmp(ths.key(), other.key()) ||
+    if (0!=cmp(ths.key(), other.key()) ||
         ths.value() != other.value()) {
       return false;
     }
@@ -189,7 +189,7 @@ void *StringVoidDict::remove(str::string &key)
   xassert(top);
 
   // check for removal of top element
-  if (0==strcmp(top->key, key)) {
+  if (0==cmp(top->key, key)) {
     Node *temp = top;
     top = top->next;
     ret = temp->value;
@@ -200,7 +200,7 @@ void *StringVoidDict::remove(str::string &key)
   // find node to remove in tail of list
   else {
     Node *p = top;
-    while (p->next && 0!=strcmp(p->next->key, key)) {
+    while (p->next && 0!=cmp(p->next->key, key)) {
       p = p->next;
     }
 
@@ -283,7 +283,7 @@ void StringVoidDict::foreach(ForeachFn func, void *extra) const
   Node *walker = top;
   while (walker->next != NULL) {
     // see if walker->next is out of order
-    if (0 <= strcmp(walker->key, walker->next->key)) {
+    if (0 <= cmp(walker->key, walker->next->key)) {
       // it's in order
       walker = walker->next;
       continue;
@@ -297,7 +297,7 @@ void StringVoidDict::foreach(ForeachFn func, void *extra) const
     mover->next = NULL;       // (redundant because of (**) lines)
 
     // insert at head?
-    if (0 < strcmp(mover->key, top->key)) {
+    if (0 < cmp(mover->key, top->key)) {
       mover->next = top;            // (**)
       top = mover;
       continue;
@@ -306,7 +306,7 @@ void StringVoidDict::foreach(ForeachFn func, void *extra) const
     // must find correct place to insert mover (will find the place
     // where we can insert mover just before searcher->next)
     Node *searcher = top;
-    while (0 < strcmp(searcher->next->key, mover->key)) {
+    while (0 < cmp(searcher->next->key, mover->key)) {
       searcher = searcher->next;
       xassert(searcher != walker);
         // otherwise how could mover have been out of order to begin with?
@@ -333,7 +333,7 @@ void StringVoidDict::verifySorted() const
 
   Node *p = top;
   while (p->next) {
-    xassert(0 <= strcmp(p->key, p->next->key));
+    xassert(0 <= cmp(p->key, p->next->key));
     p = p->next;
   }
 }

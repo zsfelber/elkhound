@@ -1,12 +1,13 @@
 // bit2d.cc            see license.txt for copyright and terms of use
 // code for bit2d.h
 
+#include <string.h>     // memset, memcpy
+#include <stdio.h>      // printf
+
 #include "bit2d.h"      // this module
 #include "xassert.h"    // xassert
 #include "flatten.h"    // Flatten
-
-#include <string.h>     // memset, memcpy
-#include <stdio.h>      // printf
+#include "storage.h"    // Flatten
 
 
 Bit2d::Bit2d(DBG_INFO_FORMAL_FIRST  point const &aSize)

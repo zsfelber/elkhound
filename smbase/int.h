@@ -2,6 +2,7 @@
 #define INT_H
 
 #include "storage.h"
+#include "str.h"
 
 // ------------ object class --------------------
 // class of objects to hold in the list

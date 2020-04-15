@@ -10,6 +10,7 @@
 #include <stdio.h>      // printf()
 
 
+#ifdef TEST_OBJ_LIST
 
 // ----------- testing ObjList -----------
 int intDiff(Integer const *left, Integer const *right, str::Storeable const *)
@@ -212,3 +213,5 @@ void entry()
 
 USUAL_MAIN
 
+
+#endif

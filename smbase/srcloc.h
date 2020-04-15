@@ -33,7 +33,7 @@
 
 class HashLineMap;    // hashline.h
 
-str::string E;
+static str::string E;
 
 // This is a source location.  It's interpreted as an integer
 // specifying the byte offset within a hypothetical file created by

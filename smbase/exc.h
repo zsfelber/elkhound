@@ -73,11 +73,11 @@ public:
   static int creationCount;
 
 public:
-  xBase(rostring m);       // create exception object with message 'm'
+  xBase(rostring &m);       // create exception object with message 'm'
   xBase(xBase const *m);   // copy ctor
   virtual ~xBase();
 
-  rostring why() const
+  rostring &why() const
     { return msg; }
 
   // print why
@@ -88,11 +88,11 @@ public:
   // add a str::string describing what was going on at the time the
   // exception was thrown; this should be called with the innermost
   // context str::string first, i.e., in the normal unwind order
-  void addContext(rostring context);
+  void addContext(rostring &context);
 };
 
 // equivalent to THROW(xBase(msg))
-void xbase(rostring msg) NORETURN;
+void xbase(rostring &msg) NORETURN;
 
 
 // -------------------- x_assert -----------------------
@@ -105,12 +105,12 @@ class x_assert : public xBase {
   int lineno;                // line number
 
 public:
-  x_assert(rostring cond, rostring fname, int line);
+  x_assert(rostring &cond, rostring &fname, int line);
   x_assert(x_assert const &obj);
   ~x_assert();
 
-  rostring cond() const { return condition; }
-  rostring fname() const { return filename; }
+  rostring &cond() const { return condition; }
+  rostring &fname() const { return filename; }
   int line() const { return lineno; }
 };
 
@@ -124,15 +124,15 @@ class xFormat : public xBase {
   str::string condition;          // what is wrong with the input
 
 public:
-  xFormat(rostring cond);
+  xFormat(rostring &cond);
   xFormat(xFormat const &obj);
   ~xFormat();
 
-  rostring cond() const { return condition; }
+  rostring &cond() const { return condition; }
 };
 
 // compact way to throw an xFormat
-void xformat(rostring condition) NORETURN;
+void xformat(rostring &condition) NORETURN;
 
 // convenient combination of condition and human-readable message
 #define checkFormat(cond, message) \
@@ -153,12 +153,12 @@ public:
   str::string filename;
   
 public:
-  XOpen(rostring fname);
+  XOpen(rostring &fname);
   XOpen(XOpen const &obj);
   ~XOpen();
 };
 
-void throw_XOpen(rostring fname) NORETURN;
+void throw_XOpen(rostring &fname) NORETURN;
 
 
 // -------------------- XOpenEx ---------------------
@@ -170,16 +170,16 @@ public:
   str::string cause;        // errno-derived failure cause, e.g. "no such file"
 
 public:
-  XOpenEx(rostring fname, rostring mode, rostring cause);
+  XOpenEx(rostring &fname, rostring &mode, rostring &cause);
   XOpenEx(XOpenEx const &obj);
   ~XOpenEx();
                                               
   // convert a mode str::string as into human-readable participle,
   // e.g. "r" becomes "reading"
-  static str::string interpretMode(rostring mode);
+  static str::string interpretMode(rostring &mode);
 };
 
-void throw_XOpenEx(rostring fname, rostring mode, rostring cause) NORETURN;
+void throw_XOpenEx(rostring &fname, rostring &mode, rostring &cause) NORETURN;
 
 
 // ------------------- XUnimp ---------------------
@@ -187,12 +187,12 @@ void throw_XOpenEx(rostring fname, rostring mode, rostring cause) NORETURN;
 // allowed but not yet handled by the existing code
 class XUnimp : public xBase {
 public:
-  XUnimp(rostring msg);
+  XUnimp(rostring &msg);
   XUnimp(XUnimp const &obj);
   ~XUnimp();
 };
 
-void throw_XUnimp(rostring msg) NORETURN;
+void throw_XUnimp(rostring &msg) NORETURN;
 
 // throw XUnimp with file/line info
 void throw_XUnimp(char const *msg, char const *file, int line) NORETURN;
@@ -205,12 +205,12 @@ void throw_XUnimp(char const *msg, char const *file, int line) NORETURN;
 // error; it is not due to a bug in the program
 class XFatal : public xBase {
 public:
-  XFatal(rostring msg);
+  XFatal(rostring &msg);
   XFatal(XFatal const &obj);
   ~XFatal();
 };
 
-void throw_XFatal(rostring msg) NORETURN;
+void throw_XFatal(rostring &msg) NORETURN;
 #define xfatal(msg) throw_XFatal(stringc << msg)
 
 

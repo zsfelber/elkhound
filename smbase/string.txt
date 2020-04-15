@@ -134,15 +134,15 @@ Transition guide for new str::string interface:
       either a nullable 'char const *' or an rostring.  Another is
       to change call sites (or default args) to pass "" instead.
 
-  - To convert an rostring to a char const*, use
-      char const *toCStr(rostring s);
+  - To convert an rostring &to a char const*, use
+      char const *toCStr(rostring &s);
     instead of
       char const *str::string::c_str() const;
     to maintain the vague hope that 'rostring' could at some point
     be yet some other type (perhaps even 'char const *' again).
     For example:
     
-      void foo(rostring s)
+      void foo(rostring &s)
       {
         FILE *fp = fopen(toCStr(s), "r");       // yes
         FILE *fp = fopen(s.c_str(), "r");       // no
@@ -157,8 +157,8 @@ Transition guide for new str::string interface:
     "something vaguely similar to char const *".  For example:
     
       int foo(char const *s);                        // real function
-      int foo(rostring s) { return foo(s.c_str()); } // yes
-      int foo(rostring s) { return foo(toCStr(s)); } // no
+      int foo(rostring &s) { return foo(s.c_str()); } // yes
+      int foo(rostring &s) { return foo(toCStr(s)); } // no
 
   - To convert a str::string (other than 'rostring') to a char const*, use
       char const *str::string::c_str() const;
@@ -192,7 +192,7 @@ Transition guide for new str::string interface:
         }
       }
     use something like the following:
-      void foo(rostring origSrc)
+      void foo(rostring &origSrc)
       {                      
         char const *src = toCStr(origSrc);
 
@@ -208,7 +208,7 @@ Transition guide for new str::string interface:
     NULL, e.g.
       if (name) { ... }
     then, assuming the caller has been appropriately modified to
-    pass an empty ("") rostring instead, change the test to
+    pass an empty ("") rostring &instead, change the test to
       if (name[0]) { ... }
     as this is a little less verbose than name.empty(), and will
     work even if name is changed back to 'char const *'.

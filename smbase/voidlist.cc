@@ -17,7 +17,7 @@
 
 VoidList::VoidList(DBG_INFO_FORMAL_FIRST  VoidList const &src, size_t size_of, bool move)
   : str::Storeable(DBG_INFO_ARG_FWD_FIRST  src, size_of?size_of:sizeof(VoidList), false, false),
-    npool(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr)
+    npool(DBG_INFO_ARG_FWD_FIRST  str::StoreAlreadyConstr)
     //npool(DBG_INFO_ARG0_FIRST  src.npool, false, move ?  str::StoragePool::Cp_Move :  str::StoragePool::Cp_All)
 {
    chk_assign(src, move);

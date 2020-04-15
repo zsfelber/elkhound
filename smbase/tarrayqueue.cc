@@ -10,6 +10,8 @@
 #include <stdlib.h>          // exit
 
 
+#ifdef TEST_ARRAY_QUEUE
+
 int maxLength = 0;
 
 // one round of testing
@@ -71,7 +73,6 @@ void round(int ops)
   }
 }
 
-
 int main()
 {
   for (int i=0; i<20; i++) {
@@ -82,6 +83,6 @@ int main()
   printf("arrayqueue appears to work; maxLength=%d\n", maxLength);
   return 0;
 }
-
+#endif
 
 // EOF

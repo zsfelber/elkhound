@@ -21,6 +21,7 @@
 #endif
 #include <iostream>
 
+#include "storage.h"            // this module
 #include "xassert.h"        // xassert
 #include "ckheap.h"         // checkHeapNode
 #include "flatten.h"        // Flatten
@@ -50,12 +51,24 @@ char const nul_byte = 0;
 char * const string::emptyString = const_cast<char*>(&nul_byte);
 char * const string::nullString = const_cast<char*>("<null>");
 
-string::string(DBG_INFO_FORMAL_FIRST  char const *src, int length, SmbaseStringFunc) : str::Storeable(DBG_INFO_ARG_FWD)
+#ifdef DEBUG
+string::string(string const &src) : Storeable(DBG_INFO_ARG0_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
+#endif
+string::string(DBG_INFO_FORMAL_FIRST string const &src) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src.s) dup(src.s); else s = nullString; }
+string::string(DBG_INFO_FORMAL_FIRST char const *src) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { if (src) dup(src); else s = nullString; }
+string::string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, string const &src) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src.s) dup(src.s); else s = nullString; }
+string::string(DBG_INFO_FORMAL_FIRST str::StoragePool & pool, char const *src) : Storeable(DBG_INFO_ARG_FWD_FIRST  pool) { if (src) dup(src); else s = nullString; }
+string::string(DBG_INFO_FORMAL_FIRST __StoreAlreadyConstr StoreAlreadyConstr) : Storeable(DBG_INFO_ARG_FWD_FIRST  StoreAlreadyConstr) {  }
+string::string(DBG_INFO_FORMAL ) : Storeable(DBG_INFO_ARG_FWD_FIRST  str_pool) { s=emptyString; }
+
+
+string::string(DBG_INFO_FORMAL_FIRST  char const *src, int length/*, SmbaseStringFunc*/) : str::Storeable(DBG_INFO_ARG_FWD)
 {
   s=emptyString;
   setlength(length);       // setlength already has the +1; sets final NUL
   memcpy(s, src, length);
 }
+string::string(DBG_INFO_FORMAL_FIRST int length, SmbaseStringFunc) : Storeable(DBG_INFO_ARG_FWD) { s=emptyString; setlength(length); }
 
 void* string::operator new (size_t size) {
     return str::Storeable::operator new(size, str_pool);
@@ -117,7 +130,7 @@ string string::substring(int startIndex, int len) const
           len >= 0 &&
           startIndex + len <= length());
 
-  return ::substring(s+startIndex, len);
+  return str::substring(s+startIndex, len);
 }
 
 
@@ -205,29 +218,23 @@ void string::debugPrint(str::stringstream& os, int indent, char const * subtreeN
 }
 
 
-// ----------------------- rostring ---------------------
-int cmp(rostring s1, rostring s2)
-  { return strcmp(s1.c_str(), s2.c_str()); }
-int cmp(rostring s1, char const *s2)
-  { return strcmp(s1.c_str(), s2); }
-int cmp(char const *s1, rostring s2)
-  { return strcmp(s1, s2.c_str()); }
+// ----------------------- rostring &---------------------
 
 
-char const *strstr(rostring haystack, char const *needle)
+char const *strstr(rostring &haystack, char const *needle)
 {
   return strstr(haystack.c_str(), needle);
 }
 
 
-int atoi(rostring s)
+int atoi(rostring &s)
 {
   return atoi(toCStr(s));
 }
 
 string substring(char const *p, int n)
 {
-  return string(DBG_INFO_ARG0_FIRST  p, n, SMBASE_STRING_FUNC);
+  return string(DBG_INFO_ARG0_FIRST  p, n/*, SMBASE_STRING_FUNC*/);
 }
 
 

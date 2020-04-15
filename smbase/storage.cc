@@ -8,7 +8,7 @@ const char* str::lastObjName = "";
 
 namespace str {
 
-OPT str::stringstream &ind(str::stringstream &os, int indent)
+str::stringstream &ind(str::stringstream &os, int indent)
 {
   xassert(indent <= 110);
   char const *ib = "                                                                                                              ";
@@ -25,13 +25,13 @@ OPT str::stringstream &ind(str::stringstream &os, int indent)
  */
 
 
-OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing)
+Storeable::Storeable(DBG_INFO_FORMAL_FIRST  __StoreAlreadyConstr nothing)
 DBG_INFO_FWD(: objectName(objectName)  REG_CHILD_COMMA)
 {
     DBG_INFO_FWD(lastObjName = objectName.str;)
 }
 
-OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
+Storeable::Storeable(DBG_INFO_FORMAL_FIRST  size_t size_of)
 DBG_INFO_FWD(: objectName(objectName)  REG_CHILD_COMMA)
 #ifdef REG_CHILD
     NDEBUG_COLON __next(0)
@@ -51,7 +51,7 @@ DBG_INFO_FWD(lastObjName = objectName.str;)
 }
 
 /* new operator filled __pool and __store_size previously, we use passed argument to double check */
-OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool, size_t size_of)
+Storeable::Storeable(DBG_INFO_FORMAL_FIRST  StoragePool const & pool, bool isPool, size_t size_of)
 DBG_INFO_FWD(: objectName(objectName))
 {
     DBG_INFO_FWD(lastObjName = objectName.str;)
@@ -65,14 +65,14 @@ DBG_INFO_FWD(: objectName(objectName))
 }
 
 
-OPT Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool)
+Storeable::Storeable(DBG_INFO_FORMAL_FIRST   Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool)
 DBG_INFO_FWD(: objectName(objectName))
 {
     DBG_INFO_FWD(lastObjName = objectName.str;)
     init(srcOrParent, size_of, childOfParent, isPool);
 }
 
-OPT Storeable::~Storeable() {
+Storeable::~Storeable() {
     if (__kind & ST_VALUE) {
         if (__kind & ST_DELETED) {
             x_assert_fail("Already deleted.", __FILE__, __LINE__);
@@ -82,7 +82,7 @@ OPT Storeable::~Storeable() {
     }
 }
 
-OPT void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool) {
+void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool childOfParent, bool isPool) {
     if (childOfParent) {
         StoragePool const & srcPool = srcOrParent.getPoolRef();
         xassert(srcPool.contains(this));
@@ -105,14 +105,14 @@ OPT void Storeable::init(Storeable const & srcOrParent, size_t size_of, bool chi
     }
 }
 
-OPT void Storeable::removeInParent() {
+void Storeable::removeInParent() {
     StoragePool * pool = constcast(__parent);
     if (pool) {
         pool->removeVariable(this);
     }
 }
 
-OPT void Storeable::assign(Storeable const & src, size_t size_of) {
+void Storeable::assign(Storeable const & src, size_t size_of) {
     // !
     xassert(src.__store_size == getStoreSize(size_of));
     StoragePool * oldpar = constcast(__parent);
@@ -142,7 +142,7 @@ OPT void Storeable::assign(Storeable const & src, size_t size_of) {
     }
 }
 
-OPT void Storeable::assignSameParent(Storeable const & src, bool isPool, StoragePool const * oldPool) {
+void Storeable::assignSameParent(Storeable const & src, bool isPool, StoragePool const * oldPool) {
     StoragePool const * srcPool = src.__parent;
     if (srcPool) {
         assignParent(srcPool, isPool, oldPool);
@@ -160,7 +160,7 @@ OPT void Storeable::assignSameParent(Storeable const & src, bool isPool, Storage
     }
 }
 
-OPT void Storeable::assignParent(StoragePool const * srcPool, bool isPool, StoragePool const * oldPool) {
+void Storeable::assignParent(StoragePool const * srcPool, bool isPool, StoragePool const * oldPool) {
     StoragePool const * par = srcPool->findChild(this);
     StoragePool * par0 = NULL;
 
@@ -215,7 +215,7 @@ OPT void Storeable::assignParent(StoragePool const * srcPool, bool isPool, Stora
     }
 }
 
-OPT void* Storeable::operator new (std::size_t size) {
+void* Storeable::operator new (std::size_t size) {
     void* result = malloc(size);
     if (result) {
         return result;
@@ -224,12 +224,12 @@ OPT void* Storeable::operator new (std::size_t size) {
     }
 }
 
-OPT void* Storeable::operator new (std::size_t size, const std::nothrow_t& nothrow_value) {
+void* Storeable::operator new (std::size_t size, const std::nothrow_t& nothrow_value) {
     void* result = malloc(size);
     return result;
 }
 
-OPT void* Storeable::operator new[] (std::size_t size) {
+void* Storeable::operator new[] (std::size_t size) {
     void* result = malloc(size);
     if (result) {
         return result;
@@ -238,24 +238,24 @@ OPT void* Storeable::operator new[] (std::size_t size) {
     }
 }
 
-OPT void* Storeable::operator new[] (std::size_t size, const std::nothrow_t& nothrow_value) {
+void* Storeable::operator new[] (std::size_t size, const std::nothrow_t& nothrow_value) {
     void* result = malloc(size);
     return result;
 }
 
-OPT void* Storeable::operator new (std::size_t size, StoragePool const & pool) {
+void* Storeable::operator new (std::size_t size, StoragePool const & pool) {
     void const * data;
     constcast(pool).allocParentItem(data, getStoreSize(size));
     return constcast(data);
 }
 
-OPT void* Storeable::operator new[] (std::size_t size, StoragePool const & pool) {
+void* Storeable::operator new[] (std::size_t size, StoragePool const & pool) {
     void const * data;
     constcast(pool).allocParentItem(data, getStoreSize(size));
     return constcast(data);
 }
 
-OPT void Storeable::operator delete (void* _ptr) {
+void Storeable::operator delete (void* _ptr) {
     DataPtr ptr = (DataPtr) _ptr;
     if (!(ptr->__kind & ST_IN_POOL)) {
         free(_ptr);
@@ -263,7 +263,7 @@ OPT void Storeable::operator delete (void* _ptr) {
     // else Nothing to do here, everything is in ~Storeable
 }
 
-OPT void Storeable::operator delete[] (void* _ptr) {
+void Storeable::operator delete[] (void* _ptr) {
     DataPtr ptr = (DataPtr) _ptr;
     if (!(ptr->__kind & ST_IN_POOL)) {
         free(_ptr);
@@ -280,7 +280,7 @@ OPT void Storeable::operator delete[] (void* _ptr) {
 
 
 
-void Storeable::debugVar(str::stringstream& os, DataPtr& var, bool ptr, int indent) const {
+void StoragePool::debugVar(str::stringstream& os, DataPtr& var, bool ptr, int indent) const {
     os<<" ";
     StoragePool const *p;
     if (contains(var)) {
@@ -308,7 +308,7 @@ void Storeable::debugVar(str::stringstream& os, DataPtr& var, bool ptr, int inde
     var->debugPrint(os, indent+1);
 }
 
-void Storeable::debugPtr(str::stringstream& os, ExternalPtr ptr, int indent) const {
+void StoragePool::debugPtr(str::stringstream& os, ExternalPtr ptr, int indent) const {
     if (*ptr) {
         debugVar(os, *ptr, true, indent);
     } else {
@@ -317,7 +317,7 @@ void Storeable::debugPtr(str::stringstream& os, ExternalPtr ptr, int indent) con
     }
 }
 
-void Storeable::debugPrint(str::stringstream& os, int indent = 0, char const *subtreeName = 0) const
+void StoragePool::debugPrint(str::stringstream& os, int indent, char const *subtreeName) const
 {
   if (indent > DEBUG_MAX_IND || isDeleted()) {
       ind(os,indent)<< "pool...";
@@ -410,7 +410,7 @@ void Storeable::debugPrint(str::stringstream& os, int indent = 0, char const *su
 
 
 
-OPT void Storeable::debugItm(str::stringstream& os, int indent) const {
+void Storeable::debugItm(str::stringstream& os, int indent) const {
     if (__kind & ST_VALUE) {
     } else if (__kind & ST_STORAGE_POOL) {
         os<<"pool:";
@@ -434,7 +434,7 @@ OPT void Storeable::debugItm(str::stringstream& os, int indent) const {
     }
 }
 
-OPT int Storeable::debugPrint(int indent) const
+int Storeable::debugPrint(int indent) const
 {
     str::stringstream sis;
     debugPrint(sis, indent);
@@ -442,23 +442,23 @@ OPT int Storeable::debugPrint(int indent) const
     return 0;
 }
 
-OPT void operator<<(str::stringstream &os, Storeable const & st) {
+void operator<<(str::stringstream &os, Storeable const & st) {
     st.debugPrint(os);
 }
 
 }// namespace str
 
-OPT void debugString(str::stringstream &os, str::Storeable const & st, int level) {
+void debugString(str::stringstream &os, str::Storeable const & st, int level) {
     st.debugPrint(os, level);
 }
 
-OPT str::string toString(str::Storeable const & st) {
+str::string toString(str::Storeable const & st) {
   str::stringstream s;
   st.debugPrint(s);
   return s.str();
 }
 /*
-OPT char const * toString(str::StoragePool const & st) {
+char const * toString(str::StoragePool const & st) {
 #ifdef DEBUG
    return st.getObjectName();
 #endif

@@ -45,8 +45,8 @@ STATICDEF char const *xSysError::
 }
 
 
-xSysError::xSysError(xSysError::Reason r, int sysCode, rostring sysReason,
-                     rostring syscall, rostring ctx)
+xSysError::xSysError(xSysError::Reason r, int sysCode, rostring &sysReason,
+                     rostring &syscall, rostring &ctx)
   : xBase(constructWhyString(r, sysReason, syscall, ctx)),
     reason(r),
     reasonString(getReasonString(r)),
@@ -58,8 +58,8 @@ xSysError::xSysError(xSysError::Reason r, int sysCode, rostring sysReason,
 
 
 STATICDEF str::string xSysError::
-  constructWhyString(xSysError::Reason r, rostring sysReason,
-                     rostring syscall, rostring ctx)
+  constructWhyString(xSysError::Reason r, rostring &sysReason,
+                     rostring &syscall, rostring &ctx)
 {
   // build str::string; start with syscall that failed
   str::stringstream sb;
@@ -102,7 +102,7 @@ xSysError::~xSysError()
 
 
 STATICDEF void xSysError::
-  xsyserror(rostring syscallName, rostring context)
+  xsyserror(rostring &syscallName, rostring &context)
 {
   // retrieve system error code
   int code = getSystemErrorCode();
@@ -123,14 +123,14 @@ void xsyserror(char const *syscallName)
   xSysError::xsyserror(syscallName, str::string(""));
 }
 
-void xsyserror(rostring syscallName, rostring context)
+void xsyserror(rostring &syscallName, rostring &context)
 {
   xSysError::xsyserror(syscallName, context);
 }
 
 
-str::string sysErrorCodeString(int systemErrorCode, rostring syscallName,
-                                               rostring context)
+str::string sysErrorCodeString(int systemErrorCode, rostring &syscallName,
+                                               rostring &context)
 {
   str::string sysMsg;
   xSysError::Reason r = xSysError::portablize(systemErrorCode, sysMsg);

@@ -52,10 +52,10 @@ private:     // funcs
   void err(int code) NORETURN;
 
 public:      // funcs
-  Regexp(rostring exp, CFlags flags = C_NONE);
+  Regexp(rostring &exp, CFlags flags = C_NONE);
   ~Regexp();
 
-  bool match(rostring str, EFlags flags = E_NONE);
+  bool match(rostring &str, EFlags flags = E_NONE);
 };
 
 // allow '|' to be used on the flags
@@ -75,7 +75,7 @@ ENUM_BITWISE_OR(Regexp::EFlags)
 // Regexp class in the obvious way.
 
 // return true if 'str' matches 'exp'
-bool regexpMatch(rostring str, rostring exp);
+bool regexpMatch(rostring &str, rostring &exp);
 
 
 #endif // REGEXP_H

@@ -8,6 +8,7 @@
 
 #include "ckheap.h"    // malloc functions
 
+#ifdef TEST_MALLOC
 
 HeapWalkOpts myWalker(void *block, int size)
 {
@@ -128,3 +129,4 @@ int main()
   return 0;
 }
 
+#endif

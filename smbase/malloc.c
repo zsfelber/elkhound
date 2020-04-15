@@ -4805,7 +4805,8 @@ void mSTATs()
 #endif
 }
 
-
+#if defined(__WIN32__)||defined(_WIN32)
+#else
 unsigned numMallocCalls()
 {
   mstate av = get_malloc_state();
@@ -4817,7 +4818,7 @@ unsigned numFreeCalls()
   mstate av = get_malloc_state();
   return av->numFreeCalls;
 }
-
+#endif
 
 /*
   ------------------------------ mallopt ------------------------------
@@ -5504,6 +5505,8 @@ static int cpuinfo (int whole, unsigned long *kernel, unsigned long *user) {
 /* sm: my stuff */
 #include "ckheap.h"     // declarations for this code
 
+#if defined(__WIN32__)||defined(_WIN32)
+#else
 static enum HeapWalkOpts checkHeapWalker(void *block, int size)
 {
   #ifdef DEBUG_HEAP
@@ -5548,6 +5551,7 @@ void checkHeap()
   walkMallocHeap(checkHeapWalker);
 
 }
+
 
 void checkHeapNode(void *node)
 {
@@ -5682,6 +5686,7 @@ void walkMallocHeap(HeapWalkFn func)
   }
 }
 
+#endif
 
 /* ------------------------------------------------------------
 History:

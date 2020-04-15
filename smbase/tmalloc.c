@@ -7,6 +7,7 @@
 #include "mysig.h"      // setHandler
 #include "ckheap.h"     // checkHeap
                 
+#ifdef TEST_MALLOC
 
 typedef void (*Fn)(void);
 
@@ -106,3 +107,4 @@ int main()
   printf("tmalloc works\n");
   return 0;
 }
+#endif

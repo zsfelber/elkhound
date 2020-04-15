@@ -154,8 +154,8 @@ private:
 
   Storeable::debugPrint;
     void debugPrint(str::stringstream& os, int indent = 0, char const *subtreeName = 0) const        {
-      if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "obj<"<< boost::typeindex::type_id<T>().pretty_name() <<">..."; return; }
-      str::ind(os,indent)<<"obj<"<< boost::typeindex::type_id<T>().pretty_name() <<">:"; list.debugPrint(os, indent); }
+      if (indent > DEBUG_MAX_IND || isDeleted()) { str::ind(os,indent)<< "obj<"<< boost::typeindex::type_id<T>().pretty_name().c_str() <<">..."; return; }
+      str::ind(os,indent)<<"obj<"<< boost::typeindex::type_id<T>().pretty_name().c_str() <<">:"; list.debugPrint(os, indent); }
   };
 
 

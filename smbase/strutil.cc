@@ -5,6 +5,7 @@
 #include "exc.h"         // xformat
 #include "autofile.h"    // AutoFILE
 #include "array.h"       // Array
+#include "str.h"       // Array
 
 #include <ctype.h>       // isspace
 #include <string.h>      // strstr, memcmp
@@ -14,7 +15,7 @@
 
 
 // replace all instances of oldstr in src with newstr, return result
-str::string replace(rostring origSrc, rostring oldstr, rostring newstr)
+str::string replace(rostring &origSrc, rostring &oldstr, rostring &newstr)
 {
   str::stringstream ret;
   char const *src = toCStr(origSrc);
@@ -27,7 +28,7 @@ str::string replace(rostring origSrc, rostring oldstr, rostring newstr)
     }
 
     // add the characters between src and next
-    ret << substring(src, next-src);
+    ret << str::substring(src, next-src);
 
     // add the replace-with str::string
     ret << newstr;
@@ -67,7 +68,7 @@ str::string expandRanges(char const *chars)
 }
 
 
-str::string translate(rostring origSrc, rostring srcchars, rostring destchars)
+str::string translate(rostring &origSrc, rostring &srcchars, rostring &destchars)
 {
   // first, expand range notation in the specification sequences
   str::string srcSpec = expandRanges(toCStr(srcchars));
@@ -101,11 +102,11 @@ str::string translate(rostring origSrc, rostring srcchars, rostring destchars)
 
 
 // why is this necessary?
-str::string stringToupper(rostring src)
+str::string stringToupper(rostring &src)
   { return translate(src, "a-z", "A-Z"); }
 
 
-str::string trimWhitespace(rostring origStr)
+str::string trimWhitespace(rostring &origStr)
 {                                   
   char const *str = toCStr(origStr);
 
@@ -122,11 +123,11 @@ str::string trimWhitespace(rostring origStr)
   }
 
   // return it
-  return substring(str, end-str);
+  return str::substring(str, end-str);
 }
 
 
-str::string firstAlphanumToken(rostring origStr)
+str::string firstAlphanumToken(rostring &origStr)
 {                                   
   char const *str = toCStr(origStr);
 
@@ -143,7 +144,7 @@ str::string firstAlphanumToken(rostring origStr)
   }
 
   // return it
-  return substring(str, end-str);
+  return str::substring(str, end-str);
 }
 
 
@@ -199,13 +200,13 @@ str::string encodeWithEscapes(char const *p, int len)
 }
 
 
-str::string encodeWithEscapes(rostring p)
+str::string encodeWithEscapes(rostring &p)
 {
   return encodeWithEscapes(toCStr(p), strlen(p));
 }
 
 
-str::string quoted(rostring src)
+str::string quoted(rostring &src)
 {
   return stringb ("\""
                  << encodeWithEscapes(src)
@@ -213,7 +214,7 @@ str::string quoted(rostring src)
 }
 
 
-void decodeEscapes(ArrayStack<char> &dest, rostring origSrc,
+void decodeEscapes(ArrayStack<char> &dest, rostring &origSrc,
                    char delim, bool allowNewlines)
 {
   char const *src = toCStr(origSrc);
@@ -307,7 +308,7 @@ void decodeEscapes(ArrayStack<char> &dest, rostring origSrc,
 }
 
 
-str::string parseQuotedString(rostring text)
+str::string parseQuotedString(rostring &text)
 {
   if (!( text[0] == '"' &&
          text[strlen(text)-1] == '"' )) {
@@ -315,7 +316,7 @@ str::string parseQuotedString(rostring text)
   }
 
   // strip the quotes
-  str::string noQuotes = substring(toCStr(text)+1, strlen(text)-2);
+  str::string noQuotes = str::substring(toCStr(text)+1, strlen(text)-2);
 
   // decode escapes
   ArrayStack<char> buf;
@@ -333,11 +334,11 @@ str::string localTimeString()
 {
   time_t t = time(NULL);
   char const *p = asctime(localtime(&t));
-  return substring(p, strlen(p) - 1);     // strip final newline
+  return str::substring(p, strlen(p) - 1);     // strip final newline
 }
 
 
-str::string sm_basename(rostring origSrc)
+str::string sm_basename(rostring &origSrc)
 {
   char const *src = toCStr(origSrc);
 
@@ -345,7 +346,7 @@ str::string sm_basename(rostring origSrc)
   if (sl && sl[1] == 0) {
     // there is a slash, but it is the last character; ignore it
     // (this behavior is what /bin/basename does)
-    return sm_basename(substring(src, strlen(src)-1));
+    return sm_basename(str::substring(src, strlen(src)-1));
   }
 
   if (sl) {
@@ -356,7 +357,7 @@ str::string sm_basename(rostring origSrc)
   }
 }
 
-str::string dirname(rostring origSrc)
+str::string dirname(rostring &origSrc)
 {                              
   char const *src = toCStr(origSrc);
 
@@ -369,11 +370,11 @@ str::string dirname(rostring origSrc)
   if (sl && sl[1] == 0) {
     // there is a slash, but it is the last character; ignore it
     // (this behavior is what /bin/dirname does)
-    return dirname(substring(src, strlen(src)-1));
+    return dirname(str::substring(src, strlen(src)-1));
   }
 
   if (sl) {
-    return substring(src, sl-src);     // everything before slash
+    return str::substring(src, sl-src);     // everything before slash
   }
   else {
     return str::string(".");
@@ -383,30 +384,30 @@ str::string dirname(rostring origSrc)
 
 // I will expand this definition to use more knowledge about English
 // irregularities as I need it
-str::string plural(int n, rostring prefix)
+str::string plural(int n, rostring &prefix)
 {
   if (n==1) {
     return prefix;
   }
 
-  if (0==strcmp(prefix, "was")) {
+  if (0==cmp(prefix, "was")) {
     return str::string("were");
   }
   if (prefix[strlen(prefix)-1] == 'y') {
-    return stringb(substring(prefix, strlen(prefix)-1).c_str() << "ies").str();
+    return stringb(str::substring(prefix, strlen(prefix)-1).c_str() << "ies").str();
   }
   else {
     return stringb(prefix.c_str() << "s").str();
   }
 }
 
-str::string pluraln(int n, rostring prefix)
+str::string pluraln(int n, rostring &prefix)
 {
   return stringb( n << " " << plural(n, prefix)).str();
 }
 
 
-str::string a_or_an(rostring noun)
+str::string a_or_an(rostring &noun)
 {
   bool use_an = false;
 
@@ -442,7 +443,7 @@ char *copyToStaticBuffer(char const *s)
 }
 
 
-bool prefixEquals(rostring str, rostring prefix)
+bool prefixEquals(rostring &str, rostring &prefix)
 {
   int slen = strlen(str);
   int plen = strlen(prefix);
@@ -450,7 +451,7 @@ bool prefixEquals(rostring str, rostring prefix)
          0==memcmp(toCStr(str), toCStr(prefix), plen);
 }
 
-bool suffixEquals(rostring str, rostring suffix)
+bool suffixEquals(rostring &str, rostring &suffix)
 {
   int slen = strlen(str);
   int ulen = strlen(suffix);    // sUffix
@@ -459,7 +460,7 @@ bool suffixEquals(rostring str, rostring suffix)
 }
 
 
-void writeStringToFile(rostring str, rostring fname)
+void writeStringToFile(rostring &str, rostring &fname)
 {
   AutoFILE fp(toCStr(fname), "w");
 
@@ -469,7 +470,7 @@ void writeStringToFile(rostring str, rostring fname)
 }
 
 
-str::string readStringFromFile(rostring fname)
+str::string readStringFromFile(rostring &fname)
 {
   AutoFILE fp(toCStr(fname), "r");
 
@@ -523,10 +524,10 @@ bool readLine(str::string &dest, FILE *fp)
 }
 
 
-str::string chomp(rostring src)
+str::string chomp(rostring &src)
 {
   if (!src.empty() && src[strlen(src)-1] == '\n') {
-    return substring(src, strlen(src)-1);
+    return str::substring(src, strlen(src)-1);
   }
   else {
     return src;
